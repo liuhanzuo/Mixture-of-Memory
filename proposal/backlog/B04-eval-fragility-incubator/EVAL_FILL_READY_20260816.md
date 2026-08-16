@@ -326,7 +326,20 @@ analyze_b04_wzc1_floor.py:121  READOUT_SPAN = max(...) - min(...)   # 175000
 analyze_b04_wzc1_floor.py:139  if steps != G1_READOUT_STEPS: sys.exit("PROTOCOL_VIOLATION ...")
 ```
 
-Worse, **the analyzer never reads a read-out dir at all.** The only `phi_budget()` call sites are
+> **PRECISION FIX by MAIN, 2026-08-16.** The sentence below originally read *"the analyzer never
+> reads a read-out dir at all"*. That is **overstated**: the analyzer does read
+> `olmo2_downstream_results/` — `:161` and `:176` open `per_example_{task}.jsonl`, `:213` counts
+> `shard*of8.json`, `:219` and `:287` load `summary.json` — it uses those for the donor margin and
+> the completeness checks. The accurate and still-decisive statement is narrower:
+> **nothing that is read from disk ever reaches `phi_budget`.** All three call sites (`:503`,
+> `:526`, `:531`) are inside `selftest_phi()` on hand-written vectors, so there is no path from a
+> read-out directory to the decision statistic. MAIN verified both halves by enumerating every
+> `phi_budget` occurrence with its enclosing `def`, and by grepping the grid constants: `:120` is
+> still revision 2's `[25000, 50000, 100000, 128000, 200000]` with `READOUT_SPAN = 175000`, and
+> `GRID_I` / `153500` / `S=100000` appear nowhere. The consequence for GPU spend is unchanged.
+
+**The analyzer reads read-out directories, but nothing it reads reaches φ.** The only
+`phi_budget()` call sites are
 `:503`, `:526`, `:531` — all inside `selftest_phi()`, all fed hand-written y-vectors. There is no
 code path that loads `median_margin` at the read-out steps from disk. So **filling the 6 evals
 does not by itself make the gate fire**: someone must still implement the revision-3 read-out
