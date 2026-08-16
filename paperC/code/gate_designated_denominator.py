@@ -227,6 +227,47 @@ def run_gate(mmlupro_doc, off_olmo_doc, off_xf_doc, verbose=True):
         notes.append(f"CHECK 5 pass: '{NEG_CONTROL}' is the sole declared negative "
                      f"control and is excluded from every denominator.")
 
+    # ---- CHECK 6: the PROSE must quote the denominator this gate validated ------
+    # Checks 1-5 all validate the EVIDENCE. None of them reads the manuscript's
+    # sentences, and that gap is not hypothetical: the 15-cell denominator was
+    # retracted in 09a_relocated.tex:24 and replaced by 17 throughout the evidence,
+    # yet '14/15' survived in the abstract, the introduction, 03b_nulls.tex and the
+    # claim ledger for an entire review round -- with all five earlier checks
+    # passing the whole time. A gate that validates the numbers but not the words
+    # cannot catch a headline that quotes a retracted ratio.
+    #
+    # A retracted ratio may still appear where the paper explicitly names it AS
+    # retracted, so a line carrying a retraction marker is exempt.
+    #
+    # '0/15' is deliberately NOT listed: it also names a legitimate subset (the
+    # OLMo-2 arms retaining 12 layers or fewer, 3 arms x 5 benchmarks).
+    retracted = ("14/15", "10/15")
+    exempt_markers = ("earlier version", "silently omitted", "retract", "Retract",
+                      "RETRACT", "no longer", "previously quoted")
+    prose_fails = []
+    for fname in sorted(os.listdir(SECTIONS)):
+        if not fname.endswith(".tex"):
+            continue
+        with open(os.path.join(SECTIONS, fname), encoding="utf-8") as fh:
+            for i, line in enumerate(fh, 1):
+                if any(m in line for m in exempt_markers):
+                    continue
+                # left-truncation counts are a different quantity that happens to
+                # share the digits: they count cells lost to a cap, not floors.
+                if "truncat" in line or r"n\_trunc" in line:
+                    continue
+                for bad in retracted:
+                    if bad in line:
+                        prose_fails.append((fname, i, bad, line.strip()[:110]))
+    for fname, i, bad, snippet in prose_fails:
+        fails.append(f"CHECK 6 FAIL: {fname}:{i} quotes the retracted denominator "
+                     f"{bad!r} without marking it as retracted. The designated set "
+                     f"has 17 MMLU-Pro cells and 85 off-MMLU cells, so the current "
+                     f"ratios are 15/17 and 9/85. Line: {snippet}")
+    if not prose_fails:
+        notes.append("CHECK 6 pass: no prose line quotes a retracted denominator "
+                     "outside an explicit retraction.")
+
     return fails, notes, dict(declared_olmo2=sorted(declared),
                               counted_mmlupro=({k: sorted(v) for k, v in cm.items()}),
                               counted_offmmlu_olmo2=sorted(counted_off),
