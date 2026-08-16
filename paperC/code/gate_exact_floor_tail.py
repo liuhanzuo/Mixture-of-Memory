@@ -37,9 +37,17 @@ rational, and therefore which rows must have their p computed against the exact 
 rather than the printed decimal. Any emitter that thresholds on the printed value is wrong
 on those rows.
 
-Exit codes: 0 = no row carries the hazard. 1 = at least one row does (informational --
-this is expected and is NOT a failure by itself; it flags rows needing exact-rational
-handling). 3 = could not parse.
+Exit codes: 0 = pass -- either no row carries the hazard, or the rows that do are
+correctly disclosed by the rounding paragraph in 03b_nulls.tex. 2 = the prose and the
+measured hazard rows disagree (wrong count, or a hazard row the prose never names).
+3 = could not parse.
+
+There is deliberately NO "informational" non-zero code. This gate used to return 1
+whenever any row carried the hazard, described in this docstring as "expected and NOT a
+failure". In a sweep that prints one `rc=1` beside seven `rc=0` the reader triages it once,
+concludes it is noise, and stops reading the body -- which is how the gate came to print
+four hazard rows on every run while the manuscript asserted "the other seven rows are
+unaffected". A non-zero code must mean something is wrong, or it should be zero.
 """
 import re
 import sys
@@ -110,8 +118,20 @@ def main():
         # merely at p<1e-5, where a one-count shift cannot reach the verdict. So the prose
         # was wrong about the mechanism and right about the conclusion, which is the kind of
         # error a reviewer finds and an author cannot explain.
-        rc = 1
+        #
+        # 2026-08-17: the baseline is now 0, not 1. Returning non-zero for the mere PRESENCE
+        # of the hazard spent a failure signal on a condition the paper handles correctly,
+        # and a permanently-red gate is a gate nobody reads -- which is how the four-row
+        # contradiction above stayed alive. The listing is still printed in full; only the
+        # exit code changed. The two escalations below still return 2.
+        rc = 0
         prose = SECTIONS / "03b_nulls.tex"
+        if not prose.exists():
+            print()
+            print("CANNOT CROSS-CHECK: sections/03b_nulls.tex is absent, so the disclosure")
+            print("      claim cannot be verified. Treating that as a failure rather than a")
+            print("      pass, because rc=0 here would assert a check that did not run.")
+            return 3
         if prose.exists():
             text = " ".join(prose.read_text(encoding="utf-8").split())
             claimed = re.search(r"the other (\w+) rows are unaffected", text)

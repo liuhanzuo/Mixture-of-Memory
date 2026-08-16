@@ -71,8 +71,26 @@ PY="${PY:-$PROJECT_ROOT/venv_union9/bin/python}"
 LM_EVAL="${LM_EVAL:-$PROJECT_ROOT/venv_union9/bin/lm_eval}"
 EMIT="$TOOLS/emit_slorb_ladder.py"
 AGG9="$TOOLS/aggregate_zeroshot_union9.py"
-VERIFY="$TOOLS/../verify_2of4_hf_export.py"
-HARNESS_PPL="${HARNESS_PPL:-$REPO/baselines/eval_hf_sparse_model.py}"
+# NOT "$TOOLS/../..." -- this file lives IN tools/, and the `..` walked one level up to
+# baselines/cast_repro/ where it does not exist. Measured 2026-08-17. That typo was silent
+# rather than fatal, which is the dangerous part: both call sites are wrapped in
+# `if [ -f "$VERIFY" ]` with pre_rc/post_rc pre-initialised to 0, so a missing tool left
+# BOTH at 0, the STAGE-6 comparison `[ pre_rc -eq post_rc ]` became 0-eq-0 = trivially
+# true, and the run printed "rung COMPLETE" having never verified 2:4 sparsity once.
+# An assertion that is arithmetically true regardless of the measurement is not evidence.
+VERIFY="$TOOLS/verify_2of4_hf_export.py"
+# The wiki-PPL harness. NOT under baselines/ -- measured 2026-08-17: that path has NEVER
+# existed, in the working tree or anywhere in git history (`git log --all -- <path>` is
+# empty), so this was a default that was wrong when it was written, not a file that moved.
+# The real tool is $REPO/SparseForge_Data/scripts/eval_hf_sparse_model.py: 298 lines,
+# docstring "Evaluate a local Hugging Face causal LM on repository token memmaps", and its
+# argparse accepts exactly the six flags STAGE 3 passes (--model --output_dir --wiki_text
+# --seqlen --wiki_tokens --device). Two caveats a future reader needs:
+#   * it is UNTRACKED (0 of the 6 .py in that dir are in git, and the dir is not gitignored);
+#   * it is wzc1-ONLY -- absent from zwfy6, same as the 5B checkpoint above. Since REQUIRE_SM
+#     already pins this driver to sm_100 (LOCAL/.212, both wzc1), that costs nothing here,
+#     but do not assume the file exists if the ladder is ever ported.
+HARNESS_PPL="${HARNESS_PPL:-$REPO/SparseForge_Data/scripts/eval_hf_sparse_model.py}"
 DATAPROBE="$TOOLS/probe_union9_datasets.py"
 WIKI="${WIKI:-$PROJECT_ROOT/data/wikitext/wikitext-2-raw-v1/wiki.test.raw}"
 TASKS="boolq,rte,hellaswag,race,piqa,winogrande,arc_easy,arc_challenge,openbookqa"
@@ -111,9 +129,15 @@ fi
 # ==========================================================================
 # PREFLIGHT
 # ==========================================================================
-# P0. tools present.
-for f in "$EMIT" "$AGG9" "$HARNESS_PPL" "$DATAPROBE"; do
-  [ -f "$f" ] || die "missing required tool: $f"
+# P0. tools present. $VERIFY is in this list as of 2026-08-17: it was previously absent,
+#     and its two call sites guard with `[ -f ]`, so a bad path degraded the 2:4 check to a
+#     no-op INSTEAD of failing. Checking it here makes a missing verifier fatal at second
+#     zero rather than invisible at the end of a paid GPU run.
+for f in "$EMIT" "$AGG9" "$HARNESS_PPL" "$DATAPROBE" "$VERIFY"; do
+  [ -f "$f" ] || die "missing required tool: $f
+      Check the path before creating the file: two defaults in this driver pointed at
+      locations that never existed ($REPO/baselines/eval_hf_sparse_model.py, and
+      \$TOOLS/../verify_2of4_hf_export.py which is one level above the real tools/ copy)."
 done
 [ -x "$PY" ] || die "python not executable: $PY"
 
@@ -259,12 +283,14 @@ log "=== STAGE 1 DONE ===" | tee -a "$PROG"
 #           dense on disk. We record the rc, we do not require 2:4.
 # ==========================================================================
 log "=== STAGE 2: 2:4 verify $VAR (PRE; a FAIL is EXPECTED -- folded => dense) ===" | tee -a "$PROG"
-pre_rc=0
-if [ -f "$VERIFY" ]; then
-  CUDA_VISIBLE_DEVICES="$GPU0" "$PY" "$VERIFY" --model "$EXPDIR/$VAR" \
-      --sample-layers 12 --seed 0 2>&1 | tee "$OUT/verify_2of4_${VAR}_pre.log"
-  pre_rc=${PIPESTATUS[0]}
-fi
+# pre_rc starts at a value NO run can produce. With the old `pre_rc=0` a skipped verifier
+# was indistinguishable from a clean verifier, and STAGE 6's pre-vs-post comparison then
+# compared 0 against 0. P0 now makes absence fatal, so reaching this branch without the
+# tool is impossible; the sentinel is belt-and-braces for anyone who edits P0.
+pre_rc=255
+CUDA_VISIBLE_DEVICES="$GPU0" "$PY" "$VERIFY" --model "$EXPDIR/$VAR" \
+    --sample-layers 12 --seed 0 2>&1 | tee "$OUT/verify_2of4_${VAR}_pre.log"
+pre_rc=${PIPESTATUS[0]}
 log "=== STAGE 2 DONE rc=$pre_rc ===" | tee -a "$PROG"
 
 # ==========================================================================
