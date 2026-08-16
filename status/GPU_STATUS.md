@@ -1,14 +1,20 @@
 # GPU_STATUS.md — 5 节点单一事实来源
 
-**最后实测 2026-08-17 07:00 GMT+8（heartbeat）。32/40 卡占用，LOCAL 8 卡空闲（**故意**）。每节点 8 个 compute PID + 单一 owning script = 无抢卡。**
+**最后实测 2026-08-17 07:28 GMT+8（heartbeat）。32/40 卡占用，LOCAL 8 卡空闲（**故意**）。每节点 8 个 compute PID + 单一 owning script = 无抢卡。**
 
 | 节点 | 硬件 | 盘 | 在跑 | step | 显存/卡 | util | amortised s/step（**ckpt mtime**） | baseline | 判定 |
 |---|---|---|---|---|---|---|---|---|---|
 | LOCAL(=.21) | 8×B200 sm_100 | wzc1 | **IDLE** | — | 0 MiB | 0% | — | — | 三判据齐（0 MiB + 0% + 0 PID）；**故意空闲 → 见下方章节** |
-| `.212` | 8×B200 sm_100 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | 54000/200000 | 157.8 GB | 98-100% | **2.4504 / 2.4521 / 2.4506** | 2.4500 | healthy 1.000× — ETA 08-21 10:16 |
-| `.73` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` + eval watcher | 193920/200000 | 96.4 GB | 100% | **7.9172 / 7.9167 / 7.9194** | 7.9160 | healthy 1.0004× — ETA ~20:41；log 内 0 个 Traceback/OOM |
-| `.82` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep8fresh2` | 168500/200000 | 78.5 GB | 100% | **5.8611 / 5.8580 / 5.8609** | 5.8640 | healthy 0.999× — ETA 08-19 09:43 |
-| `.104` | 8×H20 sm_90 | zwfy6 | `paperC_qwen3base_heal_k8f2` | 69000/200000 | 78.8 GB | 98-100% | **5.8480 / 5.8363 / 5.8426** | 5.8380 | healthy 1.001× — ETA 08-26 03:33 |
+| `.212` | 8×B200 sm_100 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | 54500/200000 | 157.8 GB | 100% | **2.4506 / 2.4506 / 2.4507** | 2.4500 | healthy 1.000× — ETA 08-21 10:16 |
+| `.73` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` + eval watcher | 194000/200000 | 96.4 GB | 99-100% | **7.9171 / 7.9194 / 7.9131** | 7.9160 | healthy 1.000× — ETA ~20:41 |
+| `.82` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep8fresh2` | 169000/200000 | 78.5 GB | 100% | **5.8606 / 5.8609 / 5.8571** | 5.8640 | healthy 0.999× — ETA 08-19 09:43 |
+| `.104` | 8×H20 sm_90 | zwfy6 | `paperC_qwen3base_heal_k8f2` | 69480/200000（log） | 78.8 GB | 99-100% | **5.8480 / 5.8363 / 5.8426** | 5.8380 | healthy 1.001× — ETA 08-26 03:33 |
+
+> ### 07:28 补记：`.104` 的 ckpt 号两轮没动 ≠ stall（已排除）
+> 上一轮和本轮最新 ckpt 都是 `step69000`。**没有据此报 stall**，而是查了两件事：
+> ckpt **年龄 46.6 min** 对 `save_every=500 @5.84 s/step = 48.7 min` 的周期 —— 下一个还差 ~2 min 才到点；
+> 且 log 已推进到 **step 69480**、mtime 是秒级新鲜。**「ckpt 号没变」在一个周期内是正常的**，
+> 判活要看 log 推进 + ckpt 年龄对周期，不是看 ckpt 号是否变化。
 
 > ### 07:00 补记：`.212` GPU0 读到 0% —— 是 ckpt flush，不是 straggler，已证
 > 首次采样 GPU0 = **0%**，其余 7 张 100%。**没有据此下结论**，而是连采 4 次（间隔 ~8 s）：
