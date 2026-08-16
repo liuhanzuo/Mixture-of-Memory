@@ -54,14 +54,14 @@
   },
   "near_miss": {
    "mismatch": 0,
-   "ok": 73,
-   "skipped": 22
+   "ok": 75,
+   "skipped": 24
   }
  },
- "n_checked": 91,
+ "n_checked": 93,
  "n_mismatch": 0,
- "n_ok": 91,
- "n_skipped_low_precision_or_unmarked": 24,
+ "n_ok": 93,
+ "n_skipped_low_precision_or_unmarked": 26,
  "n_targets": 23,
  "n_targets_uncovered": 0,
  "near_miss_abs_window": 0.001,
@@ -477,7 +477,7 @@
   {
    "abs_diff": 1.2999999999929734e-05,
    "construct": "BoolQ",
-   "context": "\\item The null is not ``chance,'' and the floor is itself an estimate that needs its own calibration against a null the construct can \\emph{realise} --- a test we initially failed on our largest benchmark, where uniform-",
+   "context": "\\item The null is not ``chance,'' and the floor is itself an estimate needing its own calibration against a null the construct can \\emph{realise} --- a test we initially failed on our largest benchmark, where uniform-ove",
    "decimals": 4,
    "evidence_source": "floor_winners_curse_calibration.json",
    "evidence_value": 0.621713,
@@ -492,7 +492,7 @@
   {
    "abs_diff": 0.0,
    "construct": "MMLU-Pro letter, naive",
-   "context": "\\item The null is not ``chance,'' and the floor is itself an estimate that needs its own calibration against a null the construct can \\emph{realise} --- a test we initially failed on our largest benchmark, where uniform-",
+   "context": "\\item The null is not ``chance,'' and the floor is itself an estimate needing its own calibration against a null the construct can \\emph{realise} --- a test we initially failed on our largest benchmark, where uniform-ove",
    "decimals": 6,
    "evidence_source": "floor_winners_curse_calibration.json",
    "evidence_value": 0.116606,
@@ -604,6 +604,34 @@
   },
   {
    "abs_diff": 0.0,
+   "construct": "MMLU letter",
+   "context": "\\paragraph{A rounding convention with the same sign problem.} Since $p=\\Pr(\\hat f\\ge\\text{floor})$ and the floor is an exact rational $\\text{count}/n$, the threshold is an integer count. Storing the floor rounded to six ",
+   "decimals": 6,
+   "evidence_source": "floor_winners_curse_calibration.json",
+   "evidence_value": 0.268908,
+   "file": "paperC/sections/03b_nulls.tex",
+   "line": 39,
+   "prose_literal": "0.268908",
+   "prose_value": 0.268908,
+   "quantity": "floor",
+   "tier": "near_miss"
+  },
+  {
+   "abs_diff": 0.0,
+   "construct": "BoolQ",
+   "context": "\\paragraph{A rounding convention with the same sign problem.} Since $p=\\Pr(\\hat f\\ge\\text{floor})$ and the floor is an exact rational $\\text{count}/n$, the threshold is an integer count. Storing the floor rounded to six ",
+   "decimals": 6,
+   "evidence_source": "floor_winners_curse_calibration.json",
+   "evidence_value": 0.621713,
+   "file": "paperC/sections/03b_nulls.tex",
+   "line": 39,
+   "prose_literal": "0.621713",
+   "prose_value": 0.621713,
+   "quantity": "floor",
+   "tier": "near_miss"
+  },
+  {
+   "abs_diff": 0.0,
    "construct": "MMLU-Pro letter, naive",
    "context": "A content floor is not a dataset constant. Four choices usually left implicit each move it by more than the effects under study, so all four are part of the measured construct and must be printed with the score. \\emph{(i",
    "decimals": 6,
@@ -661,7 +689,7 @@
   {
    "abs_diff": 0.0,
    "construct": "OpenBookQA letter",
-   "context": "The most vivid small-benchmark cases are literal constant emitters: sixteen damaged cross-family cells have accuracy equal to the marginal of the emitted letter to machine precision, and two OpenBookQA cells emit A on ev",
+   "context": "The most vivid small-benchmark cases are literal constant emitters: nine damaged cells in the designated set have accuracy equal to the marginal of the emitted letter to machine precision (sixteen if the negative control",
    "decimals": 6,
    "evidence_source": "floor_winners_curse_calibration.json",
    "evidence_value": 0.276,
@@ -675,7 +703,7 @@
   {
    "abs_diff": 0.0,
    "construct": "ARC-Easy letter",
-   "context": "A floor-level letter score does not imply that all task-relevant competence is gone. On ARC-Easy, OLMo-2 \\texttt{keep8} scores 0.2584 on letters, statistically at its 0.266414 letter floor, while \\texttt{content\\_norm} r",
+   "context": "A floor-level letter score does not imply all task-relevant competence is gone. On ARC-Easy, OLMo-2 \\texttt{keep8} scores 0.2584 on letters, statistically at its 0.266414 letter floor, while \\texttt{content\\_norm} reache",
    "decimals": 6,
    "evidence_source": "floor_winners_curse_calibration.json",
    "evidence_value": 0.266414,
@@ -689,7 +717,7 @@
   {
    "abs_diff": 1.6653345369377348e-16,
    "construct": "OpenBookQA content",
-   "context": "The residual-fraction effect is also construct-specific. On OpenBookQA \\texttt{content\\_norm}, using chance rather than the 0.3680 token-longest floor inflates the base arm's residual fraction by 2.11$\\times$. PIQA and A",
+   "context": "The residual-fraction effect is also construct-specific. On OpenBookQA \\texttt{content\\_norm}, using chance rather than the 0.3680 token-longest floor inflates the base arm's residual fraction by 2.11$\\times$; PIQA and A",
    "decimals": 4,
    "evidence_source": "construct_nulls_length_unit.json",
    "evidence_value": 0.36800000000000016,
@@ -703,7 +731,7 @@
   {
    "abs_diff": 5.551115123125783e-17,
    "construct": "OpenBookQA content",
-   "context": "The OpenBookQA character floor was added after the original audit identified an evidence hole. It is now recomputed from raw parquet and passes a 12/12 character/token self-test, so we do not use the earlier ``unrecomput",
+   "context": "The OpenBookQA character floor was added after the original audit identified an evidence hole. It is now recomputed from raw parquet and passes a 12/12 character/token self-test, so we drop the earlier ``unrecomputable''",
    "decimals": 6,
    "evidence_source": "construct_nulls_length_unit.json",
    "evidence_value": 0.36350000000000005,
@@ -717,7 +745,7 @@
   {
    "abs_diff": 0.0,
    "construct": "OpenBookQA letter",
-   "context": "The most vivid small-benchmark cases are literal constant emitters. Sixteen damaged cross-family cells have accuracy equal to the marginal of the emitted letter to machine precision. Two OpenBookQA cells emit A on every ",
+   "context": "The most vivid small-benchmark cases are literal constant emitters. Nine damaged cross-family cells in the designated set have accuracy equal to the marginal of the emitted letter to machine precision, on ARC-Challenge, ",
    "decimals": 6,
    "evidence_source": "floor_winners_curse_calibration.json",
    "evidence_value": 0.276,
@@ -1557,7 +1585,7 @@
   {
    "abs_diff": 0.0,
    "construct": "BoolQ",
-   "context": "\\item The null is not ``chance,'' and the floor is itself an estimate that needs its own calibration against a null the construct can \\emph{realise} --- a test we initially failed on our largest benchmark, where uniform-",
+   "context": "\\item The null is not ``chance,'' and the floor is itself an estimate needing its own calibration against a null the construct can \\emph{realise} --- a test we initially failed on our largest benchmark, where uniform-ove",
    "decimals": 2,
    "evidence_source": "floor_winners_curse_calibration.json",
    "evidence_value": 0.5,
@@ -1572,7 +1600,7 @@
   {
    "abs_diff": 0.0,
    "construct": "MMLU letter",
-   "context": "\\citet{balepur2024artifacts} define a majority-class baseline for letter MCQA and recommend stronger-than-chance references; their object is dataset cheatability under a black-box generative setup, whereas ours is a per-",
+   "context": "\\citet{balepur2024artifacts} define a majority-class baseline for letter MCQA and recommend stronger-than-chance references; their object is dataset cheatability under a black-box generative setup, ours a per-arm gate fo",
    "decimals": 2,
    "evidence_source": "floor_winners_curse_calibration.json",
    "evidence_value": 0.25,
@@ -1587,7 +1615,7 @@
   {
    "abs_diff": 0.0,
    "construct": "MMLU-Pro letter, naive",
-   "context": "It also exposes a benchmark-level limitation invisible to v1. Intact Llama-2-7B has \\texttt{recovery\\_fraction}=0.0545 on MMLU-Pro, even though v1 calls it comfortably above floor by $+1.538$ points. Because the intact a",
+   "context": "It also exposes a benchmark-level limitation invisible to v1: intact Llama-2-7B has \\texttt{recovery\\_fraction}=0.0545 on MMLU-Pro even though v1 calls it comfortably above floor by $+1.538$ points. The intact anchor bei",
    "decimals": 2,
    "evidence_source": "floor_winners_curse_calibration.json",
    "evidence_value": 0.1,
@@ -1602,10 +1630,40 @@
   {
    "abs_diff": 0.0,
    "construct": "OpenBookQA letter",
-   "context": "The most vivid small-benchmark cases are literal constant emitters. Sixteen damaged cross-family cells have accuracy equal to the marginal of the emitted letter to machine precision. Two OpenBookQA cells emit A on every ",
+   "context": "The most vivid small-benchmark cases are literal constant emitters. Nine damaged cross-family cells in the designated set have accuracy equal to the marginal of the emitted letter to machine precision, on ARC-Challenge, ",
    "decimals": 2,
    "evidence_source": "floor_winners_curse_calibration.json",
    "evidence_value": 0.25,
+   "file": "paperC/sections/09a_relocated.tex",
+   "line": 42,
+   "prose_literal": "0.25",
+   "prose_value": 0.25,
+   "quantity": "chance",
+   "reason": "fewer than MIN_DP=3 decimals; too coarse to test (it also rounds to other stored values)",
+   "tier": "near_miss"
+  },
+  {
+   "abs_diff": 0.00016100000000002224,
+   "construct": "ARC-Easy letter",
+   "context": "The most vivid small-benchmark cases are literal constant emitters. Nine damaged cross-family cells in the designated set have accuracy equal to the marginal of the emitted letter to machine precision, on ARC-Challenge, ",
+   "decimals": 2,
+   "evidence_source": "floor_winners_curse_calibration.json",
+   "evidence_value": 0.250161,
+   "file": "paperC/sections/09a_relocated.tex",
+   "line": 42,
+   "prose_literal": "0.25",
+   "prose_value": 0.25,
+   "quantity": "chance",
+   "reason": "fewer than MIN_DP=3 decimals; too coarse to test (it also rounds to other stored values)",
+   "tier": "near_miss"
+  },
+  {
+   "abs_diff": 0.00015599999999998948,
+   "construct": "ARC-Challenge letter",
+   "context": "The most vivid small-benchmark cases are literal constant emitters. Nine damaged cross-family cells in the designated set have accuracy equal to the marginal of the emitted letter to machine precision, on ARC-Challenge, ",
+   "decimals": 2,
+   "evidence_source": "floor_winners_curse_calibration.json",
+   "evidence_value": 0.250156,
    "file": "paperC/sections/09a_relocated.tex",
    "line": 42,
    "prose_literal": "0.25",
