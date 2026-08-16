@@ -338,6 +338,36 @@ is introduced by any relocation.
   slack figures, though not the ranking.
 - **GPU: zero used.** pdflatex + PyMuPDF on the login host only. No node was contacted.
 
+### CORRECTION by MAIN, 2026-08-16 — the "pre-existing mismatch" does not exist
+
+This document's summary reported **1 pre-existing mismatch** in `check_prose_vs_evidence.py`
+(`README.md:23`, `0.2845` vs a stored `0.268908`), described as a regression predating the sweep.
+**MAIN re-ran the checker in the clean tree and it reports `n_mismatch=0`:**
+
+```
+[scan] 24 files, 23 targets
+[result] n_checked=81 n_ok=81 n_mismatch=0 n_skipped=20 n_uncovered=0
+rc=0
+```
+
+There is no regression. Two supporting facts:
+
+- `code/check_prose_vs_evidence.py:67` names this exact value as correct — *"The MMLU **content**
+  null `0.2845`, quoted at README.md:23"* — i.e. the checker has dedicated handling for it and does
+  **not** pair it against `floor_winners_curse_calibration.json` `rows[2].floor = 0.268908`.
+  `README.md:214` lists `0.2689` and `0.2845` side by side as **two different floors**, so pairing
+  them would be the error.
+- `0.2845` appears **only** in `README.md` (lines 23 and 214) and in **no** `sections/*.tex`, so it
+  is not in the submitted paper at all.
+
+Most likely cause: the mismatch was observed inside the scratch build that had the live
+`evidence/` symlinked in — the very incident recorded below — not in the clean tree. Which sharpens
+that incident's lesson: **once a writer-checker has been run against a symlinked evidence dir, its
+own output is no longer evidence about the clean tree.**
+
+MAIN's own re-run followed the lesson: back up the output JSON first, run, restore immediately,
+confirm `git status paperC/evidence/` is empty.
+
 ### One incident to record
 
 While running the repo checkers I first symlinked the *real* `paperC/evidence/` into two scratch
