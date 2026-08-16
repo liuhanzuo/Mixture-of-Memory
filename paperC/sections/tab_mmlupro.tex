@@ -6,6 +6,8 @@
 \toprule
 Family & Arm/regime & Accuracy & $\Delta$ vs floor (pp) & CI95 half-width & $p$ & v1 verdict \\
 \midrule
+OLMo-2 & \texttt{shortgpt16}, heal & 0.153341 & $+3.674$ & 0.702 & 0.0001 & above floor \\
+OLMo-2 & \texttt{keep14}, heal & 0.119847 & $+0.324$ & 0.636 & 0.3234 & at floor \\
 OLMo-2 & \texttt{keep12}, heal & 0.113115 & $-0.349$ & 0.765 & 0.3805 & at floor \\
 OLMo-2 & \texttt{keep10}, heal & 0.112450 & $-0.416$ & 0.727 & 0.2662 & at floor \\
 OLMo-2 & \texttt{keep8}, heal & 0.115442 & $-0.116$ & 0.582 & 0.7118 & at floor \\
@@ -20,6 +22,6 @@ Qwen3 & \texttt{k10}, truncation & 0.118185 & $+0.158$ & 0.233 & 0.1872 & at flo
 Qwen3 & \texttt{k8}, truncation & 0.107796 & $-0.881$ & 0.819 & 0.0362 & below floor \\
 \bottomrule
 \end{tabular}
-\caption{MMLU-Pro letter read-out against the bit-identical always-A floor 0.116606. OLMo-2 arms are prune-then-heal; the other families are truncate-only, so regime and family are confounded. Numbers are the per-cell MMLU-scale power records for the letter-floor cells (evidence \textsf{E-B}; see the reproducibility statement for the artifact path).}
+\caption{MMLU-Pro letter read-out against the bit-identical always-A floor 0.116606, over all 17 designated damaged cells. OLMo-2 arms are prune-then-heal; the other families are truncate-only, so regime and family are confounded. Rows are ordered by retained depth within family: the two cells that clear the floor are the OLMo-2 arm retaining 16 of 32 layers and Qwen3 \texttt{k14}, and the remaining 15 are at or below it. Numbers are the per-cell MMLU-scale power records for the letter-floor cells (evidence \textsf{E-B}; see the reproducibility statement for the artifact path).}
 \label{tab:mmlupro}
 \end{table*}

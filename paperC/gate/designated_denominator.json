@@ -1,0 +1,77 @@
+{
+ "declared_olmo2": [
+  "keep10",
+  "keep12",
+  "keep14",
+  "keep8",
+  "shortgpt16"
+ ],
+ "counted_mmlupro": {
+  "olmo2_7b": [
+   "keep10",
+   "keep12",
+   "keep14",
+   "keep8",
+   "shortgpt16"
+  ],
+  "llama2_7b": [
+   "k10",
+   "k12",
+   "k14",
+   "k8"
+  ],
+  "llama3_8b": [
+   "k10",
+   "k12",
+   "k14",
+   "k8"
+  ],
+  "qwen3_8b_base": [
+   "k10",
+   "k12",
+   "k14",
+   "k8"
+  ]
+ },
+ "counted_offmmlu_olmo2": [
+  "keep10",
+  "keep12",
+  "keep14",
+  "keep8",
+  "shortgpt16"
+ ],
+ "counted_offmmlu_nonolmo": {
+  "llama2_7b": [
+   "k10",
+   "k12",
+   "k14",
+   "k8"
+  ],
+  "llama3_8b": [
+   "k10",
+   "k12",
+   "k14",
+   "k8"
+  ],
+  "qwen3_8b_base": [
+   "k10",
+   "k12",
+   "k14",
+   "k8"
+  ]
+ },
+ "offmmlu_cardinality": 85,
+ "schema_version": "1.0.0",
+ "verdict": "PASS",
+ "n_pass": 5,
+ "n_fail": 0,
+ "passed": [
+  "CHECK 1 pass: MMLU-Pro OLMo-2 declared set == counted set.",
+  "CHECK 2 pass: off-MMLU OLMo-2 rollup contains every declared rung.",
+  "CHECK 3 pass: retained-depth designation is consistent across families.",
+  "CHECK 4 pass: off-MMLU denominator is rectangular (arms x benchmarks = 85).",
+  "CHECK 5 pass: 'winogrande' is the sole declared negative control and is excluded from every denominator."
+ ],
+ "failures": [],
+ "gpu_used": "NONE"
+}
