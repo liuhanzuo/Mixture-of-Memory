@@ -1,42 +1,47 @@
 # GPU_STATUS.md — 5 节点单一事实来源
 
-**最后实测 2026-08-16 21:02 GMT+8（heartbeat）。40/40 卡占用，0 空闲，每节点 8 个 compute PID（单一主人，无抢卡）。**
+**最后实测 2026-08-17 02:10 GMT+8（heartbeat）。40/40 卡占用，0 空闲，每节点 8 个 compute PID（单一主人，无抢卡）。**
 
 | 节点 | 硬件 | 盘 | 在跑 | step | 显存/卡 | util | amortised s/step | baseline | 判定 |
 |---|---|---|---|---|---|---|---|---|---|
-| LOCAL(=.21) | 8×B200 sm_100 | wzc1 | `olmo2_probe2_7B_keep10fresh2` | 180020/200000 | 123.9 GB | 100% | **1.4100** | 1.2000 compute | healthy（+17.5% = wzc1 ckpt 代价） |
-| `.212` | 8×B200 sm_100 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | 39380/200000 | 157.8 GB | 100% | 2.5833 | — | healthy |
-| `.73` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` | 189400/200000 | 96.4 GB | 100% | **7.9180** | 7.8000 | healthy 1.02× |
-| `.82` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep8fresh2` | 162600/200000 | 78.5 GB | 100% | **5.8640** | 5.8000 | healthy 1.01× |
-| `.104` | 8×H20 sm_90 | zwfy6 | `paperC_qwen3base_heal_k8f2` | 63080/200000 | 78.8 GB | 100% | **5.8380** | 5.7500 | healthy 1.02× |
+| LOCAL(=.21) | 8×B200 sm_100 | wzc1 | `olmo2_probe2_7B_keep10fresh2` | 192940/200000 | 123.9 GB | 100% | **1.4148** | 1.3904 (9-interval mean) | healthy 1.018× — **ETA 04:35** |
+| `.212` | 8×B200 sm_100 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | 46640/200000 | 157.8 GB | 95-100% | **2.4510** | 2.4500 | healthy 1.000× — ETA 08-21 10:16 |
+| `.73` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` | 191660/200000 | 96.4 GB | 100% | **7.9160** | 7.9200 | healthy 0.999× — ETA 19:57 |
+| `.82` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep8fresh2` | 165640/200000 | 78.5 GB | 100% | **5.8660** | 5.8640 | healthy 1.000× — ETA 08-19 09:43 |
+| `.104` | 8×H20 sm_90 | zwfy6 | `paperC_qwen3base_heal_k8f2` | 66080/200000 | 78.8 GB | 100% | **5.8530** | 5.8380 | healthy 1.003× — ETA 08-26 03:33 |
 
-Monitor: `http200 OK`。错误行扫描：三个 zwfy6 live log 各 0 行。
+Monitor: `http200 OK`。错误行扫描：五个 live log 各 0 行。
 
-## ⚠️ 本轮两个测量陷阱（都已避开，记下来别再踩）
+## ★ 两个 chain watcher 在跑（2026-08-17 02:00 起，都在 LOCAL 上）
 
-1. **keep10 的 155 s 窗口读出 3.8750 s/step（=基线 3.2×），是 ckpt flush 伪影不是故障。**
-   判据：`step180000.pt` mtime = **21:00:13**，落在我窗口（20:58:09–20:59:44）**之后** ——
-   flush 被记在跨过 save 边界的那个区间里。改用**连续两个 500-step ckpt 间隔**得
-   1.3700 / 1.4100 s/step，与 compute 基线 1.2000 差 +17.5%，正是已知的 wzc1 写盘代价。
-   **报速率必须说清是 compute 还是 amortised。**
-2. **zwfy6 三臂的 log 步进只有 +20，那是 log 粒度（±1 个区间），比值 0.69×/1.39× 是量化噪声不是测量。**
-   同样改用 ckpt 间隔（500 步）→ 1.01–1.02×。**小 Δ 上的比值不构成测量。**
+LOCAL 此前**没有任何后继任务在等**（`pgrep 'watch|chain|wait'` 只返回编辑器的 file watcher），
+25 分钟后 8 张 B200 会空转。已排两个后继，**它们不可互换**：
 
-## 认任务的正确方式（同盘节点共享 logs/，mtime 会骗人）
+| watcher | PID | 等什么 | 然后做什么 |
+|---|---|---|---|
+| `chain_b12_pilot_on_local_free.sh` | 650568 | LOCAL 上 compute PID 连续 2 次为 0 | B12 pilot pair：先 rung P，P 成功才跑 Dctl。1.46 GPU-h。**Q/R/S 一律不跑** |
+| `chain_keep10_ship_and_eval_200k.sh` | 655909 | `step200000.pt` size 稳定 | `scp -O` 到 .73（~34 min）→ **两端核 md5** → 等 .73 空卡 → 跑 ladder eval |
 
-先 `ps -eo pid,cmd --no-headers | grep "[t]rain_olmo2_arch_probe2.py"` 拿 `--output_dir`，再据此定位 log。
-本轮实证：zwfy6 的 `logs/` 里有 **3 个 keep12 log + 4 个 keep8 log**（共享盘历史残留），live 的是 `_0814`；
-LOCAL 的 live log 是 `_local_0815`，而 `_21.log` **自 08-08 起就没动过**。按 mtime 或猜名字都会拿错。
+**为什么必须拆成两个**：`eval_paperb_ladder_200k.sh:85` 写死 `REQUIRE_SM=9.0`，非 H20 直接 die
+（Table 4 是单一 H20 口径，core6 有实测 0.03-0.16pp 跨架构地板）。LOCAL 是 sm_100，
+所以 keep10 的 eval **不能在它自己跑完的机器上做**；而 B12 pilot 反过来**只能**在 sm_100/wzc1 跑。
 
-## chain watcher（`.73`）
+## ⚠️ keep10 是唯一「ckpt 在错盘」的 rung（2026-08-17 实测）
 
-PID **1243702**，`scripts/chain_keep12_eval_200k.sh`，存活已确认。
-触发条件 = `outputs/olmo2_probe2_7B_keep12fresh2/step200000.pt` 出现且大小连续两次轮询不变（不是 log 行）。
-按 keep12 自己的 amortised 7.9180 s/step，剩 10600 步 ≈ **23.3 h → 约 2026-08-17 20:19 GMT+8** 落地，届时自动起 ladder eval。
+zwfy6 的 `outputs/olmo2_probe2_7B_keep10fresh2/` **停在 step90000**（08-12），wzc1 已过 193000
+→ `step200000.pt` 将是 **wzc1-only**。keep8 在 .82、keep12 在 .73 训练，本来就在 zwfy6，就地 eval 即可。
 
-## 磁盘（2026-08-16 实测，详见 status/DISK_DECISION_20260816.md）
+## ★★ 跨盘速率实测：19.2 MB/s，不是 12 MB/s（CLAUDE.md 那条自相矛盾）
 
-- wzc1 120T / **110T used / 10T free / 92%**；zwfy6 689T / **667T used / 22T free / 97%**（3 次采样一致，非 fuse 滞后）。
-- 我们在 wzc1 占 **17.05 TiB = 已用的 15.5%**（35 个用户里第 2）；在 zwfy6 占 22.98 TiB = **3.4%**，
-  而 `hunyuan/` 单独 **322 TiB（全盘 48%）** → **zwfy6 的 97% 不是我们造成的、也不是我们能修的**。
-- 待用户决定的只有一件：`out_llama/`（4.69 TiB，99 个 SparseForge sweep，仅 3 个被按名引用，#245 仍 pending）。
+CLAUDE.md 写「12MB/s 单流 / 搬两个 45.4GiB 约 42 小时」——**这条跟它自己的算术矛盾**
+（45.4GiB×2 @ 12MB/s ≈ 2.3 h，不是 42 h）。所以我实测了：**2 GiB 探针 wzc1→.73 `scp -O` 用时 112 s
+= 19.2 MB/s，两端 md5 一致**，探针已从两侧删除。
+→ keep10 的 39.01 GB ckpt 只需 **~34 分钟**，而且发生在 .73 空出前 ~17 h，**不占任何 GPU 时间**。
+**这个量级的跨盘搬运是便宜的；不要再拿「42 小时」当理由否掉一次搬运，先实测。**
+
+## ⚠️ 上一轮两个测量陷阱（仍然有效，别再踩）
+
+1. **ckpt flush 伪影**：save 边界所在的区间会把 flush 记进去。用**连续两个 500-step ckpt 间隔**测，
+   并说清报的是 compute 还是 amortised。
+2. **log 步进只有 ±20 步时，比值是量化噪声不是测量。** 本轮 `.73` 的 tqdm 瞬时值在 7.81–10.26 s/it 之间跳，
+   而 ckpt 间隔给出 7.914/7.918 —— **以 ckpt 间隔为准**。
