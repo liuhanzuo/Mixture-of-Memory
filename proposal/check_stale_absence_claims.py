@@ -114,17 +114,68 @@ REFUTED_NEARBY = re.compile(
     re.IGNORECASE)
 REFUTE_WINDOW = 260
 
+# STRUCTURAL suppression, added 2026-08-16 after the proximity rule failed its own purpose.
+#
+# The repair this guard PRESCRIBES is a separate dated superseding key. Such a key lives at
+# the top level of the document, hundreds or thousands of characters from the sentinel it
+# corrects -- so REFUTED_NEARBY, which only looks +/-260 chars, cannot see it. Measured: five
+# proposals were repaired exactly as instructed and the guard still reported all five. A
+# checker that stays red after the prescribed fix is applied is the failure mode recorded in
+# memory/an-informational-nonzero-rc-hides-real-defects.md: everyone learns to ignore its rc,
+# and then it hides the next real defect. Proximity was the wrong mechanism, not a wrong
+# window size -- widening it to 2000 chars would have suppressed genuinely-unrelated
+# sentinels in the same file, trading a false positive for a false negative.
+#
+# So a hit is also dropped when the DOCUMENT carries a superseding key that names the same
+# file as present. The key must (a) match SUPERSEDING_KEY, (b) point at this file, and (c)
+# assert existence -- three conditions, so that merely mentioning the filename in an
+# unrelated dated key does not silence anything.
+SUPERSEDING_KEY = re.compile(
+    r'(presence_correction|related_work_20\d{6}|_correction_20\d{6}|supersed)', re.IGNORECASE)
+
+
+def _superseded_structurally(doc, filename):
+    """True when a top-level key exists that declares `filename` present.
+
+    Deliberately NOT a recursive walk. A recursive search for 'exists' over these documents
+    hits dozens of unrelated prose sentences, and promoting prose to correction-hood is the
+    paperwork-counts-as-readiness bug that ready_queue.py's NESTED_GATE_CONTAINERS exists to
+    stop. Same discipline here: the correction must be a named top-level key.
+    """
+    if not isinstance(doc, dict):
+        return None
+    for key, val in doc.items():
+        if not SUPERSEDING_KEY.search(key):
+            continue
+        blob = json.dumps(val, ensure_ascii=False)
+        if filename not in blob:
+            continue
+        # (c) it must ASSERT existence, not merely restate the absence.
+        if re.search(r'"exists"\s*:\s*true', blob, re.IGNORECASE) or \
+           re.search(r'(IT DOES|NOW EXISTS|is present|已存在|实际存在)', blob, re.IGNORECASE):
+            return key
+    return None
+
 
 def scan(status_path):
     """Return [(claimed_file, resolved_path, size)] for absences that are false.
 
-    A hit is dropped when a refutation sits within REFUTE_WINDOW characters on either
-    side, because that is a correction quoting its own stale sentinel.
+    Two suppressions, and they cover different shapes:
+      * TEXTUAL   -- a refutation within REFUTE_WINDOW chars, i.e. a correction quoting its
+                     own stale sentinel inline.
+      * STRUCTURAL -- a top-level dated superseding key that declares the file present. This
+                     is the repair the guard itself prescribes, and it necessarily sits far
+                     from the sentinel, so proximity alone can never see it.
     """
     try:
-        text = status_path.read_text(encoding="utf-8")
+        raw_text = status_path.read_text(encoding="utf-8")
     except OSError:
         return []
+    try:
+        doc = json.loads(raw_text)
+    except json.JSONDecodeError:
+        doc = None
+    text = raw_text
     out = []
     for m in ABSENCE.finditer(text):
         raw = m.group(1)
@@ -138,6 +189,8 @@ def scan(status_path):
         after = text[m.end():m.end() + REFUTE_WINDOW]
         if REFUTED_NEARBY.search(before) or REFUTED_NEARBY.search(after):
             continue  # a correction, not a live stale claim
+        if _superseded_structurally(doc, name):
+            continue  # the prescribed repair is on file
         out.append((raw, cand, cand.stat().st_size))
     return out
 

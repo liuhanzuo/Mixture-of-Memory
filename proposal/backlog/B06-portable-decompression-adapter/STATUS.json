@@ -394,5 +394,20 @@
       "cost": "0 GPU, one ssh + one wc -l",
       "status": "NOT DONE -- ssh was forbidden for this leg. Stated as a consistent, cheaply testable hypothesis, NOT as an established cause."
     }
+  },
+  "related_work_presence_correction_20260816": {
+    "_what_this_supersedes": "The keys listed in stale_absence_assertions below state that RELATED_WORK.md does not exist in this directory. IT DOES. Those keys are NOT edited -- this record is append-only and the history of what was believed when is the point. This key is the dated superseding entry.",
+    "measured": {
+      "path": "proposal/backlog/B06-portable-decompression-adapter/RELATED_WORK.md",
+      "exists": true,
+      "bytes": 28761,
+      "verified_by": "os.stat on wzc1 at 2026-08-16"
+    },
+    "stale_absence_assertions": [
+      "novelty_status_detail"
+    ],
+    "presence_is_not_sufficiency": "This key discharges exactly ONE thing: the false claim that the file is missing. It does NOT assert the file's content is adequate, does NOT adjudicate novelty, and does NOT release any GPU. Any blocker that is really about CONTENT stands.",
+    "note": "novelty_status_detail still opens 'RELATED_WORK.md does NOT exist here.' The file exists. Whether its CONTENT clears the five collision families that RELATED_WORK_GAP_AUDIT_20260808.md:96 lists is a separate question and is NOT settled by this key.",
+    "found_by": "proposal/check_stale_absence_claims.py, which sweeps every STATUS.json for absence assertions about files that are on disk. It reported 6 rows; one (B03 GATE_PREREGISTRATION.md) was the checker's own false positive from a lookahead that crossed a filename boundary, fixed in commit 548e9e1."
   }
 }

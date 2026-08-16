@@ -400,5 +400,22 @@
       "gpu_cost_when_unblocked": "1.46 GPU-h for the pilot pair (rung P + Dctl control). Cheap. The blocker is correctness, not budget.",
       "priority_note": "all 40 cards are busy with training; there is no card to take today regardless."
     }
+  },
+  "related_work_presence_correction_20260816": {
+    "_what_this_supersedes": "The keys listed in stale_absence_assertions below state that RELATED_WORK.md does not exist in this directory. IT DOES. Those keys are NOT edited -- this record is append-only and the history of what was believed when is the point. This key is the dated superseding entry.",
+    "measured": {
+      "path": "proposal/backlog/B12-slorb-rank-efficiency/RELATED_WORK.md",
+      "exists": true,
+      "bytes": 40278,
+      "verified_by": "os.stat on wzc1 at 2026-08-16"
+    },
+    "stale_absence_assertions": [
+      "lifecycle_reason",
+      "novelty_status_detail",
+      "related_work_status"
+    ],
+    "presence_is_not_sufficiency": "This key discharges exactly ONE thing: the false claim that the file is missing. It does NOT assert the file's content is adequate, does NOT adjudicate novelty, and does NOT release any GPU. Any blocker that is really about CONTENT stands.",
+    "note": "related_work_status is byte-frozen at 'ABSENT -- RELATED_WORK.md not on disk', which novelty_verdict._why_this_key_exists already flags as no-longer-true. Recorded here too because related_work_status is itself in ready_queue.py's NOVELTY_VERDICT_KEYS, so a reader that hits it before novelty_verdict gets the stale answer from a key the tool treats as authoritative. B12 currently reports ready_gpu on the strength of novelty_verdict; that verdict, not this presence fact, is what licenses the card.",
+    "found_by": "proposal/check_stale_absence_claims.py, which sweeps every STATUS.json for absence assertions about files that are on disk. It reported 6 rows; one (B03 GATE_PREREGISTRATION.md) was the checker's own false positive from a lookahead that crossed a filename boundary, fixed in commit 548e9e1."
   }
 }

@@ -278,5 +278,20 @@
     ],
     "lifecycle_UNCHANGED": "ready_cpu. THIS KEY DOES NOT AUTHORISE A GPU and does not change lifecycle/priority/status. gpu_policy's three preconditions ALL still stand: (1) G0 PASSES and G0 is 0 GPU -- the reset operator STILL does not exist as code (re-verified 2026-08-16: _assert_fresh_init at scripts/train_olmo2_arch_probe2.py:140 checks post_attention_layernorm all-ones with the docstring stating 'OLMo-2 is POST-norm and has NO input_layernorm'; DistributedSampler(..., seed=args.seed) at line 869; the 2-group->4-group optimizer shim at line ~912 'elif n_ckpt_groups == 2 and n_new_groups == 4', so G0's self-test (d) tests a real code path); (2) EXPLICIT USER AUTHORISATION for ~748 GPU-h or at minimum G1's 107.7; (3) A FREE sm_90 NODE -- measured 2026-08-16 all 24 H20 cards on .73/.82/.104 are at 100% utilisation (96.4/78.5/78.8 GiB per card), there is NO capacity. NEXT ACTION = G0, which is 0 GPU.",
     "frozen_by_this_commit": "alpha=0.05; Holm 0.016667/0.025/0.05; alpha/2=0.025 for the strict-OR verdict; Theta_int=1.0230pp=0.10 retention units; Theta_sep=0.10; S=3; T_total=8000 steps; E=8; c_2=1.1283791670955126 with k=2; F_.975(2,2)=39.0000 pooling precondition; sigma_run(K)<=0.2903 pp COMPARED ON THE POINT ESTIMATE (D2 fix); sigma_R(ppl)<=0.03962; enumeration cardinality==400 WITH the >20-distinct-values assert (D1/D3 fix). If any is later changed the gate is VOID and must be re-run; a changed constant may not be presented as the original."
+  },
+  "related_work_presence_correction_20260816": {
+    "_what_this_supersedes": "The keys listed in stale_absence_assertions below state that RELATED_WORK.md does not exist in this directory. IT DOES. Those keys are NOT edited -- this record is append-only and the history of what was believed when is the point. This key is the dated superseding entry.",
+    "measured": {
+      "path": "proposal/backlog/B03-cyclic-layer-reset-boundary/RELATED_WORK.md",
+      "exists": true,
+      "bytes": 34354,
+      "verified_by": "os.stat on wzc1 at 2026-08-16"
+    },
+    "stale_absence_assertions": [
+      "lifecycle_why_20260815"
+    ],
+    "presence_is_not_sufficiency": "This key discharges exactly ONE thing: the false claim that the file is missing. It does NOT assert the file's content is adequate, does NOT adjudicate novelty, and does NOT release any GPU. Any blocker that is really about CONTENT stands.",
+    "note": "novelty adjudication: SEE novelty_status_detail_20260815, which ALREADY records itself as SUPERSEDED and says the file now exists. This key exists because lifecycle_why_20260815 -- the field ready_queue.py prints as the lifecycle justification -- still says 'RELATED_WORK.md is absent', so the correction was invisible at the surface a reader actually sees.",
+    "found_by": "proposal/check_stale_absence_claims.py, which sweeps every STATUS.json for absence assertions about files that are on disk. It reported 6 rows; one (B03 GATE_PREREGISTRATION.md) was the checker's own false positive from a lookahead that crossed a filename boundary, fixed in commit 548e9e1."
   }
 }

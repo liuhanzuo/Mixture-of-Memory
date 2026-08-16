@@ -174,5 +174,21 @@
       "the zero-match greps for concurrency/mutation APIs (plausible and consistent with the O_TRUNC finding, but not re-run)"
     ],
     "gpu_status": "0 GPU consumed. B07 stays ready_cpu with 2 live 0-GPU blockers; ready_gpu remains 0 repo-wide."
+  },
+  "related_work_presence_correction_20260816": {
+    "_what_this_supersedes": "The keys listed in stale_absence_assertions below state that RELATED_WORK.md does not exist in this directory. IT DOES. Those keys are NOT edited -- this record is append-only and the history of what was believed when is the point. This key is the dated superseding entry.",
+    "measured": {
+      "path": "proposal/backlog/B07-mutable-comem-serving/RELATED_WORK.md",
+      "exists": true,
+      "bytes": 35965,
+      "verified_by": "os.stat on wzc1 at 2026-08-16"
+    },
+    "stale_absence_assertions": [
+      "novelty_status_detail",
+      "lifecycle_why_20260814"
+    ],
+    "presence_is_not_sufficiency": "This key discharges exactly ONE thing: the false claim that the file is missing. It does NOT assert the file's content is adequate, does NOT adjudicate novelty, and does NOT release any GPU. Any blocker that is really about CONTENT stands.",
+    "note": "TWO defects. (1) novelty_status_detail opens 'RELATED_WORK.md does NOT exist here.' -- it exists. (2) lifecycle_why_20260814 asserts 'ready_queue.py:46-51 hard-codes B07 among B01/B05/B06/B07/B08 whose missing RELATED_WORK.md forbids GPU regardless of gate quality'. THERE IS NO SUCH HARD-CODING. Lines 46-51 are inside that file's module docstring (verified: ast.get_docstring contains the sentence) and grep -nE '\"(B01|B05|B06|B07|B08)\"' over ready_queue.py returns nothing; presence is read from disk per-run at its related_work_md assignment. The docstring sentence was itself false and was corrected in commit d458c50. So this proposal held a blocker against a code path that does not exist, premised on a comment that was wrong. B07's REAL remaining blocker is the one its own blocking_dependency states (the versioning/hashing/invalidation machinery is a system that does not exist yet) plus the missing concurrency axis in scripts/bench_p1_8_serving_curve.py -- neither of which this key discharges.",
+    "found_by": "proposal/check_stale_absence_claims.py, which sweeps every STATUS.json for absence assertions about files that are on disk. It reported 6 rows; one (B03 GATE_PREREGISTRATION.md) was the checker's own false positive from a lookahead that crossed a filename boundary, fixed in commit 548e9e1."
   }
 }

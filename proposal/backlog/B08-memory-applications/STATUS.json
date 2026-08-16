@@ -181,7 +181,6 @@
     "_reader_effect_MEASURED_not_assumed": "ready_queue.py:293 VERDICT_PENDING contains 'needs_narrowing', so this verdict string keeps novelty_checked False and B08 stays ready_cpu with evidence 'novelty_verdict.verdict=NEEDS_NARROWING... (PENDING)' instead of the previous 'absent'. THAT IS THE INTENDED OUTCOME, not a failure to close the gate: the gate asked 'is this preempted?' and the answer is a CONDITIONAL no. Per memory/a-declared-lifecycle-is-not-an-adjudicated-one.md an agent must not write itself a clearance token; and per RELATED_WORK.md sec 10.1 the 08-15 agent measured that flipping the token would buy no scheduling change anyway (B08 is held by prior_gate regardless). It becomes NOVEL_ENOUGH when the four edits in REQUIRED_NARROWING_four_edits_0_GPU are applied -- 0 GPU, and now the top of B08's queue.",
     "provenance": "Network via hy-proxy.woa.com:3128 with a POSITIVE CONTROL FIRST (arXiv:2310.08560 -> HTTP 200, 3,010 B) so 'no results' is distinguishable from 'proxy broken'. Full texts read, not abstracts: 2607.17545v1 (347,897 B), 2605.24579v1 (303,373 B), 2606.27472v1 (163,841 B). Venues: DBLP publ/api for all six new rows (each total=1, CoRR, 'Informal and Other Publications'), with a POSITIVE CONTROL THAT DBLP INDEXES ACL 2026 -- MM-Mem returns BOTH 'ACL 2026 | Conference and Workshop Papers | 10.18653/V1/2026.ACL-LONG.533' AND 'CoRR 2026' -- so a CoRR-only result is a VERIFIED NEGATIVE, not an indexing lag. Anthology volumes fetched directly: 2026.acl-long (5,079,040 B) and 2026.acl-short (210,861 B) HTTP 200, zero title matches. KNOWN GAP, recorded not glossed: the 2026.findings-acl index truncated at 1,343,488 / 6,675,019 B on a 120 s timeout, so the Findings-ACL-2026 negative rests on DBLP alone."
   },
-
   "leg1_code_implemented_20260816": {
     "summary": "Blockers 2 (A-notes-only arm), 3 (the U scorer) and 4 (SelfNotesCompressor) are IMPLEMENTED AND TESTED, not planned. NOVELTY_VERDICT.md (c9feb4b) had narrowed leg 1 so that these two measurements -- U on a notes-only arm, and the adjunct-vs-substitute contrast -- are its ENTIRE remaining contribution, so this is the only work that could still produce a finding. ZERO GPU: no model was loaded, no node was touched, all 40 cards stayed with other training.",
     "gpu_spent": "ZERO. 0 GPU, 0 ssh.",
@@ -259,7 +258,6 @@
     "evidence": "proposal/backlog/B08-memory-applications/evidence/b08_leg1_impl_20260816.json",
     "provenance": "proposal/shared/code/b08_append_status_keys_20260816.py -- byte-prefix append-only, asserts the 25 pre-existing keys byte-identical before and after."
   },
-
   "blocker_1_premise_STALE_20260816": {
     "claim_being_superseded": "remaining_blockers_all_CPU[0] and prior_gate both assert the ABSENCE of RELATED_WORK.md (leg-1-only). That assertion is STALE.",
     "_why_this_key_paraphrases_instead_of_quoting": "MEASURED, and it is a real property of the tooling: the stale-absence checker under proposal/ matches an absence PHRASE next to a filename anywhere in the record, so a superseding key that QUOTES the stale sentence verbatim trips the checker itself -- i.e. the repair the checker recommends would keep B08's row red forever, even after the original sentinels were fixed. Verified by running the checker's own ABSENCE regex over this key in isolation: 2 hits when the sentence was quoted, 0 once paraphrased. So the stale claim is IDENTIFIED BY LOCATION (the two key paths named above) rather than reproduced as text. The old sentinels are untouched and still quotable from git; nothing is hidden.",
@@ -268,5 +266,21 @@
     "measured_cost_of_the_stale_sentinel": "On 2026-08-16 MAIN relayed this exact stale premise into a dispatch and the agent had to spend part of its run disproving it. The record was ALREADY self-contradicting -- blocker_disposition_20260815 and related_work_20260815 both state the file is present -- so a reader who stops at the first match gets the stale half.",
     "not_a_B08_only_defect": "The stale-absence checker under proposal/ sweeps all 17 proposals and reports EIGHT stale absence assertions (A01 SOURCES.md; B01/B03/B06/B07/B08/B12 RELATED_WORK.md; B03 GATE_PREREGISTRATION). Its rc stays 1 until the other seven get dated superseding keys too, so rc=1 after this key is EXPECTED, not a failure of this key. Note for whoever fixes the rest: per the paraphrase finding above, that checker will need either paraphrasing keys or a suppression mechanism, because the natural way to write a superseding record re-triggers it.",
     "presence_is_not_sufficiency": "This key does NOT claim the novelty gate is cleared. NOVELTY_VERDICT.md is NEEDS_NARROWING, novelty_checked stays false, and the four REQUIRED_NARROWING edits are still outstanding. The only claim here is: stop telling the next agent to produce a file that is present."
+  },
+  "related_work_presence_correction_20260816": {
+    "_what_this_supersedes": "The keys listed in stale_absence_assertions below state that RELATED_WORK.md does not exist in this directory. IT DOES. Those keys are NOT edited -- this record is append-only and the history of what was believed when is the point. This key is the dated superseding entry.",
+    "measured": {
+      "path": "proposal/backlog/B08-memory-applications/RELATED_WORK.md",
+      "exists": true,
+      "bytes": 59799,
+      "verified_by": "os.stat on wzc1 at 2026-08-16"
+    },
+    "stale_absence_assertions": [
+      "novelty_status_detail",
+      "remaining_blockers_all_CPU[0]"
+    ],
+    "presence_is_not_sufficiency": "This key discharges exactly ONE thing: the false claim that the file is missing. It does NOT assert the file's content is adequate, does NOT adjudicate novelty, and does NOT release any GPU. Any blocker that is really about CONTENT stands.",
+    "note": "The file has existed since 2026-08-15 (committed 463dca4) and this record ALREADY says so at related_work_20260815.PREMISE_OF_THE_TASK_WAS_STALE ('blocker 1 said RELATED_WORK.md does not exist. IT DOES.'). Two BARE sentinels survive alongside that correction, and MAIN relayed one of them into a dispatch on 2026-08-16, costing a subagent part of a 33-minute run to disprove the premise. That is the measured cost of an append-only record whose stale half reads first. B08's real gate is novelty_verdict = NEEDS_NARROWING, which is NOT discharged here.",
+    "found_by": "proposal/check_stale_absence_claims.py, which sweeps every STATUS.json for absence assertions about files that are on disk. It reported 6 rows; one (B03 GATE_PREREGISTRATION.md) was the checker's own false positive from a lookahead that crossed a filename boundary, fixed in commit 548e9e1."
   }
 }
