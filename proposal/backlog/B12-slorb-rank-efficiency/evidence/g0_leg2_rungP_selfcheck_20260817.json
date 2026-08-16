@@ -1,0 +1,122 @@
+{
+  "_what": "Rung-P pre-registration self-check, CPU, 2026-08-17. APPEND-ONLY sibling of g0_leg2_rungA_selfcheck_20260816.json; no pre-existing key or file was edited.",
+  "_why_this_exists": "The 2026-08-16 G0 discharge validated rung A ONLY. Rung A's coarsen map is the IDENTITY (c=1 on all seven projections), so its two constants are algebraically forced by the checkpoint alone: surviving/scope = 1/2 exactly from the 2:4 mask and branch_live/scope = 1/16 exactly from SLoRB_k=16, hence density = 1/2 + 1/16 = 9/16 = 0.5625. That makes rung A an excellent CHECKPOINT-IDENTITY check and NO evidence at all that the coarsening operator is implemented correctly -- the c>1 branch of the code is never entered. Rung P (down_proj c=8) is the first rung that runs _fit_blocksum_ls on a non-trivial block size, and its constants are NOT forced. Its expected values appear nowhere in the 08-16 evidence (verified: neither '325844992' nor '55.0316' occurs in that file).",
+  "verdict": "PASS -- the ENTIRE authorised pilot pair (rung P + control Dctl) matches its pre-registered constants exactly, plus rung A reproduced. Three distinct operator paths covered: identity (A, c=1), block-basis coarsening with LS refit (P, down_proj c=8), and density-matched SVD (Dctl, both factors stored).",
+  "rung_A_reproduction": "Re-ran rung A as well and reproduced the 08-16 record on all five constants (scope 6,476,005,376; surviving 3,238,002,688; branch_live 404,750,336; density 56.2500%; psi 0.5229). Independent re-execution, same tool, ~7 weeks of no code change.",
+  "honest_note_on_redundancy": "The rung-A half of this run was REDUNDANT and should not have happened. MAIN read the bare `next_gate` key of STATUS.json, which still narrates G0 as un-run, instead of the dated `lifecycle_20260816` / `g0_result_20260816` keys that record it DISCHARGED. Same failure mode as memory/read-what-the-consumer-reads-not-the-bare-key.md and memory/a-gate-that-says-never-run-may-already-have-run.md. Cost: ~0 GPU, ~25 min CPU. The rung-P half below is genuinely new and is the reason this file is kept.",
+  "gpu_hours": 0.0,
+  "how": "CUDA_VISIBLE_DEVICES='' --dry-run; no weights materialised, nothing exported.",
+  "python": "/apdcephfs_wzc1/share_304376610/pighzliu_code/venv_union9/bin/python",
+  "logs": [
+    "logs/b12_g0_leg2_rungA.log",
+    "logs/b12_g0_leg2_rungP.log",
+    "logs/b12_g0_leg2_rungDctl.log"
+  ],
+  "measured": {
+    "A": {
+      "b12_rung": "A",
+      "operator": "coarsen",
+      "coefficients": "ls",
+      "coarsen_map": {
+        "q_proj": 1,
+        "k_proj": 1,
+        "v_proj": 1,
+        "o_proj": 1,
+        "gate_proj": 1,
+        "up_proj": 1,
+        "down_proj": 1
+      },
+      "source_iter_num": 17900,
+      "SLoRB_k": 16,
+      "scope_elements": 6476005376,
+      "surviving_2of4": 3238002688,
+      "live_branch_params": 404750336,
+      "density_two_matmul_deployment_form": 0.5625,
+      "psi_density_points_given_back": 0.5229408217630581,
+      "expected_branch_live": 404750336,
+      "expected_density_pct": 56.25,
+      "prereg_match": true
+    },
+    "P": {
+      "b12_rung": "P",
+      "operator": "coarsen",
+      "coefficients": "ls",
+      "coarsen_map": {
+        "q_proj": 1,
+        "k_proj": 1,
+        "v_proj": 1,
+        "o_proj": 1,
+        "gate_proj": 1,
+        "up_proj": 1,
+        "down_proj": 8
+      },
+      "source_iter_num": 17900,
+      "SLoRB_k": 16,
+      "scope_elements": 6476005376,
+      "surviving_2of4": 3238002688,
+      "live_branch_params": 325844992,
+      "density_two_matmul_deployment_form": 0.5503157383419689,
+      "psi_density_points_given_back": 0.6159426434271252,
+      "expected_branch_live": 325844992,
+      "expected_density_pct": 55.0316,
+      "prereg_match": true
+    },
+    "Dctl": {
+      "b12_rung": "Dctl",
+      "operator": "svd",
+      "coefficients": "svd",
+      "coarsen_map": {
+        "q_proj": 1,
+        "k_proj": 1,
+        "v_proj": 1,
+        "o_proj": 1,
+        "gate_proj": 1,
+        "up_proj": 1,
+        "down_proj": 8
+      },
+      "live_branch_params": 326098944,
+      "density_two_matmul_deployment_form": 0.5503549526392487,
+      "psi_density_points_given_back": 0.6156433227801581,
+      "expected_branch_live": 326098944,
+      "expected_density_pct": 55.0355,
+      "prereg_match": true
+    }
+  },
+  "assertions": {
+    "rung_P_live_branch_params": {
+      "expected": 325844992,
+      "measured": 325844992,
+      "match": true
+    },
+    "rung_P_density_pct": {
+      "expected": 55.0316,
+      "measured": 55.0316,
+      "match": true
+    },
+    "rung_A_forced_by_arithmetic": {
+      "surviving_over_scope": 0.5,
+      "branch_over_scope": 0.0625,
+      "note": "0.5 and 0.0625 exactly => density 0.5625 is forced; not operator evidence."
+    },
+    "rung_Dctl_live_branch_params": {
+      "expected": 326098944,
+      "measured": 326098944,
+      "match": true
+    },
+    "rung_Dctl_density_pct": {
+      "expected": 55.0355,
+      "measured": 55.0355,
+      "match": true
+    }
+  },
+  "what_this_does_NOT_establish": [
+    "Nothing about QUALITY. No eval was run; these are parameter-count and density bookkeeping assertions only.",
+    "Nothing about rungs Q/R/S, which remain unauthorised per kill_gate.clause_4."
+  ],
+  "pilot_pair_budget_check": {
+    "P_vs_Dctl_param_gap_pct": 0.0779,
+    "STATUS_claims": "0.08% apart",
+    "match": true,
+    "note": "Confirms the control is density-matched to the treatment, which is the whole point of Dctl: it isolates 'which operator' from 'how many parameters'."
+  }
+}

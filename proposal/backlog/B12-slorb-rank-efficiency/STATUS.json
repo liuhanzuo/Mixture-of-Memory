@@ -417,5 +417,31 @@
     "presence_is_not_sufficiency": "This key discharges exactly ONE thing: the false claim that the file is missing. It does NOT assert the file's content is adequate, does NOT adjudicate novelty, and does NOT release any GPU. Any blocker that is really about CONTENT stands.",
     "note": "related_work_status is byte-frozen at 'ABSENT -- RELATED_WORK.md not on disk', which novelty_verdict._why_this_key_exists already flags as no-longer-true. Recorded here too because related_work_status is itself in ready_queue.py's NOVELTY_VERDICT_KEYS, so a reader that hits it before novelty_verdict gets the stale answer from a key the tool treats as authoritative. B12 currently reports ready_gpu on the strength of novelty_verdict; that verdict, not this presence fact, is what licenses the card.",
     "found_by": "proposal/check_stale_absence_claims.py, which sweeps every STATUS.json for absence assertions about files that are on disk. It reported 6 rows; one (B03 GATE_PREREGISTRATION.md) was the checker's own false positive from a lookahead that crossed a filename boundary, fixed in commit 548e9e1."
+  },
+  "pilot_prereg_selfcheck_20260817": {
+    "_what": "APPEND-ONLY. Pre-GPU bookkeeping self-check of the AUTHORISED PILOT PAIR, 0 GPU.",
+    "verdict": "PASS -- rung P and control Dctl both hit their pre-registered constants exactly.",
+    "evidence": "proposal/backlog/B12-slorb-rank-efficiency/evidence/g0_leg2_rungP_selfcheck_20260817.json",
+    "measured": {
+      "P": {
+        "live_branch_params": 325844992,
+        "density_pct": 55.0316,
+        "operator": "coarsen (down_proj c=8, LS refit)"
+      },
+      "Dctl": {
+        "live_branch_params": 326098944,
+        "density_pct": 55.0355,
+        "operator": "svd (density-matched)"
+      },
+      "A_reproduced": {
+        "live_branch_params": 404750336,
+        "density_pct": 56.25
+      }
+    },
+    "why_it_was_worth_doing_after_G0": "G0's leg 2 validated rung A ONLY, and rung A is the IDENTITY map: surviving/scope = 1/2 from the 2:4 mask and branch_live/scope = 1/16 from SLoRB_k=16, so density = 9/16 is forced by the checkpoint and the c>1 code path is never entered. Rung A therefore proves the checkpoint is the right one and proves nothing about the coarsening operator. P and Dctl are the two cells GPU is authorised for, and this checks them before the card.",
+    "density_match_verified": "P vs Dctl differ by 0.0779% in live params, confirming gpu_cost_estimate's '0.08% apart'.",
+    "gpu_hours": 0.0,
+    "does_not_change_lifecycle": "Still ready_gpu, still pilot-pair-only. This ADDS pre-GPU confidence; it does not authorise rungs Q/R/S, which remain gated on kill_gate.clause_4_KILL_ON_PILOT.",
+    "correction_recorded": "MAIN re-ran rung A redundantly on 2026-08-17 by reading the bare `next_gate` key (which still narrates G0 as un-run) instead of `lifecycle_20260816` / `g0_result_20260816`, which record it DISCHARGED. Cost ~0 GPU. Noted so the next reader does not repeat it: in this file the DATED keys supersede the bare ones."
   }
 }
