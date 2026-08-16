@@ -54,8 +54,24 @@ B11 之前已经栽过一次（`dead_code_recheck_20260814.CORRECTION_to_K1`）�
 4. 声称「和上游一致所以行号可引用」时，**下载上游 HEAD 做 byte-diff**，不要只比 md5 说法。
    本次实测 `raw.githubusercontent.com/booydar/babilong/main/babilong/metrics.py`
    与 `third_party/babilong-pkg/` 副本 md5 均为 `0a5ecc52ade4e337d35b8f9c97c38310`，diff 为空 → 行号可引用。
-5. 净效应符号依赖数据构成时，**必须分层报**：本例 overall `+0.16 pp`，
-   但 LIST 格式 `-8.86 pp` vs 非 LIST `+0.25 pp` —— **符号翻转**。只报 overall 等于藏掉结论。
+5. 净效应符号依赖数据构成时，**必须分层报**：overall 是 `+1.35 pp`，
+   但 LIST 格式 **`-12.71 pp`** vs 非 LIST **`+1.71 pp`** —— **符号翻转**。只报 overall 等于藏掉结论。
+   > ⚠️ **2026-08-16 修正数字**：这条原先写 overall `+0.16` / LIST `-8.86` / 非 LIST `+0.25`，
+   > 那是**语料被截断**下算出来的 —— 当时的 glob **非递归**，只吃到 **973 / 10886** 个 `qa*.csv`
+   > (n=195,064)。递归重跑得 **n=418,367**（10,647 unique 文件），符号翻转**依旧成立且幅度更大**：
+   > LIST n=10377 destroyed=1332 rescued=13 → `-12.7108`；非 LIST n=407990 destroyed=1248
+   > rescued=8233 → `+1.7121`（我按 strata 独立重算，与报告字段逐位一致）。
+   > **教训是双份的**：(a) 用 `glob` 而非 `rglob`/`find` 统计"全语料"会静默少掉 91% 的文件，
+   > 而结论方向不变让人更容易不去查；(b) 修正后的数字**也不是"全"** —— 它自己的证据里写着
+   > `"disk": "wzc1 only (zwfy6 not mounted on this node)"`。**「full corpus」这个词在两盘集群上
+   > 永远要附上盘名**，见 [[two-disk-rule-applies-to-main-too]]。
+6. **「不可达」这个词要单独证明。** 同日实测 `metrics.py:31` 的 `split('Question')`：
+   `sys.settrace` 显示它在 **7/7** 个输入上都执行（行序列含 31），所以 **reachability 被推翻**；
+   但它在全部 0x110000 个 codepoint 上都不可能生效 → 正确说法是
+   **executed but can never fire（恒不触发的 no-op）**，不是 unreachable。
+   写成 unreachable 上游一句 "no, it runs" 就能关掉 issue。三个性质
+   （可达 / 有效果 / 不可能触发）必须**分开各自取证**。
+
 
 **Related**：[[fix-the-class-not-the-instance]]（同型：只修自己想到的那一个实例）、
 [[a-range-is-not-a-measurement-until-it-clears-its-floor]]、
