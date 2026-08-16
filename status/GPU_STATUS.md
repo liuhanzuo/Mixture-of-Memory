@@ -1,14 +1,33 @@
 # GPU_STATUS.md — 5 节点单一事实来源
 
-**最后实测 2026-08-17 02:10 GMT+8（heartbeat）。40/40 卡占用，0 空闲，每节点 8 个 compute PID（单一主人，无抢卡）。**
+**最后实测 2026-08-17 05:52 GMT+8（heartbeat）。32/40 卡占用，LOCAL 8 卡空闲（**故意**，理由见表下）。每节点单一主人，无抢卡。**
 
 | 节点 | 硬件 | 盘 | 在跑 | step | 显存/卡 | util | amortised s/step | baseline | 判定 |
 |---|---|---|---|---|---|---|---|---|---|
-| LOCAL(=.21) | 8×B200 sm_100 | wzc1 | `olmo2_probe2_7B_keep10fresh2` | 192940/200000 | 123.9 GB | 100% | **1.4148** | 1.3904 (9-interval mean) | healthy 1.018× — **ETA 04:35** |
-| `.212` | 8×B200 sm_100 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | 46640/200000 | 157.8 GB | 95-100% | **2.4510** | 2.4500 | healthy 1.000× — ETA 08-21 10:16 |
-| `.73` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` | 191660/200000 | 96.4 GB | 100% | **7.9160** | 7.9200 | healthy 0.999× — ETA 19:57 |
-| `.82` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep8fresh2` | 165640/200000 | 78.5 GB | 100% | **5.8660** | 5.8640 | healthy 1.000× — ETA 08-19 09:43 |
-| `.104` | 8×H20 sm_90 | zwfy6 | `paperC_qwen3base_heal_k8f2` | 66080/200000 | 78.8 GB | 100% | **5.8530** | 5.8380 | healthy 1.003× — ETA 08-26 03:33 |
+| LOCAL(=.21) | 8×B200 sm_100 | wzc1 | **IDLE**（keep10 已到 step200000 自行退出） | — | 0 MiB | 0% | — | — | **故意空闲 → 见下方「为什么不填 LOCAL」** |
+| `.212` | 8×B200 sm_100 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | — | 157.8 GB | 100% | **2.4510** | 2.4500 | healthy 1.000× — ETA 08-21 10:16 |
+| `.73` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` + `chain_keep12_eval_200k` watcher | 193380/200000 | 96.4 GB | 100% | **8.33**（实测 25-min 窗口 05:21:27→05:46:27，Δstep=180） | 7.9160 | 1.052× — **ETA ~21:05**，修正此前记的 19:57（那是短窗口外推） |
+| `.82` | 8×H20 sm_90 | zwfy6 | `olmo2_probe2_7B_keep8fresh2`（resume from step131000） | — | 78.5 GB | 100% | **5.8660** | 5.8640 | healthy 1.000× — ETA 08-19 09:43 |
+| `.104` | 8×H20 sm_90 | zwfy6 | `paperC_qwen3base_heal_k8f2` | — | 78.8 GB | 100% | **5.8530** | 5.8380 | healthy 1.003× — ETA 08-26 03:33 |
+
+## 为什么不填 LOCAL 的 8 张 B200（2026-08-17 05:52）
+
+**「有空卡」≠「必须马上塞任务」。** 三个候选全部被实测排除，不是漏看：
+
+1. **proposal 侧真的没活**：`proposal/ready_queue.py` 报 `0 ready_gpu`。每个 proposal 要么被 0-GPU gate
+   挡着（8 个 `ready_cpu`），要么有明确的 no-further-GPU 处置（A02），要么缺 **USER APPROVAL**
+   —— A04 完整 gate 是 1,077–4,309 GPU-h，我不能自行批准。
+2. **keep10 的 200k eval 不能在这里跑**：`scripts/eval_paperb_ladder_200k.sh:85` 写死 `REQUIRE_SM=9.0`，
+   LOCAL 是 sm_100。虽有 `SKIP_ARCH_GUARD`，但用它会让 Table 4 的一个 rung 跑在与其他 rung 不同的架构上
+   —— 那正是该 guard 要防的污染（实测 cross-arch floor 0.03–0.16 pp）。ckpt 已 `scp -O` 送到 `.73`
+   且两端 md5 一致（`4440fb7f0471d6952b2ffacdbad7d691`），chain 正在等 `.73` 腾卡。
+3. **唯一 wzc1/sm_100-resident 的待跑项 #245 ALPS+SLoRB 是 211 GPU-h**，且
+   `status/ALPS_SLORB_GATE0_VERDICT.md` 自己写着 **NOT LAUNCHED**，卡在两个 scoping 决定
+   （已有的 625M-token 点是否已回答 reviewer / 现存 run 的 4 处配置差异怎么定价）。**加卡救不了**：
+   `global_batch_size=256` 固定，8 卡的 GPU-h 最好也只是持平，scaling 不理想则更差。
+
+**为了不报「空闲」而投一个 211 GPU-h 的 run，正是「卡满 ≠ 在跑对的东西」这个错误本身。**
+下一次自动补卡：`.73` keep12 到 200k（~21:05）→ chain 自动投 keep12 eval，keep10 eval 紧随同一节点。
 
 Monitor: `http200 OK`。错误行扫描：五个 live log 各 0 行。
 
