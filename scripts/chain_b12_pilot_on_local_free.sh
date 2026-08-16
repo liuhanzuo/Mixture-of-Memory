@@ -93,6 +93,22 @@ done
 say "cards confirmed free. Launching the B12 PILOT PAIR (rung P, then Dctl)."
 say "authorised by proposal/backlog/B12-slorb-rank-efficiency/STATUS.json .gpu_policy"
 
+# HF proxy. MEASURED 2026-08-17, before this watcher ever fired: without it the driver's own
+# P8 preflight FAILS HARD -- probe_union9_datasets.py cannot reach huggingface.co
+# ("Network is unreachable", 5 retries per task) and P8 is a `die`, not a warning. That die
+# happens at line ~246, i.e. AFTER P6 has confirmed the node is ours, so the pilot would have
+# burned the free-node window and exited with nothing. P7's hub probe returns 000 without the
+# proxy and 200 with it, but P7 only logs a WARNING, so it would not have stopped anything.
+# With the proxy exported the preflight passes 9/9 tasks at exactly the expected n
+# (boolq 3270, rte 277, hellaswag 10042, race 1045, piqa 1838, winogrande 1267,
+#  arc_easy 2376, arc_challenge 1172, openbookqa 500) -- verified by running it here on CPU.
+# Values from CLAUDE.md's proxy section.
+export http_proxy="http://hy-proxy.woa.com:3128"
+export https_proxy="$http_proxy"
+export all_proxy="$http_proxy"
+export no_proxy="mirrors.cloud.tencent.com,tlinux-mirror.tencent-cloud.com,localhost,127.0.0.1,.oa.com,.woa.com,.local"
+say "HF proxy exported ($http_proxy) -- required by P8, measured to fail without it"
+
 for RG in P Dctl; do
   say "---- launching rung $RG (DRY_RUN=0) ----"
   RUNG="$RG" DRY_RUN=0 GPUS=0,1,2,3 GPU0=0 \
