@@ -52,7 +52,8 @@ Table~\ref{tab:v2-full} reports all 27 cells used in the post-hoc v2 re-analysis
 \label{app:generated-nulls}
 
 Table~\ref{tab:app-construct-nulls} restates the construct nulls of
-Table~\ref{tab:nulls} as a \emph{generated} artefact. It is written by
+Table~\ref{tab:nulls} as a \emph{generated} artefact, and additionally retains the
+superseded legality-blind $p$ column beside the corrected one. It is written by
 the manifest emitter directly from the balanced-null calibration record
 (evidence \textsf{E-CAL}), the single
 machine-readable source for these nine rows, and the emitter contains no numeric
@@ -61,8 +62,11 @@ inconsistency: it checks that each stored percentage-point gap equals
 $100\,(\text{Floor}-\text{Chance})$, that each floor is a label count divided by
 $n$, that no floor falls below $1/k$, that each row's balanced-null verdict
 agrees both with its $p$-value and with the file's own partition of the
-constructs, and that the row identities agree with a second, independently
-recorded evidence file. It also re-parses every number in the hand-authored
+constructs, that the corrected record agrees with the record it supersedes on
+every quantity the correction does not touch --- $n$, $k$, floor, chance and gap
+--- so that a ``correction'' cannot silently move a floor, and that the row
+identities agree with a second, independently recorded evidence file. It also
+re-parses every number in the hand-authored
 Table~\ref{tab:nulls} and in its own output and re-verifies each against the
 source at the precision that table chose. A companion checker extends the same
 tolerance-based comparison to the prose. Both exit non-zero on any mismatch, so a
@@ -121,8 +125,9 @@ Identifier & Artifact path (relative to \texttt{paperC/}) \\
 \textsf{E-H} & \texttt{evidence/construct\_nulls\_length\_unit.json} (\texttt{tcodex\_out/EVIDENCE\_PACK.md}, Section H) \\
 \textsf{E-I} & \texttt{tcodex\_out/EVIDENCE\_PACK.md}, Section I \\
 \textsf{E-K} & \texttt{tcodex\_out/EVIDENCE\_PACK.md}, Section K; row-by-row map in \texttt{evidence/claim\_evidence\_map.tsv} \\
-\textsf{E-CAL} & \texttt{evidence/floor\_winners\_curse\_calibration.json} \\
+\textsf{E-CAL} & \texttt{evidence/construct\_nulls\_legality\_aware.json}, which supersedes \texttt{evidence/} \texttt{floor\_winners\_} \texttt{curse\_calibration.json} and names it, with its \texttt{sha256}, in its own \texttt{supersedes} field \\
 Emitter & \texttt{code/emit\_tab\_construct\_nulls.py} \\
+Null recomputation & \texttt{code/recompute\_legality\_aware\_nulls.py} \\
 Prose checker & \texttt{code/check\_prose\_vs\_evidence.py} \\
 \bottomrule
 \end{tabular}

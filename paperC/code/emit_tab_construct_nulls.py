@@ -22,6 +22,26 @@ the README. E2 therefore supplies the SOURCE; this script supplies the BINDING.
 No number is recomputed here and no evidence file is modified: floors, chance
 lines, calibration moments and p-values are read, formatted, and cross-checked.
 
+2026-08-16: the source file changed (legality-aware null)
+--------------------------------------------------------
+Four of the six round_04 blind reviewers (X1/X2/X5/X6) independently flagged that
+the calibration this table binds to used a null MMLU-Pro cannot produce: it drew
+all 12032 gold letters uniformly over all k=10 letters, but 2051 items have fewer
+than 10 options, so their gold letter cannot be J. MAIN verified the defect
+(`evidence/mmlupro_legality_aware_null_MAIN.json`) and
+`paperC/code/recompute_legality_aware_nulls.py` extended the correction to all
+nine rows, writing `evidence/construct_nulls_legality_aware.json`.
+
+This emitter now reads that corrected file as PRIMARY, and reads the superseded
+one only to print the legality-blind column beside it. Keeping both columns in
+the appendix is deliberate: the paper's whole thesis is that a null must be
+compatible with the construct it calibrates, so an appendix that shows the
+paper's own incompatible null next to the admissible one, and the p it produced,
+is an instance of the thesis rather than an embarrassment. The main-text table
+(`sections/tab_nulls.tex`, audited by T7 below) carries only the corrected
+column, because a reader scanning the headline table should not have to decide
+which of two p-values is the real one.
+
 What is deliberately NOT in this file
 -------------------------------------
 Any floor or chance literal. `grep -nE '0\.[0-9]{3}' emit_tab_construct_nulls.py`
@@ -39,8 +59,11 @@ any mismatch:
   T3 stored gap_pp == round((floor - chance) * 100, 3)
   T4 n * floor is an integer count to within the JSON's own 6-dp storage error
   T5 floor >= 1/k  (a maximum over k marginals that sum to 1 cannot be smaller)
-  T6 per-row `survives` agrees with p_one_sided, and with the top-level
-     survives / inside_noise partition
+  T6 per-row `survives_aware` agrees with p_corrected, and with the top-level
+     survives_aware / inside_noise_aware partition
+  T6c the corrected file's rows agree with the superseded file on every quantity
+     the correction does NOT touch (n, k, floor, chance, gap_pp), so a "correction"
+     cannot silently move a floor
   T7 every number in the ALREADY-SHIPPED hand-typed sections/tab_nulls.tex is a
      correct rounding of this JSON  <-- this is the actual E3 gap: it catches a
      hand-typing error in the paper's existing headline table
@@ -67,7 +90,8 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 PAPER = os.path.dirname(HERE)
 
-EVIDENCE = os.path.join(PAPER, "evidence", "floor_winners_curse_calibration.json")
+EVIDENCE = os.path.join(PAPER, "evidence", "construct_nulls_legality_aware.json")
+SUPERSEDED = os.path.join(PAPER, "evidence", "floor_winners_curse_calibration.json")
 E2_ASSERT = os.path.join(PAPER, "evidence", "e2_single_source_assertion.json")
 HANDTYPED = os.path.join(PAPER, "sections", "tab_nulls.tex")
 DEFAULT_OUT = os.path.join(PAPER, "sections", "tab_construct_nulls.tex")
@@ -126,18 +150,25 @@ def fmt_p(p: float, n_draws: int) -> str:
     return "%.3f" % p
 
 
-def load() -> tuple[dict, dict]:
+def sha256_of(path: str) -> str:
+    with open(path, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def load() -> tuple[dict, dict, dict]:
     with open(EVIDENCE, encoding="utf-8") as f:
         ev = json.load(f)
+    with open(SUPERSEDED, encoding="utf-8") as f:
+        old = json.load(f)
     with open(E2_ASSERT, encoding="utf-8") as f:
         a2 = json.load(f)
-    return ev, a2
+    return ev, old, a2
 
 
 # --------------------------------------------------------------------------
 # self-tests on the evidence itself
 # --------------------------------------------------------------------------
-def check_evidence(ev: dict, a2: dict) -> list[str]:
+def check_evidence(ev: dict, old: dict, a2: dict) -> list[str]:
     bad: list[str] = []
     rows = ev.get("rows") or []
 
@@ -148,6 +179,13 @@ def check_evidence(ev: dict, a2: dict) -> list[str]:
     n_draws = ev.get("n_draws") or 0
     if not isinstance(n_draws, int) or n_draws <= 0:
         bad.append(f"T1 n_draws is not a positive int: {n_draws!r}")
+    sup = ev.get("supersedes") or {}
+    if os.path.basename(str(sup.get("path"))) != os.path.basename(SUPERSEDED):
+        bad.append(f"T1 supersedes.path={sup.get('path')!r} does not name "
+                   f"{os.path.basename(SUPERSEDED)}")
+    if sup.get("sha256") != sha256_of(SUPERSEDED):
+        bad.append("T1 supersedes.sha256 does not match the file on disk; the "
+                   "correction was computed against a different version")
 
     # T2 row identity vs the OTHER evidence file (no hardcoded expectations)
     a_rows = a2.get("rows") or []
@@ -170,6 +208,26 @@ def check_evidence(ev: dict, a2: dict) -> list[str]:
                 elif abs(float(r[key]) - float(a[key])) > TOL_EXACT:
                     bad.append(f"T2 row {i} '{key}': {r[key]!r} != e2 {a[key]!r}")
 
+    # T6c the correction must not have moved anything it does not touch
+    o_rows = old.get("rows") or []
+    if len(rows) != len(o_rows):
+        bad.append(f"T6c corrected file has {len(rows)} rows, superseded has "
+                   f"{len(o_rows)}")
+    else:
+        for i, (r, o) in enumerate(zip(rows, o_rows)):
+            if r["construct"] != o["construct"]:
+                bad.append(f"T6c row {i}: construct {r['construct']!r} != "
+                           f"{o['construct']!r}")
+            for key in ("n", "k", "floor", "chance", "gap_pp"):
+                if abs(float(r[key]) - float(o[key])) > TOL_EXACT:
+                    bad.append(f"T6c row {i} ({r['construct']}) '{key}': corrected "
+                               f"{r[key]!r} != superseded {o[key]!r}; the null "
+                               f"correction must not move floors, chance lines or gaps")
+            if abs(float(r["p_blind_shipped"]) - float(o["p_one_sided"])) > TOL_EXACT:
+                bad.append(f"T6c row {i} ({r['construct']}): p_blind_shipped "
+                           f"{r['p_blind_shipped']!r} != superseded p_one_sided "
+                           f"{o['p_one_sided']!r}")
+
     for i, r in enumerate(rows):
         tag = f"row {i} ({r.get('construct')})"
         floor, chance, n, k = r["floor"], r["chance"], r["n"], r["k"]
@@ -191,23 +249,24 @@ def check_evidence(ev: dict, a2: dict) -> list[str]:
             bad.append(f"T5 {tag}: floor={floor} < 1/k={1.0/k:.6f}; a maximum "
                        f"over {k} marginals that sum to 1 cannot be smaller")
 
-        # T6 survives <-> p
+        # T6 survives_aware <-> p_corrected
         if n_draws:
-            want = r["p_one_sided"] <= 1.0 / n_draws
-            if bool(r["survives"]) != want:
-                bad.append(f"T6 {tag}: survives={r['survives']} but "
-                           f"p_one_sided={r['p_one_sided']} vs 1/n_draws="
+            want = r["p_corrected"] <= 1.0 / n_draws
+            if bool(r["survives_aware"]) != want:
+                bad.append(f"T6 {tag}: survives_aware={r['survives_aware']} but "
+                           f"p_corrected={r['p_corrected']} vs 1/n_draws="
                            f"{1.0/n_draws:.3e}")
 
     # T6b top-level partition
-    surv = {r["construct"] for r in rows if r.get("survives")}
-    noise = {r["construct"] for r in rows if not r.get("survives")}
-    if set(ev.get("survives") or []) != surv:
-        bad.append(f"T6b top-level 'survives' {sorted(ev.get('survives') or [])} "
+    surv = {r["construct"] for r in rows if r.get("survives_aware")}
+    noise = {r["construct"] for r in rows if not r.get("survives_aware")}
+    if set(ev.get("survives_aware") or []) != surv:
+        bad.append(f"T6b top-level 'survives_aware' {sorted(ev.get('survives_aware') or [])} "
                    f"!= per-row {sorted(surv)}")
-    if set(ev.get("inside_noise") or []) != noise:
-        bad.append(f"T6b top-level 'inside_noise' {sorted(ev.get('inside_noise') or [])} "
-                   f"!= per-row {sorted(noise)}")
+    if set(ev.get("inside_noise_aware") or []) != noise:
+        bad.append(f"T6b top-level 'inside_noise_aware' "
+                   f"{sorted(ev.get('inside_noise_aware') or [])} != per-row "
+                   f"{sorted(noise)}")
     return bad
 
 
@@ -229,7 +288,7 @@ def parse_body_rows(text: str) -> list[list[str]]:
     return out
 
 
-def check_handtyped(ev: dict) -> list[str]:
+def check_handtyped(ev: dict, n_bound: int) -> list[str]:
     """Every literal in sections/tab_nulls.tex must round-trip to the JSON.
 
     This is the concrete risk E3 names. The hand-typed table carries n, floor,
@@ -242,7 +301,7 @@ def check_handtyped(ev: dict) -> list[str]:
     with open(HANDTYPED, encoding="utf-8") as f:
         rows = parse_body_rows(f.read())
     ev_rows = ev["rows"]
-    n_draws = ev["n_draws"]
+    n_draws = n_bound
     if len(rows) != len(ev_rows):
         return [f"T7 {os.path.basename(HANDTYPED)} has {len(rows)} data rows, "
                 f"evidence has {len(ev_rows)}"]
@@ -258,14 +317,16 @@ def check_handtyped(ev: dict) -> list[str]:
         if n_tex is not None and n_tex != r["n"]:
             bad.append(f"{tag}: n={n_tex} but evidence n={r['n']}")
 
-        # column -> the evidence quantities it may legitimately be showing
+        # column -> the evidence quantities it may legitimately be showing.
+        # E[f-hat] and q95 are now the LEGALITY-AWARE ones: tab_nulls.tex is the
+        # main-text headline table and carries the corrected calibration only.
         want = {
             3: [r["floor"]],
             4: [r["chance"]],
             5: [(r["floor"] - r["chance"]) * 100.0, r["gap_pp"]],
             6: [r["floor"] / r["chance"]],
-            7: [r["E_max_balanced"]],
-            8: [r["q95_balanced"]],
+            7: [r["E_max_aware"]],
+            8: [r["q95_aware"]],
         }
         for col, cands in want.items():
             if col >= len(cells):
@@ -279,18 +340,18 @@ def check_handtyped(ev: dict) -> list[str]:
                 if not any(is_rounding_of(lit, v) for v in cands):
                     bad.append(f"{tag} col{col}: {lit} is not a rounding of "
                                + " or ".join("%.10g" % v for v in cands))
-        # p column: either the derived bound string or a rounding of p
+        # p column: either the derived bound string or a rounding of p_corrected
         pcell = cells[9] if len(cells) > 9 else ""
-        expect_bound = fmt_p(r["p_one_sided"], n_draws)
+        expect_bound = fmt_p(r["p_corrected"], n_draws)
         if expect_bound.startswith("$<"):
             if pcell.replace(" ", "") != expect_bound.replace(" ", ""):
                 bad.append(f"{tag} p: {pcell!r} != {expect_bound!r} "
-                           f"(p_one_sided={r['p_one_sided']}, n_draws={n_draws})")
+                           f"(p_corrected={r['p_corrected']}, n_draws={n_draws})")
         else:
             lits = NUM.findall(pcell)
-            if not lits or not all(is_rounding_of(l, r["p_one_sided"]) for l in lits):
+            if not lits or not all(is_rounding_of(l, r["p_corrected"]) for l in lits):
                 bad.append(f"{tag} p: {pcell!r} is not a rounding of "
-                           f"{r['p_one_sided']}")
+                           f"{r['p_corrected']}")
     return bad
 
 
@@ -309,25 +370,52 @@ def tt_breakable(s: str) -> str:
     return r"; ".join(r"\texttt{" + tex_escape(p) + r"}" for p in parts)
 
 
-def build(ev: dict, sha12: str) -> list[str]:
+def p_bound_draws(ev: dict, old: dict) -> int:
+    r"""The draw budget used to write the `p < 10^-m` BOUND, deliberately the
+    conservative one.
+
+    The corrected record runs 1e6 draws, which would license `p < 10^{-6}` on the two
+    surviving rows (both measured 0 hits in 1e6). The paper already published
+    `p < 10^{-5}`, from the superseded record's 2e5 draws. We keep the published,
+    WEAKER bound: this change is a correction, and a correction should not quietly
+    strengthen a claim that survived it. The number is read from the superseded file
+    rather than written here, so it stays a two-file derivation.
+    """
+    n_old = old.get("n_draws")
+    n_new = ev.get("n_draws")
+    if not isinstance(n_old, int) or n_old <= 0:
+        raise SystemExit("p_bound_draws: superseded n_draws unusable")
+    if isinstance(n_new, int) and n_new < n_old:
+        raise SystemExit("p_bound_draws: corrected run has FEWER draws than the "
+                         "superseded one; the conservative bound would be the new "
+                         "one and this helper's premise no longer holds")
+    return n_old
+
+
+def build(ev: dict, sha12: str, old_sha12: str, n_bound: int) -> list[str]:
     n_draws = ev["n_draws"]
     lines = [
         r"% GENERATED FILE -- DO NOT EDIT BY HAND.",
         r"% Emitted by paperC/code/emit_tab_construct_nulls.py from",
-        r"% paperC/evidence/floor_winners_curse_calibration.json (sha256 "
-        + sha12 + r").",
+        r"% paperC/evidence/construct_nulls_legality_aware.json (sha256 "
+        + sha12 + r"),",
+        r"% which supersedes evidence/floor_winners_curse_calibration.json (sha256 "
+        + old_sha12 + r").",
         r"% Regenerate with:  python paperC/code/emit_tab_construct_nulls.py",
         r"\begin{table}[t]",
         r"\centering",
-        r"\footnotesize",
-        r"\setlength{\tabcolsep}{3.4pt}",
-        r"\begin{tabular}{lrrrrrrl}",
+        r"\scriptsize",
+        r"\setlength{\tabcolsep}{2.6pt}",
+        r"\begin{tabular}{lrrrrrrrl}",
         r"\toprule",
-        r"Construct & $n$ & $k$ & Chance & Floor & Gap (pp) & $p$ & Verdict \\",
+        r" & & & & & & \multicolumn{2}{c}{$p$ under null} & \\",
+        r"\cmidrule(lr){7-8}",
+        r"Construct & $n$ & $k$ & Chance & Floor & Gap (pp) & blind & legal & "
+        r"Verdict \\",
         r"\midrule",
     ]
     for r in ev["rows"]:
-        verdict = ("above balanced null" if r["survives"]
+        verdict = ("above balanced null" if r["survives_aware"]
                    else "inside estimator noise")
         lines.append(
             " & ".join([
@@ -337,30 +425,46 @@ def build(ev: dict, sha12: str) -> list[str]:
                 "%.6f" % r["chance"],
                 "%.6f" % r["floor"],
                 "%+.3f" % ((r["floor"] - r["chance"]) * 100.0),
-                fmt_p(r["p_one_sided"], n_draws),
+                fmt_p(r["p_blind_shipped"], n_bound),
+                fmt_p(r["p_corrected"], n_bound),
                 verdict,
             ]) + r" \\"
         )
+    n_var = sum(1 for r in ev["rows"] if not r["n_opt_is_constant"])
     caption = (
-        r"\textbf{Construct-null manifest (generated, not transcribed).} "
-        r"Every value in this table is emitted programmatically from the "
-        r"balanced-null calibration record (evidence \textsf{E-CAL}) by the "
-        r"manifest emitter; no number in it "
-        r"is typed by hand. $k$ is the nominal option count and Chance is the "
-        r"chance line used for that row, so the two MMLU-Pro rows differ only "
+        r"\textbf{Construct-null manifest (generated, not transcribed), with the "
+        r"legality-blind null retained for contrast.} "
+        r"Every value is emitted programmatically from the legality-aware "
+        r"calibration record (evidence \textsf{E-CAL}) by the manifest emitter; no "
+        r"number in it is typed by hand. $k$ is the nominal option count and Chance "
+        r"is the chance line used for that row, so the two MMLU-Pro rows differ only "
         r"in whether chance is naive $1/10$ or the item average "
         r"$\mathrm{mean}(1/\texttt{n\_opt})$. Gap is "
-        r"$100\,(\text{Floor}-\text{Chance})$, recomputed here rather than "
-        r"read. The $p$-value is $\Pr(\hat f \ge \text{Floor})$ under an "
-        r"exactly balanced multinomial null at that construct's own $(n,k)$, "
-        r"and Verdict states only whether that null could plausibly have "
-        r"produced the observed floor; a floor inside the estimator's noise "
-        r"still shows that chance is the wrong reference to report. "
+        r"$100\,(\text{Floor}-\text{Chance})$, recomputed here rather than read. "
+        r"The two $p$ columns are both $\Pr(\hat f \ge \text{Floor})$ under a "
+        r"balanced multinomial null, and differ only in whether that null is "
+        r"\emph{realizable}. \textbf{blind} draws every gold letter uniformly over "
+        r"all $k$ letters, which is the calibration this paper originally reported; "
+        r"for the "
+        + ("%d" % n_var) +
+        r" rows whose option count is not constant that assignment lies outside the "
+        r"support of any legal labelling, because an item with four options cannot "
+        r"have gold letter~J. \textbf{legal} holds the observed "
+        r"\texttt{n\_opt} histogram fixed and draws each item's gold letter "
+        r"uniformly among \emph{its own} legal letters. Where \texttt{n\_opt} is "
+        r"constant the two nulls are the same distribution and the columns agree by "
+        r"construction, which is itself a check on the emitter. Verdict follows the "
+        r"\textbf{legal} column. We keep the superseded column rather than deleting "
+        r"it because the incompatibility it illustrates is the paper's own thesis "
+        r"applied to the paper: a null must be compatible with the construct it "
+        r"calibrates, and the largest construct here is where we failed that test "
+        r"first. "
         r"Provenance, from the same file: "
         r"\texttt{schema\_version}~" + tex_escape(str(ev["schema_version"]))
         + r", \texttt{seed}~" + str(ev["seed"])
         + r", \texttt{n\_draws}~$" + ("%d" % n_draws)
-        + r"$, \texttt{sha256}~\texttt{" + sha12 + r"}. Method: "
+        + r"$, \texttt{sha256}~\texttt{" + sha12
+        + r"}, superseding \texttt{sha256}~\texttt{" + old_sha12 + r"}. Method: "
         + tt_breakable(ev["method"]) + r"."
     )
     lines += [
@@ -382,7 +486,7 @@ def build(ev: dict, sha12: str) -> list[str]:
     return lines
 
 
-def roundtrip(lines: list[str], ev: dict) -> list[str]:
+def roundtrip(lines: list[str], ev: dict, n_bound: int) -> list[str]:
     """T8: re-parse what we just built and re-verify it against the JSON."""
     bad: list[str] = []
     rows = parse_body_rows("\n".join(lines))
@@ -392,8 +496,8 @@ def roundtrip(lines: list[str], ev: dict) -> list[str]:
         return [f"T8 generated table has {len(rows)} rows, evidence has {len(ev_rows)}"]
     for i, (cells, r) in enumerate(zip(rows, ev_rows)):
         tag = f"T8 generated row {i+1}"
-        if len(cells) != 8:
-            bad.append(f"{tag}: {len(cells)} cells, expected 8")
+        if len(cells) != 9:
+            bad.append(f"{tag}: {len(cells)} cells, expected 9")
             continue
         if cells[0] != tex_escape(str(r["construct"])):
             bad.append(f"{tag}: construct {cells[0]!r} != {r['construct']!r}")
@@ -409,10 +513,15 @@ def roundtrip(lines: list[str], ev: dict) -> list[str]:
         gap = (r["floor"] - r["chance"]) * 100.0
         if not lits or not is_rounding_of(lits[0], gap):
             bad.append(f"{tag} gap: {cells[5]!r} not a rounding of {gap:.6f}")
-        if cells[6] != fmt_p(r["p_one_sided"], n_draws):
-            bad.append(f"{tag} p: {cells[6]!r} != {fmt_p(r['p_one_sided'], n_draws)!r}")
-        if bool(r["survives"]) != cells[7].startswith("above"):
-            bad.append(f"{tag} verdict {cells[7]!r} vs survives={r['survives']}")
+        if cells[6] != fmt_p(r["p_blind_shipped"], n_bound):
+            bad.append(f"{tag} p_blind: {cells[6]!r} != "
+                       f"{fmt_p(r['p_blind_shipped'], n_bound)!r}")
+        if cells[7] != fmt_p(r["p_corrected"], n_bound):
+            bad.append(f"{tag} p_legal: {cells[7]!r} != "
+                       f"{fmt_p(r['p_corrected'], n_bound)!r}")
+        if bool(r["survives_aware"]) != cells[8].startswith("above"):
+            bad.append(f"{tag} verdict {cells[8]!r} vs "
+                       f"survives_aware={r['survives_aware']}")
     return bad
 
 
@@ -422,30 +531,34 @@ def main() -> int:
     ap.add_argument("--check-only", action="store_true")
     args = ap.parse_args()
 
-    ev, a2 = load()
-    with open(EVIDENCE, "rb") as f:
-        sha = hashlib.sha256(f.read()).hexdigest()
+    ev, old, a2 = load()
+    sha = sha256_of(EVIDENCE)
+    old_sha = sha256_of(SUPERSEDED)
 
-    bad = check_evidence(ev, a2) + check_handtyped(ev)
+    n_bound = p_bound_draws(ev, old)
+    bad = check_evidence(ev, old, a2) + check_handtyped(ev, n_bound)
     if bad:
         _fail(bad)
 
-    lines = build(ev, sha[:12])
-    bad = roundtrip(lines, ev)
+    lines = build(ev, sha[:12], old_sha[:12], n_bound)
+    bad = roundtrip(lines, ev, n_bound)
     if bad:
         _fail(bad)
 
     n = len(ev["rows"])
-    print(f"[selftest] OK: T1-T6 provenance/invariants on {n} rows; "
+    print(f"[selftest] OK: T1-T6c provenance/invariants on {n} rows; "
           f"T2 row identity agrees with e2_single_source_assertion.json; "
-          f"T7 hand-typed sections/tab_nulls.tex round-trips "
+          f"T6c corrected file agrees with the superseded one on n/k/floor/chance/"
+          f"gap; T7 hand-typed sections/tab_nulls.tex round-trips "
           f"({n}/{n} rows); T8 generated table round-trips ({n}/{n} rows)")
     print(f"[source] {os.path.relpath(EVIDENCE, PAPER)} sha256={sha}")
+    print(f"[supersedes] {os.path.relpath(SUPERSEDED, PAPER)} sha256={old_sha}")
     for r in ev["rows"]:
         print(f"  {r['construct']:30s} n={r['n']:6d} k={r['k']:2d} "
               f"chance={r['chance']:.6f} floor={r['floor']:.6f} "
               f"gap={100*(r['floor']-r['chance']):+.3f}pp "
-              f"p={fmt_p(r['p_one_sided'], ev['n_draws'])}")
+              f"p_blind={fmt_p(r['p_blind_shipped'], n_bound)} "
+              f"p_legal={fmt_p(r['p_corrected'], n_bound)}")
     if args.check_only:
         print("[check-only] nothing written")
         return 0
