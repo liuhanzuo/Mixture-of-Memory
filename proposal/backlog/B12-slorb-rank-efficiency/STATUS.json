@@ -338,5 +338,67 @@
     "G0_OVERALL_CLEARABLE": "YES. Leg 2 PASS (on disk since 01:44, read not re-run). Leg 1 PASS (this record). Both legs now have an adjudicated basis rather than a declared one.",
     "caveat_that_must_travel_with_this_pass": "Any B12 write-up quoting RELATED_WORK.md sec 6's five-conjunct formulation WITHOUT the sec-7.3 narrowing would overclaim against ARMOR (ICLR 2026), a published paper doing post-training block-structured correction of a 2:4 core. Also: PROPOSAL.md still names neither AST nor CAST as the origin of the SLoRB branch (grep: 0 hits for AST, and its 5 CAST hits are all about the CAST-repro comparison row, not provenance). That citation gap was identified by the 01:23 write-up and is STILL OPEN.",
     "what_this_record_does_NOT_do": "Does not set lifecycle, does not set ready_gpu, does not launch the pilot, does not alter the kill gate (frozen PRE-DATA 2026-08-16: tau 1.79 pp, pass bar 60.64, noise floor 0.8953). Zero GPU was requested or spent. The pilot-authorisation question is left exactly where g0_result_20260816 left it."
+  },
+  "main_adjudication_of_g0_20260816": {
+    "_what": "MAIN's own adjudication of G0, written after reading BOTH agents' deliverables and re-verifying the load-bearing mechanisms myself. This is the promotion decision the two agents explicitly deferred to me. Append-only; no pre-existing key edited.",
+    "_who": "MAIN, not an agent",
+    "G0_VERDICT": "BOTH LEGS PASS on evidence. But B12 is NOT launchable today, for a reason neither leg tests.",
+    "leg2": {
+      "verdict": "PASS, twice, independently",
+      "first_run": "evidence/g0_leg2_rungA_selfcheck_20260816.json (01:44) -- live_branch_params == 404750336 int-exact, density == 0.5625 exact",
+      "second_run": "evidence/G0_LEG2_TOOL_SELFCHECK.md (17:44), a second agent re-earned the assertion from a fresh export because the first pass wrote to /tmp/b12_rungA_export which /tmp cleared. Both constants matched again.",
+      "MAIN_dispatch_error": "I dispatched leg 2 as 'never executed', quoting the gate text. It had already run 16 hours earlier and one `ls -la` on the evidence directory would have shown it. The gate's status description was true when written, not now."
+    },
+    "leg1": {
+      "verdict": "RELATED_WORK.md was NOT a stub (216 lines, 30 candidates), but surfaces (c) and (d) were only partially addressed and are now closed",
+      "why_they_failed": "the original search used the weight-clustering vocabulary ('weight clustering', 'coarsening', 'group-wise quantization') and never the BLOCK-DIAGONAL vocabulary, which is where the semi-structured-sparsity literature puts this operator",
+      "works_added": [
+        "ARMOR 2510.05528 (ICLR 2026 Poster, venueid confirmed) -- post-training BLOCK-DIAGONAL correctors on a 2:4 core; the most important omission",
+        "LoSA 2502.14816 (ICLR 2025 Poster)",
+        "HASSLE-free 2502.00899 (preprint) -- headline config is verbatim '2:4 sparsity component plus a 64-rank component'",
+        "LoRAPrune 2305.18403 (Findings of ACL 2024, verified via aclanthology 2024.findings-acl.178 + DBLP conf/acl/Zhang0SYOYZ24, NOT OpenReview)"
+      ],
+      "claim_narrowed": "section 6's 'the literature's post-hoc adapter operator is uniformly SVD/spectral' is FALSE as stated against ARMOR; it survives only when restricted to 'applied to a TRAINED adapter'."
+    },
+    "novelty": {
+      "verdict": "DISTINCT, on four conjuncts rather than five",
+      "load_bearing_reason": "the AXIS, not the operator: generic rank reduction minimises adapter STORAGE, whereas B12 titrates DEPLOYMENT DENSITY against a 50.0% hard floor -- a quantity that does not exist on a dense base",
+      "conceded_prior_art": [
+        "the algebraic form (2:4 base + additive low-rank term) via HASSLE-free",
+        "block structure per se via ARMOR",
+        "Dctl (SVD control) is not novel, per concurrent PARA"
+      ],
+      "not_killed_because": "the bar is IDENTICAL, not ADJACENT (see memory/prior-work-differentiate-dont-abandon). Nothing identical was found; 37 queries at the conjunction returned zero occupants."
+    },
+    "WHY_NOT_LAUNCHABLE_TODAY": {
+      "blocker": "scripts/launch_slorb_rank_sweep.sh fails its own preflight P0 before touching a GPU.",
+      "measured_by": "MAIN, DRY_RUN=1 bash scripts/launch_slorb_rank_sweep.sh, rc captured on the line immediately after the command (no pipe, no command substitution)",
+      "TRUE_RC": 1,
+      "fatal_line": "FATAL: missing required tool: <REPO>/baselines/eval_hf_sparse_model.py",
+      "searched_both_disks": "absent on wzc1 AND on zwfy6; `git log --all -- baselines/eval_hf_sparse_model.py` is EMPTY (never committed) and `git check-ignore` does not match it (not ignored). The other three preflight tools (EMIT/AGG9/DATAPROBE) all exist under baselines/cast_repro/tools/.",
+      "PROVENANCE_CONCERN_RAISED_BY_THIS": "eight committed scripts reference this file, including scripts/_union9_eval_spec_21.sh which is the harness behind the SparseForge ppl@4096 numbers (6.6795 -> 6.1938). A file that produced reported numbers, is referenced by eight scripts, was never committed, is not gitignored, and is absent from both disks. Either those ppl numbers came from an uncommitted local file that is now gone, or they came from some other path. THIS MUST BE SETTLED BEFORE the ppl figures are used in any write-up, and it is a strictly larger issue than B12.",
+      "note": "Neither agent caught this: one reported a venv path defect that git 4665c92 had ALREADY fixed at 01:47 (verified: line 66-70 now point at $PROJECT_ROOT/venv_union9, and that python exists). The launcher's real blocker is one preflight item further down."
+    },
+    "argparse_defect_CONFIRMED_BY_MAIN": {
+      "claim": "the gate's own command line `--mode ladder` is silently bound to `--model` because emit_slorb_ladder.py:220 omits allow_abbrev=False",
+      "MAIN_minimal_repro": "argparse with allow_abbrev=True (the default) parses ['--mode','ladder'] into Namespace(model='ladder'); with allow_abbrev=False it raises SystemExit 2. Reproduced directly, not taken on report.",
+      "consequence": "a wrong flag produced a GREEN self-check. 'It ran as written' is not 'it ran what the gate meant'.",
+      "also": "the gate names slorb_variant_manifest.json, which belongs to the PREDECESSOR tool; this tool writes slorb_ladder_manifest.json, which is also what the driver reads."
+    },
+    "rung_A_assertion_is_FORCED": {
+      "finding": "with c=1 everywhere, live == scope/16 and density == 1/2+1/16 are forced by integer arithmetic once the scope/surviving guards pass, so rung A never exercises _fit_blocksum_ls at k_eff>16 nor the SVD path",
+      "why_it_matters": "a tautologically-true assertion passing is not evidence. The agent mitigated this at 0 GPU by dry-running rung P, where live == scope/16 is FALSE, and matched 325844992 / 55.031574% exactly -- so the c>1 coarsening bookkeeping IS now verified.",
+      "still_untested": "the entire SVD path (Dctl)"
+    },
+    "MAIN_DECISION": {
+      "promote_to_ready_gpu": "NOT YET. The lifecycle_20260816=ready_gpu field was written by an agent about its own work; a declared lifecycle is not an adjudicated one (memory/a-declared-lifecycle-is-not-an-adjudicated-one).",
+      "what_must_happen_first": [
+        "resolve baselines/eval_hf_sparse_model.py -- either recover/rewrite it or repoint HARNESS_PPL at whatever actually produced the union-9 ppl numbers, and record which",
+        "add allow_abbrev=False to emit_slorb_ladder.py:220 and correct the gate's manifest filename",
+        "re-run DRY_RUN=1 and require TRUE_RC=0 before requesting a card"
+      ],
+      "gpu_cost_when_unblocked": "1.46 GPU-h for the pilot pair (rung P + Dctl control). Cheap. The blocker is correctness, not budget.",
+      "priority_note": "all 40 cards are busy with training; there is no card to take today regardless."
+    }
   }
 }
