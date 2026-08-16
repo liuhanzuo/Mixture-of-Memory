@@ -232,5 +232,127 @@
       "non_monotone": true,
       "note": "This is the single most relevant empirical precedent and revision 2 scores it KILL, as revision 1 also did (phi 0.8916 with the wrong span). It is non-monotone in budget, which is exactly the shape a slope-only statistic under-reads."
     }
+  },
+  "clause5_budget_discrimination_revision3": {
+    "revision": "3 (2026-08-16, PRE-DATA). Implements DECIDABILITY_FIX_20260816.md sec 3.",
+    "primary_metric": "median_margin",
+    "margin_definition": "|score(gold) - max(other)| on norm_scores, pooled over the 6 core tasks; same definition as margins() at :172-201",
+    "readout_arm": {
+      "ckpt_dir": "outputs/olmo2_probe2_7B_keep14fresh2_seed1234",
+      "keep_front_layers": 14,
+      "n_fresh_layers": 2,
+      "seed": 1234,
+      "base_model": "../models/OLMo-2-1124-7B",
+      "only_ckpt_step_varies": true
+    },
+    "unverifiable_from_disk": {
+      "fields": [
+        "batch_size (prereg 8)",
+        "max_len (prereg 1024, harness default)",
+        "harness git commit (prereg a163a89)",
+        "one-driver-invocation"
+      ],
+      "why": "summary.json records none of them; its keys are output_name/n_shards/add_bos/meta/tasks and meta's are mode/keep_front_layers/n_fresh_layers/num_hidden_layers/ckpt_step/ckpt/base_model/add_bos.",
+      "who_enforces": "scripts/_run_b04_readout_evalfill.sh (pins the flags; refuses an uncommitted harness). A rung produced by any OTHER route is NOT provably same-harness from its own artifacts.",
+      "status": "DISCLOSED PREREG GAP, not resolved by this code. See READOUT_PATH_20260816.md 'Ambiguity 1'."
+    },
+    "D_damaged_range": 0.02181999999999995,
+    "sigma_hat": 0.0005405884438142497,
+    "comparator_interval_I": [
+      83500,
+      200000
+    ],
+    "abs_I": 116500,
+    "span_116500_status": "DESCRIPTIVE ONLY -- BARRED from multiplying any slope (the revision-1 defect); used only to test grid support",
+    "grids": {
+      "GRID_I": {
+        "steps": [
+          100000,
+          128000,
+          153500,
+          175000,
+          200000
+        ],
+        "span": 100000,
+        "sup_ratio": 1.22039,
+        "role": "PRIMARY",
+        "points_inside_I": 5
+      },
+      "GRID_W": {
+        "steps": [
+          25000,
+          50000,
+          100000,
+          128000,
+          200000
+        ],
+        "span": 175000,
+        "sup_ratio": 1.173627,
+        "role": "SECONDARY",
+        "points_inside_I": 3
+      }
+    },
+    "combine_rule": "FINAL = the MORE SEVERE of verdict_I and verdict_W (KILL > NARROWED > PASS)",
+    "mandatory_codisclosure_spearman_core6_heal_steps": 0.6668859288553503,
+    "union_steps": [
+      25000,
+      50000,
+      100000,
+      128000,
+      153500,
+      175000,
+      200000
+    ],
+    "denominator_guard_6sigma": 0.0032435306628854983,
+    "readout_census": {
+      "roots": [
+        {
+          "disk": "wzc1",
+          "root": "olmo2_downstream_results",
+          "searched": true,
+          "n_dirs_scanned": 45
+        },
+        {
+          "disk": "zwfy6",
+          "root": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_downstream_results",
+          "searched": false,
+          "why": "not mounted from this node -> absence on this disk is NOT established here"
+        }
+      ],
+      "found": {
+        "200000": {
+          "dir": "olmo2_downstream_results/keep14_s1234_step200000_sv181",
+          "disk": "wzc1",
+          "ckpt": "outputs/olmo2_probe2_7B_keep14fresh2_seed1234/step200000.pt",
+          "median_margin": 0.10850000000000004,
+          "n_pooled": 17195
+        }
+      },
+      "absent_steps": [
+        25000,
+        50000,
+        100000,
+        128000,
+        153500,
+        175000
+      ]
+    },
+    "missing_per_grid": {
+      "GRID_I": [
+        100000,
+        128000,
+        153500,
+        175000
+      ],
+      "GRID_W": [
+        25000,
+        50000,
+        100000,
+        128000
+      ]
+    },
+    "verdict": "READOUT_ABSENT",
+    "why": "a named arm of a grid lacks a margin-computable eval dir. phi is UNDEFINED -- not small, not large. NON-PASS: an undefined ratio cannot license 244-2560 GPU-h.",
+    "blocks_spend": true
   }
 }

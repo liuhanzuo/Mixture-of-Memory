@@ -3,6 +3,12 @@
 
 Run from repo root:
     python proposal/backlog/B04-eval-fragility-incubator/code/analyze_b04_wzc1_floor.py
+    ... --selftest        both selftests: arithmetic (revision 2) + on-disk fixture (revision 3)
+    ... --readout-only    just clause 5 revision 3, from the banked evidence constants
+
+Exit code: 0 on a computed verdict (KILL/NARROWED/PASS); non-zero on any prereg HARD ABORT
+(READOUT_ABSENT 3, PROTOCOL_VIOLATION/FIELD_ASYMMETRY 4, DENOMINATOR_UNRESOLVED/
+FLOOR_UNMEASURABLE 5). An abort is a NON-PASS and must never look like success to a shell.
 
 What this does
 --------------
@@ -68,6 +74,39 @@ attained by a step function. So max() can exceed range-alone by at most 17.4% an
 falls below it: it is strictly the more conservative of the two candidate statistics while
 still being shape-agnostic. Dropping the slope term would only ever let a case pass that
 max() kills. Both terms are emitted separately so either can be audited.
+
+Decision statistic, REVISION 3 (2026-08-16, still PRE-DATA, 0 GPU) -- and THE READ-OUT PATH
+-------------------------------------------------------------------------------------------
+Authority: DECIDABILITY_FIX_20260816.md sec 3, which is the verbatim gate text. The code
+below IMPLEMENTS it; it does not amend it. Revision 2's grid, span, phi_budget() and
+selftest are left in place unmodified for provenance -- revision 2's grid IS revision 3's
+secondary grid.
+
+Two things changed:
+
+  (1) THE GRID. Revision 1 multiplied a slope measured on the read-out grid by the
+      COMPARATOR's foreign span 116500. Revision 2 fixed the constant to the grid's own
+      175000 but left the grid, 2 of whose 5 points (25000, 50000) sit BELOW the comparator
+      interval I = [83500, 200000], measuring budget movement that cannot explain any
+      damaged rung's position. So neither span was right: the grid had to change.
+        GRID_I = {100000,128000,153500,175000,200000}  S_I = 100000  PRIMARY   (5/5 in I,
+                 covering 0.8584 of |I|; the uncovered [83500,100000] = 14.16% is DISCLOSED,
+                 so phi_I is a LOWER BOUND over I)
+        GRID_W = {25000,50000,100000,128000,200000}    S_W = 175000  SECONDARY (revision 2
+                 verbatim, retained so revision 2 stays auditable)
+      FINAL VERDICT = the MORE SEVERE of verdict_I and verdict_W (KILL > NARROWED > PASS).
+
+  (2) THE INPUTS NOW EXIST AS CODE. Before 2026-08-16 phi_budget() was called from exactly
+      three places -- :503, :526, :531 in the pre-2026-08-16 file (git 625053b), i.e. all
+      inside selftest_phi(), all on hand-written y-vectors. The analyzer did read
+      olmo2_downstream_results/ (for the donor margin and the completeness checks), but
+      NOTHING it read from disk ever reached phi. So three adversarial passes checked whether
+      phi's FORMULA was right and none checked whether phi's INPUTS EXISTED.
+      clause5_revision3() closes that: it loads median_margin at each grid step from the
+      on-disk eval dirs, assembles y, computes phi per grid, and combines. Every prereg hard
+      abort (READOUT_ABSENT, PROTOCOL_VIOLATION, FIELD_ASYMMETRY, DENOMINATOR_UNRESOLVED,
+      FLOOR_UNMEASURABLE) is raised, never swallowed: a missing rung is NEVER interpolated, a
+      grid is NEVER shortened, and no NaN is allowed to flow onward.
 """
 
 from __future__ import annotations
@@ -123,6 +162,494 @@ READOUT_SPAN = max(G1_READOUT_STEPS) - min(G1_READOUT_STEPS)   # 175000
 # function. Emitted so the max() guard's worst-case inflation over range-alone is auditable.
 SLOPE_TERM_SUP_RATIO = 1.173627
 PHI_KILL, PHI_PASS = 0.60, 0.30
+
+# =========================================================================================
+# ---- REVISION 3 (2026-08-16, PRE-DATA, 0 GPU) -------------------------------------------
+# =========================================================================================
+# Authority: DECIDABILITY_FIX_20260816.md sec 3 (the verbatim gate block). This section
+# IMPLEMENTS that pre-registration; it does not amend it. No threshold, no grid, and no
+# abort name below was chosen here -- every one is copied from sec 3.
+#
+# Everything above (G1_READOUT_STEPS, READOUT_SPAN, SLOPE_TERM_SUP_RATIO, phi_budget) is
+# REVISION 2 and is deliberately LEFT IN PLACE, unmodified, for provenance: revision 2's
+# grid is revision 3's SECONDARY grid, and its selftest is the record that the max-guard
+# and the shape-safe boundaries were checked. GRID_W below is asserted identical to it.
+#
+# Why revision 3 exists (sec 2): revision 1 multiplied a slope measured on the read-out
+# grid by the COMPARATOR's foreign span 116500; revision 2 fixed the constant to the grid's
+# own 175000 but left the grid, 2 of whose 5 points (25000, 50000) sit BELOW the comparator
+# interval I = [83500, 200000] and so measure budget movement that cannot explain any
+# damaged rung's position. Neither span is right; the grid had to change.
+
+# The comparator's heal-step interval. DESCRIPTIVE ONLY. |I| MUST NOT multiply any slope
+# (that is the revision-1 defect); it is used ONLY to test whether a grid is on-support.
+COMPARATOR_INTERVAL_I = (83500, 200000)
+
+GRID_I = [100000, 128000, 153500, 175000, 200000]   # PRIMARY   -- interval-matched, 5/5 in I
+SPAN_I = max(GRID_I) - min(GRID_I)                  # 100000
+GRID_W = list(G1_READOUT_STEPS)                     # SECONDARY -- revision 2's grid, verbatim
+SPAN_W = max(GRID_W) - min(GRID_W)                  # 175000
+
+# sup_y |beta|*S / range(y) over each FIXED x-grid, attained by a step function:
+#   sup = S * sum_{i: w_i > 0} w_i,   w_i = (x_i - xbar) / Sxx
+# Recomputed at import (below) and asserted against these pinned literals, so a grid edit
+# cannot silently leave a stale sup ratio behind.
+SUP_RATIO_I = 1.220390
+SUP_RATIO_W = 1.173627
+
+# KILL > NARROWED > PASS. The combined verdict is the MORE SEVERE of the two grids'.
+VERDICT_SEVERITY = {"PASS": 0, "NARROWED": 1, "KILL": 2}
+
+READOUT_GRIDS = [
+    ("GRID_I", GRID_I, SPAN_I, SUP_RATIO_I, "PRIMARY"),
+    ("GRID_W", GRID_W, SPAN_W, SUP_RATIO_W, "SECONDARY"),
+]
+READOUT_UNION_STEPS = sorted(set(GRID_I) | set(GRID_W))
+# = [25000, 50000, 100000, 128000, 153500, 175000, 200000]
+
+# The read-out arm. Damage held EXACTLY at keep_front=14 / n_fresh=2 / seed=1234; ONLY
+# ckpt_step varies. A dir is accepted only if its OWN summary.json.meta names this ckpt.
+READOUT_CKPT_DIR = "outputs/olmo2_probe2_7B_keep14fresh2_seed1234"
+READOUT_CKPT_MARK = "keep14fresh2_seed1234"
+READOUT_KEEP_FRONT, READOUT_N_FRESH = 14, 2
+READOUT_BASE_MODEL = "../models/OLMo-2-1124-7B"
+
+# ---- what the prereg names but summary.json does NOT record ------------------------------
+# The prereg's arm definition (DECIDABILITY_FIX_20260816.md sec 3 READ-OUT; field table in
+# EVAL_FILL_READY_20260816.md sec 1) fixes batch_size=8, max_len=1024 (default), the harness
+# at git a163a89, and one driver invocation. NONE of those is written into summary.json --
+# its only keys are output_name / n_shards / add_bos / meta / tasks, and meta's only keys are
+# mode / keep_front_layers / n_fresh_layers / num_hidden_layers / ckpt_step / ckpt /
+# base_model / add_bos (verified on the archived rung 2026-08-16). So the read-out path
+# CANNOT verify them from disk, and it does not pretend to. It DISCLOSES them instead, in
+# every report, under `unverifiable_from_disk`. Enforcement lives in the fill driver
+# (scripts/_run_b04_readout_evalfill.sh), which pins the flags and refuses to run against an
+# uncommitted harness. Reported as a prereg gap, NOT resolved here.
+UNVERIFIABLE_FROM_DISK = {
+    "fields": ["batch_size (prereg 8)", "max_len (prereg 1024, harness default)",
+               "harness git commit (prereg a163a89)", "one-driver-invocation"],
+    "why": "summary.json records none of them; its keys are output_name/n_shards/add_bos/"
+           "meta/tasks and meta's are mode/keep_front_layers/n_fresh_layers/"
+           "num_hidden_layers/ckpt_step/ckpt/base_model/add_bos.",
+    "who_enforces": "scripts/_run_b04_readout_evalfill.sh (pins the flags; refuses an "
+                    "uncommitted harness). A rung produced by any OTHER route is NOT "
+                    "provably same-harness from its own artifacts.",
+    "status": "DISCLOSED PREREG GAP, not resolved by this code. See "
+              "READOUT_PATH_20260816.md 'Ambiguity 1'.",
+}
+
+# Both physical disks (memory/two-disk-rule-applies-to-main-too.md). A root that is not
+# mounted from this node is reported as UNSEARCHABLE -- never silently treated as empty.
+SEARCH_ROOTS = [
+    ("wzc1", Path("olmo2_downstream_results")),
+    ("zwfy6", Path("/apdcephfs_zwfy6/share_304376610/pighzliu_code/"
+                   "Mixture-of-Memory/olmo2_downstream_results")),
+]
+
+
+class GateAbort(Exception):
+    """A prereg HARD ABORT. Carries the abort's prereg name so callers assert on it.
+
+    Every abort is a NON-PASS and blocks the downstream spend. This is an exception and
+    not a sys.exit so the fixture selftest can assert that each one actually fires.
+    """
+
+    def __init__(self, code: str, msg: str, detail: dict | None = None):
+        super().__init__(f"{code}: {msg}")
+        self.code, self.msg, self.detail = code, msg, detail or {}
+
+
+def _sup_ratio(steps, span):
+    n = len(steps)
+    mx = sum(steps) / n
+    sxx = sum((a - mx) ** 2 for a in steps)
+    return span * sum(w for w in ((a - mx) / sxx for a in steps) if w > 0)
+
+
+# Fail at import if a grid and its pinned sup ratio ever drift apart.
+for _nm, _g, _s, _sup, _role in READOUT_GRIDS:
+    _got = _sup_ratio(_g, _s)
+    if abs(_got - _sup) > 5e-7:
+        sys.exit(f"FATAL: {_nm} sup ratio drifted: pinned {_sup}, recomputed {_got:.6f}. "
+                 "A grid or span was edited without updating its sup ratio.")
+if GRID_W != G1_READOUT_STEPS or SPAN_W != READOUT_SPAN:
+    sys.exit("FATAL: GRID_W must be revision 2's grid VERBATIM (auditability requirement, "
+             f"DECIDABILITY_FIX_20260816.md sec 3): {GRID_W} vs {G1_READOUT_STEPS}")
+del _nm, _g, _s, _sup, _role, _got
+
+
+def phi_budget_grid(y, damaged_range, grid_name, steps, span, evaluated_steps=None):
+    """REVISION-3 per-grid statistic. Identical arithmetic to phi_budget, per grid.
+
+        phi_G = max( max(y_G) - min(y_G), |OLS slope of y_G on heal_step| * S_G ) / D
+
+    `steps` is the grid's PREREG step set; `evaluated_steps` is what was actually found on
+    disk. They must be equal -- adding points biases toward PASS (the unused seed1234 ckpts
+    cluster near 200000, shrinking the range term); dropping one breaks k=5-vs-k=5 matching
+    (E[range]/sigma 2.0588 at k=4 vs 2.3259 at k=5, -11.5%, also toward PASS).
+
+    Raises GateAbort; never returns a NaN and never shortens a grid.
+    """
+    steps = list(steps)
+    if evaluated_steps is not None and list(evaluated_steps) != steps:
+        raise GateAbort("PROTOCOL_VIOLATION",
+                        f"{grid_name} evaluated step set {list(evaluated_steps)} != prereg "
+                        f"{steps}. Extending n until the statistic crosses a threshold is "
+                        "the paperC --max_steps error "
+                        "(readout_preregistration.not_a_decision_point).",
+                        {"grid": grid_name})
+    if len(y) != len(steps):
+        raise GateAbort("PROTOCOL_VIOLATION",
+                        f"{grid_name} read-out has {len(y)} points, prereg has {len(steps)}",
+                        {"grid": grid_name})
+    if any(v is None or v != v for v in y):          # v != v catches NaN
+        raise GateAbort("READOUT_ABSENT",
+                        f"{grid_name} y contains a hole/NaN: {y}. phi is UNDEFINED -- not "
+                        "small, not large. A NaN must never flow onward.",
+                        {"grid": grid_name})
+    if damaged_range is None or damaged_range <= 0:
+        raise GateAbort("DENOMINATOR_UNRESOLVED",
+                        f"damaged_range={damaged_range} <= 0 -> phi is UNDEFINED, not small.",
+                        {"grid": grid_name})
+    rng = max(y) - min(y)
+    slope_term = abs(ols_slope(steps, y)) * span
+    phi = max(rng, slope_term) / damaged_range
+    v = "KILL" if phi >= PHI_KILL else ("PASS" if phi <= PHI_PASS else "NARROWED")
+    return {
+        "grid": grid_name, "steps": steps, "span_used": span, "y": list(y),
+        "phi": phi, "verdict": v,
+        "range_term": rng, "slope_term": slope_term,
+        "binding_term": "range" if rng >= slope_term else "slope",
+        "damaged_range_D": damaged_range,
+        "phi_kill_threshold": PHI_KILL, "phi_pass_threshold": PHI_PASS,
+        "sup_ratio_this_grid": _sup_ratio(steps, span),
+        "points_inside_comparator_I": sum(
+            1 for s in steps if COMPARATOR_INTERVAL_I[0] <= s <= COMPARATOR_INTERVAL_I[1]),
+    }
+
+
+def combine_verdicts(per_grid: dict) -> str:
+    """FINAL VERDICT = the MORE SEVERE of verdict_I and verdict_W (KILL > NARROWED > PASS)."""
+    if not per_grid:
+        raise GateAbort("READOUT_ABSENT", "no grid produced a verdict")
+    return max((r["verdict"] for r in per_grid.values()),
+               key=lambda v: VERDICT_SEVERITY[v])
+
+
+# ---- the read-out path: on-disk eval dirs -> y -> phi ------------------------------------
+
+def readout_margins(dirpath: Path) -> list[float]:
+    """Pooled |margin| for ONE read-out arm, from its OWN native norm_scores.
+
+    Deliberately does NOT use the norm_lens transplant that margins() falls back to: the
+    prereg's FIELD_ASYMMETRY abort exists because an asymmetric-field paired comparison
+    already produced a 56x artefact once (status/PAPERF_ACCNORM_VERIFIED.md:43-67). Every
+    read-out arm is produced by the a163a89 harness, which writes norm_scores/norm_lens
+    natively, so a missing field means the arm is not the protocol of record -- not that it
+    needs repairing here.
+
+    margin = |score(gold) - max(other)| on norm_scores  (same definition as margins():172-201)
+    """
+    out = []
+    for t in TASKS:
+        p = dirpath / f"per_example_{t}.jsonl"
+        if not p.exists():
+            raise GateAbort("READOUT_ABSENT",
+                            f"{dirpath.name}: no per_example_{t}.jsonl "
+                            "(--save_per_example missing?) -> margin not computable")
+        n = rows = 0
+        for line in open(p):
+            if not line.strip():
+                continue
+            rows += 1
+            o = json.loads(line)
+            for fld in ("norm_scores", "norm_lens", "gold_letter", "item_id"):
+                if fld not in o or o[fld] is None:
+                    raise GateAbort("FIELD_ASYMMETRY",
+                                    f"{dirpath.name}/{t} row {rows} lacks '{fld}' -> margin "
+                                    "not computable on this arm's own fields; the transplant "
+                                    "fallback is BARRED for read-out arms")
+            sc, g = o["norm_scores"], o["gold_letter"]
+            oth = [v for k, v in sc.items() if k != g and v is not None]
+            if sc.get(g) is None or not oth:
+                continue
+            out.append(abs(sc[g] - max(oth)))
+            n += 1
+        if rows != EXPECTED_N[t]:
+            raise GateAbort("PROTOCOL_VIOLATION",
+                            f"{dirpath.name}/per_example_{t}.jsonl has {rows} rows, expected "
+                            f"{EXPECTED_N[t]}")
+        if n != EXPECTED_N[t]:
+            raise GateAbort("PROTOCOL_VIOLATION",
+                            f"{dirpath.name}/{t} scored {n}, expected {EXPECTED_N[t]}")
+    if len(out) != EXPECTED_POOLED:
+        raise GateAbort("PROTOCOL_VIOLATION",
+                        f"{dirpath.name} pooled {len(out)} != {EXPECTED_POOLED}")
+    return out
+
+
+def inspect_readout_dir(dirpath: Path, want_step: int) -> dict:
+    """Is this dir a margin-computable read-out arm for `want_step`? Fail loudly if malformed.
+
+    Returns {"ok": True, "median_margin": ..., ...} or {"ok": False, "why": ...} when the dir
+    simply is not this arm (wrong ckpt / wrong task set -> a candidate to skip). Anything
+    that IS this arm but is broken raises GateAbort: it must never be silently skipped, or a
+    partial merge would read as "absent" and then as "filled" on the next run.
+    """
+    s = dirpath / "summary.json"
+    if not s.exists():
+        return {"ok": False, "why": "no summary.json"}
+    try:
+        j = json.load(open(s))
+    except Exception as e:                                    # noqa: BLE001
+        return {"ok": False, "why": f"summary.json unreadable: {e}"}
+    meta = j.get("meta") or {}
+    ck = meta.get("ckpt") or ""
+    # --- identity: the dir must belong to the INTENDED checkpoint, not merely be named it.
+    if READOUT_CKPT_MARK not in ck:
+        return {"ok": False, "why": f"meta.ckpt={ck!r} is not a {READOUT_CKPT_MARK} ckpt"}
+    if str(meta.get("ckpt_step")) != str(want_step):
+        return {"ok": False, "why": f"meta.ckpt_step={meta.get('ckpt_step')} != {want_step}"}
+    tasks = j.get("tasks") or {}
+    if sorted(tasks) != sorted(TASKS):
+        # e.g. the know5 dir at step200000: right ckpt, DIFFERENT task set. Not a candidate.
+        return {"ok": False, "why": f"task set {sorted(tasks)} != core6"}
+
+    # From here on the dir IS the named arm at the named step. Every remaining defect is a
+    # hard abort, because a plausible-looking short merge must never reach phi.
+    nsh = len(list(dirpath.glob("shard*of8.json")))
+    if nsh != 8:
+        raise GateAbort("PROTOCOL_VIOLATION",
+                        f"{dirpath.name} has {nsh}/8 shard files -- refusing partial merge. "
+                        "A silent 5/8 merge has destroyed a measurement in this project.")
+    if j.get("n_shards") != 8:
+        raise GateAbort("PROTOCOL_VIOLATION",
+                        f"{dirpath.name} summary.n_shards={j.get('n_shards')} != 8 -- "
+                        "PARTIAL MERGE that looks complete")
+    if j.get("add_bos") is not False:
+        raise GateAbort("PROTOCOL_VIOLATION",
+                        f"{dirpath.name} add_bos={j.get('add_bos')} != False; OLMo-2 "
+                        "published numbers are made without BOS")
+    if (meta.get("keep_front_layers"), meta.get("n_fresh_layers")) != \
+       (READOUT_KEEP_FRONT, READOUT_N_FRESH):
+        raise GateAbort("PROTOCOL_VIOLATION",
+                        f"{dirpath.name} keep/fresh = {meta.get('keep_front_layers')}/"
+                        f"{meta.get('n_fresh_layers')} != {READOUT_KEEP_FRONT}/"
+                        f"{READOUT_N_FRESH}: damage is NOT held fixed across the read-out")
+    if meta.get("base_model") != READOUT_BASE_MODEL:
+        raise GateAbort("PROTOCOL_VIOLATION",
+                        f"{dirpath.name} base_model={meta.get('base_model')!r} != "
+                        f"{READOUT_BASE_MODEL!r}: wrong base means wrong transplant")
+    for t in TASKS:
+        e = tasks[t]
+        if e.get("skipped"):
+            raise GateAbort("PROTOCOL_VIOLATION", f"{dirpath.name}/{t} SKIPPED")
+        if e.get("n_scored") != EXPECTED_N[t]:
+            raise GateAbort("PROTOCOL_VIOLATION",
+                            f"{dirpath.name}/{t} n_scored={e.get('n_scored')} != "
+                            f"{EXPECTED_N[t]}")
+        if e.get("n_nan", 0) != 0:
+            raise GateAbort("PROTOCOL_VIOLATION",
+                            f"{dirpath.name}/{t} n_nan={e.get('n_nan')} != 0")
+    ms = readout_margins(dirpath)                 # asserts rows AND scored AND pooled AND fields
+    return {"ok": True, "dir": str(dirpath), "ckpt": ck, "ckpt_step": meta.get("ckpt_step"),
+            "n_pooled": len(ms), "median_margin": statistics.median(ms),
+            "base_model": meta.get("base_model"), "num_hidden_layers":
+            meta.get("num_hidden_layers")}
+
+
+def find_readout_arms(steps, roots=None) -> dict:
+    """Scan every candidate dir on every mounted root for each read-out step.
+
+    Identification is by the dir's OWN summary.json.meta.ckpt / ckpt_step, never by its
+    name -- a dir with the right name and the wrong checkpoint would feed a wrong y into
+    phi and nothing downstream would notice.
+
+    A root that is not mounted from this node is reported UNSEARCHABLE, not empty
+    (memory/two-disk-rule-applies-to-main-too.md).
+    """
+    roots = SEARCH_ROOTS if roots is None else roots
+    census = {"roots": [], "per_step": {}}
+    for label, root in roots:
+        if not root.is_dir():
+            census["roots"].append({"disk": label, "root": str(root), "searched": False,
+                                    "why": "not mounted from this node -> absence on this "
+                                           "disk is NOT established here"})
+            continue
+        dirs = sorted(p for p in root.iterdir() if p.is_dir())
+        census["roots"].append({"disk": label, "root": str(root), "searched": True,
+                                "n_dirs_scanned": len(dirs)})
+        for st in steps:
+            for p in dirs:
+                r = inspect_readout_dir(p, st)
+                if r.get("ok"):
+                    census["per_step"].setdefault(str(st), []).append({**r, "disk": label})
+    resolved, absent = {}, []
+    for st in steps:
+        c = census["per_step"].get(str(st), [])
+        if not c:
+            absent.append(st)
+            continue
+        if len(c) > 1:
+            mm = {round(x["median_margin"], 12) for x in c}
+            if len(mm) > 1:
+                # Not covered by the prereg. Fail loud rather than pick: see
+                # READOUT_PATH_20260816.md "prereg ambiguity 3".
+                raise GateAbort("PROTOCOL_VIOLATION",
+                                f"step {st} has {len(c)} margin-computable dirs that DISAGREE "
+                                f"on median_margin ({sorted(mm)}): "
+                                f"{[x['dir'] for x in c]}. The prereg names one arm per step; "
+                                "refusing to choose.")
+        resolved[st] = c[0]
+    # Keyed by int throughout -- callers index it with the grid's own int steps. (An earlier
+    # draft re-keyed this to str for the JSON and every int lookup silently missed, so the
+    # census found step200000 and `missing` still listed it. Caught by fixture check F1.)
+    census["resolved"] = resolved
+    census["absent_steps"] = absent
+    return census
+
+
+def clause5_revision3(damaged_range: float, sigma_hat: float, rho_core6_heal: float,
+                      roots=None) -> dict:
+    """THE GATE. Loads median_margin at the grid steps from disk, computes phi on GRID_I
+    (primary) and GRID_W (secondary), and combines by the prereg's severity rule.
+
+    Returns a report dict. `verdict` is one of KILL / NARROWED / PASS / an abort name.
+    Never interpolates a missing rung, never shortens a grid, never returns a NaN.
+    """
+    rep = {
+        "revision": "3 (2026-08-16, PRE-DATA). Implements DECIDABILITY_FIX_20260816.md sec 3.",
+        "primary_metric": "median_margin",
+        "margin_definition": "|score(gold) - max(other)| on norm_scores, pooled over the 6 "
+                             "core tasks; same definition as margins() at :172-201",
+        "readout_arm": {"ckpt_dir": READOUT_CKPT_DIR, "keep_front_layers": READOUT_KEEP_FRONT,
+                        "n_fresh_layers": READOUT_N_FRESH, "seed": 1234,
+                        "base_model": READOUT_BASE_MODEL, "only_ckpt_step_varies": True},
+        "unverifiable_from_disk": UNVERIFIABLE_FROM_DISK,
+        "D_damaged_range": damaged_range, "sigma_hat": sigma_hat,
+        "comparator_interval_I": list(COMPARATOR_INTERVAL_I),
+        "abs_I": COMPARATOR_INTERVAL_I[1] - COMPARATOR_INTERVAL_I[0],
+        "span_116500_status": "DESCRIPTIVE ONLY -- BARRED from multiplying any slope "
+                              "(the revision-1 defect); used only to test grid support",
+        "grids": {nm: {"steps": g, "span": s, "sup_ratio": sup, "role": role,
+                       "points_inside_I": sum(1 for x in g
+                                              if COMPARATOR_INTERVAL_I[0] <= x
+                                              <= COMPARATOR_INTERVAL_I[1])}
+                  for nm, g, s, sup, role in READOUT_GRIDS},
+        "combine_rule": "FINAL = the MORE SEVERE of verdict_I and verdict_W "
+                        "(KILL > NARROWED > PASS)",
+        "mandatory_codisclosure_spearman_core6_heal_steps": rho_core6_heal,
+        "union_steps": READOUT_UNION_STEPS,
+    }
+    if sigma_hat == 0:
+        rep["verdict"] = "FLOOR_UNMEASURABLE"
+        rep["why"] = "sigma_hat == 0 -> the contrast is not a real nuisance contrast. NOT a pass."
+        return rep
+    guard = FLOOR_SAFETY_FACTOR * sigma_hat
+    rep["denominator_guard_6sigma"] = guard
+    if damaged_range is None or damaged_range <= 0 or damaged_range < guard:
+        rep["verdict"] = "DENOMINATOR_UNRESOLVED"
+        rep["why"] = f"D={damaged_range} below guard {guard}. phi UNDEFINED. NON-PASS."
+        return rep
+
+    try:
+        census = find_readout_arms(READOUT_UNION_STEPS, roots=roots)
+    except GateAbort as e:
+        rep["verdict"], rep["why"], rep["abort_detail"] = e.code, e.msg, e.detail
+        return rep
+    rep["readout_census"] = {
+        "roots": census["roots"],
+        # str-keyed on purpose: this half is for the JSON/print side. The int-keyed
+        # census["resolved"] is what the grid lookups below use.
+        "found": {str(k): {"dir": v["dir"], "disk": v["disk"], "ckpt": v["ckpt"],
+                           "median_margin": v["median_margin"], "n_pooled": v["n_pooled"]}
+                  for k, v in census["resolved"].items()},
+        "absent_steps": census["absent_steps"],
+    }
+
+    missing = {nm: [s for s in g if s not in census["resolved"]]
+               for nm, g, _, _, _ in READOUT_GRIDS}
+    rep["missing_per_grid"] = missing
+    if any(missing.values()):
+        rep["verdict"] = "READOUT_ABSENT"
+        rep["why"] = ("a named arm of a grid lacks a margin-computable eval dir. phi is "
+                      "UNDEFINED -- not small, not large. NON-PASS: an undefined ratio "
+                      "cannot license 244-2560 GPU-h.")
+        rep["blocks_spend"] = True
+        return rep
+
+    per_grid = {}
+    try:
+        for nm, g, s, _sup, _role in READOUT_GRIDS:
+            y = [census["resolved"][st]["median_margin"] for st in g]
+            per_grid[nm] = phi_budget_grid(y, damaged_range, nm, g, s, evaluated_steps=g)
+    except GateAbort as e:
+        rep["verdict"], rep["why"], rep["abort_detail"] = e.code, e.msg, e.detail
+        rep["per_grid"] = per_grid
+        return rep
+    rep["per_grid"] = per_grid
+    rep["verdict"] = combine_verdicts(per_grid)
+    rep["blocks_spend"] = rep["verdict"] != "PASS"
+    return rep
+
+
+def print_clause5_revision3(rep: dict) -> None:
+    """MANDATORY REPORTING: every phi is printed with its grid, span, binding term, D,
+    sigma_hat, and Spearman(core6, heal_steps). A phi without its span is the artefact the
+    decidability lens caught (116500 vs 175000 vs 100000 differ by up to 1.75x).
+    """
+    print("\n=== CLAUSE 5, REVISION 3 (two-grid, interval-matched) ===")
+    print(f"  D (damaged median_margin range) = {rep['D_damaged_range']:.6f}   "
+          f"sigma_hat = {rep['sigma_hat']:.6f}   "
+          f"6*sigma guard = {rep.get('denominator_guard_6sigma', float('nan')):.7f}")
+    print(f"  Spearman(core6, heal_steps) = "
+          f"{rep['mandatory_codisclosure_spearman_core6_heal_steps']:+.4f} (wzc1 ladder; "
+          f"+0.8721 on zwfy6 -- naming the ladder is mandatory)")
+    print(f"  comparator interval I = {rep['comparator_interval_I']} |I| = {rep['abs_I']} "
+          f"({rep['span_116500_status']})")
+    for nm, g in rep["grids"].items():
+        print(f"  {nm:7s} {g['role']:9s} steps={g['steps']} span={g['span']} "
+              f"sup={g['sup_ratio']:.6f} inside_I={g['points_inside_I']}/{len(g['steps'])}")
+    u = rep["unverifiable_from_disk"]
+    print(f"  NOT VERIFIABLE FROM DISK (disclosed prereg gap): {', '.join(u['fields'])}")
+    print(f"    enforced instead by: {u['who_enforces'].split('.')[0]}")
+    for r in rep.get("readout_census", {}).get("roots", []):
+        if r.get("searched"):
+            print(f"  scanned {r['disk']:6s} {r['root']}  ({r['n_dirs_scanned']} dirs)")
+        else:
+            print(f"  UNSEARCHABLE {r['disk']:6s} {r['root']}  -> {r['why']}")
+    found = rep.get("readout_census", {}).get("found", {})
+    for st in [str(s) for s in rep["union_steps"]]:
+        if st in found:
+            f = found[st]
+            print(f"    step{st:<7s} median_margin={f['median_margin']:.6f} "
+                  f"n={f['n_pooled']} <- {f['disk']}:{Path(f['dir']).name}")
+        else:
+            print(f"    step{st:<7s} ABSENT")
+    for nm, r in rep.get("per_grid", {}).items():
+        print(f"  phi_{nm} = {r['phi']:.4f} -> {r['verdict']}   "
+              f"[grid={r['steps']} span={r['span_used']} binding={r['binding_term']} "
+              f"range_term={r['range_term']:.6f} slope_term={r['slope_term']:.6f} "
+              f"D={r['damaged_range_D']:.6f}]")
+    v = rep["verdict"]
+    if v in VERDICT_SEVERITY:
+        print(f"  COMBINE ({rep['combine_rule']})")
+        print(f"  ==> GATE VERDICT = {v}"
+              f"{'  [NON-PASS -- blocks the 244-2560 GPU-h ladder]' if v != 'PASS' else ''}")
+    else:
+        print(f"  ==> GATE VERDICT = {v}   [HARD ABORT, NON-PASS]")
+        print(f"      why: {rep.get('why','')}")
+        for nm, ms in (rep.get("missing_per_grid") or {}).items():
+            if ms:
+                print(f"      {nm} missing {len(ms)} of "
+                      f"{len(rep['grids'][nm]['steps'])} arms: {ms}")
+        print("      phi is UNDEFINED -- not small, not large. No interpolation, no "
+              "shortened grid, no NaN.")
+
+
+ABORT_EXIT_CODES = {"READOUT_ABSENT": 3, "PROTOCOL_VIOLATION": 4,
+                    "FIELD_ASYMMETRY": 4, "DENOMINATOR_UNRESOLVED": 5,
+                    "FLOOR_UNMEASURABLE": 5, "SHARD_SAMPLES_ARE_NOT_A_READOUT": 4}
 
 
 def phi_budget(y_readout, damaged_range, span=READOUT_SPAN, steps=None):
@@ -428,6 +955,13 @@ def main():
         print("DENOMINATOR_UNRESOLVED: damaged range below the floor guard; phi is UNDEFINED "
               "(not small, not large). Blocks the family-ladder spend exactly as a KILL would.")
 
+    # ---- REVISION 3: the actual read-out path. Loads y from disk and computes phi. -------
+    # This is the part that did not exist before 2026-08-16: revision 2's phi_budget() was
+    # only ever called from selftest_phi() on hand-written vectors, so no on-disk read-out
+    # ever reached the decision statistic.
+    clause5_r3 = clause5_revision3(dam_range, sigma["median_margin"],
+                                   clause5["spearman_core6_heal_steps_MANDATORY_CODISCLOSURE"])
+
     out = {
         "gate": "B04 G0 floor-first (0 GPU)",
         "date": "2026-08-14",
@@ -445,6 +979,9 @@ def main():
         "fragility_stats": rung,
         "per_metric_floor_analysis": per_metric,
         "clause5_budget_discrimination": clause5,
+        # Revision 2's key above is UNCHANGED (provenance). Revision 3 is a NEW key, so the
+        # two are auditable side by side and no prior number is overwritten.
+        "clause5_budget_discrimination_revision3": clause5_r3,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=2) + "\n")
@@ -480,6 +1017,321 @@ def main():
               f"(binding term: {ap['binding_term']})")
     print(f"  MANDATORY co-disclosure Spearman(core6, heal_steps) = "
           f"{clause5['spearman_core6_heal_steps_MANDATORY_CODISCLOSURE']:+.4f} (wzc1 ladder)")
+
+    # ---- REVISION 3 read-out: report and set the process exit code from the verdict -------
+    print_clause5_revision3(clause5_r3)
+    v3 = clause5_r3["verdict"]
+    if v3 not in VERDICT_SEVERITY:
+        # A hard abort must be visible to a shell caller, not only in the JSON. It is a
+        # NON-PASS, so it must NOT exit 0.
+        sys.exit(ABORT_EXIT_CODES.get(v3, 6))
+
+
+def selftest_readout_fixture() -> None:
+    """SELFTEST 2 (MAIN, 2026-08-16): exercise the REAL disk-reading path end to end.
+
+    The pre-existing selftest_phi() proves the FUNCTION is falsifiable; it says nothing
+    about whether the GATE can run, because it feeds hand-written y-vectors. This one
+    builds a synthetic fixture tree of fake eval dirs and drives clause5_revision3()
+    against it, so that "selftest passes" says something about the pipeline.
+
+    Nothing here points at the live olmo2_downstream_results/ -- the fixture is a freshly
+    written tree in a throwaway tmpdir and is removed afterwards. It is NEVER a symlink to
+    a live evidence dir: this project's integrity checkers are WRITERS
+    (memory/repo-checkers-are-writers-not-probes.md), so a symlinked fixture could be
+    mutated in place.
+    """
+    import shutil
+    import tempfile
+
+    D = 0.02181999999999995
+    SIG = 0.0005405884438142497
+    RHO = 0.6668859288553503
+
+    def write_dir(root: Path, name: str, step: int, mm: float, *, n_shards=8,
+                  shard_files=8, keep=14, fresh=2, add_bos=False, ckpt=None,
+                  tasks=None, drop_field=None, row_delta=0, n_scored_delta=0, n_nan=0,
+                  base_model=None):
+        """Write a minimal-but-real eval dir: 6 per_example jsonl + shards + summary.json.
+
+        Rows are constructed so that the pooled MEDIAN of |gold - max(other)| is exactly
+        `mm`: every row gets the same margin, so the median is that margin regardless of n.
+        """
+        d = root / name
+        d.mkdir(parents=True, exist_ok=True)
+        tasks = TASKS if tasks is None else tasks
+        for i in range(shard_files):
+            (d / f"shard{i}of8.json").write_text("{}\n")
+        tj = {}
+        for t in tasks:
+            n = EXPECTED_N.get(t, 100)
+            with open(d / f"per_example_{t}.jsonl", "w") as f:
+                for j in range(n + (row_delta if t == tasks[0] else 0)):
+                    row = {"item_id": j, "gold_letter": "A",
+                           "norm_scores": {"A": round(mm, 6), "B": 0.0},
+                           "norm_lens": {"A": 10, "B": 10},
+                           "option_scores": {"A": round(mm * 10, 6), "B": 0.0},
+                           "nan": False}
+                    if drop_field and t == tasks[-1]:
+                        row.pop(drop_field, None)
+                    f.write(json.dumps(row) + "\n")
+            tj[t] = {"n": n, "n_scored": n + (n_scored_delta if t == tasks[0] else 0),
+                     "n_nan": n_nan if t == tasks[0] else 0, "acc": 0.3, "acc_norm": 0.4}
+        json.dump({"output_name": name, "n_shards": n_shards, "add_bos": add_bos,
+                   "meta": {"mode": "pruned", "keep_front_layers": keep,
+                            "n_fresh_layers": fresh, "num_hidden_layers": 16,
+                            "ckpt_step": step,
+                            "ckpt": ckpt or f"{READOUT_CKPT_DIR}/step{step}.pt",
+                            "base_model": base_model or READOUT_BASE_MODEL,
+                            "add_bos": add_bos},
+                   "tasks": tj}, open(d / "summary.json", "w"))
+        return d
+
+    tmp = Path(tempfile.mkdtemp(prefix="b04_readout_fixture_"))
+    assert not tmp.is_symlink(), "fixture root must be a real dir, never a symlink"
+    ok = 0
+    try:
+        def run(sub, **kw):
+            return clause5_revision3(D, SIG, RHO, roots=[("fixture", tmp / sub)], **kw)
+
+        # --- F1: only step200000 present == TODAY's real disk state -> READOUT_ABSENT -----
+        r = write_dir(tmp / "f1", "arm_step200000", 200000, 0.108500)
+        rep = run("f1")
+        assert rep["verdict"] == "READOUT_ABSENT", rep["verdict"]
+        assert sorted(rep["missing_per_grid"]["GRID_I"]) == [100000, 128000, 153500, 175000]
+        assert sorted(rep["missing_per_grid"]["GRID_W"]) == [25000, 50000, 100000, 128000]
+        assert "per_grid" not in rep, "phi must not be computed with a hole"
+        assert rep["blocks_spend"] is True
+        print(f"  [ok] F1 one-arm-only        -> {rep['verdict']}, GRID_I missing 4, "
+              f"GRID_W missing 4, no phi computed"); ok += 1
+
+        # --- F2: all 7 arms, gentle ramp -> phi_I PASS, phi_W NARROWED, combined NARROWED -
+        Y2 = {25000: 0.100000, 50000: 0.101000, 100000: 0.102000, 128000: 0.103000,
+              153500: 0.104000, 175000: 0.105000, 200000: 0.108500}
+        for st, mm in Y2.items():
+            write_dir(tmp / "f2", f"arm_step{st}", st, mm)
+        rep = run("f2")
+        assert rep["verdict"] == "NARROWED", rep
+        pi, pw = rep["per_grid"]["GRID_I"], rep["per_grid"]["GRID_W"]
+        assert pi["verdict"] == "PASS" and pw["verdict"] == "NARROWED", (pi, pw)
+        assert abs(pi["phi"] - 0.2978918423464721) < 1e-12, pi["phi"]
+        assert abs(pw["phi"] - 0.38955087076077055) < 1e-12, pw["phi"]
+        assert pi["span_used"] == 100000 and pw["span_used"] == 175000
+        print(f"  [ok] F2 full 7-arm ramp     -> phi_I={pi['phi']:.4f} {pi['verdict']} @S=100000, "
+              f"phi_W={pw['phi']:.4f} {pw['verdict']} @S=175000, combined={rep['verdict']} "
+              "(the SECONDARY grid carries it -- the combine rule is load-bearing)"); ok += 1
+
+        # --- F3: steep early compression -> phi_I NARROWED, phi_W KILL, combined KILL -----
+        Y3 = {25000: 0.090000, 50000: 0.093000, 100000: 0.096000, 128000: 0.100000,
+              153500: 0.103000, 175000: 0.105000, 200000: 0.108500}
+        for st, mm in Y3.items():
+            write_dir(tmp / "f3", f"arm_step{st}", st, mm)
+        rep = run("f3")
+        assert rep["verdict"] == "KILL", rep
+        assert rep["per_grid"]["GRID_I"]["verdict"] == "NARROWED"
+        assert rep["per_grid"]["GRID_W"]["verdict"] == "KILL"
+        print(f"  [ok] F3 steep early         -> phi_I={rep['per_grid']['GRID_I']['phi']:.4f} "
+              f"NARROWED, phi_W={rep['per_grid']['GRID_W']['phi']:.4f} KILL, "
+              f"combined={rep['verdict']}"); ok += 1
+
+        # --- F4: flat read-out -> PASS on both grids --------------------------------------
+        Y4 = {s: 0.108500 for s in READOUT_UNION_STEPS}
+        Y4[200000] = 0.108900
+        for st, mm in Y4.items():
+            write_dir(tmp / "f4", f"arm_step{st}", st, mm)
+        rep = run("f4")
+        assert rep["verdict"] == "PASS", rep
+        assert rep["blocks_spend"] is False
+        print(f"  [ok] F4 flat read-out       -> phi_I={rep['per_grid']['GRID_I']['phi']:.4f}, "
+              f"phi_W={rep['per_grid']['GRID_W']['phi']:.4f}, combined=PASS "
+              "(all three verdicts reachable THROUGH DISK, not only in arithmetic)"); ok += 1
+
+        # --- F5: 5 of 8 shard files -- the historical silent-merge disaster ---------------
+        for st, mm in Y4.items():
+            write_dir(tmp / "f5", f"arm_step{st}", st, mm,
+                      shard_files=(5 if st == 153500 else 8))
+        rep = run("f5")
+        assert rep["verdict"] == "PROTOCOL_VIOLATION" and "5/8 shard" in rep["why"], rep
+        print(f"  [ok] F5 5/8 shards          -> {rep['verdict']} ({rep['why'][:58]}...)"); ok += 1
+
+        # --- F6: 8 shard files but summary.n_shards=5 (partial merge that LOOKS complete) -
+        for st, mm in Y4.items():
+            write_dir(tmp / "f6", f"arm_step{st}", st, mm, n_shards=(5 if st == 175000 else 8))
+        rep = run("f6")
+        assert rep["verdict"] == "PROTOCOL_VIOLATION" and "PARTIAL MERGE" in rep["why"], rep
+        print(f"  [ok] F6 n_shards=5 in summary -> {rep['verdict']} (PARTIAL MERGE)"); ok += 1
+
+        # --- F7: per-task n_scored short by 100 ------------------------------------------
+        for st, mm in Y4.items():
+            write_dir(tmp / "f7", f"arm_step{st}", st, mm,
+                      n_scored_delta=(-100 if st == 128000 else 0))
+        rep = run("f7")
+        assert rep["verdict"] == "PROTOCOL_VIOLATION" and "n_scored" in rep["why"], rep
+        print(f"  [ok] F7 n_scored short 100  -> {rep['verdict']} ({rep['why'][:58]}...)"); ok += 1
+
+        # --- F8: per_example truncated while summary STILL claims complete ----------------
+        # The dangerous shape: summary.json passes every check, and only the row count of the
+        # file phi is actually computed from is short. n_scored_delta is deliberately 0 here.
+        for st, mm in Y4.items():
+            write_dir(tmp / "f8", f"arm_step{st}", st, mm,
+                      row_delta=(-100 if st == 100000 else 0))
+        rep = run("f8")
+        assert rep["verdict"] == "PROTOCOL_VIOLATION" and "rows" in rep["why"], rep
+        print(f"  [ok] F8 per_example truncated, summary clean -> {rep['verdict']} "
+              f"({rep['why'][:52]}...)"); ok += 1
+
+        # --- F9: norm_scores stripped -> FIELD_ASYMMETRY ---------------------------------
+        for st, mm in Y4.items():
+            write_dir(tmp / "f9", f"arm_step{st}", st, mm,
+                      drop_field=("norm_scores" if st == 50000 else None))
+        rep = run("f9")
+        assert rep["verdict"] == "FIELD_ASYMMETRY", rep
+        print(f"  [ok] F9 norm_scores stripped -> {rep['verdict']}"); ok += 1
+
+        # --- F10: right dir NAME, WRONG checkpoint -> the arm reads as ABSENT, never used -
+        # This is the failure that would otherwise feed a wrong y into phi unnoticed.
+        for st, mm in Y4.items():
+            write_dir(tmp / "f10", f"arm_step{st}", st, mm,
+                      ckpt=("outputs/olmo2_probe2_7B_keep14fresh2/step153500.pt"
+                            if st == 153500 else None))
+        rep = run("f10")
+        assert rep["verdict"] == "READOUT_ABSENT", rep
+        assert rep["missing_per_grid"]["GRID_I"] == [153500], rep["missing_per_grid"]
+        print(f"  [ok] F10 wrong ckpt, right name -> {rep['verdict']} (GRID_I missing "
+              "[153500]; the dir is NOT silently accepted)"); ok += 1
+
+        # --- F11: ckpt_step disagrees with the dir's own name ----------------------------
+        # Identification is by meta.ckpt_step, never by the dir name. The dir NAMED 175000
+        # declares ckpt_step 200000, so 175000 must read as ABSENT. Its median_margin is set
+        # equal to the true 200000 arm's so the only defect under test is the mislabel (a
+        # DISAGREEING duplicate is a different fault, covered by F16).
+        for st, mm in Y4.items():
+            write_dir(tmp / "f11", f"arm_step{st}", st,
+                      (Y4[200000] if st == 175000 else mm))
+        p = tmp / "f11" / "arm_step175000" / "summary.json"
+        j = json.load(open(p))
+        j["meta"]["ckpt_step"] = 200000
+        j["meta"]["ckpt"] = f"{READOUT_CKPT_DIR}/step200000.pt"
+        json.dump(j, open(p, "w"))
+        rep = run("f11")
+        assert rep["verdict"] == "READOUT_ABSENT", rep
+        assert rep["missing_per_grid"]["GRID_I"] == [175000], rep["missing_per_grid"]
+        print(f"  [ok] F11 ckpt_step != dir name -> {rep['verdict']} (GRID_I missing "
+              "[175000]; identification is by meta, not by name)"); ok += 1
+
+        # --- F12: damage NOT held fixed (keep/fresh drift) -------------------------------
+        for st, mm in Y4.items():
+            write_dir(tmp / "f12", f"arm_step{st}", st, mm, keep=(12 if st == 128000 else 14))
+        rep = run("f12")
+        assert rep["verdict"] == "PROTOCOL_VIOLATION" and "keep/fresh" in rep["why"], rep
+        print(f"  [ok] F12 keep/fresh drift   -> {rep['verdict']} (damage not held fixed)"); ok += 1
+
+        # --- F13: add_bos True -----------------------------------------------------------
+        for st, mm in Y4.items():
+            write_dir(tmp / "f13", f"arm_step{st}", st, mm, add_bos=(st == 25000))
+        rep = run("f13")
+        assert rep["verdict"] == "PROTOCOL_VIOLATION" and "add_bos" in rep["why"], rep
+        print(f"  [ok] F13 add_bos=True       -> {rep['verdict']}"); ok += 1
+
+        # --- F14: n_nan != 0 -------------------------------------------------------------
+        for st, mm in Y4.items():
+            write_dir(tmp / "f14", f"arm_step{st}", st, mm, n_nan=(3 if st == 200000 else 0))
+        rep = run("f14")
+        assert rep["verdict"] == "PROTOCOL_VIOLATION" and "n_nan" in rep["why"], rep
+        print(f"  [ok] F14 n_nan=3            -> {rep['verdict']}"); ok += 1
+
+        # --- F15: the know5 dir shape (right ckpt, DIFFERENT task set) is not a candidate -
+        write_dir(tmp / "f15", "arm_step100000_know", 100000, 0.5,
+                  tasks=["mmlu", "boolq", "social_iqa"])
+        for st, mm in Y4.items():
+            write_dir(tmp / "f15", f"arm_step{st}", st, mm)
+        rep = run("f15")
+        assert rep["verdict"] == "PASS", rep
+        assert Path(rep["readout_census"]["found"]["100000"]["dir"]).name == "arm_step100000"
+        print(f"  [ok] F15 know5-shaped decoy -> ignored, core6 dir used, "
+              f"combined={rep['verdict']}"); ok += 1
+
+        # --- F16: two core6 dirs for the same step that DISAGREE -> refuse to choose ------
+        for st, mm in Y4.items():
+            write_dir(tmp / "f16", f"arm_step{st}", st, mm)
+        write_dir(tmp / "f16", "arm_step100000_dup", 100000, 0.099999)
+        rep = run("f16")
+        assert rep["verdict"] == "PROTOCOL_VIOLATION" and "DISAGREE" in rep["why"], rep
+        print(f"  [ok] F16 duplicate arms disagree -> {rep['verdict']} (refuses to pick)"); ok += 1
+
+        # --- F17: wrong base_model -> PROTOCOL_VIOLATION ----------------------------------
+        for st, mm in Y4.items():
+            write_dir(tmp / "f17", f"arm_step{st}", st, mm,
+                      base_model=("../models/OLMo-2-1124-13B" if st == 100000 else None))
+        rep = run("f17")
+        assert rep["verdict"] == "PROTOCOL_VIOLATION" and "base_model" in rep["why"], rep
+        print(f"  [ok] F17 wrong base_model   -> {rep['verdict']}"); ok += 1
+
+        # --- F18: an UNMOUNTED root is reported UNSEARCHABLE, never as "empty" ------------
+        rep = clause5_revision3(D, SIG, RHO, roots=[
+            ("fixture", tmp / "f4"),
+            ("nosuchdisk", Path("/apdcephfs_no_such_disk_b04/olmo2_downstream_results"))])
+        assert rep["verdict"] == "PASS", rep
+        roots = {r["disk"]: r for r in rep["readout_census"]["roots"]}
+        assert roots["nosuchdisk"]["searched"] is False
+        assert "NOT established" in roots["nosuchdisk"]["why"]
+        print(f"  [ok] F18 unmounted root     -> reported searched=False with a reason, "
+              "not treated as empty"); ok += 1
+
+        # --- F19: a degenerate denominator aborts before any disk read --------------------
+        rep = clause5_revision3(0.0, SIG, RHO, roots=[("fixture", tmp / "f4")])
+        assert rep["verdict"] == "DENOMINATOR_UNRESOLVED", rep
+        rep = clause5_revision3(0.001, SIG, RHO, roots=[("fixture", tmp / "f4")])
+        assert rep["verdict"] == "DENOMINATOR_UNRESOLVED", rep   # 0.001 < 6*sigma = 0.003244
+        rep = clause5_revision3(D, 0.0, RHO, roots=[("fixture", tmp / "f4")])
+        assert rep["verdict"] == "FLOOR_UNMEASURABLE", rep
+        print(f"  [ok] F19 D<=0 / D<6sigma / sigma==0 -> DENOMINATOR_UNRESOLVED x2, "
+              "FLOOR_UNMEASURABLE"); ok += 1
+
+        # --- F20: a shortened or extended grid can never reach phi ------------------------
+        for bad in ([100000, 128000, 153500, 175000],
+                    [100000, 128000, 153500, 175000, 190000, 200000]):
+            try:
+                phi_budget_grid([0.1] * len(bad), D, "GRID_I", GRID_I, SPAN_I,
+                                evaluated_steps=bad)
+            except GateAbort as e:
+                assert e.code == "PROTOCOL_VIOLATION", e.code
+            else:
+                sys.exit("FATAL: a mismatched step set did NOT abort")
+        try:
+            phi_budget_grid([0.1, 0.1, None, 0.1, 0.1], D, "GRID_I", GRID_I, SPAN_I)
+        except GateAbort as e:
+            assert e.code == "READOUT_ABSENT", e.code
+        else:
+            sys.exit("FATAL: a None in y did NOT abort")
+        try:
+            phi_budget_grid([0.1, 0.1, float("nan"), 0.1, 0.1], D, "GRID_I", GRID_I, SPAN_I)
+        except GateAbort as e:
+            assert e.code == "READOUT_ABSENT", e.code
+        else:
+            sys.exit("FATAL: a NaN in y did NOT abort")
+        print(f"  [ok] F20 k=4 / k=6 / None / NaN -> all abort; no shortened grid, no NaN "
+              "flows onward"); ok += 1
+
+        # --- F21: the combine rule is never laxer than either grid alone ------------------
+        import random
+        rnd = random.Random(20260816)
+        worse = 0
+        for _ in range(20000):
+            y = {s: 0.09 + rnd.random() * 0.03 for s in READOUT_UNION_STEPS}
+            ri = phi_budget_grid([y[s] for s in GRID_I], D, "GRID_I", GRID_I, SPAN_I)
+            rw = phi_budget_grid([y[s] for s in GRID_W], D, "GRID_W", GRID_W, SPAN_W)
+            comb = combine_verdicts({"GRID_I": ri, "GRID_W": rw})
+            if VERDICT_SEVERITY[comb] < max(VERDICT_SEVERITY[ri["verdict"]],
+                                            VERDICT_SEVERITY[rw["verdict"]]):
+                worse += 1
+        assert worse == 0, worse
+        print(f"  [ok] F21 combine monotone   -> 0/20000 random shapes where combined was "
+              "less severe than either grid alone"); ok += 1
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    print(f"[ok] fixture selftest: {ok}/21 checks passed -- the DISK-READING path is "
+          "exercised end to end, not only the arithmetic")
 
 
 def selftest_phi(dam_range: float = 0.02181999999999995) -> None:
@@ -540,6 +1392,24 @@ def selftest_phi(dam_range: float = 0.02181999999999995) -> None:
 
 if __name__ == "__main__":
     if "--selftest" in sys.argv:
+        # SELFTEST 1 (arithmetic, revision 2, hand-written y-vectors) -- unchanged.
         selftest_phi()
+        # SELFTEST 2 (pipeline, revision 3, synthetic on-disk fixture) -- added 2026-08-16.
+        # Both must pass. The first says the function is falsifiable; only the second says
+        # anything about whether the gate can RUN.
+        print("\n--- fixture selftest: the REAL disk-reading path, on a synthetic tree ---")
+        selftest_readout_fixture()
+    elif "--readout-only" in sys.argv:
+        # Compute ONLY clause 5 revision 3, from the constants already banked in the
+        # evidence JSON. Does not rewrite the evidence JSON. Exits non-zero on any abort.
+        ev = json.load(open(OUT))
+        c5 = ev["clause5_budget_discrimination"]
+        rep = clause5_revision3(
+            c5["damaged_range_median_margin"],
+            ev["per_metric_floor_analysis"]["median_margin"]["sigma_hat"],
+            c5["spearman_core6_heal_steps_MANDATORY_CODISCLOSURE"])
+        print_clause5_revision3(rep)
+        if rep["verdict"] not in VERDICT_SEVERITY:
+            sys.exit(ABORT_EXIT_CODES.get(rep["verdict"], 6))
     else:
         main()
