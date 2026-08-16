@@ -1,5 +1,16 @@
 % Downstream zero-shot MC + MMLU per arm (7B).
 % Source: PAPER_B_DATA.md secs. 3(b), 8.1--8.2.
+% NOTE (2026-08-17): those two PAPER_B_DATA sections are the 2026-07-27 snapshot and describe the
+% OLDER shallow rungs (keep12@111500, keep10@10000, keep8@44000), not the rows printed below.
+% Evidence paths for the keep8/keep10/keep12 rows as printed, plus a 33-cell recomputation done
+% from the raw per-shard JSONs rather than from summary.json, are recorded in
+%   paperB/TABLE4_PROVENANCE_20260817.md
+% In brief: the ten non-MMLU columns come from zwfy6-ONLY
+%   olmo2_downstream_results/7B_keep{8,10,12}_step{121000,83500,124000}_v2{,_know}/summary.json
+% and the MMLU column from the letter_acc field (both disks, byte-identical) of
+%   olmo2_mmlu_content_results/7B_keep{8,10,12}_step{121000,83500,124000}/summary.json
+% Do NOT source MMLU from the *_wzc1 or the *_v2 mmlu dirs -- they are near-miss decoys, and
+% 7B_keep12_step111500_wzc1 is additionally the wrong step. See that file's sec. 2b.
 \begin{table*}[t]
 \centering
 \scriptsize

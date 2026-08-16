@@ -122,6 +122,33 @@ acc_norm×5 + winogrande acc），bug 只出在 aux5/know5 那一列。
 `[PENDING training]`：full32 32L continued-pretraining control（P1.1，LOCAL/wzc1 #100）未到 200k，本审计不含，跑满后按同口径补一行。
 `[NOT MISSING]`：frozen-front / random-init 在本机 `olmo2_downstream_results/` 已存在（分别为 `7B_freezefront_step200000` 与 `7B_scratch16L_step200000`，random-init = from-scratch 16L），无需去 .82 找。
 
+> ⚠️ **2026-08-17 补记（#192 A+ 之后，本节上面的 keep8/keep10/keep12 路径已不是 Table 4 的来源）。**
+> commit `6d15049` 把 Table 4 的三个浅层行换成了单协议 `_v2` 重测，但**没写任何证据路径**，
+> 且这些目录**不在 `outputs/` 也不在 `evals/`**（`evals/` 在本仓根本不存在），
+> 所以 `grep -r '0\.6936' outputs evals` 两盘都返回空 —— 那是**检索范围假象，不是文件缺失**。
+>
+> Table 4 三行的真实来源（完整审计见 `paperB/TABLE4_PROVENANCE_20260817.md`）：
+> - **十个非 MMLU 列**：**仅 zwfy6**
+>   `olmo2_downstream_results/7B_keep{8,10,12}_step{121000,83500,124000}_v2{,_know}/summary.json`
+>   （wzc1 上 `find -maxdepth 6 -type d -name '*keep{8,10,12}_step*_v2*'` 为空；
+>   按 `paperB/data/README.md` 的口径属 disk-local，非 portable）。
+> - **MMLU 列**：`olmo2_mmlu_content_results/7B_keep{8,10,12}_step{121000,83500,124000}/summary.json`
+>   的 **`letter_acc`** 字段，两盘 sha256 一致。
+>   ⚠️ 同名的 `*_wzc1`（.2546/.2717/.2713）与 mmlu 树里的 `*_v2`（.2543/.2707/.2724）都是**诱饵**，
+>   且 `7B_keep12_step111500_wzc1` **step 也不对**（111500≠124000）。
+>
+> **已核**：33/33 cell 复现（含从 `shard{0..7}of8.json` 绕过 `summary.json` 重算，
+> keep12 arc_easy = 1648/2376 = 0.693603 → `.694`），逐 cell 断言
+> `n_scored==n==expected` / `n_nan==0` / `n_shards==8` / `add_bos==false` / `ckpt_step==` 行内 step，
+> 三个脚本 `PY_RC=0`。无一 cell 不复现。
+>
+> **两处仍需注意**：(1) `paperB/data/raw/` 里 keep8@121k **完全没有**，keep12@124k 是**旧的 6/8 缺陷文件**
+> （`arc_easy n_scored=1782` 而 `n_shards` 仍写 8 —— 缺陷可在文件中直接验证），
+> keep10@83.5k 是另一次（pre-`_v2`）测量，与 Table 4 最大差 0.40pp（keep12 侧 0.49pp，均在 caption 披露的
+> ≤0.5pt 同架构跨 stack 界内）。(2) `paperB/scripts/build_appendix_artifacts.py` 只经
+> `RAW = ROOT/"data"/"raw"` 取数且断言仍指向旧 rung，**不读任何 `_v2` 路径** ——
+> 它跑绿**不构成** Table 4 浅层三行的证据。
+
 ---
 
 ## 6. 一句话结论
