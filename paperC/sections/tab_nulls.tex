@@ -35,7 +35,11 @@ $p=\Pr(\hat f\ge\text{observed floor})$ under the realisable null, evaluated at 
 rational value $\text{count}/n$ ($10^{6}$ draws per construct, three seeds, two independent
 implementations; the reported $p<10^{-5}$ bound is the more conservative one carried over from the
 earlier $2\times10^{5}$-draw run; evidence \textsf{E-CAL}, the single machine-readable source for
-these rows). \textbf{Only MMLU and BoolQ have floors a balanced null could not plausibly produce}
+these rows). The Floor column prints the stored six-decimal value, which on five of these nine
+rows is strictly \emph{above} $\text{count}/n$ and would demand one extra count if used as the
+tail threshold; $p$ is therefore not computed from the printed figure, and
+Section~\ref{sec:legality-aware-null} gives the affected rows and the size of the effect.
+\textbf{Only MMLU and BoolQ have floors a balanced null could not plausibly produce}
 ($p<10^{-5}$); both are constructs with a genuinely fixed option count, so for them the choice of
 null is not in question. For the six remaining letter constructs the observed floor lies inside the
 estimator's own noise ($p=0.083$--$0.853$), and on CommonsenseQA and PIQA it is in fact
