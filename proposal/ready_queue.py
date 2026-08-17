@@ -539,9 +539,89 @@ def lifecycle_keys(doc):
 LIFECYCLE_KEYS = ["lifecycle_20260816", "lifecycle"]
 
 
+# Language by which an append-only record RETRACTS something it said earlier in the
+# same blob. Anchored on the SUPERSEDING half, never on the claim being retracted:
+# "does not exist" is what we are trying to stop believing, so it must not be what
+# decides whether we keep reading.
+_RETRACTION_RE = re.compile(
+    r"SUPERSED|NOW EXISTS|IS NOW DISCHARGED|IT DOES|NO LONGER|CORRECT[ED]?\b|"
+    r"APPENDED 20\d{6}|NOT rewritten|kept verbatim|HAS NOW BEEN DONE|RESOLVED|"
+    r"WAS WRONG|DISCHARGED", re.I)
+
+# The marker is also the idempotence sentinel (see _txt), so it must be a string that
+# cannot plausibly occur in a STATUS.json prose field.
+_SPLICE_MARK = " ⟨TAIL RETRACTS, spliced⟩ "
+
+
 def _txt(v, n=400):
+    """Truncate for display WITHOUT severing a retraction from the claim it retracts.
+
+    WHY THIS IS NOT A PLAIN s[:n]
+    -----------------------------
+    Measured on B03, 2026-08-17. `lifecycle_why_20260815` is 1104 chars and the queue
+    printed the first 260 of them:
+
+        "...(2) novelty is unadjudicated and RELATED_WORK.md is absent. NOT cl…"
+
+    cut off mid-word, one clause before its own bracketed correction:
+
+        "[APPENDED 2026-08-15, NOT rewritten: blocker (2) IS NOW DISCHARGED --
+         RELATED_WORK.md exists and novelty_checked is true...]"
+
+    RELATED_WORK.md is 34,354 B on disk. So the surface a dispatcher actually reads
+    asserted a live blocker whose retraction was sitting just past the cut.
+
+    This is structural, not bad luck. LIFECYCLE_SCHEMA.md sec 0 makes these records
+    APPEND-ONLY: a claim is never edited, it is superseded by text APPENDED AFTER it.
+    Corrections therefore always live in the TAIL -- exactly what head-truncation
+    removes. Head-only truncation is a systematically stale reader of an append-only
+    field. Verified across the queue: 9 of 9 lifecycle reasons exceed their limit, so
+    every one of them was being shown head-first with its tail dropped.
+
+    B03's own record predicted this failure verbatim, which is why it is worth fixing
+    at the display layer rather than per-proposal:
+
+        "This key exists because lifecycle_why_20260815 -- the field ready_queue.py
+         prints as the lifecycle justification -- still says 'RELATED_WORK.md is
+         absent', so the correction was invisible at the surface a reader actually
+         sees."
+
+    BEHAVIOUR: if the hidden tail contains retraction language, keep the head AND
+    splice in the retracting tail, marked, instead of dropping it. Cost is a longer
+    line; the alternative is dispatching an agent to write a file that exists (which
+    has now happened twice -- see memory/append-only-records-outlive-their-own-truth).
+
+    Deliberately NOT done: raising `n` globally. The tail is what matters, not the
+    length, and a bigger head still severs a long enough record.
+    """
     s = v if isinstance(v, str) else json.dumps(v, ensure_ascii=False)
-    return s if len(s) <= n else s[:n - 1] + "…"
+    if len(s) <= n:
+        return s
+    # IDEMPOTENCE. Some fields are _txt'd twice -- built at n=400 (rec["next_gate"],
+    # :812) and again at print time with a smaller n (:1184). Without this guard the
+    # second pass treats the FIRST pass's output as fresh prose: it re-truncates the
+    # head, finds "TAIL RETRACTS" (which matches _RETRACTION_RE via "RETRACT") in the
+    # remainder, and splices again -- measured on B03's next_gate, which printed the
+    # marker twice and spliced the second fragment out of the middle of the first.
+    # A double-spliced string is worse than a truncated one, because the reader can no
+    # longer tell which retraction attaches to which claim. So: splice at most once,
+    # and on an already-spliced string only shorten the head.
+    if _SPLICE_MARK in s:
+        head, _, spliced = s.partition(_SPLICE_MARK)
+        keep = max(n - len(_SPLICE_MARK) - len(spliced), 60)
+        return (head if len(head) <= keep else head[:keep - 1] + "…") + \
+            _SPLICE_MARK + spliced
+    head, tail = s[:n - 1], s[n - 1:]
+    m = _RETRACTION_RE.search(tail)
+    if not m:
+        return head + "…"
+    # Splice from the start of the sentence/bracket carrying the retraction, so the
+    # correction arrives with its subject attached rather than as a dangling clause.
+    start = max(tail.rfind(sep, 0, m.start()) + 1
+                for sep in (". ", "[", "-- ", "\n"))
+    frag = tail[start:].strip()
+    return head + "…" + _SPLICE_MARK + (frag if len(frag) <= 400
+                                        else frag[:399] + "…")
 
 
 def _first(d, keys):
