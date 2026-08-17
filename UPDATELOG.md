@@ -6046,3 +6046,50 @@ Sanity 已四重验证(adapter_config 配置正确、cmdline 无 SWA、CSV 完�
 另补：follow-through 之前没做完 —— `claims/A03_SURVIVING_CLAIMS.md` 仍写 A-2 provisional / C-1 OPEN，与 verdict 要求的撤稿矛盾。A-2 四处全标 RETRACTED，C-1 标 CLOSED→ARTIFACT。
 
 **顺带一条经验结论**：keep12 的 run-to-run spread **不比 keep7 小**（popqa 0.451 vs 0.273，mmlu_content 0.055 vs 0.025），反驳了我在 `STAGE_B_DECISION.md` 里的「recover 空间小 → 效应小」预测。**spread 不随 damage 单调。**
+
+
+## 2026-08-17T16:48 — 12-worker P5 run (mom12_ds_20260817) + DeepSeek V4 Pro for workers
+
+**用户指令**：把在跑的 run 各分一个 worker，共 12 个 worker，现有 paper 各一个、其余跑新
+proposal；另建一个 proposer，worker 没想法时由 manager 调用。随后：worker 改用 deepseek 降用量。
+
+**分工**（W1-W5 = custodian 看护已有资产；W6-W12 开新方向）
+- W1 paperA / W2 paperB / W3 paperC / W4 SparseForge_NIPS_2026 / W5 四个在跑训练 arm + 链式 eval
+- W6-W12：`proposal/{active,backlog}` 或由 proposer 产出
+
+**新增两个 persona**（`prompts/personas.json`，共 6 个）
+- `custodian`：速率只能从 ckpt mtime 算；每轮自核一条 critical claim；不为整齐只朝有利方向修正
+- `proposer`：每个提案必须自带 kill gate（n / 统计量 / alpha / 效应量 / null floor）；
+  novelty 判据是「完全相同」而非「有重叠」；提案必须落盘（return 值不算）
+
+**proposer 机制**：MGR 在某 worker 连续两轮无 idea 时 `mgrctl spawn --persona proposer`。
+
+⚠️ **两个我自己引入又查出来的缺陷**：
+1. 我原先把分工表和 proposer 策略写进 config 的 `_assignments` / `_proposer_policy` 自定义键。
+   grep 全仓确认**没有任何代码读它们**（manager 只收 `research_prompt`，manager.py:271）
+   → 已移入 research prompt 正文，否则整套机制是死的装饰。
+2. 我第一版写的调用是 `p5ctl spawn`，实测 manager 用的是 **`mgrctl`**（tools/mgrctl.py:414）。
+   flag 名已逐一核对：`--id --model --persona --note`。
+
+**DeepSeek 两个实测缺陷**（切换前先验，没有盲改）
+1. registry 的 launcher 指向 `/newcpfs/user/qixuan1/4run_claude_deepseek_v4_pro.sh`
+   = **原作者机器**，本机不存在（docs/08 §1 已列此类路径）→ 选它会每轮失败。
+   已改指向 `bin/tclaude-launcher.sh`。
+2. `model_id: "deepseek-v4-pro"` 被 tclaude 拒绝（`model "deepseek-v4-pro" is not available`）；
+   真实 served id 带前缀 = **`claude-deepseek-v4-pro`**。
+   实测 live turn：rc=0 / subtype=success / result=`DS_V4PRO_OK` /
+   modelUsage key=`claude-deepseek-v4-pro` / $0.106165。
+   另断言了 `resolve_model_entry` 的 opus/gpt 强制族路由**没有**把它劫走。
+
+**模型分层**：12 worker = `deepseek-v4-pro`（降用量）；
+**MGR + monitor + debate moderator + diversity judge 保持 `opus5-1m`** ——
+它们负责裁决和杀方向，让廉价模型去评判 12 个 worker 正是要避免的失效模式。
+（顺带修掉 manager/monitor_agent 从 base config 继承的 `gpt5.6sol`：docs/08 §6.2 自己写明
+它至今没有过一次已验证的完整 live turn。）
+
+**状态**：`run/mom12_ds_20260817` running，12 worker + MGR 全部起来；
+事件流实测出现 `claude-deepseek-v4-pro`（W1 已 77 events），0 auth 失败。
+commit `e260e3e`（config+personas）/ `8dfe66e`（deepseek 修复）。
+
+> ⚠️ 本条目 16:48 第一次写入时用了**未加引号的 heredoc**，反引号被 shell 当命令执行，
+> 所有标识符被吃掉。已按此重写；那个坏版本从未 commit。
