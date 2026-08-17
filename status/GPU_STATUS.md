@@ -1,28 +1,41 @@
 # GPU_STATUS.md — 5 节点单一事实来源
 
-**最后实测 2026-08-17 08:30 GMT+8（heartbeat）。32/40 卡占用，LOCAL 8 卡空闲（**故意**）。每节点 8 个 compute PID + 单一 owning script = 无抢卡。四臂全部 0 个 Traceback/OOM/ChildFailedError。**
+**最后实测 2026-08-17 09:30 GMT+8（heartbeat）。32/40 卡占用，LOCAL 8 卡空闲（**故意**）。每节点 8 个 compute PID + 单一 owning script = 无抢卡。四臂全部 0 个 Traceback/OOM/ChildFailedError。**
 
-| 节点 | 硬件 | 盘 | 在跑 | ckpt step | 显存/卡 | util | amortised s/step（**ckpt mtime**） | baseline | ckpt 年龄/周期 | 判定 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| LOCAL(=.21) | 8×B200 sm_100 | wzc1 | **IDLE** | — | 0 MiB | 0% | — | — | — | 三判据齐（0 MiB + 0% + 0 PID）；**故意空闲 → 见下方章节** |
-| `.212` | 8×B200 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | **56000** | 157.8 GB | 100% | **2.4504 / 2.4520 / 2.4500** | 2.4500 | 12.1 / 20.4 min | healthy 1.000× — ETA 08-21 10:16 |
-| `.73` | 8×H20 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` + eval watcher | **194500** (log 194600) | 96.4 GB | 99-100% | **7.9174 / 7.9120 / 7.9220** | 7.9160 | 19.0 / 65.9 min | healthy 1.000× — ETA ~20:41 |
-| `.82` | 8×H20 | zwfy6 | `olmo2_probe2_7B_keep8fresh2` | **169500** | 78.5 GB | 100% | **5.8609 / 5.8560 / 5.8740** | 5.8640 | 17.0 / 48.8 min | healthy 1.000× — ETA 08-19 09:53 |
-| `.104` | 8×H20 | zwfy6 | `paperC_qwen3base_heal_k8f2` | **70000** | 78.8 GB | 99-100% | **5.8460 / 5.8440 / 5.8540** | 5.8380 | 12.9 / 48.7 min | healthy 1.001× — ETA 08-26 03:33 |
+| 节点 | 硬件 | 盘 | 在跑 | ckpt step | log step | 显存/卡 | util | amortised s/step（**ckpt mtime**） | baseline | ckpt 年龄/周期 | 判定 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| LOCAL(=.21) | 8×B200 sm_100 | wzc1 | **IDLE** | — | — | 0 MiB | 0% | — | — | — | 三判据齐（0 MiB + 0% + 0 PID）；**故意空闲 → 见下方章节** |
+| `.212` | 8×B200 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | **57500** | 57680 | 157.8 GB | 100% | **2.4500 / 2.4500** | 2.4500 | 6.6 / 20.4 min | healthy 1.000× — ETA 08-21 10:16 |
+| `.73` | 8×H20 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` + eval watcher | **195000** | 195060 | 96.4 GB | 99% | **7.9220 / 7.9160** | 7.9160 | 8.8 / 65.9 min | healthy 1.000× — **剩 ~4940 步 ≈ 10.9 h** |
+| `.82` | 8×H20 | zwfy6 | `olmo2_probe2_7B_keep8fresh2` | **170000** | 170240 | 78.5 GB | 99-100% | **5.8740 / 5.8580** | 5.8640 | 24.0 / 48.8 min | healthy 1.000× — ETA 08-19 09:53 |
+| `.104` | 8×H20 | zwfy6 | `paperC_qwen3base_heal_k8f2` | **70500** | 70700 | 78.8 GB | 100% | **5.8540 / 5.8520** | 5.8380 | 19.9 / 48.7 min | healthy 1.002× — ETA 08-26 03:33 |
 
-> ### 08:30：`.104` 的「ckpt 号没动」二次证实为正常周期
-> 07:28 我看到 `.104` 两轮最新 ckpt 都是 `step69000`，按 ckpt 年龄 46.6 min vs 48.7 min 周期判为**非 stall**。
-> 之后它落了 `step69500`，本轮又落 `step70000` —— **判断两次得到证实**。
-> 「ckpt 年龄/周期」这一列就是为了让下一个 agent 一眼看出「号没变」是否落在周期内，不必重新推导。
-> **本轮四臂的 ckpt 年龄全部小于各自周期。**
+> ### ★★ 09:30 修复：两个 watcher 会在 `.73` 上撞车（已加锁，实测过）
+> `.73` 上**同时**有两个 watcher 准备启动**同一个** 8 卡 eval driver，而**两者都没有锁**：
+>
+> | watcher | 位置 | 触发条件 | poll |
+> |---|---|---|---|
+> | `chain_keep12_eval_200k.sh` (PID 1243702) | .73 | keep12 落 `step200000.pt` | 300 s |
+> | `chain_keep10_ship_and_eval_200k.sh` (PID 655909) | LOCAL | `.73` 连续 2 次报 0 compute PID | 300 s |
+>
+> `eval_paperb_ladder_200k.sh` 把一个 7B 模型分片到**全部 8 张卡**（`CUDA_VISIBLE_DEVICES=$g`），
+> 两个并发 = 每张卡两个 7B = **2026-08-08 毁掉 4/5 rung 的那个 OOM**。
+> **撞车窗口是真的**：keep12 训练退出后、它自己的 eval 抢到卡之前有一段 0 PID；model-load 阶段也读 0 PID。
+> 谁先采样谁赢 —— 那是抛硬币，不是设计。
+>
+> **修法**：锁加在 **driver** 里（两条 chain 都要经过它），所以**不动任何正在跑的 watcher**
+> （运行中的 shell 会重读自己的 .sh，改它就是 bug）。fail-closed + 大声报错，不排队 ——
+> 输的那个 watcher 本来就会继续 poll 重试，静默排队反而会把调度缺陷藏起来。
+> commit `5e013ee`，已 `scp -O` 到 zwfy6（两端 sha256 一致 `3b3a49ad…`），`.73` 上实测
+> `flock` 存在 + `bash -n` 通过 + `.locks/` 可写 + 训练未受影响（仍 8 PID）。
 
-> ### 08:30：B12 pilot watcher 已正常退出，不是失联
-> `chain_b12_pilot_on_local_free.sh` PID 650568 `ps` 查不到，**这是完成而非崩溃**：
-> `logs/chain_b12_pilot_local.log` 尾部是
-> `rung P finished rc=0` → `rung Dctl finished rc=0` → `=== B12 PILOT PAIR COMPLETE (P + Dctl). Rungs Q/R/S remain UNAUTHORISED ===`（05:24），
-> 而 `pilot_verdict_20260817.json` 写于 05:29。**Q/R/S 的 2.92 GPU-h 按预注册未花。**
-> B12 已按自己的 kill gate 判 `dead`（rung P 60.0534 < pass_bar 60.64）。
-> ⚠️ 台账此前仍把它列为「在等 LOCAL 空闲」= 过期，已改。**watcher 消失前先读它的 log 再判生死。**
+> ### 09:30：`.104` 之外三台的 log 归属曾被我搞错（第 2 次）
+> 用 `olmo2_7B_keep8` / `qwen3` 这种**过松的 glob** + `head -1`（字典序，**不是最新**），
+> 给 `.82` 选中了 **8-01 的死 log（step 48060）**，给 `.104` 选中了 **`.73` 的 8-09 log**。
+> 两个文件读起来都完全正常。**`.82` 那条会凭空造出一个 stall 判定**，因为它永远不会再动。
+> 正解要**两个判据同时满足**：`find logs -newermt '-6 minutes'`（活的）**且** 文件名/内容含
+> 由该节点 `--output_dir` 推出的 run 名（归属对）。
+> 附证据：`.73` 和 `.82` 看到的「最近 6 分钟被写过的 log」**是同一张表** —— 共享盘的铁证。
 
 > ## ⚠️⚠️ `.73` 速率：我今天报错了**两次**，方向相反，两次都是 watcher 采样伪影
 >
@@ -62,15 +75,18 @@
 
 Monitor: `http200 OK`，`latest` 键 5 节点各 8 卡。错误行扫描：四个 live log 各 0 行。
 
-## ★ chain watcher 现况（08:30）
+## ★ chain watcher 现况（09:30 实测）
 
 | watcher | PID | 状态 | 等什么 → 然后做什么 |
 |---|---|---|---|
-| `chain_keep10_ship_and_eval_200k.sh` | 655909 | **alive 06:24:54** | `.73` 空卡 → 跑 ladder eval（ckpt 已送达并核过 md5） |
-| `chain_b12_pilot_on_local_free.sh` | 650568 | **已完成退出**（05:24，rc=0/rc=0） | — 见上方 B12 章节 |
-| `chain_keep12_eval_200k`（.73 本地） | — | alive（3 个匹配进程） | keep12 落 `step200000.pt` → 自动投 eval |
+| `chain_keep10_ship_and_eval_200k.sh` | 655909 | **alive 07:21:31** | `.73` 连续 2 次 0 PID → 跑 keep10 ladder eval（ckpt 已送达并核过 md5） |
+| `chain_keep12_eval_200k.sh`（.73 本地） | **1243702** | **alive**，每 300 s 一行 | keep12 落 `step200000.pt`（**认文件不认 log 行** —— log 行会早于 43.9 GB 落盘） → 自动投 keep12 eval |
+| `chain_b12_pilot_on_local_free.sh` | 650568 | **已完成退出**（05:24，rung P rc=0 / Dctl rc=0） | — Q/R/S 按预注册未跑，2.92 GPU-h 未花 |
 
-**为什么 keep10 的 eval 必须拆出去**：`eval_paperb_ladder_200k.sh:85` 写死 `REQUIRE_SM=9.0`，
+**两条 live chain 现在被 driver 里的 flock 串行化**（见上方 09:30 修复条）：谁先拿到锁谁跑，
+输的那个照常继续 poll 重试，**不会两个同时占同一节点的 8 卡**。
+
+**为什么 keep10 的 eval 必须拆出去**：`eval_paperb_ladder_200k.sh` 写死 `REQUIRE_SM=9.0`，
 非 H20 直接 die（Table 4 是单一 H20 口径）。LOCAL 是 sm_100，所以 keep10 的 eval
 **不能在它自己跑完的机器上做**。
 
