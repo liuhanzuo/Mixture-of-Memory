@@ -184,6 +184,44 @@ _BLIND_FATAL = re.compile(
     r"|(?<![A-Za-z])meta.review(?![A-Za-z])"
     r"|(?<![A-Za-z])blind.review(?![A-Za-z])", re.I)
 
+# SECOND PATTERN: the leak's SHAPE, not its vocabulary.
+#
+# The pattern above matches the *words* of the review process. It therefore misses any
+# PARAPHRASE that discloses the same thing without them. Measured 2026-08-17, and the
+# demonstration came from the de-attribution work itself: the first replacement wording
+# written for construct_nulls_legality_aware.json was
+#
+#     "an audit found, in several independent readings, that ..."
+#
+# which still tells a blind reviewer that several independent parties read the paper. The
+# vocabulary screen PASSED it. So did every one of these, all of which disclose a panel
+# size or a vote split:
+#
+#     "four of six independent readers flagged this"
+#     "multiple independent assessors agreed"
+#     "three of the five reports raised it"
+#
+# That is the same failure as the round 00-02 breach in kind: I checked for the words of
+# the process instead of for the disclosure. A count-of-persons construction is the
+# disclosure, whatever noun it uses. See
+# memory/blindness-check-must-grep-writer-steering-not-just-panel-words.md.
+#
+# So this matches "<N|word> of <the>? <N|word> <person-ish plural>" and a small set of
+# panel nouns that are not review jargon. It is deliberately narrow on the NOUN side --
+# `readers/readings/assessors/referees/reports/evaluators/respondents/panellists` -- so
+# that ordinary research prose ("four of six cells", "three of the five arms", "two of
+# twelve items") does not fire. Those are in the negative controls.
+_NUM = r"(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)"
+_PANEL_NOUN = (r"(?:readers?|readings?|assessors?|evaluators?|respondents?|panell?ists?"
+               r"|reports?|critiques?|referees?|opinions?)")
+_BLIND_SHAPE = re.compile(
+    # "four of six independent readers", "three of the five reports"
+    rf"(?<![A-Za-z]){_NUM}\s+of\s+(?:the\s+)?{_NUM}\s+(?:\w+\s+){{0,2}}?{_PANEL_NOUN}(?![A-Za-z])"
+    # "several/multiple independent readings", "N independent assessors"
+    rf"|(?<![A-Za-z])(?:several|multiple|numerous|various|{_NUM})\s+independent\s+"
+    rf"(?:\w+\s+){{0,1}}?{_PANEL_NOUN}(?![A-Za-z])",
+    re.I)
+
 
 def screen_blind(path, rel):
     """Return the review-process leaks in one file, as (lineno, text) pairs.
@@ -245,6 +283,10 @@ def screen_blind(path, rel):
         m = _BLIND_FATAL.search(line)
         if m:
             hits.append((rel, i, m.group(0), line.strip()[:120]))
+            continue                      # one hit per line is enough to block
+        m = _BLIND_SHAPE.search(line)
+        if m:
+            hits.append((rel, i, f"SHAPE:{m.group(0)}", line.strip()[:120]))
     return hits
 
 
