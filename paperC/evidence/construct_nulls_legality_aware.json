@@ -1,1693 +1,1706 @@
 {
-  "schema_version": "1.0.0",
-  "what": "nine-row construct winner's-curse calibration under a LEGALITY-AWARE balanced null (each item's gold letter uniform over ITS OWN n_opt legal letters, observed n_opt histogram held fixed)",
-  "why": "four of six round_04 blind reviewers (X1/X2/X5/X6) independently flagged that the shipped MMLU-Pro calibration uses a null whose support excludes MMLU-Pro's own legal label assignments; MAIN verified it (evidence/mmlupro_legality_aware_null_MAIN.json). This file extends the correction from that one row to all nine.",
-  "defect_in_superseded_file": "floor_winners_curse_calibration.json draws all n gold letters uniform over all k letters. For a construct whose option count varies, that assignment is not realizable: an item with 4 options cannot have gold letter J. The null then makes the k letter marginals exchangeable, which MIS-STATES E[max_L] -- understating it when items have fewer options than k (MMLU-Pro) and overstating it when some have more (ARC).",
-  "supersedes": {
-    "path": "paperC/evidence/floor_winners_curse_calibration.json",
-    "sha256": "275112623d057406811f5d77071d3c139b0ffa74d46fc6c8ed33d08c380cd399",
-    "method_string": "balanced (exactly uniform) multinomial null at each construct's own (n,k); f_const=max_L of the k sampled marginals; p = P(max_L >= observed floor)",
-    "scope": "supersedes the E_max/q95/p columns for the rows whose n_opt is NOT constant; the floors, chance lines, gaps and the constant-n_opt rows' p-values are unchanged and are carried through verbatim"
+ "schema_version": "1.0.0",
+ "what": "nine-row construct winner's-curse calibration under a LEGALITY-AWARE balanced null (each item's gold letter uniform over ITS OWN n_opt legal letters, observed n_opt histogram held fixed)",
+ "why": "an audit found that the shipped MMLU-Pro calibration uses a null whose support excludes MMLU-Pro's own legal label assignments; MAIN verified it (evidence/mmlupro_legality_aware_null_MAIN.json). This file extends the correction from that one row to all nine.",
+ "defect_in_superseded_file": "floor_winners_curse_calibration.json draws all n gold letters uniform over all k letters. For a construct whose option count varies, that assignment is not realizable: an item with 4 options cannot have gold letter J. The null then makes the k letter marginals exchangeable, which MIS-STATES E[max_L] -- understating it when items have fewer options than k (MMLU-Pro) and overstating it when some have more (ARC).",
+ "supersedes": {
+  "path": "paperC/evidence/floor_winners_curse_calibration.json",
+  "sha256": "275112623d057406811f5d77071d3c139b0ffa74d46fc6c8ed33d08c380cd399",
+  "method_string": "balanced (exactly uniform) multinomial null at each construct's own (n,k); f_const=max_L of the k sampled marginals; p = P(max_L >= observed floor)",
+  "scope": "supersedes the E_max/q95/p columns for the rows whose n_opt is NOT constant; the floors, chance lines, gaps and the constant-n_opt rows' p-values are unchanged and are carried through verbatim"
+ },
+ "corroborating_records": {
+  "main_verification": {
+   "path": "paperC/evidence/mmlupro_legality_aware_null_MAIN.json",
+   "sha256": "09df4e06b7b6b0f4e29401c852e88b61c29c6b0fe568185e21ef8e1031fec875"
   },
-  "corroborating_records": {
-    "main_verification": {
-      "path": "paperC/evidence/mmlupro_legality_aware_null_MAIN.json",
-      "sha256": "180cdcc565374220f7b6bf58e843a0d6f9fbd0c090dc0769a3a9d9f507a8f4f8"
-    },
-    "mmlu_pro_n_opt_hist": {
-      "path": "paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json",
-      "sha256": "b0c86c9042c7afc46364fec22e2df5aa3369b60fff6281544752a2bd869e9ea6",
-      "key": "letter_null.n_opt_hist"
-    },
-    "small_benchmark_floors": {
-      "path": "paperC/evidence/second_mc_benchmark/gate2_letter_content_nulls.json",
-      "sha256": "34efbdf10939d598fcb223542b5b6ed95f18d91f80aa86db9ac7de6cd50edb97",
-      "key": "tasks.<task>.letter_null"
-    }
+  "mmlu_pro_n_opt_hist": {
+   "path": "paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json",
+   "sha256": "b0c86c9042c7afc46364fec22e2df5aa3369b60fff6281544752a2bd869e9ea6",
+   "key": "letter_null.n_opt_hist"
   },
-  "method": "legality-aware balanced null: hold the observed n_opt histogram fixed and draw each item's gold letter uniformly among its own n_opt legal letters; f_const = max_L of the k sampled marginals; p = P(max_L >= observed floor)",
-  "n_draws": 1000000,
-  "seed": 20260814,
-  "seeds_checked": [
-    20260814,
-    7,
-    99
-  ],
-  "n_draws_per_seed": 200000,
-  "implementations": [
-    "stratified multinomial (one multinomial per n_opt stratum per draw)",
-    "per-item categorical (independent, 20000 draws)"
-  ],
-  "environment": {
-    "numpy_version": "2.5.1",
-    "python_version": "3.14.6",
-    "python_bin": "/opt/conda/envs/torch-base/bin/python",
-    "node_hostname": "TENCENT64.site",
-    "node_label": "LOCAL (wzc1, 8xB200 sm_100)",
-    "cross_node_bit_identity": "NOT CLAIMED: the five nodes carry three numpy versions (2.3.5/2.4.6/2.5.1) and same-seed default_rng streams differ across them; see memory/numpy-version-split-breaks-cross-node-bootstrap.md",
-    "gpu_used": false
-  },
-  "floor_invariance_verified": {
-    "checked_file": "paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json",
-    "sha256": "b0c86c9042c7afc46364fec22e2df5aa3369b60fff6281544752a2bd869e9ea6",
-    "F1_all_floor_used_equal_1403_over_12032": true,
-    "F1_distinct_floor_used_values": [
-      0.11660571808510638
-    ],
-    "F1_expected": 0.11660571808510638,
-    "F1_is_fatal": true,
-    "F2_no_null_moment_key_appears_in_that_file": true,
-    "F2_forbidden_tokens_found": [],
-    "F2_is_fatal": true,
-    "F2_note": "checks BOTH nulls' moments, so neither the null being removed nor the one being installed may leak into a downstream count",
-    "F3_aggregate_at_or_below_floor": "15/17",
-    "F3_per_family_damaged_rungs": {
-      "olmo2_7b": [
-        "shortgpt16",
-        "keep14",
-        "keep12",
-        "keep10",
-        "keep8"
-      ],
-      "llama2_7b": [
-        "k14",
-        "k12",
-        "k10",
-        "k8"
-      ],
-      "llama3_8b": [
-        "k14",
-        "k12",
-        "k10",
-        "k8"
-      ],
-      "qwen3_8b_base": [
-        "k14",
-        "k12",
-        "k10",
-        "k8"
-      ]
-    },
-    "F3_is_fatal": false,
-    "F3_note": "DIAGNOSTIC ONLY, deliberately not compared to a literal. This aggregate is a function of the observed floor and the DESIGNATED ARM SET, so it legitimately changes when the arm set is corrected -- as happened on 2026-08-16, when a concurrent independent fix to an undisclosed denominator exclusion moved it from 14/15 to 15/17 with the floor untouched. Asserting a literal here would make this check fail on honest denominator fixes, which is the opposite of its purpose.",
-    "chance_used_values_present": [
-      0.1,
-      0.11087694718844986
-    ],
-    "conclusion": "the downstream counts are functions of the OBSERVED floor and the arm scores only; they never read a null moment, so correcting the null cannot move them. Whatever the current aggregate is, it is not a function of the null, and this fix leaves it untouched.",
-    "all_pass": true
-  },
-  "floor_invariance": "every floor in this file is the shipped floor, byte-for-byte. The floor is max_L (count_L / n) over the observed gold labels; no null enters its computation, so correcting the null cannot move it. Verified downstream too: mmlu_pro_power_nulls_v2.json:rollup uses floor_used=0.11660571808510638 = 1403/12032, which is letter_null.gold_letter_marginal_frac.A and does not reference any E_max, so the 14/15, 3/12-vs-1/12 and 10/15 counts are unaffected.",
-  "directionality": "MEASURED, and it CONTRADICTS the universal monotonicity asserted in evidence/mmlupro_legality_aware_null_MAIN.json:VERDICT.confinement ('the fix is monotone ... can only push a row further INSIDE the noise bucket, never out of it. So no row moves in the paper favour'). The true statement is case-split on whether items have FEWER or MORE options than the nominal k the shipped null used. (i) Constant n_opt == k: the two nulls are the same distribution and nothing moves (MMLU 4-way, BoolQ 2-way, OpenBookQA 4-way, CommonsenseQA 5-way, PIQA 2-way). (ii) Items with n_opt < k: their mass concentrates on the always-legal low letters, raising E[max] and hence p -- against the authors. MMLU-Pro is this case (2051/12032 restricted; E[max] +0.94 pp, p 0 -> 0.083). (iii) Items with n_opt > k: such an item can land on a letter that is legal almost nowhere else and so can never win the maximum, which removes mass from the contest and LOWERS E[max] and p -- in the authors' favour. ARC-Easy (4 items are 5-way) and ARC-Challenge (3 items are 5-way) are this case, and the effect is real, not Monte-Carlo error: dE[max] = -7.8e-5 and -1.2e-4, both about -33 sigma over 3 seeds x 2e5 draws vs the same budget on the blind null, giving dp = -0.004 and -0.005. Neither ARC row comes near the 0.05 line either way (0.140 -> 0.136, 0.453 -> 0.447), so NO VERDICT CHANGES because of them and the headline three-becomes-two is unaffected. But the blanket claim 'no row moves in the authors' favour' is false and must not be printed. Per-row signs, standard errors and the histogram-predicted sign are in rows[].directionality.",
-  "floor_rounding_convention": "SECOND, SMALLER DEFECT found while recomputing. p is defined as Pr(f_hat >= observed floor) and the floor is an exact rational count/n (MMLU-Pro: 1403/12032 = 0.1166057180851...). The superseded file stores floors at 6 dp, and 0.116606 > 1403/12032, so comparing against the stored value demands a simulated count of 1404 and EXCLUDES the very outcome that was observed. That biases p downward, i.e. toward 'survives', i.e. in the authors' favour. Measured on MMLU-Pro: p = 0.0831 with the exact floor vs 0.0776 with the 6-dp value; on PIQA 0.6895 vs 0.6557; the other seven rows are unaffected because their 6-dp floor rounds down rather than up. Both are reported per row (p_aware, p_aware_rounded_floor_convention) and the EXACT-floor value is primary because that is what the paper's own definition of p says. No verdict changes, but MMLU-Pro's distance from 0.05 does.",
-  "rows": [
-    {
-      "construct": "MMLU-Pro letter, naive",
-      "n": 12032,
-      "k": 10,
-      "floor": 0.116606,
-      "floor_count": 1403,
-      "chance": 0.1,
-      "gap_pp": 1.661,
-      "n_opt_hist": {
-        "3": 21,
-        "4": 606,
-        "5": 52,
-        "6": 93,
-        "7": 158,
-        "8": 320,
-        "9": 801,
-        "10": 9981
-      },
-      "n_opt_is_constant": false,
-      "k_nominal": 10,
-      "kmax_observed": 10,
-      "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
-      "n_opt_source_disk": "zwfy6",
-      "n_opt_source": "mmlu_pro_letter_content_results/7B_base/per_example_mmlu_pro_shard{0..7}of8.jsonl :: n_opt",
-      "n_opt_how": "counted on .73 (zwfy6 root /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory); these records do not exist on wzc1, so the histogram is carried here as a literal and cross-validated against evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json:letter_null.n_opt_hist",
-      "n_items_with_fewer_than_k_options": 2051,
-      "n_items_with_more_than_k_options": 0,
-      "E_max_blind_shipped": 0.104457,
-      "q95_blind_shipped": 0.107048,
-      "p_blind_shipped": 0.0,
-      "blind_recomputed_here": {
-        "E_max": 0.10445775501440603,
-        "E_max_sem": 2.1506795735352155e-06,
-        "p_one_sided": 0.0,
-        "p_sem": 0.0,
-        "p_rounded_floor": 0.0,
-        "n_draws_each": 200000,
-        "seeds": [
-          20270814,
-          10007,
-          10099
-        ]
-      },
-      "E_max_aware": 0.11387310064827127,
-      "q95_aware": 0.1171875,
-      "q99_aware": 0.1188497340425532,
-      "p_aware": 0.082948,
-      "p_aware_rounded_floor_convention": 0.077462,
-      "sd_max_aware": 0.0018656172032390746,
-      "threshold_count_exact_floor": 1403,
-      "threshold_count_rounded_floor": 1404,
-      "floor_rounding_matters": true,
-      "per_seed_aware": {
-        "20260814": {
-          "n_draws": 200000,
-          "seed": 20260814,
-          "E_max": 0.11387652426861701,
-          "sd_max": 0.0018686258394898672,
-          "q95": 0.1171875,
-          "q99": 0.1188497340425532,
-          "p_one_sided": 0.083445,
-          "p_exact_floor": 0.083445,
-          "p_rounded_floor": 0.07798,
-          "threshold_count_exact_floor": 1403,
-          "threshold_count_rounded_floor": 1404
-        },
-        "7": {
-          "n_draws": 200000,
-          "seed": 7,
-          "E_max": 0.1138661564993351,
-          "sd_max": 0.0018649194605996281,
-          "q95": 0.11710438829787234,
-          "q99": 0.11876662234042554,
-          "p_one_sided": 0.082355,
-          "p_exact_floor": 0.082355,
-          "p_rounded_floor": 0.076985,
-          "threshold_count_exact_floor": 1403,
-          "threshold_count_rounded_floor": 1404
-        },
-        "99": {
-          "n_draws": 200000,
-          "seed": 99,
-          "E_max": 0.11387516497672873,
-          "sd_max": 0.001864191048735321,
-          "q95": 0.1171875,
-          "q99": 0.11876662234042554,
-          "p_one_sided": 0.082935,
-          "p_exact_floor": 0.082935,
-          "p_rounded_floor": 0.077555,
-          "threshold_count_exact_floor": 1403,
-          "threshold_count_rounded_floor": 1404
-        }
-      },
-      "aware_across_seeds": {
-        "E_max_mean": 0.11387261524822695,
-        "E_max_sem": 3.2531265240967213e-06,
-        "p_mean": 0.08291166666666666,
-        "p_sem": 0.00031487210807635185,
-        "seeds": [
-          20260814,
-          7,
-          99
-        ],
-        "n_draws_each": 200000
-      },
-      "big_run_aware": {
-        "n_draws": 1000000,
-        "seed": 20260814,
-        "E_max": 0.11387310064827127,
-        "sd_max": 0.0018656172032390746,
-        "q95": 0.1171875,
-        "q99": 0.1188497340425532,
-        "p_one_sided": 0.082948,
-        "p_exact_floor": 0.082948,
-        "p_rounded_floor": 0.077462,
-        "threshold_count_exact_floor": 1403,
-        "threshold_count_rounded_floor": 1404
-      },
-      "impl2_per_item_categorical": {
-        "n_draws": 20000,
-        "seed": 20260814,
-        "E_max": 0.1138796833444149,
-        "sd_max": 0.0018725151153028796,
-        "q95": 0.1171875,
-        "q99": 0.11893284574468085,
-        "p_one_sided": 0.08455,
-        "p_exact_floor": 0.08455,
-        "p_rounded_floor": 0.0792,
-        "threshold_count_exact_floor": 1403,
-        "threshold_count_rounded_floor": 1404
-      },
-      "seed_spread_E_max": 1.0367769281913186e-05,
-      "seed_spread_p": 0.0010900000000000076,
-      "expected_letter_marginals_aware": {
-        "A": 0.11087694718844986,
-        "B": 0.11087694718844986,
-        "C": 0.11087694718844986,
-        "D": 0.11029516527355623,
-        "E": 0.0977037424012158,
-        "F": 0.09683938069908815,
-        "G": 0.09555114931610942,
-        "H": 0.0936751994680851,
-        "I": 0.09035073138297872,
-        "J": 0.08295378989361703
-      },
-      "p_2x2": {
-        "blind_rounded_floor__as_shipped": 0.0,
-        "blind_exact_floor": 0.0,
-        "aware_rounded_floor": 0.077462,
-        "aware_exact_floor__primary": 0.082948
-      },
-      "verdict_blind": "above balanced null",
-      "p_corrected": 0.082948,
-      "p_correction_needed": true,
-      "verdict_aware": "inside estimator noise",
-      "survives_aware": false,
-      "p_change_attribution": "null correction (n_opt varies) plus threshold convention",
-      "verdict_changed": true,
-      "directionality": {
-        "dE_max_aware_minus_blind": 0.009414860233820918,
-        "dE_max_sem": 3.899776251248683e-06,
-        "dE_max_sigma": 2414.205233135194,
-        "dp_aware_minus_blind": 0.08291166666666666,
-        "dp_sem": 0.00031487210807635185,
-        "dp_sigma": 263.3185491506342,
-        "n_items_n_opt_below_k": 2051,
-        "n_items_n_opt_above_k": 0,
-        "expected_sign": "up",
-        "observed_sign": "up",
-        "sign_consistent_with_histogram": true,
-        "moves_in_authors_favour": false,
-        "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
-        "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
-      }
-    },
-    {
-      "construct": "MMLU-Pro letter, item-avg.",
-      "n": 12032,
-      "k": 10,
-      "floor": 0.116606,
-      "floor_count": 1403,
-      "chance": 0.110877,
-      "gap_pp": 0.573,
-      "n_opt_hist": {
-        "3": 21,
-        "4": 606,
-        "5": 52,
-        "6": 93,
-        "7": 158,
-        "8": 320,
-        "9": 801,
-        "10": 9981
-      },
-      "n_opt_is_constant": false,
-      "k_nominal": 10,
-      "kmax_observed": 10,
-      "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
-      "n_opt_source_disk": "zwfy6",
-      "n_opt_source": "mmlu_pro_letter_content_results/7B_base/per_example_mmlu_pro_shard{0..7}of8.jsonl :: n_opt",
-      "n_opt_how": "counted on .73 (zwfy6 root /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory); these records do not exist on wzc1, so the histogram is carried here as a literal and cross-validated against evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json:letter_null.n_opt_hist",
-      "n_items_with_fewer_than_k_options": 2051,
-      "n_items_with_more_than_k_options": 0,
-      "E_max_blind_shipped": 0.10446,
-      "q95_blind_shipped": 0.107131,
-      "p_blind_shipped": 0.0,
-      "blind_recomputed_here": {
-        "E_max": 0.10445775501440603,
-        "E_max_sem": 2.1506795735352155e-06,
-        "p_one_sided": 0.0,
-        "p_sem": 0.0,
-        "p_rounded_floor": 0.0,
-        "n_draws_each": 200000,
-        "seeds": [
-          20270814,
-          10007,
-          10099
-        ]
-      },
-      "E_max_aware": 0.11387310064827127,
-      "q95_aware": 0.1171875,
-      "q99_aware": 0.1188497340425532,
-      "p_aware": 0.082948,
-      "p_aware_rounded_floor_convention": 0.077462,
-      "sd_max_aware": 0.0018656172032390746,
-      "threshold_count_exact_floor": 1403,
-      "threshold_count_rounded_floor": 1404,
-      "floor_rounding_matters": true,
-      "per_seed_aware": {
-        "20260814": {
-          "n_draws": 200000,
-          "seed": 20260814,
-          "E_max": 0.11387652426861701,
-          "sd_max": 0.0018686258394898672,
-          "q95": 0.1171875,
-          "q99": 0.1188497340425532,
-          "p_one_sided": 0.083445,
-          "p_exact_floor": 0.083445,
-          "p_rounded_floor": 0.07798,
-          "threshold_count_exact_floor": 1403,
-          "threshold_count_rounded_floor": 1404
-        },
-        "7": {
-          "n_draws": 200000,
-          "seed": 7,
-          "E_max": 0.1138661564993351,
-          "sd_max": 0.0018649194605996281,
-          "q95": 0.11710438829787234,
-          "q99": 0.11876662234042554,
-          "p_one_sided": 0.082355,
-          "p_exact_floor": 0.082355,
-          "p_rounded_floor": 0.076985,
-          "threshold_count_exact_floor": 1403,
-          "threshold_count_rounded_floor": 1404
-        },
-        "99": {
-          "n_draws": 200000,
-          "seed": 99,
-          "E_max": 0.11387516497672873,
-          "sd_max": 0.001864191048735321,
-          "q95": 0.1171875,
-          "q99": 0.11876662234042554,
-          "p_one_sided": 0.082935,
-          "p_exact_floor": 0.082935,
-          "p_rounded_floor": 0.077555,
-          "threshold_count_exact_floor": 1403,
-          "threshold_count_rounded_floor": 1404
-        }
-      },
-      "aware_across_seeds": {
-        "E_max_mean": 0.11387261524822695,
-        "E_max_sem": 3.2531265240967213e-06,
-        "p_mean": 0.08291166666666666,
-        "p_sem": 0.00031487210807635185,
-        "seeds": [
-          20260814,
-          7,
-          99
-        ],
-        "n_draws_each": 200000
-      },
-      "big_run_aware": {
-        "n_draws": 1000000,
-        "seed": 20260814,
-        "E_max": 0.11387310064827127,
-        "sd_max": 0.0018656172032390746,
-        "q95": 0.1171875,
-        "q99": 0.1188497340425532,
-        "p_one_sided": 0.082948,
-        "p_exact_floor": 0.082948,
-        "p_rounded_floor": 0.077462,
-        "threshold_count_exact_floor": 1403,
-        "threshold_count_rounded_floor": 1404
-      },
-      "impl2_per_item_categorical": {
-        "n_draws": 20000,
-        "seed": 20260814,
-        "E_max": 0.1138796833444149,
-        "sd_max": 0.0018725151153028796,
-        "q95": 0.1171875,
-        "q99": 0.11893284574468085,
-        "p_one_sided": 0.08455,
-        "p_exact_floor": 0.08455,
-        "p_rounded_floor": 0.0792,
-        "threshold_count_exact_floor": 1403,
-        "threshold_count_rounded_floor": 1404
-      },
-      "seed_spread_E_max": 1.0367769281913186e-05,
-      "seed_spread_p": 0.0010900000000000076,
-      "expected_letter_marginals_aware": {
-        "A": 0.11087694718844986,
-        "B": 0.11087694718844986,
-        "C": 0.11087694718844986,
-        "D": 0.11029516527355623,
-        "E": 0.0977037424012158,
-        "F": 0.09683938069908815,
-        "G": 0.09555114931610942,
-        "H": 0.0936751994680851,
-        "I": 0.09035073138297872,
-        "J": 0.08295378989361703
-      },
-      "p_2x2": {
-        "blind_rounded_floor__as_shipped": 0.0,
-        "blind_exact_floor": 0.0,
-        "aware_rounded_floor": 0.077462,
-        "aware_exact_floor__primary": 0.082948
-      },
-      "verdict_blind": "above balanced null",
-      "p_corrected": 0.082948,
-      "p_correction_needed": true,
-      "verdict_aware": "inside estimator noise",
-      "survives_aware": false,
-      "p_change_attribution": "null correction (n_opt varies) plus threshold convention",
-      "verdict_changed": true,
-      "directionality": {
-        "dE_max_aware_minus_blind": 0.009414860233820918,
-        "dE_max_sem": 3.899776251248683e-06,
-        "dE_max_sigma": 2414.205233135194,
-        "dp_aware_minus_blind": 0.08291166666666666,
-        "dp_sem": 0.00031487210807635185,
-        "dp_sigma": 263.3185491506342,
-        "n_items_n_opt_below_k": 2051,
-        "n_items_n_opt_above_k": 0,
-        "expected_sign": "up",
-        "observed_sign": "up",
-        "sign_consistent_with_histogram": true,
-        "moves_in_authors_favour": false,
-        "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
-        "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
-      }
-    },
-    {
-      "construct": "MMLU letter",
-      "n": 14042,
-      "k": 4,
-      "floor": 0.268908,
-      "floor_count": 3776,
-      "chance": 0.25,
-      "gap_pp": 1.891,
-      "n_opt_hist": {
-        "4": 14042
-      },
-      "n_opt_is_constant": true,
-      "k_nominal": 4,
-      "kmax_observed": 4,
-      "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
-      "n_opt_source_disk": "wzc1",
-      "n_opt_source": "olmo2_downstream_results/7B_keep8_step121000_wzc1_know/per_example_mmlu_shard{0..7}of8.jsonl :: len(option_scores)",
-      "n_opt_how": "14042/14042 items score exactly the four candidates A-D; identical in 7B_fromscratch_step200000_perex_know",
-      "n_items_with_fewer_than_k_options": 0,
-      "n_items_with_more_than_k_options": 0,
-      "E_max_blind_shipped": 0.254355,
-      "q95_blind_shipped": 0.258225,
-      "p_blind_shipped": 0.0,
-      "blind_recomputed_here": {
-        "E_max": 0.2543471007216446,
-        "E_max_sem": 1.036521562102324e-06,
-        "p_one_sided": 0.0,
-        "p_sem": 0.0,
-        "p_rounded_floor": 0.0,
-        "n_draws_each": 200000,
-        "seeds": [
-          20270814,
-          10007,
-          10099
-        ]
-      },
-      "E_max_aware": 0.25435012804443813,
-      "q95_aware": 0.25822532402791626,
-      "q99_aware": 0.2602905569007264,
-      "p_aware": 0.0,
-      "p_aware_rounded_floor_convention": 0.0,
-      "sd_max_aware": 0.002078713023553521,
-      "threshold_count_exact_floor": 3776,
-      "threshold_count_rounded_floor": 3777,
-      "floor_rounding_matters": true,
-      "per_seed_aware": {
-        "20260814": {
-          "n_draws": 200000,
-          "seed": 20260814,
-          "E_max": 0.25434930885913687,
-          "sd_max": 0.0020769539968498213,
-          "q95": 0.25822532402791626,
-          "q99": 0.26021934197407776,
-          "p_one_sided": 0.0,
-          "p_exact_floor": 0.0,
-          "p_rounded_floor": 0.0,
-          "threshold_count_exact_floor": 3776,
-          "threshold_count_rounded_floor": 3777
-        },
-        "7": {
-          "n_draws": 200000,
-          "seed": 7,
-          "E_max": 0.2543416212078051,
-          "sd_max": 0.0020761884319467068,
-          "q95": 0.25822532402791626,
-          "q99": 0.2602905569007264,
-          "p_one_sided": 0.0,
-          "p_exact_floor": 0.0,
-          "p_rounded_floor": 0.0,
-          "threshold_count_exact_floor": 3776,
-          "threshold_count_rounded_floor": 3777
-        },
-        "99": {
-          "n_draws": 200000,
-          "seed": 99,
-          "E_max": 0.2543537498219627,
-          "sd_max": 0.002080364191509434,
-          "q95": 0.25822532402791626,
-          "q99": 0.2602905569007264,
-          "p_one_sided": 5e-06,
-          "p_exact_floor": 5e-06,
-          "p_rounded_floor": 5e-06,
-          "threshold_count_exact_floor": 3776,
-          "threshold_count_rounded_floor": 3777
-        }
-      },
-      "aware_across_seeds": {
-        "E_max_mean": 0.2543482266296349,
-        "E_max_sem": 3.5427971936942223e-06,
-        "p_mean": 1.6666666666666669e-06,
-        "p_sem": 1.6666666666666669e-06,
-        "seeds": [
-          20260814,
-          7,
-          99
-        ],
-        "n_draws_each": 200000
-      },
-      "big_run_aware": {
-        "n_draws": 1000000,
-        "seed": 20260814,
-        "E_max": 0.25435012804443813,
-        "sd_max": 0.002078713023553521,
-        "q95": 0.25822532402791626,
-        "q99": 0.2602905569007264,
-        "p_one_sided": 0.0,
-        "p_exact_floor": 0.0,
-        "p_rounded_floor": 0.0,
-        "threshold_count_exact_floor": 3776,
-        "threshold_count_rounded_floor": 3777
-      },
-      "impl2_per_item_categorical": {
-        "n_draws": 20000,
-        "seed": 20260814,
-        "E_max": 0.2543466066087452,
-        "sd_max": 0.0020867810961320015,
-        "q95": 0.25822532402791626,
-        "q99": 0.26021934197407776,
-        "p_one_sided": 0.0,
-        "p_exact_floor": 0.0,
-        "p_rounded_floor": 0.0,
-        "threshold_count_exact_floor": 3776,
-        "threshold_count_rounded_floor": 3777
-      },
-      "seed_spread_E_max": 1.2128614157558282e-05,
-      "seed_spread_p": 5e-06,
-      "expected_letter_marginals_aware": {
-        "A": 0.25,
-        "B": 0.25,
-        "C": 0.25,
-        "D": 0.25
-      },
-      "p_2x2": {
-        "blind_rounded_floor__as_shipped": 0.0,
-        "blind_exact_floor": 0.0,
-        "aware_rounded_floor": 0.0,
-        "aware_exact_floor__primary": 0.0
-      },
-      "verdict_blind": "above balanced null",
-      "p_corrected": 0.0,
-      "p_correction_needed": false,
-      "equivalence_assertion": {
-        "claim": "n_opt is constant and equal to k, so every item's legal set is all k letters: the legality-aware and legality-blind nulls are the SAME distribution and no correction to the NULL is possible, let alone needed",
-        "abs_dE_max": 3.027322793502929e-06,
-        "tol": 0.0006,
-        "holds": true,
-        "note": "compared across independent RNG streams and different n_draws, so the residual is Monte-Carlo error, not a distributional difference"
-      },
-      "verdict_aware": "above balanced null",
-      "survives_aware": true,
-      "p_change_attribution": "threshold convention only (n_opt is constant, so the null is identical)",
-      "verdict_changed": false,
-      "directionality": {
-        "dE_max_aware_minus_blind": 1.1259079902847802e-06,
-        "dE_max_sem": 3.6913126262009696e-06,
-        "dE_max_sigma": 0.3050156148501417,
-        "dp_aware_minus_blind": 1.6666666666666669e-06,
-        "dp_sem": 1.6666666666666669e-06,
-        "dp_sigma": 1.0,
-        "n_items_n_opt_below_k": 0,
-        "n_items_n_opt_above_k": 0,
-        "expected_sign": "zero",
-        "observed_sign": "zero",
-        "sign_consistent_with_histogram": true,
-        "moves_in_authors_favour": false,
-        "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
-        "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
-      }
-    },
-    {
-      "construct": "OpenBookQA letter",
-      "n": 500,
-      "k": 4,
-      "floor": 0.276,
-      "floor_count": 138,
-      "chance": 0.25,
-      "gap_pp": 2.6,
-      "n_opt_hist": {
-        "4": 500
-      },
-      "n_opt_is_constant": true,
-      "k_nominal": 4,
-      "kmax_observed": 4,
-      "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
-      "n_opt_source_disk": "wzc1",
-      "n_opt_source": "olmo2_mc_letter_content_results/7B_base/per_example_openbookqa_shard{0..7}of8.jsonl :: n_opt",
-      "n_opt_how": "500/500 items have n_opt=4",
-      "n_items_with_fewer_than_k_options": 0,
-      "n_items_with_more_than_k_options": 0,
-      "E_max_blind_shipped": 0.273191,
-      "q95_blind_shipped": 0.294,
-      "p_blind_shipped": 0.3834,
-      "blind_recomputed_here": {
-        "E_max": 0.27318961,
-        "E_max_sem": 3.1521156916236718e-06,
-        "p_one_sided": 0.38307166666666664,
-        "p_sem": 0.0003361340671683114,
-        "p_rounded_floor": 0.38307166666666664,
-        "n_draws_each": 200000,
-        "seeds": [
-          20270814,
-          10007,
-          10099
-        ]
-      },
-      "E_max_aware": 0.27318954000000006,
-      "q95_aware": 0.294,
-      "q99_aware": 0.306,
-      "p_aware": 0.383596,
-      "p_aware_rounded_floor_convention": 0.383596,
-      "sd_max_aware": 0.011208809402688941,
-      "threshold_count_exact_floor": 138,
-      "threshold_count_rounded_floor": 138,
-      "floor_rounding_matters": false,
-      "per_seed_aware": {
-        "20260814": {
-          "n_draws": 200000,
-          "seed": 20260814,
-          "E_max": 0.27318305,
-          "sd_max": 0.011213884316039072,
-          "q95": 0.294,
-          "q99": 0.306,
-          "p_one_sided": 0.383695,
-          "p_exact_floor": 0.383695,
-          "p_rounded_floor": 0.383695,
-          "threshold_count_exact_floor": 138,
-          "threshold_count_rounded_floor": 138
-        },
-        "7": {
-          "n_draws": 200000,
-          "seed": 7,
-          "E_max": 0.27316597000000004,
-          "sd_max": 0.011204786552866962,
-          "q95": 0.294,
-          "q99": 0.306,
-          "p_one_sided": 0.38277,
-          "p_exact_floor": 0.38277,
-          "p_rounded_floor": 0.38277,
-          "threshold_count_exact_floor": 138,
-          "threshold_count_rounded_floor": 138
-        },
-        "99": {
-          "n_draws": 200000,
-          "seed": 99,
-          "E_max": 0.27322854,
-          "sd_max": 0.011265345268051924,
-          "q95": 0.294,
-          "q99": 0.306,
-          "p_one_sided": 0.38415,
-          "p_exact_floor": 0.38415,
-          "p_rounded_floor": 0.38415,
-          "threshold_count_exact_floor": 138,
-          "threshold_count_rounded_floor": 138
-        }
-      },
-      "aware_across_seeds": {
-        "E_max_mean": 0.27319252000000005,
-        "E_max_sem": 1.867272431471392e-05,
-        "p_mean": 0.3835383333333333,
-        "p_sem": 0.00040600013683631935,
-        "seeds": [
-          20260814,
-          7,
-          99
-        ],
-        "n_draws_each": 200000
-      },
-      "big_run_aware": {
-        "n_draws": 1000000,
-        "seed": 20260814,
-        "E_max": 0.27318954000000006,
-        "sd_max": 0.011208809402688941,
-        "q95": 0.294,
-        "q99": 0.306,
-        "p_one_sided": 0.383596,
-        "p_exact_floor": 0.383596,
-        "p_rounded_floor": 0.383596,
-        "threshold_count_exact_floor": 138,
-        "threshold_count_rounded_floor": 138
-      },
-      "impl2_per_item_categorical": {
-        "n_draws": 20000,
-        "seed": 20260814,
-        "E_max": 0.2732388,
-        "sd_max": 0.011202662609508373,
-        "q95": 0.294,
-        "q99": 0.306,
-        "p_one_sided": 0.38525,
-        "p_exact_floor": 0.38525,
-        "p_rounded_floor": 0.38525,
-        "threshold_count_exact_floor": 138,
-        "threshold_count_rounded_floor": 138
-      },
-      "seed_spread_E_max": 6.256999999998403e-05,
-      "seed_spread_p": 0.0013799999999999923,
-      "expected_letter_marginals_aware": {
-        "A": 0.25,
-        "B": 0.25,
-        "C": 0.25,
-        "D": 0.25
-      },
-      "p_2x2": {
-        "blind_rounded_floor__as_shipped": 0.38307166666666664,
-        "blind_exact_floor": 0.38307166666666664,
-        "aware_rounded_floor": 0.383596,
-        "aware_exact_floor__primary": 0.383596
-      },
-      "verdict_blind": "inside estimator noise",
-      "p_corrected": 0.383596,
-      "p_correction_needed": false,
-      "equivalence_assertion": {
-        "claim": "n_opt is constant and equal to k, so every item's legal set is all k letters: the legality-aware and legality-blind nulls are the SAME distribution and no correction to the NULL is possible, let alone needed",
-        "abs_dE_max": 6.999999996315509e-08,
-        "tol": 0.0006,
-        "holds": true,
-        "note": "compared across independent RNG streams and different n_draws, so the residual is Monte-Carlo error, not a distributional difference"
-      },
-      "verdict_aware": "inside estimator noise",
-      "survives_aware": false,
-      "p_change_attribution": "neither: n_opt is constant and the 6-dp floor gives the same threshold count, so any difference from the shipped p is Monte-Carlo error",
-      "verdict_changed": false,
-      "directionality": {
-        "dE_max_aware_minus_blind": 2.9100000000226167e-06,
-        "dE_max_sem": 1.893690752648617e-05,
-        "dE_max_sigma": 0.15366817395884388,
-        "dp_aware_minus_blind": 0.0004666666666666708,
-        "dp_sem": 0.0005270884387104511,
-        "dp_sigma": 0.8853669183266374,
-        "n_items_n_opt_below_k": 0,
-        "n_items_n_opt_above_k": 0,
-        "expected_sign": "zero",
-        "observed_sign": "zero",
-        "sign_consistent_with_histogram": true,
-        "moves_in_authors_favour": false,
-        "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
-        "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
-      }
-    },
-    {
-      "construct": "ARC-Easy letter",
-      "n": 2376,
-      "k": 4,
-      "floor": 0.266414,
-      "floor_count": 633,
-      "chance": 0.250161,
-      "gap_pp": 1.625,
-      "n_opt_hist": {
-        "3": 7,
-        "4": 2365,
-        "5": 4
-      },
-      "n_opt_is_constant": false,
-      "k_nominal": 4,
-      "kmax_observed": 5,
-      "k_note": "shipped k=4 is the NOMINAL option count but max(n_opt)=5: 4 item(s) actually offer 5 options, so a k=4 null cannot emit letter E even though the construct contains it. Same defect CLASS as the MMLU-Pro one, opposite sign: the extra letter carries only 4/2376 of the mass and can never win the maximum, so recognising it slightly LOWERS E[max]. The legality-aware p reported here uses the OBSERVED histogram and therefore already accounts for it.",
-      "n_opt_source_disk": "wzc1",
-      "n_opt_source": "olmo2_mc_letter_content_results/7B_base/per_example_arc_easy_shard{0..7}of8.jsonl :: n_opt",
-      "n_opt_how": "NOT constant: 11/2376 items are 3- or 5-way, which is exactly why the shipped chance line is 0.250161 rather than 0.250000",
-      "n_items_with_fewer_than_k_options": 7,
-      "n_items_with_more_than_k_options": 4,
-      "E_max_blind_shipped": 0.260611,
-      "q95_blind_shipped": 0.270202,
-      "p_blind_shipped": 0.13972,
-      "blind_recomputed_here": {
-        "E_max": 0.2605839471099888,
-        "E_max_sem": 2.8844049245963217e-06,
-        "p_one_sided": 0.13767,
-        "p_sem": 0.00024501700621249383,
-        "p_rounded_floor": 0.13767,
-        "n_draws_each": 200000,
-        "seeds": [
-          20270814,
-          10007,
-          10099
-        ]
-      },
-      "E_max_aware": 0.2605232521043771,
-      "q95_aware": 0.2697811447811448,
-      "q99_aware": 0.27525252525252525,
-      "p_aware": 0.135721,
-      "p_aware_rounded_floor_convention": 0.135721,
-      "sd_max_aware": 0.005091589711359075,
-      "threshold_count_exact_floor": 633,
-      "threshold_count_rounded_floor": 633,
-      "floor_rounding_matters": false,
-      "per_seed_aware": {
-        "20260814": {
-          "n_draws": 200000,
-          "seed": 20260814,
-          "E_max": 0.2605276936026936,
-          "sd_max": 0.005092599925073819,
-          "q95": 0.2697811447811448,
-          "q99": 0.27525252525252525,
-          "p_one_sided": 0.136195,
-          "p_exact_floor": 0.136195,
-          "p_rounded_floor": 0.136195,
-          "threshold_count_exact_floor": 633,
-          "threshold_count_rounded_floor": 633
-        },
-        "7": {
-          "n_draws": 200000,
-          "seed": 7,
-          "E_max": 0.2605210732323232,
-          "sd_max": 0.005100425296835367,
-          "q95": 0.2702020202020202,
-          "q99": 0.27525252525252525,
-          "p_one_sided": 0.136205,
-          "p_exact_floor": 0.136205,
-          "p_rounded_floor": 0.136205,
-          "threshold_count_exact_floor": 633,
-          "threshold_count_rounded_floor": 633
-        },
-        "99": {
-          "n_draws": 200000,
-          "seed": 99,
-          "E_max": 0.2605377377946128,
-          "sd_max": 0.005103605734406241,
-          "q95": 0.2702020202020202,
-          "q99": 0.27525252525252525,
-          "p_one_sided": 0.136995,
-          "p_exact_floor": 0.136995,
-          "p_rounded_floor": 0.136995,
-          "threshold_count_exact_floor": 633,
-          "threshold_count_rounded_floor": 633
-        }
-      },
-      "aware_across_seeds": {
-        "E_max_mean": 0.26052883487654316,
-        "E_max_sem": 4.844370911199899e-06,
-        "p_mean": 0.13646499999999998,
-        "p_sem": 0.0002650157228040141,
-        "seeds": [
-          20260814,
-          7,
-          99
-        ],
-        "n_draws_each": 200000
-      },
-      "big_run_aware": {
-        "n_draws": 1000000,
-        "seed": 20260814,
-        "E_max": 0.2605232521043771,
-        "sd_max": 0.005091589711359075,
-        "q95": 0.2697811447811448,
-        "q99": 0.27525252525252525,
-        "p_one_sided": 0.135721,
-        "p_exact_floor": 0.135721,
-        "p_rounded_floor": 0.135721,
-        "threshold_count_exact_floor": 633,
-        "threshold_count_rounded_floor": 633
-      },
-      "impl2_per_item_categorical": {
-        "n_draws": 20000,
-        "seed": 20260814,
-        "E_max": 0.26049631734006734,
-        "sd_max": 0.005071837320624033,
-        "q95": 0.2697811447811448,
-        "q99": 0.27525252525252525,
-        "p_one_sided": 0.13335,
-        "p_exact_floor": 0.13335,
-        "p_rounded_floor": 0.13335,
-        "threshold_count_exact_floor": 633,
-        "threshold_count_rounded_floor": 633
-      },
-      "seed_spread_E_max": 1.6664562289603335e-05,
-      "seed_spread_p": 0.0007999999999999952,
-      "expected_letter_marginals_aware": {
-        "A": 0.25016133557800224,
-        "B": 0.25016133557800224,
-        "C": 0.25016133557800224,
-        "D": 0.24917929292929292,
-        "E": 0.0003367003367003367
-      },
-      "p_2x2": {
-        "blind_rounded_floor__as_shipped": 0.13767,
-        "blind_exact_floor": 0.13767,
-        "aware_rounded_floor": 0.135721,
-        "aware_exact_floor__primary": 0.135721
-      },
-      "verdict_blind": "inside estimator noise",
-      "p_corrected": 0.135721,
-      "p_correction_needed": true,
-      "verdict_aware": "inside estimator noise",
-      "survives_aware": false,
-      "p_change_attribution": "null correction only (n_opt varies; 6-dp floor rounds down so the threshold count is unchanged)",
-      "verdict_changed": false,
-      "directionality": {
-        "dE_max_aware_minus_blind": -5.5112233445619996e-05,
-        "dE_max_sem": 5.63806006480201e-06,
-        "dE_max_sigma": -9.775034819100558,
-        "dp_aware_minus_blind": -0.0012050000000000116,
-        "dp_sem": 0.0003609247382303785,
-        "dp_sigma": -3.3386461839888053,
-        "n_items_n_opt_below_k": 7,
-        "n_items_n_opt_above_k": 4,
-        "expected_sign": "either",
-        "observed_sign": "down",
-        "sign_consistent_with_histogram": true,
-        "moves_in_authors_favour": true,
-        "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
-        "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
-      }
-    },
-    {
-      "construct": "ARC-Challenge letter",
-      "n": 1172,
-      "k": 4,
-      "floor": 0.265358,
-      "floor_count": 311,
-      "chance": 0.250156,
-      "gap_pp": 1.52,
-      "n_opt_hist": {
-        "3": 4,
-        "4": 1165,
-        "5": 3
-      },
-      "n_opt_is_constant": false,
-      "k_nominal": 4,
-      "kmax_observed": 5,
-      "k_note": "shipped k=4 is the NOMINAL option count but max(n_opt)=5: 3 item(s) actually offer 5 options, so a k=4 null cannot emit letter E even though the construct contains it. Same defect CLASS as the MMLU-Pro one, opposite sign: the extra letter carries only 3/1172 of the mass and can never win the maximum, so recognising it slightly LOWERS E[max]. The legality-aware p reported here uses the OBSERVED histogram and therefore already accounts for it.",
-      "n_opt_source_disk": "wzc1",
-      "n_opt_source": "olmo2_mc_letter_content_results/7B_base/per_example_arc_challenge_shard{0..7}of8.jsonl :: n_opt",
-      "n_opt_how": "NOT constant: 7/1172 items are 3- or 5-way, hence chance 0.250156 rather than 0.250000",
-      "n_items_with_fewer_than_k_options": 4,
-      "n_items_with_more_than_k_options": 3,
-      "E_max_blind_shipped": 0.265105,
-      "q95_blind_shipped": 0.27901,
-      "p_blind_shipped": 0.45252,
-      "blind_recomputed_here": {
-        "E_max": 0.2650980830489192,
-        "E_max_sem": 5.654346117479743e-06,
-        "p_one_sided": 0.452455,
-        "p_sem": 0.0006947721449031647,
-        "p_rounded_floor": 0.452455,
-        "n_draws_each": 200000,
-        "seeds": [
-          20270814,
-          10007,
-          10099
-        ]
-      },
-      "E_max_aware": 0.26498449573378835,
-      "q95_aware": 0.2781569965870307,
-      "q99_aware": 0.2858361774744027,
-      "p_aware": 0.447647,
-      "p_aware_rounded_floor_convention": 0.447647,
-      "sd_max_aware": 0.007270687933292787,
-      "threshold_count_exact_floor": 311,
-      "threshold_count_rounded_floor": 311,
-      "floor_rounding_matters": false,
-      "per_seed_aware": {
-        "20260814": {
-          "n_draws": 200000,
-          "seed": 20260814,
-          "E_max": 0.26498504692832764,
-          "sd_max": 0.007279626806934036,
-          "q95": 0.2781569965870307,
-          "q99": 0.2858361774744027,
-          "p_one_sided": 0.44697,
-          "p_exact_floor": 0.44697,
-          "p_rounded_floor": 0.44697,
-          "threshold_count_exact_floor": 311,
-          "threshold_count_rounded_floor": 311
-        },
-        "7": {
-          "n_draws": 200000,
-          "seed": 7,
-          "E_max": 0.2649862755972696,
-          "sd_max": 0.007263522993389376,
-          "q95": 0.2781569965870307,
-          "q99": 0.2858361774744027,
-          "p_one_sided": 0.447485,
-          "p_exact_floor": 0.447485,
-          "p_rounded_floor": 0.447485,
-          "threshold_count_exact_floor": 311,
-          "threshold_count_rounded_floor": 311
-        },
-        "99": {
-          "n_draws": 200000,
-          "seed": 99,
-          "E_max": 0.2649931655290102,
-          "sd_max": 0.007285956634857325,
-          "q95": 0.2781569965870307,
-          "q99": 0.2858361774744027,
-          "p_one_sided": 0.44727,
-          "p_exact_floor": 0.44727,
-          "p_rounded_floor": 0.44727,
-          "threshold_count_exact_floor": 311,
-          "threshold_count_rounded_floor": 311
-        }
-      },
-      "aware_across_seeds": {
-        "E_max_mean": 0.2649881626848692,
-        "E_max_sem": 2.526443083794482e-06,
-        "p_mean": 0.4472416666666667,
-        "p_sem": 0.0001493411456289977,
-        "seeds": [
-          20260814,
-          7,
-          99
-        ],
-        "n_draws_each": 200000
-      },
-      "big_run_aware": {
-        "n_draws": 1000000,
-        "seed": 20260814,
-        "E_max": 0.26498449573378835,
-        "sd_max": 0.007270687933292787,
-        "q95": 0.2781569965870307,
-        "q99": 0.2858361774744027,
-        "p_one_sided": 0.447647,
-        "p_exact_floor": 0.447647,
-        "p_rounded_floor": 0.447647,
-        "threshold_count_exact_floor": 311,
-        "threshold_count_rounded_floor": 311
-      },
-      "impl2_per_item_categorical": {
-        "n_draws": 20000,
-        "seed": 20260814,
-        "E_max": 0.2650334470989761,
-        "sd_max": 0.0072447757922528624,
-        "q95": 0.2781569965870307,
-        "q99": 0.2858361774744027,
-        "p_one_sided": 0.44765,
-        "p_exact_floor": 0.44765,
-        "p_rounded_floor": 0.44765,
-        "threshold_count_exact_floor": 311,
-        "threshold_count_rounded_floor": 311
-      },
-      "seed_spread_E_max": 8.11860068256065e-06,
-      "seed_spread_p": 0.0005150000000000432,
-      "expected_letter_marginals_aware": {
-        "A": 0.25015642775881686,
-        "B": 0.25015642775881686,
-        "C": 0.25015642775881686,
-        "D": 0.24901877133105804,
-        "E": 0.0005119453924914676
-      },
-      "p_2x2": {
-        "blind_rounded_floor__as_shipped": 0.452455,
-        "blind_exact_floor": 0.452455,
-        "aware_rounded_floor": 0.447647,
-        "aware_exact_floor__primary": 0.447647
-      },
-      "verdict_blind": "inside estimator noise",
-      "p_corrected": 0.447647,
-      "p_correction_needed": true,
-      "verdict_aware": "inside estimator noise",
-      "survives_aware": false,
-      "p_change_attribution": "null correction only (n_opt varies; 6-dp floor rounds down so the threshold count is unchanged)",
-      "verdict_changed": false,
-      "directionality": {
-        "dE_max_aware_minus_blind": -0.00010992036404999794,
-        "dE_max_sem": 6.1931046068923475e-06,
-        "dE_max_sigma": -17.748830518326276,
-        "dp_aware_minus_blind": -0.005213333333333292,
-        "dp_sem": 0.0007106413378851006,
-        "dp_sigma": -7.336096361701105,
-        "n_items_n_opt_below_k": 4,
-        "n_items_n_opt_above_k": 3,
-        "expected_sign": "either",
-        "observed_sign": "down",
-        "sign_consistent_with_histogram": true,
-        "moves_in_authors_favour": true,
-        "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
-        "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
-      }
-    },
-    {
-      "construct": "CommonsenseQA letter",
-      "n": 1221,
-      "k": 5,
-      "floor": 0.208845,
-      "floor_count": 255,
-      "chance": 0.2,
-      "gap_pp": 0.884,
-      "n_opt_hist": {
-        "5": 1221
-      },
-      "n_opt_is_constant": true,
-      "k_nominal": 5,
-      "kmax_observed": 5,
-      "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
-      "n_opt_source_disk": "wzc1",
-      "n_opt_source": "olmo2_mc_letter_content_results/7B_base/per_example_commonsense_qa_shard{0..7}of8.jsonl :: n_opt",
-      "n_opt_how": "1221/1221 items have n_opt=5",
-      "n_items_with_fewer_than_k_options": 0,
-      "n_items_with_more_than_k_options": 0,
-      "E_max_blind_shipped": 0.215006,
-      "q95_blind_shipped": 0.226863,
-      "p_blind_shipped": 0.85332,
-      "blind_recomputed_here": {
-        "E_max": 0.21497008599508596,
-        "E_max_sem": 3.569111070263066e-06,
-        "p_one_sided": 0.8520383333333333,
-        "p_sem": 0.0006947441575461012,
-        "p_rounded_floor": 0.8520383333333333,
-        "n_draws_each": 200000,
-        "seeds": [
-          20270814,
-          10007,
-          10099
-        ]
-      },
-      "E_max_aware": 0.21499352006552008,
-      "q95_aware": 0.22686322686322685,
-      "q99_aware": 0.2334152334152334,
-      "p_aware": 0.852826,
-      "p_aware_rounded_floor_convention": 0.852826,
-      "sd_max_aware": 0.006478687864786396,
-      "threshold_count_exact_floor": 255,
-      "threshold_count_rounded_floor": 255,
-      "floor_rounding_matters": false,
-      "per_seed_aware": {
-        "20260814": {
-          "n_draws": 200000,
-          "seed": 20260814,
-          "E_max": 0.21498645372645372,
-          "sd_max": 0.00647768662064933,
-          "q95": 0.22686322686322685,
-          "q99": 0.2334152334152334,
-          "p_one_sided": 0.85291,
-          "p_exact_floor": 0.85291,
-          "p_rounded_floor": 0.85291,
-          "threshold_count_exact_floor": 255,
-          "threshold_count_rounded_floor": 255
-        },
-        "7": {
-          "n_draws": 200000,
-          "seed": 7,
-          "E_max": 0.21495135544635544,
-          "sd_max": 0.00645829430029975,
-          "q95": 0.22686322686322685,
-          "q99": 0.2334152334152334,
-          "p_one_sided": 0.850935,
-          "p_exact_floor": 0.850935,
-          "p_rounded_floor": 0.850935,
-          "threshold_count_exact_floor": 255,
-          "threshold_count_rounded_floor": 255
-        },
-        "99": {
-          "n_draws": 200000,
-          "seed": 99,
-          "E_max": 0.21502037264537266,
-          "sd_max": 0.0065103114313416425,
-          "q95": 0.22686322686322685,
-          "q99": 0.2334152334152334,
-          "p_one_sided": 0.85199,
-          "p_exact_floor": 0.85199,
-          "p_rounded_floor": 0.85199,
-          "threshold_count_exact_floor": 255,
-          "threshold_count_rounded_floor": 255
-        }
-      },
-      "aware_across_seeds": {
-        "E_max_mean": 0.2149860606060606,
-        "E_max_sem": 1.9924518796183325e-05,
-        "p_mean": 0.8519450000000001,
-        "p_sem": 0.0005705771931415743,
-        "seeds": [
-          20260814,
-          7,
-          99
-        ],
-        "n_draws_each": 200000
-      },
-      "big_run_aware": {
-        "n_draws": 1000000,
-        "seed": 20260814,
-        "E_max": 0.21499352006552008,
-        "sd_max": 0.006478687864786396,
-        "q95": 0.22686322686322685,
-        "q99": 0.2334152334152334,
-        "p_one_sided": 0.852826,
-        "p_exact_floor": 0.852826,
-        "p_rounded_floor": 0.852826,
-        "threshold_count_exact_floor": 255,
-        "threshold_count_rounded_floor": 255
-      },
-      "impl2_per_item_categorical": {
-        "n_draws": 20000,
-        "seed": 20260814,
-        "E_max": 0.21511895986895987,
-        "sd_max": 0.00650723732019763,
-        "q95": 0.22686322686322685,
-        "q99": 0.2334152334152334,
-        "p_one_sided": 0.8582,
-        "p_exact_floor": 0.8582,
-        "p_rounded_floor": 0.8582,
-        "threshold_count_exact_floor": 255,
-        "threshold_count_rounded_floor": 255
-      },
-      "seed_spread_E_max": 6.901719901722392e-05,
-      "seed_spread_p": 0.001974999999999949,
-      "expected_letter_marginals_aware": {
-        "A": 0.19999999999999998,
-        "B": 0.19999999999999998,
-        "C": 0.19999999999999998,
-        "D": 0.19999999999999998,
-        "E": 0.19999999999999998
-      },
-      "p_2x2": {
-        "blind_rounded_floor__as_shipped": 0.8520383333333333,
-        "blind_exact_floor": 0.8520383333333333,
-        "aware_rounded_floor": 0.852826,
-        "aware_exact_floor__primary": 0.852826
-      },
-      "verdict_blind": "inside estimator noise",
-      "p_corrected": 0.852826,
-      "p_correction_needed": false,
-      "equivalence_assertion": {
-        "claim": "n_opt is constant and equal to k, so every item's legal set is all k letters: the legality-aware and legality-blind nulls are the SAME distribution and no correction to the NULL is possible, let alone needed",
-        "abs_dE_max": 2.3434070434119603e-05,
-        "tol": 0.0006,
-        "holds": true,
-        "note": "compared across independent RNG streams and different n_draws, so the residual is Monte-Carlo error, not a distributional difference"
-      },
-      "verdict_aware": "inside estimator noise",
-      "survives_aware": false,
-      "p_change_attribution": "neither: n_opt is constant and the 6-dp floor gives the same threshold count, so any difference from the shipped p is Monte-Carlo error",
-      "verdict_changed": false,
-      "directionality": {
-        "dE_max_aware_minus_blind": 1.597461097463393e-05,
-        "dE_max_sem": 2.024166502764377e-05,
-        "dE_max_sigma": 0.789194513041176,
-        "dp_aware_minus_blind": -9.333333333327865e-05,
-        "dp_sem": 0.000899014892967719,
-        "dp_sigma": -0.10381733835929897,
-        "n_items_n_opt_below_k": 0,
-        "n_items_n_opt_above_k": 0,
-        "expected_sign": "zero",
-        "observed_sign": "zero",
-        "sign_consistent_with_histogram": true,
-        "moves_in_authors_favour": false,
-        "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
-        "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
-      }
-    },
-    {
-      "construct": "PIQA letter",
-      "n": 1838,
-      "k": 2,
-      "floor": 0.504897,
-      "floor_count": 928,
-      "chance": 0.5,
-      "gap_pp": 0.49,
-      "n_opt_hist": {
-        "2": 1838
-      },
-      "n_opt_is_constant": true,
-      "k_nominal": 2,
-      "kmax_observed": 2,
-      "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
-      "n_opt_source_disk": "wzc1",
-      "n_opt_source": "olmo2_mc_letter_content_results/7B_base/per_example_piqa_shard{0..7}of8.jsonl :: n_opt",
-      "n_opt_how": "1838/1838 items have n_opt=2",
-      "n_items_with_fewer_than_k_options": 0,
-      "n_items_with_more_than_k_options": 0,
-      "E_max_blind_shipped": 0.509307,
-      "q95_blind_shipped": 0.522851,
-      "p_blind_shipped": 0.65791,
-      "blind_recomputed_here": {
-        "E_max": 0.5092986235038084,
-        "E_max_sem": 8.566516155139424e-06,
-        "p_one_sided": 0.691985,
-        "p_sem": 0.0005948178993047642,
-        "p_rounded_floor": 0.6576366666666666,
-        "n_draws_each": 200000,
-        "seeds": [
-          20270814,
-          10007,
-          10099
-        ]
-      },
-      "E_max_aware": 0.509299963547334,
-      "q95_aware": 0.5228509249183896,
-      "q99_aware": 0.529923830250272,
-      "p_aware": 0.691229,
-      "p_aware_rounded_floor_convention": 0.657341,
-      "sd_max_aware": 0.007023491838161014,
-      "threshold_count_exact_floor": 928,
-      "threshold_count_rounded_floor": 929,
-      "floor_rounding_matters": true,
-      "per_seed_aware": {
-        "20260814": {
-          "n_draws": 200000,
-          "seed": 20260814,
-          "E_max": 0.5092907535364526,
-          "sd_max": 0.007027180848650735,
-          "q95": 0.5228509249183896,
-          "q99": 0.529923830250272,
-          "p_one_sided": 0.689545,
-          "p_exact_floor": 0.689545,
-          "p_rounded_floor": 0.655735,
-          "threshold_count_exact_floor": 928,
-          "threshold_count_rounded_floor": 929
-        },
-        "7": {
-          "n_draws": 200000,
-          "seed": 7,
-          "E_max": 0.509289175734494,
-          "sd_max": 0.007017045756514712,
-          "q95": 0.5228509249183896,
-          "q99": 0.529923830250272,
-          "p_one_sided": 0.691945,
-          "p_exact_floor": 0.691945,
-          "p_rounded_floor": 0.658015,
-          "threshold_count_exact_floor": 928,
-          "threshold_count_rounded_floor": 929
-        },
-        "99": {
-          "n_draws": 200000,
-          "seed": 99,
-          "E_max": 0.5093143416757344,
-          "sd_max": 0.0070373481398437795,
-          "q95": 0.5228509249183896,
-          "q99": 0.529923830250272,
-          "p_one_sided": 0.69253,
-          "p_exact_floor": 0.69253,
-          "p_rounded_floor": 0.65855,
-          "threshold_count_exact_floor": 928,
-          "threshold_count_rounded_floor": 929
-        }
-      },
-      "aware_across_seeds": {
-        "E_max_mean": 0.5092980903155603,
-        "E_max_sem": 8.138435463617006e-06,
-        "p_mean": 0.69134,
-        "p_sem": 0.0009132496920339038,
-        "seeds": [
-          20260814,
-          7,
-          99
-        ],
-        "n_draws_each": 200000
-      },
-      "big_run_aware": {
-        "n_draws": 1000000,
-        "seed": 20260814,
-        "E_max": 0.509299963547334,
-        "sd_max": 0.007023491838161014,
-        "q95": 0.5228509249183896,
-        "q99": 0.529923830250272,
-        "p_one_sided": 0.691229,
-        "p_exact_floor": 0.691229,
-        "p_rounded_floor": 0.657341,
-        "threshold_count_exact_floor": 928,
-        "threshold_count_rounded_floor": 929
-      },
-      "impl2_per_item_categorical": {
-        "n_draws": 20000,
-        "seed": 20260814,
-        "E_max": 0.5093021218715996,
-        "sd_max": 0.007033999676180542,
-        "q95": 0.5228509249183896,
-        "q99": 0.529923830250272,
-        "p_one_sided": 0.69135,
-        "p_exact_floor": 0.69135,
-        "p_rounded_floor": 0.65595,
-        "threshold_count_exact_floor": 928,
-        "threshold_count_rounded_floor": 929
-      },
-      "seed_spread_E_max": 2.5165941240468115e-05,
-      "seed_spread_p": 0.0029850000000000154,
-      "expected_letter_marginals_aware": {
-        "A": 0.5,
-        "B": 0.5
-      },
-      "p_2x2": {
-        "blind_rounded_floor__as_shipped": 0.6576366666666666,
-        "blind_exact_floor": 0.691985,
-        "aware_rounded_floor": 0.657341,
-        "aware_exact_floor__primary": 0.691229
-      },
-      "verdict_blind": "inside estimator noise",
-      "p_corrected": 0.691229,
-      "p_correction_needed": false,
-      "equivalence_assertion": {
-        "claim": "n_opt is constant and equal to k, so every item's legal set is all k letters: the legality-aware and legality-blind nulls are the SAME distribution and no correction to the NULL is possible, let alone needed",
-        "abs_dE_max": 1.3400435255883636e-06,
-        "tol": 0.0006,
-        "holds": true,
-        "note": "compared across independent RNG streams and different n_draws, so the residual is Monte-Carlo error, not a distributional difference"
-      },
-      "verdict_aware": "inside estimator noise",
-      "survives_aware": false,
-      "p_change_attribution": "threshold convention only (n_opt is constant, so the null is identical)",
-      "verdict_changed": false,
-      "directionality": {
-        "dE_max_aware_minus_blind": -5.331882481085515e-07,
-        "dE_max_sem": 1.1816062408083486e-05,
-        "dE_max_sigma": -0.045124020988903384,
-        "dp_aware_minus_blind": -0.0006450000000000067,
-        "dp_sem": 0.0010898776689763638,
-        "dp_sigma": -0.5918095382262528,
-        "n_items_n_opt_below_k": 0,
-        "n_items_n_opt_above_k": 0,
-        "expected_sign": "zero",
-        "observed_sign": "zero",
-        "sign_consistent_with_histogram": true,
-        "moves_in_authors_favour": false,
-        "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
-        "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
-      }
-    },
-    {
-      "construct": "BoolQ",
-      "n": 3270,
-      "k": 2,
-      "floor": 0.621713,
-      "floor_count": 2033,
-      "chance": 0.5,
-      "gap_pp": 12.171,
-      "n_opt_hist": {
-        "2": 3270
-      },
-      "n_opt_is_constant": true,
-      "k_nominal": 2,
-      "kmax_observed": 2,
-      "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
-      "n_opt_source_disk": "wzc1",
-      "n_opt_source": "olmo2_downstream_results/7B_keep8_step121000_wzc1_know/per_example_boolq_shard{0..7}of8.jsonl :: len(option_scores)",
-      "n_opt_how": "3270/3270 items score exactly the two candidates A-B; identical in 7B_fromscratch_step200000_perex_know",
-      "n_items_with_fewer_than_k_options": 0,
-      "n_items_with_more_than_k_options": 0,
-      "E_max_blind_shipped": 0.506981,
-      "q95_blind_shipped": 0.517125,
-      "p_blind_shipped": 0.0,
-      "blind_recomputed_here": {
-        "E_max": 0.506968982670744,
-        "E_max_sem": 4.995938673364231e-06,
-        "p_one_sided": 0.0,
-        "p_sem": 0.0,
-        "p_rounded_floor": 0.0,
-        "n_draws_each": 200000,
-        "seeds": [
-          20270814,
-          10007,
-          10099
-        ]
-      },
-      "E_max_aware": 0.5069719880733945,
-      "q95_aware": 0.517125382262997,
-      "q99_aware": 0.5223241590214067,
-      "p_aware": 0.0,
-      "p_aware_rounded_floor_convention": 0.0,
-      "sd_max_aware": 0.005266347115156089,
-      "threshold_count_exact_floor": 2033,
-      "threshold_count_rounded_floor": 2034,
-      "floor_rounding_matters": true,
-      "per_seed_aware": {
-        "20260814": {
-          "n_draws": 200000,
-          "seed": 20260814,
-          "E_max": 0.506963983180428,
-          "sd_max": 0.00526925920198282,
-          "q95": 0.517125382262997,
-          "q99": 0.5223241590214067,
-          "p_one_sided": 0.0,
-          "p_exact_floor": 0.0,
-          "p_rounded_floor": 0.0,
-          "threshold_count_exact_floor": 2033,
-          "threshold_count_rounded_floor": 2034
-        },
-        "7": {
-          "n_draws": 200000,
-          "seed": 7,
-          "E_max": 0.5069642110091742,
-          "sd_max": 0.00526211744410703,
-          "q95": 0.517125382262997,
-          "q99": 0.5226299694189602,
-          "p_one_sided": 0.0,
-          "p_exact_floor": 0.0,
-          "p_rounded_floor": 0.0,
-          "threshold_count_exact_floor": 2033,
-          "threshold_count_rounded_floor": 2034
-        },
-        "99": {
-          "n_draws": 200000,
-          "seed": 99,
-          "E_max": 0.5069841941896024,
-          "sd_max": 0.005277714188301025,
-          "q95": 0.517125382262997,
-          "q99": 0.5226299694189602,
-          "p_one_sided": 0.0,
-          "p_exact_floor": 0.0,
-          "p_rounded_floor": 0.0,
-          "threshold_count_exact_floor": 2033,
-          "threshold_count_rounded_floor": 2034
-        }
-      },
-      "aware_across_seeds": {
-        "E_max_mean": 0.5069707961264015,
-        "E_max_sem": 6.6993544374283416e-06,
-        "p_mean": 0.0,
-        "p_sem": 0.0,
-        "seeds": [
-          20260814,
-          7,
-          99
-        ],
-        "n_draws_each": 200000
-      },
-      "big_run_aware": {
-        "n_draws": 1000000,
-        "seed": 20260814,
-        "E_max": 0.5069719880733945,
-        "sd_max": 0.005266347115156089,
-        "q95": 0.517125382262997,
-        "q99": 0.5223241590214067,
-        "p_one_sided": 0.0,
-        "p_exact_floor": 0.0,
-        "p_rounded_floor": 0.0,
-        "threshold_count_exact_floor": 2033,
-        "threshold_count_rounded_floor": 2034
-      },
-      "impl2_per_item_categorical": {
-        "n_draws": 20000,
-        "seed": 20260814,
-        "E_max": 0.5069607033639143,
-        "sd_max": 0.005272521404005211,
-        "q95": 0.517125382262997,
-        "q99": 0.5226299694189602,
-        "p_one_sided": 0.0,
-        "p_exact_floor": 0.0,
-        "p_rounded_floor": 0.0,
-        "threshold_count_exact_floor": 2033,
-        "threshold_count_rounded_floor": 2034
-      },
-      "seed_spread_E_max": 2.0211009174375683e-05,
-      "seed_spread_p": 0.0,
-      "expected_letter_marginals_aware": {
-        "A": 0.5,
-        "B": 0.5
-      },
-      "p_2x2": {
-        "blind_rounded_floor__as_shipped": 0.0,
-        "blind_exact_floor": 0.0,
-        "aware_rounded_floor": 0.0,
-        "aware_exact_floor__primary": 0.0
-      },
-      "verdict_blind": "above balanced null",
-      "p_corrected": 0.0,
-      "p_correction_needed": false,
-      "equivalence_assertion": {
-        "claim": "n_opt is constant and equal to k, so every item's legal set is all k letters: the legality-aware and legality-blind nulls are the SAME distribution and no correction to the NULL is possible, let alone needed",
-        "abs_dE_max": 3.0054026505244025e-06,
-        "tol": 0.0006,
-        "holds": true,
-        "note": "compared across independent RNG streams and different n_draws, so the residual is Monte-Carlo error, not a distributional difference"
-      },
-      "verdict_aware": "above balanced null",
-      "survives_aware": true,
-      "p_change_attribution": "threshold convention only (n_opt is constant, so the null is identical)",
-      "verdict_changed": false,
-      "directionality": {
-        "dE_max_aware_minus_blind": 1.813455657528884e-06,
-        "dE_max_sem": 8.357078024423797e-06,
-        "dE_max_sigma": 0.2169963774693749,
-        "dp_aware_minus_blind": 0.0,
-        "dp_sem": 0.0,
-        "dp_sigma": null,
-        "n_items_n_opt_below_k": 0,
-        "n_items_n_opt_above_k": 0,
-        "expected_sign": "zero",
-        "observed_sign": "zero",
-        "sign_consistent_with_histogram": true,
-        "moves_in_authors_favour": false,
-        "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
-        "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
-      }
-    }
-  ],
-  "survives_aware": [
-    "MMLU letter",
-    "BoolQ"
-  ],
-  "inside_noise_aware": [
-    "MMLU-Pro letter, naive",
-    "MMLU-Pro letter, item-avg.",
-    "OpenBookQA letter",
-    "ARC-Easy letter",
-    "ARC-Challenge letter",
-    "CommonsenseQA letter",
-    "PIQA letter"
-  ],
-  "verdict_changes": [
-    "MMLU-Pro letter, naive",
-    "MMLU-Pro letter, item-avg."
-  ],
-  "headline": {
-    "n_survives_blind": 4,
-    "n_survives_aware": 2,
-    "survives_blind": [
-      "MMLU-Pro letter, naive",
-      "MMLU-Pro letter, item-avg.",
-      "MMLU letter",
-      "BoolQ"
-    ],
-    "consequence": "the abstract and introduction said three of the eight letter constructs (MMLU-Pro, MMLU, BoolQ) have floors a balanced null could not produce. Under the admissible null that becomes two (MMLU, BoolQ): both MMLU-Pro rows move into the estimator-noise bucket. MMLU-Pro is the largest-n construct and the one the paper uses to clear the power wall, so this is the flagship row.",
-    "inside_noise_p_range": [
-      0.082948,
-      0.852826
-    ],
-    "closest_to_significance": "MMLU-Pro at p = 0.083 is by far the nearest any inside-noise row comes to 0.05 -- the next smallest is 0.083. It must NOT be described as 'well inside' the estimator noise; the honest reading is that it fails to clear 0.05 while being close enough that a larger item set could plausibly change the answer.",
-    "n_rows_moving_in_authors_favour": 2,
-    "rows_moving_in_authors_favour": [
-      "ARC-Easy letter",
-      "ARC-Challenge letter"
-    ]
-  },
-  "directionality_summary_superseded_20260817": {
-    "what": "The narrative strings in .directionality and .floor_rounding_convention were written from an EARLIER, smaller Monte-Carlo budget and were never updated when rows[].directionality was recomputed. Where the two disagree, rows[] is authoritative and is what the manuscript prints.",
-    "stale_in_narrative_vs_authoritative_in_rows": {
-      "dp_ARC_Easy": {
-        "narrative": -0.004,
-        "rows": -0.001205,
-        "printed": "-0.0012"
-      },
-      "dp_ARC_Challenge": {
-        "narrative": -0.005,
-        "rows": -0.005213,
-        "printed": "-0.0052"
-      },
-      "sigma": {
-        "narrative": "about -33 (this is dE_max_sigma, not dp_sigma)",
-        "rows": "dp_sigma -3.34 and -7.34",
-        "printed": "-3.3 and -7.3"
-      },
-      "ARC_Challenge_p_after": {
-        "narrative": 0.447,
-        "rows": 0.447647,
-        "printed": "0.448"
-      }
-    },
-    "why_it_matters": "The narrative conflates two different sigmas: -33 is dE_max_sigma (the shift in the expected maximum), while the sentence it appears in is about dp. Quoting it beside a dp would overstate the significance of the p-shift by an order of magnitude. Separately 0.447 vs 0.447647 is a truncation, not a rounding, and prints as 0.448.",
-    "verified_by": "MAIN 2026-08-17, recomputed from rows[].directionality in this same file; no verdict depends on any of these four values.",
-    "no_verdict_changes": true
+  "small_benchmark_floors": {
+   "path": "paperC/evidence/second_mc_benchmark/gate2_letter_content_nulls.json",
+   "sha256": "34efbdf10939d598fcb223542b5b6ed95f18d91f80aa86db9ac7de6cd50edb97",
+   "key": "tasks.<task>.letter_null"
   }
+ },
+ "method": "legality-aware balanced null: hold the observed n_opt histogram fixed and draw each item's gold letter uniformly among its own n_opt legal letters; f_const = max_L of the k sampled marginals; p = P(max_L >= observed floor)",
+ "n_draws": 1000000,
+ "seed": 20260814,
+ "seeds_checked": [
+  20260814,
+  7,
+  99
+ ],
+ "n_draws_per_seed": 200000,
+ "implementations": [
+  "stratified multinomial (one multinomial per n_opt stratum per draw)",
+  "per-item categorical (independent, 20000 draws)"
+ ],
+ "environment": {
+  "numpy_version": "2.5.1",
+  "python_version": "3.14.6",
+  "python_bin": "/opt/conda/envs/torch-base/bin/python",
+  "node_hostname": "TENCENT64.site",
+  "node_label": "LOCAL (wzc1, 8xB200 sm_100)",
+  "cross_node_bit_identity": "NOT CLAIMED: the five nodes carry three numpy versions (2.3.5/2.4.6/2.5.1) and same-seed default_rng streams differ across them; see memory/numpy-version-split-breaks-cross-node-bootstrap.md",
+  "gpu_used": false
+ },
+ "floor_invariance_verified": {
+  "checked_file": "paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json",
+  "sha256": "b0c86c9042c7afc46364fec22e2df5aa3369b60fff6281544752a2bd869e9ea6",
+  "F1_all_floor_used_equal_1403_over_12032": true,
+  "F1_distinct_floor_used_values": [
+   0.11660571808510638
+  ],
+  "F1_expected": 0.11660571808510638,
+  "F1_is_fatal": true,
+  "F2_no_null_moment_key_appears_in_that_file": true,
+  "F2_forbidden_tokens_found": [],
+  "F2_is_fatal": true,
+  "F2_note": "checks BOTH nulls' moments, so neither the null being removed nor the one being installed may leak into a downstream count",
+  "F3_aggregate_at_or_below_floor": "15/17",
+  "F3_per_family_damaged_rungs": {
+   "olmo2_7b": [
+    "shortgpt16",
+    "keep14",
+    "keep12",
+    "keep10",
+    "keep8"
+   ],
+   "llama2_7b": [
+    "k14",
+    "k12",
+    "k10",
+    "k8"
+   ],
+   "llama3_8b": [
+    "k14",
+    "k12",
+    "k10",
+    "k8"
+   ],
+   "qwen3_8b_base": [
+    "k14",
+    "k12",
+    "k10",
+    "k8"
+   ]
+  },
+  "F3_is_fatal": false,
+  "F3_note": "DIAGNOSTIC ONLY, deliberately not compared to a literal. This aggregate is a function of the observed floor and the DESIGNATED ARM SET, so it legitimately changes when the arm set is corrected -- as happened on 2026-08-16, when a concurrent independent fix to an undisclosed denominator exclusion moved it from 14/15 to 15/17 with the floor untouched. Asserting a literal here would make this check fail on honest denominator fixes, which is the opposite of its purpose.",
+  "chance_used_values_present": [
+   0.1,
+   0.11087694718844986
+  ],
+  "conclusion": "the downstream counts are functions of the OBSERVED floor and the arm scores only; they never read a null moment, so correcting the null cannot move them. Whatever the current aggregate is, it is not a function of the null, and this fix leaves it untouched.",
+  "all_pass": true
+ },
+ "floor_invariance": "every floor in this file is the shipped floor, byte-for-byte. The floor is max_L (count_L / n) over the observed gold labels; no null enters its computation, so correcting the null cannot move it. Verified downstream too: mmlu_pro_power_nulls_v2.json:rollup uses floor_used=0.11660571808510638 = 1403/12032, which is letter_null.gold_letter_marginal_frac.A and does not reference any E_max, so the 14/15, 3/12-vs-1/12 and 10/15 counts are unaffected.",
+ "directionality": "MEASURED, and it CONTRADICTS the universal monotonicity asserted in evidence/mmlupro_legality_aware_null_MAIN.json:VERDICT.confinement ('the fix is monotone ... can only push a row further INSIDE the noise bucket, never out of it. So no row moves in the paper favour'). The true statement is case-split on whether items have FEWER or MORE options than the nominal k the shipped null used. (i) Constant n_opt == k: the two nulls are the same distribution and nothing moves (MMLU 4-way, BoolQ 2-way, OpenBookQA 4-way, CommonsenseQA 5-way, PIQA 2-way). (ii) Items with n_opt < k: their mass concentrates on the always-legal low letters, raising E[max] and hence p -- against the authors. MMLU-Pro is this case (2051/12032 restricted; E[max] +0.94 pp, p 0 -> 0.083). (iii) Items with n_opt > k: such an item can land on a letter that is legal almost nowhere else and so can never win the maximum, which removes mass from the contest and LOWERS E[max] and p -- in the authors' favour. ARC-Easy (4 items are 5-way) and ARC-Challenge (3 items are 5-way) are this case, and the effect is real, not Monte-Carlo error: dE[max] = -7.8e-5 and -1.2e-4, both about -33 sigma over 3 seeds x 2e5 draws vs the same budget on the blind null, giving dp = -0.004 and -0.005. Neither ARC row comes near the 0.05 line either way (0.140 -> 0.136, 0.453 -> 0.447), so NO VERDICT CHANGES because of them and the headline three-becomes-two is unaffected. But the blanket claim 'no row moves in the authors' favour' is false and must not be printed. Per-row signs, standard errors and the histogram-predicted sign are in rows[].directionality.",
+ "floor_rounding_convention": "SECOND, SMALLER DEFECT found while recomputing. p is defined as Pr(f_hat >= observed floor) and the floor is an exact rational count/n (MMLU-Pro: 1403/12032 = 0.1166057180851...). The superseded file stores floors at 6 dp, and 0.116606 > 1403/12032, so comparing against the stored value demands a simulated count of 1404 and EXCLUDES the very outcome that was observed. That biases p downward, i.e. toward 'survives', i.e. in the authors' favour. Measured on MMLU-Pro: p = 0.0831 with the exact floor vs 0.0776 with the 6-dp value; on PIQA 0.6895 vs 0.6557; the other seven rows are unaffected because their 6-dp floor rounds down rather than up. Both are reported per row (p_aware, p_aware_rounded_floor_convention) and the EXACT-floor value is primary because that is what the paper's own definition of p says. No verdict changes, but MMLU-Pro's distance from 0.05 does.",
+ "rows": [
+  {
+   "construct": "MMLU-Pro letter, naive",
+   "n": 12032,
+   "k": 10,
+   "floor": 0.116606,
+   "floor_count": 1403,
+   "chance": 0.1,
+   "gap_pp": 1.661,
+   "n_opt_hist": {
+    "3": 21,
+    "4": 606,
+    "5": 52,
+    "6": 93,
+    "7": 158,
+    "8": 320,
+    "9": 801,
+    "10": 9981
+   },
+   "n_opt_is_constant": false,
+   "k_nominal": 10,
+   "kmax_observed": 10,
+   "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
+   "n_opt_source_disk": "zwfy6",
+   "n_opt_source": "mmlu_pro_letter_content_results/7B_base/per_example_mmlu_pro_shard{0..7}of8.jsonl :: n_opt",
+   "n_opt_how": "counted on .73 (zwfy6 root /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory); these records do not exist on wzc1, so the histogram is carried here as a literal and cross-validated against evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json:letter_null.n_opt_hist",
+   "n_items_with_fewer_than_k_options": 2051,
+   "n_items_with_more_than_k_options": 0,
+   "E_max_blind_shipped": 0.104457,
+   "q95_blind_shipped": 0.107048,
+   "p_blind_shipped": 0.0,
+   "blind_recomputed_here": {
+    "E_max": 0.10445775501440603,
+    "E_max_sem": 2.1506795735352155e-06,
+    "p_one_sided": 0.0,
+    "p_sem": 0.0,
+    "p_rounded_floor": 0.0,
+    "n_draws_each": 200000,
+    "seeds": [
+     20270814,
+     10007,
+     10099
+    ]
+   },
+   "E_max_aware": 0.11387310064827127,
+   "q95_aware": 0.1171875,
+   "q99_aware": 0.1188497340425532,
+   "p_aware": 0.082948,
+   "p_aware_rounded_floor_convention": 0.077462,
+   "sd_max_aware": 0.0018656172032390746,
+   "threshold_count_exact_floor": 1403,
+   "threshold_count_rounded_floor": 1404,
+   "floor_rounding_matters": true,
+   "per_seed_aware": {
+    "20260814": {
+     "n_draws": 200000,
+     "seed": 20260814,
+     "E_max": 0.11387652426861701,
+     "sd_max": 0.0018686258394898672,
+     "q95": 0.1171875,
+     "q99": 0.1188497340425532,
+     "p_one_sided": 0.083445,
+     "p_exact_floor": 0.083445,
+     "p_rounded_floor": 0.07798,
+     "threshold_count_exact_floor": 1403,
+     "threshold_count_rounded_floor": 1404
+    },
+    "7": {
+     "n_draws": 200000,
+     "seed": 7,
+     "E_max": 0.1138661564993351,
+     "sd_max": 0.0018649194605996281,
+     "q95": 0.11710438829787234,
+     "q99": 0.11876662234042554,
+     "p_one_sided": 0.082355,
+     "p_exact_floor": 0.082355,
+     "p_rounded_floor": 0.076985,
+     "threshold_count_exact_floor": 1403,
+     "threshold_count_rounded_floor": 1404
+    },
+    "99": {
+     "n_draws": 200000,
+     "seed": 99,
+     "E_max": 0.11387516497672873,
+     "sd_max": 0.001864191048735321,
+     "q95": 0.1171875,
+     "q99": 0.11876662234042554,
+     "p_one_sided": 0.082935,
+     "p_exact_floor": 0.082935,
+     "p_rounded_floor": 0.077555,
+     "threshold_count_exact_floor": 1403,
+     "threshold_count_rounded_floor": 1404
+    }
+   },
+   "aware_across_seeds": {
+    "E_max_mean": 0.11387261524822695,
+    "E_max_sem": 3.2531265240967213e-06,
+    "p_mean": 0.08291166666666666,
+    "p_sem": 0.00031487210807635185,
+    "seeds": [
+     20260814,
+     7,
+     99
+    ],
+    "n_draws_each": 200000
+   },
+   "big_run_aware": {
+    "n_draws": 1000000,
+    "seed": 20260814,
+    "E_max": 0.11387310064827127,
+    "sd_max": 0.0018656172032390746,
+    "q95": 0.1171875,
+    "q99": 0.1188497340425532,
+    "p_one_sided": 0.082948,
+    "p_exact_floor": 0.082948,
+    "p_rounded_floor": 0.077462,
+    "threshold_count_exact_floor": 1403,
+    "threshold_count_rounded_floor": 1404
+   },
+   "impl2_per_item_categorical": {
+    "n_draws": 20000,
+    "seed": 20260814,
+    "E_max": 0.1138796833444149,
+    "sd_max": 0.0018725151153028796,
+    "q95": 0.1171875,
+    "q99": 0.11893284574468085,
+    "p_one_sided": 0.08455,
+    "p_exact_floor": 0.08455,
+    "p_rounded_floor": 0.0792,
+    "threshold_count_exact_floor": 1403,
+    "threshold_count_rounded_floor": 1404
+   },
+   "seed_spread_E_max": 1.0367769281913186e-05,
+   "seed_spread_p": 0.0010900000000000076,
+   "expected_letter_marginals_aware": {
+    "A": 0.11087694718844986,
+    "B": 0.11087694718844986,
+    "C": 0.11087694718844986,
+    "D": 0.11029516527355623,
+    "E": 0.0977037424012158,
+    "F": 0.09683938069908815,
+    "G": 0.09555114931610942,
+    "H": 0.0936751994680851,
+    "I": 0.09035073138297872,
+    "J": 0.08295378989361703
+   },
+   "p_2x2": {
+    "blind_rounded_floor__as_shipped": 0.0,
+    "blind_exact_floor": 0.0,
+    "aware_rounded_floor": 0.077462,
+    "aware_exact_floor__primary": 0.082948
+   },
+   "verdict_blind": "above balanced null",
+   "p_corrected": 0.082948,
+   "p_correction_needed": true,
+   "verdict_aware": "inside estimator noise",
+   "survives_aware": false,
+   "p_change_attribution": "null correction (n_opt varies) plus threshold convention",
+   "verdict_changed": true,
+   "directionality": {
+    "dE_max_aware_minus_blind": 0.009414860233820918,
+    "dE_max_sem": 3.899776251248683e-06,
+    "dE_max_sigma": 2414.205233135194,
+    "dp_aware_minus_blind": 0.08291166666666666,
+    "dp_sem": 0.00031487210807635185,
+    "dp_sigma": 263.3185491506342,
+    "n_items_n_opt_below_k": 2051,
+    "n_items_n_opt_above_k": 0,
+    "expected_sign": "up",
+    "observed_sign": "up",
+    "sign_consistent_with_histogram": true,
+    "moves_in_authors_favour": false,
+    "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
+    "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
+   }
+  },
+  {
+   "construct": "MMLU-Pro letter, item-avg.",
+   "n": 12032,
+   "k": 10,
+   "floor": 0.116606,
+   "floor_count": 1403,
+   "chance": 0.110877,
+   "gap_pp": 0.573,
+   "n_opt_hist": {
+    "3": 21,
+    "4": 606,
+    "5": 52,
+    "6": 93,
+    "7": 158,
+    "8": 320,
+    "9": 801,
+    "10": 9981
+   },
+   "n_opt_is_constant": false,
+   "k_nominal": 10,
+   "kmax_observed": 10,
+   "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
+   "n_opt_source_disk": "zwfy6",
+   "n_opt_source": "mmlu_pro_letter_content_results/7B_base/per_example_mmlu_pro_shard{0..7}of8.jsonl :: n_opt",
+   "n_opt_how": "counted on .73 (zwfy6 root /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory); these records do not exist on wzc1, so the histogram is carried here as a literal and cross-validated against evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json:letter_null.n_opt_hist",
+   "n_items_with_fewer_than_k_options": 2051,
+   "n_items_with_more_than_k_options": 0,
+   "E_max_blind_shipped": 0.10446,
+   "q95_blind_shipped": 0.107131,
+   "p_blind_shipped": 0.0,
+   "blind_recomputed_here": {
+    "E_max": 0.10445775501440603,
+    "E_max_sem": 2.1506795735352155e-06,
+    "p_one_sided": 0.0,
+    "p_sem": 0.0,
+    "p_rounded_floor": 0.0,
+    "n_draws_each": 200000,
+    "seeds": [
+     20270814,
+     10007,
+     10099
+    ]
+   },
+   "E_max_aware": 0.11387310064827127,
+   "q95_aware": 0.1171875,
+   "q99_aware": 0.1188497340425532,
+   "p_aware": 0.082948,
+   "p_aware_rounded_floor_convention": 0.077462,
+   "sd_max_aware": 0.0018656172032390746,
+   "threshold_count_exact_floor": 1403,
+   "threshold_count_rounded_floor": 1404,
+   "floor_rounding_matters": true,
+   "per_seed_aware": {
+    "20260814": {
+     "n_draws": 200000,
+     "seed": 20260814,
+     "E_max": 0.11387652426861701,
+     "sd_max": 0.0018686258394898672,
+     "q95": 0.1171875,
+     "q99": 0.1188497340425532,
+     "p_one_sided": 0.083445,
+     "p_exact_floor": 0.083445,
+     "p_rounded_floor": 0.07798,
+     "threshold_count_exact_floor": 1403,
+     "threshold_count_rounded_floor": 1404
+    },
+    "7": {
+     "n_draws": 200000,
+     "seed": 7,
+     "E_max": 0.1138661564993351,
+     "sd_max": 0.0018649194605996281,
+     "q95": 0.11710438829787234,
+     "q99": 0.11876662234042554,
+     "p_one_sided": 0.082355,
+     "p_exact_floor": 0.082355,
+     "p_rounded_floor": 0.076985,
+     "threshold_count_exact_floor": 1403,
+     "threshold_count_rounded_floor": 1404
+    },
+    "99": {
+     "n_draws": 200000,
+     "seed": 99,
+     "E_max": 0.11387516497672873,
+     "sd_max": 0.001864191048735321,
+     "q95": 0.1171875,
+     "q99": 0.11876662234042554,
+     "p_one_sided": 0.082935,
+     "p_exact_floor": 0.082935,
+     "p_rounded_floor": 0.077555,
+     "threshold_count_exact_floor": 1403,
+     "threshold_count_rounded_floor": 1404
+    }
+   },
+   "aware_across_seeds": {
+    "E_max_mean": 0.11387261524822695,
+    "E_max_sem": 3.2531265240967213e-06,
+    "p_mean": 0.08291166666666666,
+    "p_sem": 0.00031487210807635185,
+    "seeds": [
+     20260814,
+     7,
+     99
+    ],
+    "n_draws_each": 200000
+   },
+   "big_run_aware": {
+    "n_draws": 1000000,
+    "seed": 20260814,
+    "E_max": 0.11387310064827127,
+    "sd_max": 0.0018656172032390746,
+    "q95": 0.1171875,
+    "q99": 0.1188497340425532,
+    "p_one_sided": 0.082948,
+    "p_exact_floor": 0.082948,
+    "p_rounded_floor": 0.077462,
+    "threshold_count_exact_floor": 1403,
+    "threshold_count_rounded_floor": 1404
+   },
+   "impl2_per_item_categorical": {
+    "n_draws": 20000,
+    "seed": 20260814,
+    "E_max": 0.1138796833444149,
+    "sd_max": 0.0018725151153028796,
+    "q95": 0.1171875,
+    "q99": 0.11893284574468085,
+    "p_one_sided": 0.08455,
+    "p_exact_floor": 0.08455,
+    "p_rounded_floor": 0.0792,
+    "threshold_count_exact_floor": 1403,
+    "threshold_count_rounded_floor": 1404
+   },
+   "seed_spread_E_max": 1.0367769281913186e-05,
+   "seed_spread_p": 0.0010900000000000076,
+   "expected_letter_marginals_aware": {
+    "A": 0.11087694718844986,
+    "B": 0.11087694718844986,
+    "C": 0.11087694718844986,
+    "D": 0.11029516527355623,
+    "E": 0.0977037424012158,
+    "F": 0.09683938069908815,
+    "G": 0.09555114931610942,
+    "H": 0.0936751994680851,
+    "I": 0.09035073138297872,
+    "J": 0.08295378989361703
+   },
+   "p_2x2": {
+    "blind_rounded_floor__as_shipped": 0.0,
+    "blind_exact_floor": 0.0,
+    "aware_rounded_floor": 0.077462,
+    "aware_exact_floor__primary": 0.082948
+   },
+   "verdict_blind": "above balanced null",
+   "p_corrected": 0.082948,
+   "p_correction_needed": true,
+   "verdict_aware": "inside estimator noise",
+   "survives_aware": false,
+   "p_change_attribution": "null correction (n_opt varies) plus threshold convention",
+   "verdict_changed": true,
+   "directionality": {
+    "dE_max_aware_minus_blind": 0.009414860233820918,
+    "dE_max_sem": 3.899776251248683e-06,
+    "dE_max_sigma": 2414.205233135194,
+    "dp_aware_minus_blind": 0.08291166666666666,
+    "dp_sem": 0.00031487210807635185,
+    "dp_sigma": 263.3185491506342,
+    "n_items_n_opt_below_k": 2051,
+    "n_items_n_opt_above_k": 0,
+    "expected_sign": "up",
+    "observed_sign": "up",
+    "sign_consistent_with_histogram": true,
+    "moves_in_authors_favour": false,
+    "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
+    "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
+   }
+  },
+  {
+   "construct": "MMLU letter",
+   "n": 14042,
+   "k": 4,
+   "floor": 0.268908,
+   "floor_count": 3776,
+   "chance": 0.25,
+   "gap_pp": 1.891,
+   "n_opt_hist": {
+    "4": 14042
+   },
+   "n_opt_is_constant": true,
+   "k_nominal": 4,
+   "kmax_observed": 4,
+   "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
+   "n_opt_source_disk": "wzc1",
+   "n_opt_source": "olmo2_downstream_results/7B_keep8_step121000_wzc1_know/per_example_mmlu_shard{0..7}of8.jsonl :: len(option_scores)",
+   "n_opt_how": "14042/14042 items score exactly the four candidates A-D; identical in 7B_fromscratch_step200000_perex_know",
+   "n_items_with_fewer_than_k_options": 0,
+   "n_items_with_more_than_k_options": 0,
+   "E_max_blind_shipped": 0.254355,
+   "q95_blind_shipped": 0.258225,
+   "p_blind_shipped": 0.0,
+   "blind_recomputed_here": {
+    "E_max": 0.2543471007216446,
+    "E_max_sem": 1.036521562102324e-06,
+    "p_one_sided": 0.0,
+    "p_sem": 0.0,
+    "p_rounded_floor": 0.0,
+    "n_draws_each": 200000,
+    "seeds": [
+     20270814,
+     10007,
+     10099
+    ]
+   },
+   "E_max_aware": 0.25435012804443813,
+   "q95_aware": 0.25822532402791626,
+   "q99_aware": 0.2602905569007264,
+   "p_aware": 0.0,
+   "p_aware_rounded_floor_convention": 0.0,
+   "sd_max_aware": 0.002078713023553521,
+   "threshold_count_exact_floor": 3776,
+   "threshold_count_rounded_floor": 3777,
+   "floor_rounding_matters": true,
+   "per_seed_aware": {
+    "20260814": {
+     "n_draws": 200000,
+     "seed": 20260814,
+     "E_max": 0.25434930885913687,
+     "sd_max": 0.0020769539968498213,
+     "q95": 0.25822532402791626,
+     "q99": 0.26021934197407776,
+     "p_one_sided": 0.0,
+     "p_exact_floor": 0.0,
+     "p_rounded_floor": 0.0,
+     "threshold_count_exact_floor": 3776,
+     "threshold_count_rounded_floor": 3777
+    },
+    "7": {
+     "n_draws": 200000,
+     "seed": 7,
+     "E_max": 0.2543416212078051,
+     "sd_max": 0.0020761884319467068,
+     "q95": 0.25822532402791626,
+     "q99": 0.2602905569007264,
+     "p_one_sided": 0.0,
+     "p_exact_floor": 0.0,
+     "p_rounded_floor": 0.0,
+     "threshold_count_exact_floor": 3776,
+     "threshold_count_rounded_floor": 3777
+    },
+    "99": {
+     "n_draws": 200000,
+     "seed": 99,
+     "E_max": 0.2543537498219627,
+     "sd_max": 0.002080364191509434,
+     "q95": 0.25822532402791626,
+     "q99": 0.2602905569007264,
+     "p_one_sided": 5e-06,
+     "p_exact_floor": 5e-06,
+     "p_rounded_floor": 5e-06,
+     "threshold_count_exact_floor": 3776,
+     "threshold_count_rounded_floor": 3777
+    }
+   },
+   "aware_across_seeds": {
+    "E_max_mean": 0.2543482266296349,
+    "E_max_sem": 3.5427971936942223e-06,
+    "p_mean": 1.6666666666666669e-06,
+    "p_sem": 1.6666666666666669e-06,
+    "seeds": [
+     20260814,
+     7,
+     99
+    ],
+    "n_draws_each": 200000
+   },
+   "big_run_aware": {
+    "n_draws": 1000000,
+    "seed": 20260814,
+    "E_max": 0.25435012804443813,
+    "sd_max": 0.002078713023553521,
+    "q95": 0.25822532402791626,
+    "q99": 0.2602905569007264,
+    "p_one_sided": 0.0,
+    "p_exact_floor": 0.0,
+    "p_rounded_floor": 0.0,
+    "threshold_count_exact_floor": 3776,
+    "threshold_count_rounded_floor": 3777
+   },
+   "impl2_per_item_categorical": {
+    "n_draws": 20000,
+    "seed": 20260814,
+    "E_max": 0.2543466066087452,
+    "sd_max": 0.0020867810961320015,
+    "q95": 0.25822532402791626,
+    "q99": 0.26021934197407776,
+    "p_one_sided": 0.0,
+    "p_exact_floor": 0.0,
+    "p_rounded_floor": 0.0,
+    "threshold_count_exact_floor": 3776,
+    "threshold_count_rounded_floor": 3777
+   },
+   "seed_spread_E_max": 1.2128614157558282e-05,
+   "seed_spread_p": 5e-06,
+   "expected_letter_marginals_aware": {
+    "A": 0.25,
+    "B": 0.25,
+    "C": 0.25,
+    "D": 0.25
+   },
+   "p_2x2": {
+    "blind_rounded_floor__as_shipped": 0.0,
+    "blind_exact_floor": 0.0,
+    "aware_rounded_floor": 0.0,
+    "aware_exact_floor__primary": 0.0
+   },
+   "verdict_blind": "above balanced null",
+   "p_corrected": 0.0,
+   "p_correction_needed": false,
+   "equivalence_assertion": {
+    "claim": "n_opt is constant and equal to k, so every item's legal set is all k letters: the legality-aware and legality-blind nulls are the SAME distribution and no correction to the NULL is possible, let alone needed",
+    "abs_dE_max": 3.027322793502929e-06,
+    "tol": 0.0006,
+    "holds": true,
+    "note": "compared across independent RNG streams and different n_draws, so the residual is Monte-Carlo error, not a distributional difference"
+   },
+   "verdict_aware": "above balanced null",
+   "survives_aware": true,
+   "p_change_attribution": "threshold convention only (n_opt is constant, so the null is identical)",
+   "verdict_changed": false,
+   "directionality": {
+    "dE_max_aware_minus_blind": 1.1259079902847802e-06,
+    "dE_max_sem": 3.6913126262009696e-06,
+    "dE_max_sigma": 0.3050156148501417,
+    "dp_aware_minus_blind": 1.6666666666666669e-06,
+    "dp_sem": 1.6666666666666669e-06,
+    "dp_sigma": 1.0,
+    "n_items_n_opt_below_k": 0,
+    "n_items_n_opt_above_k": 0,
+    "expected_sign": "zero",
+    "observed_sign": "zero",
+    "sign_consistent_with_histogram": true,
+    "moves_in_authors_favour": false,
+    "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
+    "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
+   }
+  },
+  {
+   "construct": "OpenBookQA letter",
+   "n": 500,
+   "k": 4,
+   "floor": 0.276,
+   "floor_count": 138,
+   "chance": 0.25,
+   "gap_pp": 2.6,
+   "n_opt_hist": {
+    "4": 500
+   },
+   "n_opt_is_constant": true,
+   "k_nominal": 4,
+   "kmax_observed": 4,
+   "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
+   "n_opt_source_disk": "wzc1",
+   "n_opt_source": "olmo2_mc_letter_content_results/7B_base/per_example_openbookqa_shard{0..7}of8.jsonl :: n_opt",
+   "n_opt_how": "500/500 items have n_opt=4",
+   "n_items_with_fewer_than_k_options": 0,
+   "n_items_with_more_than_k_options": 0,
+   "E_max_blind_shipped": 0.273191,
+   "q95_blind_shipped": 0.294,
+   "p_blind_shipped": 0.3834,
+   "blind_recomputed_here": {
+    "E_max": 0.27318961,
+    "E_max_sem": 3.1521156916236718e-06,
+    "p_one_sided": 0.38307166666666664,
+    "p_sem": 0.0003361340671683114,
+    "p_rounded_floor": 0.38307166666666664,
+    "n_draws_each": 200000,
+    "seeds": [
+     20270814,
+     10007,
+     10099
+    ]
+   },
+   "E_max_aware": 0.27318954000000006,
+   "q95_aware": 0.294,
+   "q99_aware": 0.306,
+   "p_aware": 0.383596,
+   "p_aware_rounded_floor_convention": 0.383596,
+   "sd_max_aware": 0.011208809402688941,
+   "threshold_count_exact_floor": 138,
+   "threshold_count_rounded_floor": 138,
+   "floor_rounding_matters": false,
+   "per_seed_aware": {
+    "20260814": {
+     "n_draws": 200000,
+     "seed": 20260814,
+     "E_max": 0.27318305,
+     "sd_max": 0.011213884316039072,
+     "q95": 0.294,
+     "q99": 0.306,
+     "p_one_sided": 0.383695,
+     "p_exact_floor": 0.383695,
+     "p_rounded_floor": 0.383695,
+     "threshold_count_exact_floor": 138,
+     "threshold_count_rounded_floor": 138
+    },
+    "7": {
+     "n_draws": 200000,
+     "seed": 7,
+     "E_max": 0.27316597000000004,
+     "sd_max": 0.011204786552866962,
+     "q95": 0.294,
+     "q99": 0.306,
+     "p_one_sided": 0.38277,
+     "p_exact_floor": 0.38277,
+     "p_rounded_floor": 0.38277,
+     "threshold_count_exact_floor": 138,
+     "threshold_count_rounded_floor": 138
+    },
+    "99": {
+     "n_draws": 200000,
+     "seed": 99,
+     "E_max": 0.27322854,
+     "sd_max": 0.011265345268051924,
+     "q95": 0.294,
+     "q99": 0.306,
+     "p_one_sided": 0.38415,
+     "p_exact_floor": 0.38415,
+     "p_rounded_floor": 0.38415,
+     "threshold_count_exact_floor": 138,
+     "threshold_count_rounded_floor": 138
+    }
+   },
+   "aware_across_seeds": {
+    "E_max_mean": 0.27319252000000005,
+    "E_max_sem": 1.867272431471392e-05,
+    "p_mean": 0.3835383333333333,
+    "p_sem": 0.00040600013683631935,
+    "seeds": [
+     20260814,
+     7,
+     99
+    ],
+    "n_draws_each": 200000
+   },
+   "big_run_aware": {
+    "n_draws": 1000000,
+    "seed": 20260814,
+    "E_max": 0.27318954000000006,
+    "sd_max": 0.011208809402688941,
+    "q95": 0.294,
+    "q99": 0.306,
+    "p_one_sided": 0.383596,
+    "p_exact_floor": 0.383596,
+    "p_rounded_floor": 0.383596,
+    "threshold_count_exact_floor": 138,
+    "threshold_count_rounded_floor": 138
+   },
+   "impl2_per_item_categorical": {
+    "n_draws": 20000,
+    "seed": 20260814,
+    "E_max": 0.2732388,
+    "sd_max": 0.011202662609508373,
+    "q95": 0.294,
+    "q99": 0.306,
+    "p_one_sided": 0.38525,
+    "p_exact_floor": 0.38525,
+    "p_rounded_floor": 0.38525,
+    "threshold_count_exact_floor": 138,
+    "threshold_count_rounded_floor": 138
+   },
+   "seed_spread_E_max": 6.256999999998403e-05,
+   "seed_spread_p": 0.0013799999999999923,
+   "expected_letter_marginals_aware": {
+    "A": 0.25,
+    "B": 0.25,
+    "C": 0.25,
+    "D": 0.25
+   },
+   "p_2x2": {
+    "blind_rounded_floor__as_shipped": 0.38307166666666664,
+    "blind_exact_floor": 0.38307166666666664,
+    "aware_rounded_floor": 0.383596,
+    "aware_exact_floor__primary": 0.383596
+   },
+   "verdict_blind": "inside estimator noise",
+   "p_corrected": 0.383596,
+   "p_correction_needed": false,
+   "equivalence_assertion": {
+    "claim": "n_opt is constant and equal to k, so every item's legal set is all k letters: the legality-aware and legality-blind nulls are the SAME distribution and no correction to the NULL is possible, let alone needed",
+    "abs_dE_max": 6.999999996315509e-08,
+    "tol": 0.0006,
+    "holds": true,
+    "note": "compared across independent RNG streams and different n_draws, so the residual is Monte-Carlo error, not a distributional difference"
+   },
+   "verdict_aware": "inside estimator noise",
+   "survives_aware": false,
+   "p_change_attribution": "neither: n_opt is constant and the 6-dp floor gives the same threshold count, so any difference from the shipped p is Monte-Carlo error",
+   "verdict_changed": false,
+   "directionality": {
+    "dE_max_aware_minus_blind": 2.9100000000226167e-06,
+    "dE_max_sem": 1.893690752648617e-05,
+    "dE_max_sigma": 0.15366817395884388,
+    "dp_aware_minus_blind": 0.0004666666666666708,
+    "dp_sem": 0.0005270884387104511,
+    "dp_sigma": 0.8853669183266374,
+    "n_items_n_opt_below_k": 0,
+    "n_items_n_opt_above_k": 0,
+    "expected_sign": "zero",
+    "observed_sign": "zero",
+    "sign_consistent_with_histogram": true,
+    "moves_in_authors_favour": false,
+    "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
+    "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
+   }
+  },
+  {
+   "construct": "ARC-Easy letter",
+   "n": 2376,
+   "k": 4,
+   "floor": 0.266414,
+   "floor_count": 633,
+   "chance": 0.250161,
+   "gap_pp": 1.625,
+   "n_opt_hist": {
+    "3": 7,
+    "4": 2365,
+    "5": 4
+   },
+   "n_opt_is_constant": false,
+   "k_nominal": 4,
+   "kmax_observed": 5,
+   "k_note": "shipped k=4 is the NOMINAL option count but max(n_opt)=5: 4 item(s) actually offer 5 options, so a k=4 null cannot emit letter E even though the construct contains it. Same defect CLASS as the MMLU-Pro one, opposite sign: the extra letter carries only 4/2376 of the mass and can never win the maximum, so recognising it slightly LOWERS E[max]. The legality-aware p reported here uses the OBSERVED histogram and therefore already accounts for it.",
+   "n_opt_source_disk": "wzc1",
+   "n_opt_source": "olmo2_mc_letter_content_results/7B_base/per_example_arc_easy_shard{0..7}of8.jsonl :: n_opt",
+   "n_opt_how": "NOT constant: 11/2376 items are 3- or 5-way, which is exactly why the shipped chance line is 0.250161 rather than 0.250000",
+   "n_items_with_fewer_than_k_options": 7,
+   "n_items_with_more_than_k_options": 4,
+   "E_max_blind_shipped": 0.260611,
+   "q95_blind_shipped": 0.270202,
+   "p_blind_shipped": 0.13972,
+   "blind_recomputed_here": {
+    "E_max": 0.2605839471099888,
+    "E_max_sem": 2.8844049245963217e-06,
+    "p_one_sided": 0.13767,
+    "p_sem": 0.00024501700621249383,
+    "p_rounded_floor": 0.13767,
+    "n_draws_each": 200000,
+    "seeds": [
+     20270814,
+     10007,
+     10099
+    ]
+   },
+   "E_max_aware": 0.2605232521043771,
+   "q95_aware": 0.2697811447811448,
+   "q99_aware": 0.27525252525252525,
+   "p_aware": 0.135721,
+   "p_aware_rounded_floor_convention": 0.135721,
+   "sd_max_aware": 0.005091589711359075,
+   "threshold_count_exact_floor": 633,
+   "threshold_count_rounded_floor": 633,
+   "floor_rounding_matters": false,
+   "per_seed_aware": {
+    "20260814": {
+     "n_draws": 200000,
+     "seed": 20260814,
+     "E_max": 0.2605276936026936,
+     "sd_max": 0.005092599925073819,
+     "q95": 0.2697811447811448,
+     "q99": 0.27525252525252525,
+     "p_one_sided": 0.136195,
+     "p_exact_floor": 0.136195,
+     "p_rounded_floor": 0.136195,
+     "threshold_count_exact_floor": 633,
+     "threshold_count_rounded_floor": 633
+    },
+    "7": {
+     "n_draws": 200000,
+     "seed": 7,
+     "E_max": 0.2605210732323232,
+     "sd_max": 0.005100425296835367,
+     "q95": 0.2702020202020202,
+     "q99": 0.27525252525252525,
+     "p_one_sided": 0.136205,
+     "p_exact_floor": 0.136205,
+     "p_rounded_floor": 0.136205,
+     "threshold_count_exact_floor": 633,
+     "threshold_count_rounded_floor": 633
+    },
+    "99": {
+     "n_draws": 200000,
+     "seed": 99,
+     "E_max": 0.2605377377946128,
+     "sd_max": 0.005103605734406241,
+     "q95": 0.2702020202020202,
+     "q99": 0.27525252525252525,
+     "p_one_sided": 0.136995,
+     "p_exact_floor": 0.136995,
+     "p_rounded_floor": 0.136995,
+     "threshold_count_exact_floor": 633,
+     "threshold_count_rounded_floor": 633
+    }
+   },
+   "aware_across_seeds": {
+    "E_max_mean": 0.26052883487654316,
+    "E_max_sem": 4.844370911199899e-06,
+    "p_mean": 0.13646499999999998,
+    "p_sem": 0.0002650157228040141,
+    "seeds": [
+     20260814,
+     7,
+     99
+    ],
+    "n_draws_each": 200000
+   },
+   "big_run_aware": {
+    "n_draws": 1000000,
+    "seed": 20260814,
+    "E_max": 0.2605232521043771,
+    "sd_max": 0.005091589711359075,
+    "q95": 0.2697811447811448,
+    "q99": 0.27525252525252525,
+    "p_one_sided": 0.135721,
+    "p_exact_floor": 0.135721,
+    "p_rounded_floor": 0.135721,
+    "threshold_count_exact_floor": 633,
+    "threshold_count_rounded_floor": 633
+   },
+   "impl2_per_item_categorical": {
+    "n_draws": 20000,
+    "seed": 20260814,
+    "E_max": 0.26049631734006734,
+    "sd_max": 0.005071837320624033,
+    "q95": 0.2697811447811448,
+    "q99": 0.27525252525252525,
+    "p_one_sided": 0.13335,
+    "p_exact_floor": 0.13335,
+    "p_rounded_floor": 0.13335,
+    "threshold_count_exact_floor": 633,
+    "threshold_count_rounded_floor": 633
+   },
+   "seed_spread_E_max": 1.6664562289603335e-05,
+   "seed_spread_p": 0.0007999999999999952,
+   "expected_letter_marginals_aware": {
+    "A": 0.25016133557800224,
+    "B": 0.25016133557800224,
+    "C": 0.25016133557800224,
+    "D": 0.24917929292929292,
+    "E": 0.0003367003367003367
+   },
+   "p_2x2": {
+    "blind_rounded_floor__as_shipped": 0.13767,
+    "blind_exact_floor": 0.13767,
+    "aware_rounded_floor": 0.135721,
+    "aware_exact_floor__primary": 0.135721
+   },
+   "verdict_blind": "inside estimator noise",
+   "p_corrected": 0.135721,
+   "p_correction_needed": true,
+   "verdict_aware": "inside estimator noise",
+   "survives_aware": false,
+   "p_change_attribution": "null correction only (n_opt varies; 6-dp floor rounds down so the threshold count is unchanged)",
+   "verdict_changed": false,
+   "directionality": {
+    "dE_max_aware_minus_blind": -5.5112233445619996e-05,
+    "dE_max_sem": 5.63806006480201e-06,
+    "dE_max_sigma": -9.775034819100558,
+    "dp_aware_minus_blind": -0.0012050000000000116,
+    "dp_sem": 0.0003609247382303785,
+    "dp_sigma": -3.3386461839888053,
+    "n_items_n_opt_below_k": 7,
+    "n_items_n_opt_above_k": 4,
+    "expected_sign": "either",
+    "observed_sign": "down",
+    "sign_consistent_with_histogram": true,
+    "moves_in_authors_favour": true,
+    "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
+    "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
+   }
+  },
+  {
+   "construct": "ARC-Challenge letter",
+   "n": 1172,
+   "k": 4,
+   "floor": 0.265358,
+   "floor_count": 311,
+   "chance": 0.250156,
+   "gap_pp": 1.52,
+   "n_opt_hist": {
+    "3": 4,
+    "4": 1165,
+    "5": 3
+   },
+   "n_opt_is_constant": false,
+   "k_nominal": 4,
+   "kmax_observed": 5,
+   "k_note": "shipped k=4 is the NOMINAL option count but max(n_opt)=5: 3 item(s) actually offer 5 options, so a k=4 null cannot emit letter E even though the construct contains it. Same defect CLASS as the MMLU-Pro one, opposite sign: the extra letter carries only 3/1172 of the mass and can never win the maximum, so recognising it slightly LOWERS E[max]. The legality-aware p reported here uses the OBSERVED histogram and therefore already accounts for it.",
+   "n_opt_source_disk": "wzc1",
+   "n_opt_source": "olmo2_mc_letter_content_results/7B_base/per_example_arc_challenge_shard{0..7}of8.jsonl :: n_opt",
+   "n_opt_how": "NOT constant: 7/1172 items are 3- or 5-way, hence chance 0.250156 rather than 0.250000",
+   "n_items_with_fewer_than_k_options": 4,
+   "n_items_with_more_than_k_options": 3,
+   "E_max_blind_shipped": 0.265105,
+   "q95_blind_shipped": 0.27901,
+   "p_blind_shipped": 0.45252,
+   "blind_recomputed_here": {
+    "E_max": 0.2650980830489192,
+    "E_max_sem": 5.654346117479743e-06,
+    "p_one_sided": 0.452455,
+    "p_sem": 0.0006947721449031647,
+    "p_rounded_floor": 0.452455,
+    "n_draws_each": 200000,
+    "seeds": [
+     20270814,
+     10007,
+     10099
+    ]
+   },
+   "E_max_aware": 0.26498449573378835,
+   "q95_aware": 0.2781569965870307,
+   "q99_aware": 0.2858361774744027,
+   "p_aware": 0.447647,
+   "p_aware_rounded_floor_convention": 0.447647,
+   "sd_max_aware": 0.007270687933292787,
+   "threshold_count_exact_floor": 311,
+   "threshold_count_rounded_floor": 311,
+   "floor_rounding_matters": false,
+   "per_seed_aware": {
+    "20260814": {
+     "n_draws": 200000,
+     "seed": 20260814,
+     "E_max": 0.26498504692832764,
+     "sd_max": 0.007279626806934036,
+     "q95": 0.2781569965870307,
+     "q99": 0.2858361774744027,
+     "p_one_sided": 0.44697,
+     "p_exact_floor": 0.44697,
+     "p_rounded_floor": 0.44697,
+     "threshold_count_exact_floor": 311,
+     "threshold_count_rounded_floor": 311
+    },
+    "7": {
+     "n_draws": 200000,
+     "seed": 7,
+     "E_max": 0.2649862755972696,
+     "sd_max": 0.007263522993389376,
+     "q95": 0.2781569965870307,
+     "q99": 0.2858361774744027,
+     "p_one_sided": 0.447485,
+     "p_exact_floor": 0.447485,
+     "p_rounded_floor": 0.447485,
+     "threshold_count_exact_floor": 311,
+     "threshold_count_rounded_floor": 311
+    },
+    "99": {
+     "n_draws": 200000,
+     "seed": 99,
+     "E_max": 0.2649931655290102,
+     "sd_max": 0.007285956634857325,
+     "q95": 0.2781569965870307,
+     "q99": 0.2858361774744027,
+     "p_one_sided": 0.44727,
+     "p_exact_floor": 0.44727,
+     "p_rounded_floor": 0.44727,
+     "threshold_count_exact_floor": 311,
+     "threshold_count_rounded_floor": 311
+    }
+   },
+   "aware_across_seeds": {
+    "E_max_mean": 0.2649881626848692,
+    "E_max_sem": 2.526443083794482e-06,
+    "p_mean": 0.4472416666666667,
+    "p_sem": 0.0001493411456289977,
+    "seeds": [
+     20260814,
+     7,
+     99
+    ],
+    "n_draws_each": 200000
+   },
+   "big_run_aware": {
+    "n_draws": 1000000,
+    "seed": 20260814,
+    "E_max": 0.26498449573378835,
+    "sd_max": 0.007270687933292787,
+    "q95": 0.2781569965870307,
+    "q99": 0.2858361774744027,
+    "p_one_sided": 0.447647,
+    "p_exact_floor": 0.447647,
+    "p_rounded_floor": 0.447647,
+    "threshold_count_exact_floor": 311,
+    "threshold_count_rounded_floor": 311
+   },
+   "impl2_per_item_categorical": {
+    "n_draws": 20000,
+    "seed": 20260814,
+    "E_max": 0.2650334470989761,
+    "sd_max": 0.0072447757922528624,
+    "q95": 0.2781569965870307,
+    "q99": 0.2858361774744027,
+    "p_one_sided": 0.44765,
+    "p_exact_floor": 0.44765,
+    "p_rounded_floor": 0.44765,
+    "threshold_count_exact_floor": 311,
+    "threshold_count_rounded_floor": 311
+   },
+   "seed_spread_E_max": 8.11860068256065e-06,
+   "seed_spread_p": 0.0005150000000000432,
+   "expected_letter_marginals_aware": {
+    "A": 0.25015642775881686,
+    "B": 0.25015642775881686,
+    "C": 0.25015642775881686,
+    "D": 0.24901877133105804,
+    "E": 0.0005119453924914676
+   },
+   "p_2x2": {
+    "blind_rounded_floor__as_shipped": 0.452455,
+    "blind_exact_floor": 0.452455,
+    "aware_rounded_floor": 0.447647,
+    "aware_exact_floor__primary": 0.447647
+   },
+   "verdict_blind": "inside estimator noise",
+   "p_corrected": 0.447647,
+   "p_correction_needed": true,
+   "verdict_aware": "inside estimator noise",
+   "survives_aware": false,
+   "p_change_attribution": "null correction only (n_opt varies; 6-dp floor rounds down so the threshold count is unchanged)",
+   "verdict_changed": false,
+   "directionality": {
+    "dE_max_aware_minus_blind": -0.00010992036404999794,
+    "dE_max_sem": 6.1931046068923475e-06,
+    "dE_max_sigma": -17.748830518326276,
+    "dp_aware_minus_blind": -0.005213333333333292,
+    "dp_sem": 0.0007106413378851006,
+    "dp_sigma": -7.336096361701105,
+    "n_items_n_opt_below_k": 4,
+    "n_items_n_opt_above_k": 3,
+    "expected_sign": "either",
+    "observed_sign": "down",
+    "sign_consistent_with_histogram": true,
+    "moves_in_authors_favour": true,
+    "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
+    "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
+   }
+  },
+  {
+   "construct": "CommonsenseQA letter",
+   "n": 1221,
+   "k": 5,
+   "floor": 0.208845,
+   "floor_count": 255,
+   "chance": 0.2,
+   "gap_pp": 0.884,
+   "n_opt_hist": {
+    "5": 1221
+   },
+   "n_opt_is_constant": true,
+   "k_nominal": 5,
+   "kmax_observed": 5,
+   "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
+   "n_opt_source_disk": "wzc1",
+   "n_opt_source": "olmo2_mc_letter_content_results/7B_base/per_example_commonsense_qa_shard{0..7}of8.jsonl :: n_opt",
+   "n_opt_how": "1221/1221 items have n_opt=5",
+   "n_items_with_fewer_than_k_options": 0,
+   "n_items_with_more_than_k_options": 0,
+   "E_max_blind_shipped": 0.215006,
+   "q95_blind_shipped": 0.226863,
+   "p_blind_shipped": 0.85332,
+   "blind_recomputed_here": {
+    "E_max": 0.21497008599508596,
+    "E_max_sem": 3.569111070263066e-06,
+    "p_one_sided": 0.8520383333333333,
+    "p_sem": 0.0006947441575461012,
+    "p_rounded_floor": 0.8520383333333333,
+    "n_draws_each": 200000,
+    "seeds": [
+     20270814,
+     10007,
+     10099
+    ]
+   },
+   "E_max_aware": 0.21499352006552008,
+   "q95_aware": 0.22686322686322685,
+   "q99_aware": 0.2334152334152334,
+   "p_aware": 0.852826,
+   "p_aware_rounded_floor_convention": 0.852826,
+   "sd_max_aware": 0.006478687864786396,
+   "threshold_count_exact_floor": 255,
+   "threshold_count_rounded_floor": 255,
+   "floor_rounding_matters": false,
+   "per_seed_aware": {
+    "20260814": {
+     "n_draws": 200000,
+     "seed": 20260814,
+     "E_max": 0.21498645372645372,
+     "sd_max": 0.00647768662064933,
+     "q95": 0.22686322686322685,
+     "q99": 0.2334152334152334,
+     "p_one_sided": 0.85291,
+     "p_exact_floor": 0.85291,
+     "p_rounded_floor": 0.85291,
+     "threshold_count_exact_floor": 255,
+     "threshold_count_rounded_floor": 255
+    },
+    "7": {
+     "n_draws": 200000,
+     "seed": 7,
+     "E_max": 0.21495135544635544,
+     "sd_max": 0.00645829430029975,
+     "q95": 0.22686322686322685,
+     "q99": 0.2334152334152334,
+     "p_one_sided": 0.850935,
+     "p_exact_floor": 0.850935,
+     "p_rounded_floor": 0.850935,
+     "threshold_count_exact_floor": 255,
+     "threshold_count_rounded_floor": 255
+    },
+    "99": {
+     "n_draws": 200000,
+     "seed": 99,
+     "E_max": 0.21502037264537266,
+     "sd_max": 0.0065103114313416425,
+     "q95": 0.22686322686322685,
+     "q99": 0.2334152334152334,
+     "p_one_sided": 0.85199,
+     "p_exact_floor": 0.85199,
+     "p_rounded_floor": 0.85199,
+     "threshold_count_exact_floor": 255,
+     "threshold_count_rounded_floor": 255
+    }
+   },
+   "aware_across_seeds": {
+    "E_max_mean": 0.2149860606060606,
+    "E_max_sem": 1.9924518796183325e-05,
+    "p_mean": 0.8519450000000001,
+    "p_sem": 0.0005705771931415743,
+    "seeds": [
+     20260814,
+     7,
+     99
+    ],
+    "n_draws_each": 200000
+   },
+   "big_run_aware": {
+    "n_draws": 1000000,
+    "seed": 20260814,
+    "E_max": 0.21499352006552008,
+    "sd_max": 0.006478687864786396,
+    "q95": 0.22686322686322685,
+    "q99": 0.2334152334152334,
+    "p_one_sided": 0.852826,
+    "p_exact_floor": 0.852826,
+    "p_rounded_floor": 0.852826,
+    "threshold_count_exact_floor": 255,
+    "threshold_count_rounded_floor": 255
+   },
+   "impl2_per_item_categorical": {
+    "n_draws": 20000,
+    "seed": 20260814,
+    "E_max": 0.21511895986895987,
+    "sd_max": 0.00650723732019763,
+    "q95": 0.22686322686322685,
+    "q99": 0.2334152334152334,
+    "p_one_sided": 0.8582,
+    "p_exact_floor": 0.8582,
+    "p_rounded_floor": 0.8582,
+    "threshold_count_exact_floor": 255,
+    "threshold_count_rounded_floor": 255
+   },
+   "seed_spread_E_max": 6.901719901722392e-05,
+   "seed_spread_p": 0.001974999999999949,
+   "expected_letter_marginals_aware": {
+    "A": 0.19999999999999998,
+    "B": 0.19999999999999998,
+    "C": 0.19999999999999998,
+    "D": 0.19999999999999998,
+    "E": 0.19999999999999998
+   },
+   "p_2x2": {
+    "blind_rounded_floor__as_shipped": 0.8520383333333333,
+    "blind_exact_floor": 0.8520383333333333,
+    "aware_rounded_floor": 0.852826,
+    "aware_exact_floor__primary": 0.852826
+   },
+   "verdict_blind": "inside estimator noise",
+   "p_corrected": 0.852826,
+   "p_correction_needed": false,
+   "equivalence_assertion": {
+    "claim": "n_opt is constant and equal to k, so every item's legal set is all k letters: the legality-aware and legality-blind nulls are the SAME distribution and no correction to the NULL is possible, let alone needed",
+    "abs_dE_max": 2.3434070434119603e-05,
+    "tol": 0.0006,
+    "holds": true,
+    "note": "compared across independent RNG streams and different n_draws, so the residual is Monte-Carlo error, not a distributional difference"
+   },
+   "verdict_aware": "inside estimator noise",
+   "survives_aware": false,
+   "p_change_attribution": "neither: n_opt is constant and the 6-dp floor gives the same threshold count, so any difference from the shipped p is Monte-Carlo error",
+   "verdict_changed": false,
+   "directionality": {
+    "dE_max_aware_minus_blind": 1.597461097463393e-05,
+    "dE_max_sem": 2.024166502764377e-05,
+    "dE_max_sigma": 0.789194513041176,
+    "dp_aware_minus_blind": -9.333333333327865e-05,
+    "dp_sem": 0.000899014892967719,
+    "dp_sigma": -0.10381733835929897,
+    "n_items_n_opt_below_k": 0,
+    "n_items_n_opt_above_k": 0,
+    "expected_sign": "zero",
+    "observed_sign": "zero",
+    "sign_consistent_with_histogram": true,
+    "moves_in_authors_favour": false,
+    "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
+    "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
+   }
+  },
+  {
+   "construct": "PIQA letter",
+   "n": 1838,
+   "k": 2,
+   "floor": 0.504897,
+   "floor_count": 928,
+   "chance": 0.5,
+   "gap_pp": 0.49,
+   "n_opt_hist": {
+    "2": 1838
+   },
+   "n_opt_is_constant": true,
+   "k_nominal": 2,
+   "kmax_observed": 2,
+   "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
+   "n_opt_source_disk": "wzc1",
+   "n_opt_source": "olmo2_mc_letter_content_results/7B_base/per_example_piqa_shard{0..7}of8.jsonl :: n_opt",
+   "n_opt_how": "1838/1838 items have n_opt=2",
+   "n_items_with_fewer_than_k_options": 0,
+   "n_items_with_more_than_k_options": 0,
+   "E_max_blind_shipped": 0.509307,
+   "q95_blind_shipped": 0.522851,
+   "p_blind_shipped": 0.65791,
+   "blind_recomputed_here": {
+    "E_max": 0.5092986235038084,
+    "E_max_sem": 8.566516155139424e-06,
+    "p_one_sided": 0.691985,
+    "p_sem": 0.0005948178993047642,
+    "p_rounded_floor": 0.6576366666666666,
+    "n_draws_each": 200000,
+    "seeds": [
+     20270814,
+     10007,
+     10099
+    ]
+   },
+   "E_max_aware": 0.509299963547334,
+   "q95_aware": 0.5228509249183896,
+   "q99_aware": 0.529923830250272,
+   "p_aware": 0.691229,
+   "p_aware_rounded_floor_convention": 0.657341,
+   "sd_max_aware": 0.007023491838161014,
+   "threshold_count_exact_floor": 928,
+   "threshold_count_rounded_floor": 929,
+   "floor_rounding_matters": true,
+   "per_seed_aware": {
+    "20260814": {
+     "n_draws": 200000,
+     "seed": 20260814,
+     "E_max": 0.5092907535364526,
+     "sd_max": 0.007027180848650735,
+     "q95": 0.5228509249183896,
+     "q99": 0.529923830250272,
+     "p_one_sided": 0.689545,
+     "p_exact_floor": 0.689545,
+     "p_rounded_floor": 0.655735,
+     "threshold_count_exact_floor": 928,
+     "threshold_count_rounded_floor": 929
+    },
+    "7": {
+     "n_draws": 200000,
+     "seed": 7,
+     "E_max": 0.509289175734494,
+     "sd_max": 0.007017045756514712,
+     "q95": 0.5228509249183896,
+     "q99": 0.529923830250272,
+     "p_one_sided": 0.691945,
+     "p_exact_floor": 0.691945,
+     "p_rounded_floor": 0.658015,
+     "threshold_count_exact_floor": 928,
+     "threshold_count_rounded_floor": 929
+    },
+    "99": {
+     "n_draws": 200000,
+     "seed": 99,
+     "E_max": 0.5093143416757344,
+     "sd_max": 0.0070373481398437795,
+     "q95": 0.5228509249183896,
+     "q99": 0.529923830250272,
+     "p_one_sided": 0.69253,
+     "p_exact_floor": 0.69253,
+     "p_rounded_floor": 0.65855,
+     "threshold_count_exact_floor": 928,
+     "threshold_count_rounded_floor": 929
+    }
+   },
+   "aware_across_seeds": {
+    "E_max_mean": 0.5092980903155603,
+    "E_max_sem": 8.138435463617006e-06,
+    "p_mean": 0.69134,
+    "p_sem": 0.0009132496920339038,
+    "seeds": [
+     20260814,
+     7,
+     99
+    ],
+    "n_draws_each": 200000
+   },
+   "big_run_aware": {
+    "n_draws": 1000000,
+    "seed": 20260814,
+    "E_max": 0.509299963547334,
+    "sd_max": 0.007023491838161014,
+    "q95": 0.5228509249183896,
+    "q99": 0.529923830250272,
+    "p_one_sided": 0.691229,
+    "p_exact_floor": 0.691229,
+    "p_rounded_floor": 0.657341,
+    "threshold_count_exact_floor": 928,
+    "threshold_count_rounded_floor": 929
+   },
+   "impl2_per_item_categorical": {
+    "n_draws": 20000,
+    "seed": 20260814,
+    "E_max": 0.5093021218715996,
+    "sd_max": 0.007033999676180542,
+    "q95": 0.5228509249183896,
+    "q99": 0.529923830250272,
+    "p_one_sided": 0.69135,
+    "p_exact_floor": 0.69135,
+    "p_rounded_floor": 0.65595,
+    "threshold_count_exact_floor": 928,
+    "threshold_count_rounded_floor": 929
+   },
+   "seed_spread_E_max": 2.5165941240468115e-05,
+   "seed_spread_p": 0.0029850000000000154,
+   "expected_letter_marginals_aware": {
+    "A": 0.5,
+    "B": 0.5
+   },
+   "p_2x2": {
+    "blind_rounded_floor__as_shipped": 0.6576366666666666,
+    "blind_exact_floor": 0.691985,
+    "aware_rounded_floor": 0.657341,
+    "aware_exact_floor__primary": 0.691229
+   },
+   "verdict_blind": "inside estimator noise",
+   "p_corrected": 0.691229,
+   "p_correction_needed": false,
+   "equivalence_assertion": {
+    "claim": "n_opt is constant and equal to k, so every item's legal set is all k letters: the legality-aware and legality-blind nulls are the SAME distribution and no correction to the NULL is possible, let alone needed",
+    "abs_dE_max": 1.3400435255883636e-06,
+    "tol": 0.0006,
+    "holds": true,
+    "note": "compared across independent RNG streams and different n_draws, so the residual is Monte-Carlo error, not a distributional difference"
+   },
+   "verdict_aware": "inside estimator noise",
+   "survives_aware": false,
+   "p_change_attribution": "threshold convention only (n_opt is constant, so the null is identical)",
+   "verdict_changed": false,
+   "directionality": {
+    "dE_max_aware_minus_blind": -5.331882481085515e-07,
+    "dE_max_sem": 1.1816062408083486e-05,
+    "dE_max_sigma": -0.045124020988903384,
+    "dp_aware_minus_blind": -0.0006450000000000067,
+    "dp_sem": 0.0010898776689763638,
+    "dp_sigma": -0.5918095382262528,
+    "n_items_n_opt_below_k": 0,
+    "n_items_n_opt_above_k": 0,
+    "expected_sign": "zero",
+    "observed_sign": "zero",
+    "sign_consistent_with_histogram": true,
+    "moves_in_authors_favour": false,
+    "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
+    "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
+   }
+  },
+  {
+   "construct": "BoolQ",
+   "n": 3270,
+   "k": 2,
+   "floor": 0.621713,
+   "floor_count": 2033,
+   "chance": 0.5,
+   "gap_pp": 12.171,
+   "n_opt_hist": {
+    "2": 3270
+   },
+   "n_opt_is_constant": true,
+   "k_nominal": 2,
+   "kmax_observed": 2,
+   "k_note": "shipped k is the NOMINAL option count and equals max(n_opt)",
+   "n_opt_source_disk": "wzc1",
+   "n_opt_source": "olmo2_downstream_results/7B_keep8_step121000_wzc1_know/per_example_boolq_shard{0..7}of8.jsonl :: len(option_scores)",
+   "n_opt_how": "3270/3270 items score exactly the two candidates A-B; identical in 7B_fromscratch_step200000_perex_know",
+   "n_items_with_fewer_than_k_options": 0,
+   "n_items_with_more_than_k_options": 0,
+   "E_max_blind_shipped": 0.506981,
+   "q95_blind_shipped": 0.517125,
+   "p_blind_shipped": 0.0,
+   "blind_recomputed_here": {
+    "E_max": 0.506968982670744,
+    "E_max_sem": 4.995938673364231e-06,
+    "p_one_sided": 0.0,
+    "p_sem": 0.0,
+    "p_rounded_floor": 0.0,
+    "n_draws_each": 200000,
+    "seeds": [
+     20270814,
+     10007,
+     10099
+    ]
+   },
+   "E_max_aware": 0.5069719880733945,
+   "q95_aware": 0.517125382262997,
+   "q99_aware": 0.5223241590214067,
+   "p_aware": 0.0,
+   "p_aware_rounded_floor_convention": 0.0,
+   "sd_max_aware": 0.005266347115156089,
+   "threshold_count_exact_floor": 2033,
+   "threshold_count_rounded_floor": 2034,
+   "floor_rounding_matters": true,
+   "per_seed_aware": {
+    "20260814": {
+     "n_draws": 200000,
+     "seed": 20260814,
+     "E_max": 0.506963983180428,
+     "sd_max": 0.00526925920198282,
+     "q95": 0.517125382262997,
+     "q99": 0.5223241590214067,
+     "p_one_sided": 0.0,
+     "p_exact_floor": 0.0,
+     "p_rounded_floor": 0.0,
+     "threshold_count_exact_floor": 2033,
+     "threshold_count_rounded_floor": 2034
+    },
+    "7": {
+     "n_draws": 200000,
+     "seed": 7,
+     "E_max": 0.5069642110091742,
+     "sd_max": 0.00526211744410703,
+     "q95": 0.517125382262997,
+     "q99": 0.5226299694189602,
+     "p_one_sided": 0.0,
+     "p_exact_floor": 0.0,
+     "p_rounded_floor": 0.0,
+     "threshold_count_exact_floor": 2033,
+     "threshold_count_rounded_floor": 2034
+    },
+    "99": {
+     "n_draws": 200000,
+     "seed": 99,
+     "E_max": 0.5069841941896024,
+     "sd_max": 0.005277714188301025,
+     "q95": 0.517125382262997,
+     "q99": 0.5226299694189602,
+     "p_one_sided": 0.0,
+     "p_exact_floor": 0.0,
+     "p_rounded_floor": 0.0,
+     "threshold_count_exact_floor": 2033,
+     "threshold_count_rounded_floor": 2034
+    }
+   },
+   "aware_across_seeds": {
+    "E_max_mean": 0.5069707961264015,
+    "E_max_sem": 6.6993544374283416e-06,
+    "p_mean": 0.0,
+    "p_sem": 0.0,
+    "seeds": [
+     20260814,
+     7,
+     99
+    ],
+    "n_draws_each": 200000
+   },
+   "big_run_aware": {
+    "n_draws": 1000000,
+    "seed": 20260814,
+    "E_max": 0.5069719880733945,
+    "sd_max": 0.005266347115156089,
+    "q95": 0.517125382262997,
+    "q99": 0.5223241590214067,
+    "p_one_sided": 0.0,
+    "p_exact_floor": 0.0,
+    "p_rounded_floor": 0.0,
+    "threshold_count_exact_floor": 2033,
+    "threshold_count_rounded_floor": 2034
+   },
+   "impl2_per_item_categorical": {
+    "n_draws": 20000,
+    "seed": 20260814,
+    "E_max": 0.5069607033639143,
+    "sd_max": 0.005272521404005211,
+    "q95": 0.517125382262997,
+    "q99": 0.5226299694189602,
+    "p_one_sided": 0.0,
+    "p_exact_floor": 0.0,
+    "p_rounded_floor": 0.0,
+    "threshold_count_exact_floor": 2033,
+    "threshold_count_rounded_floor": 2034
+   },
+   "seed_spread_E_max": 2.0211009174375683e-05,
+   "seed_spread_p": 0.0,
+   "expected_letter_marginals_aware": {
+    "A": 0.5,
+    "B": 0.5
+   },
+   "p_2x2": {
+    "blind_rounded_floor__as_shipped": 0.0,
+    "blind_exact_floor": 0.0,
+    "aware_rounded_floor": 0.0,
+    "aware_exact_floor__primary": 0.0
+   },
+   "verdict_blind": "above balanced null",
+   "p_corrected": 0.0,
+   "p_correction_needed": false,
+   "equivalence_assertion": {
+    "claim": "n_opt is constant and equal to k, so every item's legal set is all k letters: the legality-aware and legality-blind nulls are the SAME distribution and no correction to the NULL is possible, let alone needed",
+    "abs_dE_max": 3.0054026505244025e-06,
+    "tol": 0.0006,
+    "holds": true,
+    "note": "compared across independent RNG streams and different n_draws, so the residual is Monte-Carlo error, not a distributional difference"
+   },
+   "verdict_aware": "above balanced null",
+   "survives_aware": true,
+   "p_change_attribution": "threshold convention only (n_opt is constant, so the null is identical)",
+   "verdict_changed": false,
+   "directionality": {
+    "dE_max_aware_minus_blind": 1.813455657528884e-06,
+    "dE_max_sem": 8.357078024423797e-06,
+    "dE_max_sigma": 0.2169963774693749,
+    "dp_aware_minus_blind": 0.0,
+    "dp_sem": 0.0,
+    "dp_sigma": null,
+    "n_items_n_opt_below_k": 0,
+    "n_items_n_opt_above_k": 0,
+    "expected_sign": "zero",
+    "observed_sign": "zero",
+    "sign_consistent_with_histogram": true,
+    "moves_in_authors_favour": false,
+    "moves_in_authors_favour_criterion": "n_opt is not constant AND dp is more than 3 MC standard errors below zero. Constant-n_opt rows are excluded by construction: the two nulls are the same distribution there, so any observed dp is pure Monte-Carlo error and must not be read as a direction (PIQA's dp = -7e-4 at sem 1e-3 is exactly such an artefact).",
+    "explanation": "items with n_opt<k concentrate mass on the always-legal low letters, raising E[max] and hence p (against the authors); items with n_opt>k divert mass to a letter legal on almost nothing, which can never win the maximum, lowering E[max] and hence p (in the authors' favour). Constant n_opt gives exactly zero."
+   }
+  }
+ ],
+ "survives_aware": [
+  "MMLU letter",
+  "BoolQ"
+ ],
+ "inside_noise_aware": [
+  "MMLU-Pro letter, naive",
+  "MMLU-Pro letter, item-avg.",
+  "OpenBookQA letter",
+  "ARC-Easy letter",
+  "ARC-Challenge letter",
+  "CommonsenseQA letter",
+  "PIQA letter"
+ ],
+ "verdict_changes": [
+  "MMLU-Pro letter, naive",
+  "MMLU-Pro letter, item-avg."
+ ],
+ "headline": {
+  "n_survives_blind": 4,
+  "n_survives_aware": 2,
+  "survives_blind": [
+   "MMLU-Pro letter, naive",
+   "MMLU-Pro letter, item-avg.",
+   "MMLU letter",
+   "BoolQ"
+  ],
+  "consequence": "the abstract and introduction said three of the eight letter constructs (MMLU-Pro, MMLU, BoolQ) have floors a balanced null could not produce. Under the admissible null that becomes two (MMLU, BoolQ): both MMLU-Pro rows move into the estimator-noise bucket. MMLU-Pro is the largest-n construct and the one the paper uses to clear the power wall, so this is the flagship row.",
+  "inside_noise_p_range": [
+   0.082948,
+   0.852826
+  ],
+  "closest_to_significance": "MMLU-Pro at p = 0.083 is by far the nearest any inside-noise row comes to 0.05 -- the next smallest is 0.083. It must NOT be described as 'well inside' the estimator noise; the honest reading is that it fails to clear 0.05 while being close enough that a larger item set could plausibly change the answer.",
+  "n_rows_moving_in_authors_favour": 2,
+  "rows_moving_in_authors_favour": [
+   "ARC-Easy letter",
+   "ARC-Challenge letter"
+  ]
+ },
+ "directionality_summary_superseded_20260817": {
+  "what": "The narrative strings in .directionality and .floor_rounding_convention were written from an EARLIER, smaller Monte-Carlo budget and were never updated when rows[].directionality was recomputed. Where the two disagree, rows[] is authoritative and is what the manuscript prints.",
+  "stale_in_narrative_vs_authoritative_in_rows": {
+   "dp_ARC_Easy": {
+    "narrative": -0.004,
+    "rows": -0.001205,
+    "printed": "-0.0012"
+   },
+   "dp_ARC_Challenge": {
+    "narrative": -0.005,
+    "rows": -0.005213,
+    "printed": "-0.0052"
+   },
+   "sigma": {
+    "narrative": "about -33 (this is dE_max_sigma, not dp_sigma)",
+    "rows": "dp_sigma -3.34 and -7.34",
+    "printed": "-3.3 and -7.3"
+   },
+   "ARC_Challenge_p_after": {
+    "narrative": 0.447,
+    "rows": 0.447647,
+    "printed": "0.448"
+   }
+  },
+  "why_it_matters": "The narrative conflates two different sigmas: -33 is dE_max_sigma (the shift in the expected maximum), while the sentence it appears in is about dp. Quoting it beside a dp would overstate the significance of the p-shift by an order of magnitude. Separately 0.447 vs 0.447647 is a truncation, not a rounding, and prints as 0.448.",
+  "verified_by": "MAIN 2026-08-17, recomputed from rows[].directionality in this same file; no verdict depends on any of these four values.",
+  "no_verdict_changes": true
+ },
+ "reemitted_deattributed_20260817": {
+  "what": "Re-emitted by paperC/code/recompute_legality_aware_nulls.py after the emitter's '.why' string was rewritten to remove review-process attribution. The scientific content of '.why' is unchanged: the defect named, the file named, and the corroborating MAIN record are all identical; only the identity of who raised it was dropped.",
+  "why_the_emitter_and_not_the_json": "The '.why' text is a hardcoded literal in the emitter, so editing the JSON alone would have been reverted by the next re-run. The emitter was fixed first and the JSON regenerated from it.",
+  "numeric_identity_verified": "All 1076 numeric leaves are bit-identical to the pre-re-emission file (recursive leaf diff, 0 mismatches, none lost, none added). The only string diffs are '.why' and the field below. Downstream emit_tab_construct_nulls.py --check-only passes T1-T8, 9/9 rows.",
+  "corroborating_records.main_verification.sha256_refreshed": {
+   "old": "180cdcc565374220f7b6bf58e843a0d6f9fbd0c090dc0769a3a9d9f507a8f4f8",
+   "new": "09df4e06b7b6b0f4e29401c852e88b61c29c6b0fe568185e21ef8e1031fec875",
+   "reason": "The old value was ALREADY STALE before this re-emission, and this re-emission is what surfaced it: it hashes mmlupro_legality_aware_null_MAIN.json as of commit be390da, but that file was amended twice afterwards (4be82bb, 614e187) while this file was not regenerated. A reader who hashes the shipped MAIN record gets the new value, so the old one read as a provenance mismatch. The emitter recomputes this hash from disk, so the refresh is what the tool has produced on every run since 614e187.",
+   "no_number_depends_on_it": "MAIN_REC is read only for its n_opt histogram (validate_hists), which is cross-checked against mmlu_pro_power_nulls_v2.json and agrees; no gate reads this sha256 field."
+  },
+  "preserved": "directionality_summary_superseded_20260817 was re-attached VERBATIM. It is hand-authored: no emitter writes it, so a bare re-run of the emitter silently deletes it.",
+  "verified_by": "MAIN 2026-08-17"
+ }
 }

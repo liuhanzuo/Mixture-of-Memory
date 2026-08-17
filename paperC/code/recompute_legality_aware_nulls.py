@@ -3,7 +3,7 @@ r"""paperC: recompute the nine construct winner's-curse nulls under a LEGALITY-A
 
 Why this exists
 ---------------
-Four of the six round_04 blind codex reviewers (X1/X2/X5/X6) independently flagged
+An audit found
 that `paperC/evidence/floor_winners_curse_calibration.json` calibrates the MMLU-Pro
 floor against a null that MMLU-Pro cannot produce. MAIN verified the defect rather
 than relaying it; the verification record is
@@ -479,7 +479,7 @@ def verify_floor_invariance() -> dict:
     Why F3 must not be a literal (learned the hard way, 2026-08-16): this check was
     first written to assert the aggregate equals 14/15, the value the paper reported.
     It fired within the hour -- not because of anything to do with the null, but because
-    a CONCURRENT, INDEPENDENT fix to a different round_04 defect (an undisclosed
+    a CONCURRENT, INDEPENDENT fix to a different, unrelated defect (an undisclosed
     exclusion of `shortgpt16` and `keep14` from the OLMo-2 denominator) legitimately
     moved the aggregate to 15/17. Coupling a null-independence check to the current
     value of a denominator makes it fail on every honest change to that denominator,
@@ -862,8 +862,8 @@ def main() -> int:
                  "LEGALITY-AWARE balanced null (each item's gold letter uniform "
                  "over ITS OWN n_opt legal letters, observed n_opt histogram held "
                  "fixed)"),
-        "why": ("four of six round_04 blind reviewers (X1/X2/X5/X6) independently "
-                "flagged that the shipped MMLU-Pro calibration uses a null whose "
+        "why": ("an audit found that the "
+                "shipped MMLU-Pro calibration uses a null whose "
                 "support excludes MMLU-Pro's own legal label assignments; MAIN "
                 "verified it (evidence/mmlupro_legality_aware_null_MAIN.json). This "
                 "file extends the correction from that one row to all nine."),

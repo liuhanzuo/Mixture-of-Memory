@@ -24,9 +24,9 @@ lines, calibration moments and p-values are read, formatted, and cross-checked.
 
 2026-08-16: the source file changed (legality-aware null)
 --------------------------------------------------------
-Four of the six round_04 blind reviewers (X1/X2/X5/X6) independently flagged that
-the calibration this table binds to used a null MMLU-Pro cannot produce: it drew
-all 12032 gold letters uniformly over all k=10 letters, but 2051 items have fewer
+An audit found that the calibration this table
+binds to used a null MMLU-Pro cannot produce: it drew all 12032 gold letters
+uniformly over all k=10 letters, but 2051 items have fewer
 than 10 options, so their gold letter cannot be J. MAIN verified the defect
 (`evidence/mmlupro_legality_aware_null_MAIN.json`) and
 `paperC/code/recompute_legality_aware_nulls.py` extended the correction to all
