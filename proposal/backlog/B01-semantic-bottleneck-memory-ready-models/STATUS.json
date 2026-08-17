@@ -109,5 +109,115 @@
     "recommended_next_spend_is_NOT_the_four_arm_gate": "Two items dominate on information-per-GPU-hour: (1) fix the d_bottle persist path (0 GPU code work) -- until then arms 2/3/4 differ ONLY in quality and the storage headline is untestable, so the 25-40 GPU-h would buy the wrong axis; (2) evaluate the two EXISTING, NEVER-EVALUATED 8B endpoints (outputs/qwenbott_funnel_L12_d512 vs outputs/qwenbott_baseline_L12) -- the only kill-gate condition (#2, LM tax vs scale) answerable from assets already on disk.",
     "honest_gaps": "Semantic Scholar HTTP 429 on every call -> every venue call is SINGLE-AUTHORITY. arXiv API 429 for the first ~15 min; several searches returned implausible zero-hits and MUST be re-run. DBLP /search/publ/api intermittently 500/503. 10 entries are arXiv-only = venue UNVERIFIED FROM THIS NODE, not unpublished (incl MLA itself). ONE FAMILY NOT VERIFIED AT ALL: discrete latent codecs (VQ-VAE and successors) -- a B01 submission must close this. Abstracts read for KV-CAT/VWT/Through-the-Bottleneck/MatryoshkaKV/CARE/SeDeM/RAC only. Cross-disk NOT checked: all B01 assets recorded as wzc1; ls-confirm before dispatching to .73/.82/.104. Full list in RELATED_WORK.md section 5.",
     "promotion": "NOT YET -- the kill gate has not run, and blocking_dependency (the d_bottle persist path) is a VERIFIED CODE DEFECT, not a literature issue. Re-verified from source this session: scripts/train_qwen_bottleneck_continued.py:112-133."
+  },
+  "blocking_dependency_discharged_20260817": {
+    "supersedes_key": "blocking_dependency",
+    "supersedes_paths_verbatim": [
+      "blocking_dependency.statement",
+      "blocking_dependency.mechanism_verified_in_code",
+      "blocking_dependency.consequence",
+      "blocking_dependency.from_proposal"
+    ],
+    "discharges": [
+      "blocking_dependency.statement",
+      "blocking_dependency.mechanism_verified_in_code",
+      "blocking_dependency.consequence",
+      "blocking_dependency.from_proposal"
+    ],
+    "verdict": "DISCHARGED. The d_bottle-width persist path now exists, is exercised end-to-end, and its equivalence + storage saving are MEASURED on the real 8B endpoint. The four blocker clauses above are kept VERBATIM (append-only, LIFECYCLE_SCHEMA.md sec 0); they were accurate when written and describe the code as of 4e96d42.",
+    "discharged_by_commit": "58ff2d2",
+    "commit_message_is_WRONG_read_this": "The code landed inside 58ff2d2, whose subject is 'chore(status): topology correction -- our 5 nodes ARE taiji pods'. A CONCURRENT `git commit` from another agent picked up the staged index before this change could take its own commit. Content at 58ff2d2 is correct and complete; history was NOT rewritten because other agents were committing to main at the time. A follow-up EMPTY commit 6260eab documents this so a bisect does not chase a subject line that never mentions B01.",
+    "what_changed": {
+      "src/memory/qcmem/qcmem_model.py": "New `persist_bottleneck_latent` ctor flag (DEFAULT FALSE). `_write_band` runs layers[0:j-1] + the funnel's wrapped inner layer, then returns `funnel.act(funnel.down(h))` -- the d_bottle-wide latent -- instead of the funnel's restored full-width output. `_lift_latent` re-applies the deferred bias-free `up` to each cached piece on the READ side (per piece, BEFORE the pack, so the GEMM shapes match the legacy run). `_resolve_deferred_funnel` validates placement; `store_bytes_per_token()` reports the width actually persisted.",
+      "scripts/semantic_bottleneck_model.py": "Docstring only: records the three properties of BottleneckLayer that make the split legal (bias-free linear `up` applied last; elementwise GELU BEFORE `up`; no residual and nothing between `up` and the return), so a future funnel redesign must revisit it.",
+      "scripts/eval_qcmem_locomo.py": "New `--persist_bottleneck_latent` with five fail-early guards, and it prints store_bytes_per_token into every arm's log.",
+      "scripts/qcmem_bottleneck_persist_selftest.py": "NEW. CPU/CUDA gate.",
+      "scripts/qcmem_bottleneck_persist_8b_smoke.py": "NEW. 8B real-checkpoint gate."
+    },
+    "why_it_is_exact_not_approximate": "The write band computes h_j = up(act(down(g(x)))) and the read band computes f(h_j). Persisting s = act(down(g(x))) and reading f(up(s)) is the SAME composition -- only the cut point moves. `act` (GELU) STAYS on the write side because it is the nonlinearity; `down` cannot be deferred (it IS the width reduction); `up` cannot be deferred unless the funnel is the LAST layer of the write band, which is why resume_j == bottleneck_layer + 1 is enforced rather than recommended.",
+    "measured_equivalence_8B_real_endpoint": {
+      "ckpt": "outputs/qwenbott_funnel_L12_d512/final.pt (16,390,019,143 B, step=2000)",
+      "config": "resume_j=13 (== bottleneck_layer 12 + 1), bf16, 1x B200 (LOCAL), sdpa, 3x256-tok context chunks + 64-tok query + BOS sink, 3 decode steps",
+      "max_abs_diff": 0.0,
+      "differing_elements": 0,
+      "n_logits_compared": 128385920,
+      "per_tensor": "read 0/126,562,688 | read_tail 0/1,215,488 | decode 0/607,744",
+      "greedy_tokens": "[782, 2090, 288, 11] on BOTH paths",
+      "verdict": "BIT-IDENTICAL on the real 8B weights. This is a measurement, not an inference from the algebra: max |diff| printed as 0.000000e+00 with an element-wise inequality count of 0.",
+      "evidence": "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/persist_8b_smoke_20260817.json"
+    },
+    "measured_bytes_per_token_the_gates_mandatory_quantity": {
+      "definition_used": "numel * element_size() / T of the tensor WRITE actually returns -- i.e. of what is written to the store, NOT of the restored hidden. This is the distinction next_gate_executable_20260814 calls mandatory.",
+      "legacy_full_width": "8192 B/tok  (shape [1, 64, 4096], bf16)",
+      "persist_d_bottle": "1024 B/tok  (shape [1, 64, 512],  bf16)",
+      "ratio_measured": 8.0,
+      "ratio_expected_hidden_over_dbottle": 8.0,
+      "whole_context_store": "a 3x256-token context went from 6,291,456 B to 786,432 B",
+      "note": "The storage axis is therefore NO LONGER CONSTANT across the four arms; arms 2/3/4 now differ from arm 1 in storage as well as quality, which is what the gate needs.",
+      "evidence": "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/persist_8b_smoke_20260817.json"
+    },
+    "measured_legacy_regression_protects_published_numbers": {
+      "method": "The gate materialises `git show HEAD:src/memory/qcmem/qcmem_model.py` into a separate module and runs BOTH implementations over the same weights -- so the baseline is the file as COMMITTED, not a hand-written reimplementation of what I believe the old code did.",
+      "coverage": "9 observable tensors per arm (write_sink, write_q, write_ctx_cat, write_chunks_cat, write_prefill_hj, read, read_tail, resume_forward_ids, decode) x {bottleneck arm, bottleneck_dim=0 VANILLA arm} x {CPU, CUDA} x {fp32, bf16}",
+      "result": "max_abs 0.0, 0 differing elements in every cell. The flag defaults OFF and the default path is byte-identical.",
+      "why_the_vanilla_arm_matters": "bottleneck_dim=0 is the configuration every already-published QCMem number in this repo was produced under. It is checked explicitly rather than assumed to be covered.",
+      "evidence": [
+        "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/persist_selftest_cpu_20260817.json",
+        "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/persist_selftest_cuda_20260817.json"
+      ]
+    },
+    "negative_controls_all_verified_to_fire": [
+      "QCMemModel refuses persist on a backbone with no funnel at layers[resume_j-1] (would silently persist full width)",
+      "refuses resume_j == bottleneck_layer (funnel not last in band)",
+      "refuses resume_j > bottleneck_layer+1 (band would consume full width before the store)",
+      "refuses resume_j == 0 (empty write band)",
+      "a persist-path read REJECTS a full-width cached piece instead of packing it",
+      "eval_qcmem_locomo.py errors on --persist_bottleneck_latent without --bottleneck_ckpt (rc=2, verified)",
+      "errors with --baseline hcache/kvdirect/cacheblend (rc=2, verified)",
+      "errors with --top_prepay_b != 0 (rc=2, verified)",
+      "errors on the STOCK-CONTINUED ckpt outputs/qwenbott_baseline_L12 (arch_meta bottleneck_dim=0) (rc=2, verified against the real arch_meta)",
+      "errors when --resume_j != bottleneck_layer+1 (rc=2, verified against the real arch_meta)"
+    ],
+    "reproduce": [
+      "CPU:  /opt/conda/envs/torch-base/bin/python scripts/qcmem_bottleneck_persist_selftest.py --json_out <f> > <log>; echo $?   # 34 PASS / 0 FAIL",
+      "CUDA: CUDA_VISIBLE_DEVICES=0 ... scripts/qcmem_bottleneck_persist_selftest.py --device cuda ...                            # 34 PASS / 0 FAIL",
+      "8B:   CUDA_VISIBLE_DEVICES=0 ... scripts/qcmem_bottleneck_persist_8b_smoke.py --json_out <f> > <log>; echo $?             # 6 PASS / 0 FAIL",
+      "NOTE the `cmd > file; echo $?` form: piping into tail would report the PIPE's rc, not the gate's."
+    ],
+    "gpu_spent": "~5 minutes on ONE B200 (LOCAL) for the 8B smoke (40.5 s model load + <2 s of forwards) plus the CUDA fixture gate. The rest was 0 GPU.",
+    "what_is_NOT_discharged_by_this": "Only the STORAGE-MECHANISM blocker is closed. The four-arm QUALITY comparison has not been run, the ~25-40 GPU-h estimate stands, and other_gaps_from_proposal (no full quality/storage/latency frontier; Read-LoRA + Write-LoRA never combined; the strong-model/A13B leg) are untouched. The residual-FREE vs residual-PRESERVING ablation that related_work_status.new_requirement_surfaced added is also still open and is the arm that separates B01 from Variable-Width Transformers."
+  },
+  "defect_found_while_verifying_20260817": {
+    "claim_in_repo": "src/memory/qcmem/qcmem_model.py write_chunks docstring asserted the batched writer is 'bit-identical' to per-chunk write_chunk.",
+    "status": "TOO STRONG whenever a funnel BottleneckLayer sits in the write band. PRE-EXISTING -- reproduced against git HEAD with this change's files absent, so it is NOT caused by the persist path, and it affects the legacy full-width path identically.",
+    "diagnosis": "A batched-vs-unbatched GEMM kernel/blocking difference. The funnel's down/up are the only plain nn.Linear layers in the write band, which is exactly why the divergence appears only when the funnel is present. The docstring's SEMANTIC claim (no cross-chunk information flow; attention never mixes batch entries) is INTACT and is what its argument actually establishes; only the stronger BITWISE wording was wrong.",
+    "action_taken": "The write_chunks docstring now records the counterexample with its numbers instead of repeating the claim, and the gate asserts 'persist path no worse than legacy' rather than an absolute bit-identity it cannot have. Recorded here because 'bit-identical' is the kind of claim other gates get built on.",
+    "evidence": [
+      "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/preexisting_writechunks_gemm_HEADonly_20260817.txt",
+      "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/preexisting_writechunks_gemm_cpu_HEADonly_20260817.txt"
+    ],
+    "measured_source_a_pre_existence_proof_git_HEAD_only": {
+      "_note": "HEAD code only: BOTH qcmem_model.py and semantic_bottleneck_model.py loaded via `git show`, so the persist path takes no part. Each row has a funnel-REMOVED control at IDENTICAL shapes -- that control is what makes the attribution stick.",
+      "CUDA bf16, hidden 4096 / d_bottle 512, funnel in band": "3764/393216 elements differ, max_abs 1.5625e-02",
+      "CUDA bf16, IDENTICAL shapes, funnel REMOVED": "0/393216 -- bit-identical",
+      "CPU fp32, hidden 256 / d_bottle 32, funnel in band": "11271/16384 differ, max_abs 6.9849e-09",
+      "CPU fp32, IDENTICAL shapes, funnel REMOVED": "0/16384 -- bit-identical",
+      "bare nn.Linear(4096,512,bias=False) CUDA bf16, B=2 vs two B=1": "82/49152 differ, max_abs 3.9062e-03",
+      "bare nn.Linear(256,32) CPU fp32, B=2 vs two B=1": "1376/1536 differ, max_abs 6.1095e-07; bit-identical in bf16"
+    },
+    "measured_source_b_same_phenomenon_as_the_gate_sees_it": {
+      "_note": "The LEGACY arm of check 5 in scripts/qcmem_bottleneck_persist_selftest.py. Different seeds and chunk mix than source (a), so the counts differ slightly; same phenomenon. Listed separately rather than merged, because quoting one source's count under the other's label is how a number stops being traceable.",
+      "CPU fp32 tiny/float32": "11218/16384 differ, max_abs 5.588e-09",
+      "CUDA bf16 real/bfloat16": "6422/393216 differ, max_abs 3.125e-02",
+      "CPU real/bfloat16 and both tiny/bfloat16 cells": "0 differing -- bit-identical"
+    },
+    "_correction_note": "An earlier draft of THIS key (written the same session, never committed) quoted source (b)'s CPU fp32 count (11218 @ 5.588e-09) under source (a)'s git-HEAD-only label. The two are different runs. Both are now reported with their own provenance.",
+    "measured_superseded_by_the_two_keys_above": {
+      "CUDA bf16, hidden 4096 / d_bottle 512, funnel in band": "3764/393216 elements differ, max_abs 1.56e-02",
+      "CUDA bf16, IDENTICAL shapes, funnel REMOVED": "0/393216 -- bit-identical",
+      "CPU fp32, hidden 256 / d_bottle 32, funnel in band": "11218/16384 differ, max_abs 5.59e-09",
+      "CPU fp32, IDENTICAL shapes, funnel REMOVED": "0/16384 -- bit-identical",
+      "isolated to a bare op": "nn.Linear(4096, 512, bias=False) in CUDA bf16 at B=2 vs two B=1 calls: 82/49152 elements differ, max_abs 3.91e-03"
+    }
   }
 }

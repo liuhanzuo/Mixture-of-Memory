@@ -651,22 +651,30 @@ class QCMemModel:
         SEMANTIC claim (no cross-chunk information flow) is intact and is what the
         argument above actually establishes. The stronger BITWISE claim does not
         hold when a funnel ``BottleneckLayer`` sits in the write band, because a
-        plain ``nn.Linear`` is not bit-reproducible across batch sizes:
+        plain ``nn.Linear`` is not bit-reproducible across batch sizes. Measured on
+        git-HEAD code alone (both this file and ``semantic_bottleneck_model.py``
+        loaded via ``git show``, so the persist path takes no part), each with a
+        funnel-REMOVED control at IDENTICAL shapes:
 
           CUDA bf16, hidden 4096 / d_bottle 512, funnel in band
-                                          -> 3764/393216 elems differ, max_abs 1.56e-02
+                                        -> 3764/393216 elems differ, max_abs 1.5625e-02
           CUDA bf16, identical shapes, NO funnel      -> 0/393216 (bit-identical)
-          CPU  fp32, hidden 256 / d_bottle 32, funnel -> 11218/16384, max_abs 5.59e-09
-          CPU  fp32, identical shapes, NO funnel      -> 0/16384
+          CPU  fp32, hidden 256 / d_bottle 32, funnel -> 11271/16384, max_abs 6.9849e-09
+          CPU  fp32, identical shapes, NO funnel      -> 0/16384   (bit-identical)
 
         Isolated to a bare op: ``nn.Linear(4096, 512, bias=False)`` in CUDA bf16 at
         ``B=2`` differs from two ``B=1`` calls in 82/49152 elements (max_abs
-        3.91e-03) — a batched-vs-unbatched GEMM blocking difference. This PREDATES
-        the persist path (reproduced against the code as committed, with the flag
-        absent) and affects the legacy full-width path identically; it is recorded
-        here rather than silently left in the docstring because "bit-identical" is
-        the kind of claim other gates are built on. Repro + both paths' numbers:
-        ``scripts/qcmem_bottleneck_persist_selftest.py`` check 5.
+        3.9062e-03); the CPU fp32 256->32 analogue differs in 1376/1536 (max_abs
+        6.1095e-07) and is bit-identical in bf16 — a batched-vs-unbatched GEMM
+        blocking difference. The funnel's ``down``/``up`` are the only plain
+        ``nn.Linear``s in the band, which is exactly why the divergence appears only
+        when the funnel is present. This PREDATES the persist path and affects the
+        legacy full-width path identically; it is recorded here rather than silently
+        left in the docstring because "bit-identical" is the kind of claim other
+        gates are built on. Repro + both paths' numbers:
+        ``scripts/qcmem_bottleneck_persist_selftest.py`` check 5 (whose own counts
+        differ slightly from the above — different seeds and chunk mix, same
+        phenomenon).
 
         Parameters
         ----------

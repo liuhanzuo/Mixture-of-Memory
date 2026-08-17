@@ -1,0 +1,18 @@
+ckpt      : /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/qwenbott_funnel_L12_d512/final.pt (16,390,019,143 B)
+arch_meta : bottleneck_layer=12 bottleneck_dim=512 hidden=4096 layers=36
+base      : /apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b
+resume_j  : 13 (== bottleneck_layer + 1)
+Loading weights:   0%|          | 0/399 [00:00<?, ?it/s]Loading weights: 100%|██████████| 399/399 [00:00<00:00, 7488.39it/s]
+loaded in 15.9s  step=2000  missing=0 unexpected=0
+  [PASS] checkpoint loaded with no unexpected/missing tensors  missing=[] unexpected=[]
+  [PASS] layers[bottleneck_layer] is the funnel wrapper  type=BottleneckLayer down=(512, 4096) up=(4096, 512) up_bias=False
+pipeline wall: OFF 1.38s  ON 0.16s
+  [PASS] 8B real weights: persist ON == persist OFF (read-side logits)  max_abs=0.000000e+00 (worst read, |logit|max=17.000, tol=1.700e-01); differing read:0/126562688 read_tail:0/1215488 decode:0/607744
+        -> BIT-IDENTICAL over 128,385,920 logits
+  [PASS] 8B real weights: identical greedy tokens  OFF=[782, 2090, 288, 11] ON=[782, 2090, 288, 11]
+  [PASS] 8B real weights: measured bytes/token ratio == hidden/d_bottle  8192 -> 1024 B/tok = 8.0000x (expected 8.0000x); shapes (1, 64, 4096) -> (1, 64, 512); 3x256-tok context store 6,291,456 -> 786,432 B
+  [PASS] 8B real weights: store_bytes_per_token() matches the measured tensors  api=[8192, 1024] measured=[8192.0, 1024.0]
+
+========================================================================
+wrote /tmp/b01_v2_8b.json
+ALL CHECKS PASSED (8B real checkpoint)

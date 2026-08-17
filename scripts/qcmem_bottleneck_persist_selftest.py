@@ -294,24 +294,31 @@ def run_fixture(fx_name, dtype_name, device, prev_mod, prev_warn):
     # ---------------- 5. write_chunks stays consistent with write_chunk -----
     # `write_chunks`' docstring GUARANTEES bit-identity with per-chunk
     # `write_chunk`, and the persist path must not degrade that. But the guarantee
-    # is ALREADY BROKEN ON HEAD whenever a BottleneckLayer sits in the write band —
-    # measured, and reproduced against git HEAD with this file's changes absent:
+    # is ALREADY BROKEN ON HEAD whenever a BottleneckLayer sits in the write band.
+    # Measured on git-HEAD code alone (this file's changes absent), each with a
+    # funnel-REMOVED control at IDENTICAL shapes:
     #
     #   CUDA bf16, hidden 4096 / d512, funnel in band : 3764/393216 elems differ,
-    #                                                   max_abs 1.56e-02
+    #                                                   max_abs 1.5625e-02
     #   CUDA bf16, SAME shapes, NO funnel             : 0/393216  (bit-identical)
-    #   CPU  fp32, hidden 256  / d32,  funnel in band : 11218/16384, max_abs 5.59e-09
-    #   CPU  fp32, SAME shapes, NO funnel             : 0/16384
+    #   CPU  fp32, hidden 256  / d32,  funnel in band : 11271/16384, max_abs 6.9849e-09
+    #   CPU  fp32, SAME shapes, NO funnel             : 0/16384    (bit-identical)
+    #
+    # (The counts THIS check prints differ slightly from those -- different seeds
+    # and chunk mix, same phenomenon. The funnel-removed rows are the control that
+    # makes the attribution stick.)
     #
     # Mechanism, isolated to a bare op: `nn.Linear(4096, 512, bias=False)` in CUDA
     # bf16 called at B=2 differs from two B=1 calls in 82/49152 elements
-    # (max_abs 3.91e-03) — a batched-vs-unbatched GEMM kernel/blocking difference.
-    # The funnel's `down`/`up` are the only plain `nn.Linear`s in the band, which is
-    # exactly why the divergence appears only when the funnel is present. It has
-    # NOTHING to do with QCMem's chunk-locality argument (attention still never
-    # mixes batch entries; the docstring's *semantic* claim is intact) and NOTHING
-    # to do with this change. It does mean the word "bit-identical" in
-    # `write_chunks`' docstring is too strong for funnel-wrapped backbones.
+    # (max_abs 3.9062e-03); the CPU fp32 256->32 analogue differs in 1376/1536
+    # (max_abs 6.1095e-07) and is bit-identical in bf16 -- a batched-vs-unbatched
+    # GEMM kernel/blocking difference. The funnel's `down`/`up` are the only plain
+    # `nn.Linear`s in the band, which is exactly why the divergence appears only
+    # when the funnel is present. It has NOTHING to do with QCMem's chunk-locality
+    # argument (attention still never mixes batch entries; the docstring's
+    # *semantic* claim is intact) and NOTHING to do with this change. It does mean
+    # the word "bit-identical" in `write_chunks`' docstring is too strong for
+    # funnel-wrapped backbones.
     #
     # So: measure BOTH paths, require the persist path's RELATIVE deviation not to
     # exceed the legacy path's by more than a dtype floor, and print the numbers.
