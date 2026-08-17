@@ -226,8 +226,20 @@ def screen_blind(path, rel):
         return []
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
-    except OSError:
-        return []
+    except OSError as e:
+        # FAIL CLOSED on an unreadable file. Returning [] here means "no leaks found",
+        # which for a screen is the *permissive* answer -- so a missing or unreadable
+        # file would be reported as clean and shipped.
+        #
+        # Measured 2026-08-17: my own dry-check passed a repo-relative path while CWD was
+        # the repo root (the real code passes ROOT/rel), read_text raised, and the screen
+        # printed "clean" for BOTH files that in fact carry 6 and 2 leaks. I nearly
+        # concluded the guard did not work; the guard was fine and the probe was wrong --
+        # but a screen must not be able to say "clean" because it could not look.
+        return [(rel, 0, "UNREADABLE",
+                 f"cannot read for blindness screening ({type(e).__name__}: {e}) -- "
+                 f"treated as a LEAK because a screen that cannot read a file must not "
+                 f"pass it")]
     hits = []
     for i, line in enumerate(text.splitlines(), 1):
         m = _BLIND_FATAL.search(line)
