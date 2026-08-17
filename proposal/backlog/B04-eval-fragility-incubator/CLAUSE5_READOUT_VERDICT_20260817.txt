@@ -1,0 +1,22 @@
+
+=== CLAUSE 5, REVISION 3 (two-grid, interval-matched) ===
+  D (damaged median_margin range) = 0.021820   sigma_hat = 0.000541   6*sigma guard = 0.0032435
+  Spearman(core6, heal_steps) = +0.6669 (wzc1 ladder; +0.8721 on zwfy6 -- naming the ladder is mandatory)
+  comparator interval I = [83500, 200000] |I| = 116500 (DESCRIPTIVE ONLY -- BARRED from multiplying any slope (the revision-1 defect); used only to test grid support)
+  GRID_I  PRIMARY   steps=[100000, 128000, 153500, 175000, 200000] span=100000 sup=1.220390 inside_I=5/5
+  GRID_W  SECONDARY steps=[25000, 50000, 100000, 128000, 200000] span=175000 sup=1.173627 inside_I=3/5
+  NOT VERIFIABLE FROM DISK (disclosed prereg gap): batch_size (prereg 8), max_len (prereg 1024, harness default), harness git commit (prereg a163a89), one-driver-invocation
+    enforced instead by: scripts/_run_b04_readout_evalfill
+  scanned wzc1   olmo2_downstream_results  (51 dirs)
+  UNSEARCHABLE zwfy6  /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_downstream_results  -> not mounted from this node -> absence on this disk is NOT established here
+    step25000   median_margin=0.098003 n=17195 <- wzc1:keep14_s1234_step25000_b04fill
+    step50000   median_margin=0.100424 n=17195 <- wzc1:keep14_s1234_step50000_b04fill
+    step100000  median_margin=0.103809 n=17195 <- wzc1:keep14_s1234_step100000_b04fill
+    step128000  median_margin=0.107521 n=17195 <- wzc1:keep14_s1234_step128000_b04fill
+    step153500  median_margin=0.106691 n=17195 <- wzc1:keep14_s1234_step153500_b04fill
+    step175000  median_margin=0.107248 n=17195 <- wzc1:keep14_s1234_step175000_b04fill
+    step200000  median_margin=0.108500 n=17195 <- wzc1:keep14_s1234_step200000_sv181
+  phi_GRID_I = 0.2150 -> PASS   [grid=[100000, 128000, 153500, 175000, 200000] span=100000 binding=range range_term=0.004691 slope_term=0.003759 D=0.021820]
+  phi_GRID_W = 0.4998 -> NARROWED   [grid=[25000, 50000, 100000, 128000, 200000] span=175000 binding=slope range_term=0.010497 slope_term=0.010905 D=0.021820]
+  COMBINE (FINAL = the MORE SEVERE of verdict_I and verdict_W (KILL > NARROWED > PASS))
+  ==> GATE VERDICT = NARROWED  [NON-PASS -- blocks the 244-2560 GPU-h ladder]
