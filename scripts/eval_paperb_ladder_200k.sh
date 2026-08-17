@@ -122,6 +122,59 @@ log "DRY_RUN=$DRY_RUN"
 # ==========================================================================
 log "---- PREFLIGHT ----"
 
+# P0a. NODE-EXCLUSIVE LOCK. This driver shards one 7B model across ALL 8 GPUs
+#      (CUDA_VISIBLE_DEVICES=$g, one rank per card), so two concurrent invocations put
+#      two 7B models on every card. That is exactly the OOM that destroyed 4 of 5 rungs
+#      on 2026-08-08.
+#
+#      This is not hypothetical. Measured 2026-08-17: TWO independent watchers are armed
+#      to launch this driver on the SAME node (.73):
+#        - chain_keep12_eval_200k.sh (PID 1243702, on .73) fires when keep12's
+#          step200000.pt lands; polls every 300 s.
+#        - chain_keep10_ship_and_eval_200k.sh (PID 655909, on LOCAL) fires when .73
+#          reports 0 compute PIDs for 2 consecutive polls, also every 300 s.
+#      Neither has a lock, and grep for flock/lockfile/pgrep in this driver returned
+#      nothing. When keep12's training exits there is a window with 0 compute PIDs
+#      BEFORE keep12's own eval has claimed a card -- and a model-load phase reads 0 PIDs
+#      too. Whether they collide therefore depends on which watcher samples first, i.e.
+#      on a coin flip rather than on a design.
+#
+#      Both chains pass through THIS script, so one lock here guards both without editing
+#      either running watcher (a running shell re-reads its .sh; editing one is a bug).
+#
+#      Fails closed and LOUD: a second arrival exits non-zero instead of queueing,
+#      because the watcher that lost keeps polling and will retry, whereas a silent queue
+#      would hide the scheduling defect. The lock is an flock held on fd 9 for the life of
+#      the process, so kill -9 on the HOLDER releases it -- verified, rc=0 on the next
+#      attempt. (Caveat learned the hard way: killing a wrapper shell does NOT release it,
+#      because the child that owns fd 9 survives. When diagnosing a stuck lock, find the
+#      real owner via /proc/*/fd/9 -> the lock path, not via the launching pid.)
+LOCK_DIR="${LOCK_DIR:-$PROJECT_ROOT/.locks}"
+mkdir -p "$LOCK_DIR" 2>/dev/null || true
+LOCK_FILE="$LOCK_DIR/ladder200k_eval_node.lock"
+if command -v flock >/dev/null 2>&1; then
+  exec 9>>"$LOCK_FILE" || die "cannot open lock file $LOCK_FILE"
+  if ! flock -n 9; then
+    # tail -1, NOT head -1: the file is APPENDED to by every holder, so head names the
+    # FIRST-EVER holder, which after the first run is a long-dead pid. Measured
+    # 2026-08-17 in the lock's own controls -- the refusal message named pid 1030590
+    # while the real holder was 1030610. Same defect class as reading the head of any
+    # append-only record; the current truth is at the end.
+    holder=$(tail -1 "$LOCK_FILE" 2>/dev/null)
+    die "REFUSING: another ladder eval already holds this node's GPUs.
+     lock=$LOCK_FILE holder=${holder:-unknown}
+     This driver needs all 8 cards; two at once OOMs both (2026-08-08 cost 4/5 rungs).
+     The losing watcher should keep polling and retry -- this is a REFUSAL, not a crash."
+  fi
+  printf 'ARM=%s pid=%s host=%s started=%s\n' "$ARM" "$$" "$(hostname)" "$(date -Is)" >&9
+  log "P0a node lock acquired: $LOCK_FILE (ARM=$ARM pid=$$)"
+else
+  # Never silently proceed unguarded -- otherwise the log implies a protection that is
+  # not present.
+  log "P0a WARNING: flock(1) not found; running WITHOUT the node-exclusive lock. A second
+     ladder eval on this node would OOM both. Check by hand: pgrep -af eval_paperb_ladder_200k"
+fi
+
 # P0. interpreter + torch version. torch 2.7.0 vs 2.13.0 moved ~20 items on
 #     bit-identical weights (status/PAPERB_FLIP_BOUNDARY_RESOLVED.md). All the
 #     clean `_v2` batteries are torch 2.13.0; the stale olmo2_venv is 2.7.0.
