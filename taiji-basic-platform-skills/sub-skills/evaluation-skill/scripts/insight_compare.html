@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Insight Case 明细对比</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f2f5;color:#1f2937;line-height:1.5;margin:0;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;flex-shrink:0}
+.topbar h1{font-size:15px;font-weight:700}
+.topbar .info{font-size:11px;opacity:.85}
+.topbar input{flex:1;min-width:200px;max-width:400px;padding:6px 12px;border:none;border-radius:6px;font-size:12px}
+.topbar button{padding:6px 14px;border:none;border-radius:6px;background:rgba(255,255,255,.2);color:#fff;font-size:12px;cursor:pointer;font-weight:600}
+.topbar button:hover{background:rgba(255,255,255,.35)}
+.layout{display:grid;grid-template-columns:260px 1fr;flex:1;min-height:0}
+.sidebar{background:#fff;padding:14px;border-right:1px solid #e5e7eb;overflow-y:auto}
+.sidebar h3{font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;margin:14px 0 6px;letter-spacing:.5px}
+.sidebar h3:first-child{margin-top:0}
+.cb-list{display:flex;flex-direction:column;gap:3px}
+.cb-item{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:5px;cursor:pointer;font-size:12px;transition:background .1s}
+.cb-item:hover{background:#f3f4f6}
+.cb-item input{accent-color:#4f46e5}
+.cb-item .badge{margin-left:auto;font-size:10px;color:#9ca3af}
+.slider-wrap{margin:8px 0}
+.slider-wrap label{font-size:11px;color:#6b7280;display:block;margin-bottom:1px}
+.slider-wrap input{width:100%}
+.slider-wrap .hint{font-size:10px;color:#9ca3af}
+.content{padding:16px 20px;overflow-y:auto}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+.stat-card{background:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 1px 2px rgba(0,0,0,.04);border-left:3px solid #4f46e5}
+.stat-card .lbl{font-size:11px;color:#9ca3af;margin-bottom:2px}
+.stat-card .val{font-size:20px;font-weight:700}
+.stat-card .sub{font-size:10px;color:#d1d5db;margin-top:1px}
+.cov-section{margin-bottom:14px}
+.cov-section h3{font-size:13px;margin-bottom:6px;color:#374151}
+.cov-section table{width:100%;border-collapse:collapse;font-size:11px;background:#fff;border-radius:6px;overflow:hidden}
+.cov-section th{background:#4f46e5;color:#fff;padding:6px 10px;text-align:left}
+.cov-section td{padding:5px 10px;border-bottom:1px solid #f3f4f6;text-align:center}
+.cov-hi{background:#dcfce7;color:#166534;font-weight:600}
+.cov-md{background:#fef9c3;color:#854d0e}
+.cov-lo{background:#fee2e2;color:#991b1b}
+.cov-na{color:#d1d5db}
+.chart-area{margin-bottom:14px}
+.chart-tabs{display:flex;gap:3px;margin-bottom:8px}
+.chart-tabs button{padding:5px 14px;border:1px solid #d1d5db;border-radius:5px;background:#fff;font-size:11px;cursor:pointer}
+.chart-tabs button:hover{border-color:#4f46e5;color:#4f46e5}
+.chart-tabs button.on{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.chart-box{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.04);height:380px;position:relative}
+.table-area{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.table-area h3{font-size:13px;margin-bottom:8px}
+.toolbar{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
+.toolbar input{padding:5px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:11px;width:180px}
+.toolbar button{padding:5px 12px;border:1px solid #d1d5db;border-radius:5px;background:#fff;font-size:11px;cursor:pointer}
+.toolbar button:hover{border-color:#4f46e5}
+.toolbar button.on{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.tbl-wrap{max-height:450px;overflow:auto}
+.tbl-wrap table{width:100%;border-collapse:collapse;font-size:12px}
+.tbl-wrap th{background:#f9fafb;padding:8px 10px;text-align:left;font-weight:600;border-bottom:2px solid #e5e7eb;cursor:pointer;user-select:none;white-space:nowrap;position:sticky;top:0}
+.tbl-wrap th:hover{background:#f3f4f6}
+.tbl-wrap td{padding:6px 10px;border-bottom:1px solid #f3f4f6}
+.tbl-wrap tr:hover{background:#f8f9ff}
+.sc-win{color:#16a34a;font-weight:600}
+.sc-lose{color:#dc2626;font-weight:600}
+.sc-tie{color:#ca8a04}
+.sbar{display:inline-block;width:40px;height:5px;border-radius:2px;background:#e5e7eb;margin-left:4px;vertical-align:middle}
+.sbar-fill{height:100%;border-radius:2px;background:#4f46e5}
+.diff-cell{font-weight:700;font-size:11px}
+.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:100;justify-content:center;align-items:center}
+.modal-bg.show{display:flex}
+.modal-box{background:#fff;border-radius:10px;padding:20px;max-width:700px;max-height:80vh;overflow-y:auto;width:90%}
+.modal-box h3{font-size:14px;margin-bottom:10px}
+.modal-box pre{font-size:11px;white-space:pre-wrap;background:#f9fafb;padding:10px;border-radius:6px;max-height:300px;overflow:auto}
+.modal-box .close{float:right;cursor:pointer;font-size:18px;color:#9ca3af}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>Insight Case 明细对比</h1>
+  <span class="info" id="topInfo"></span>
+  <span class="info" style="font-size:11px;opacity:.7">数据已预加载，切换左侧筛选条件即可分析</span>
+</div>
+<div class="layout">
+<div class="sidebar" id="sidebar"></div>
+<div class="content">
+  <div class="chart-area" style="margin-bottom:14px">
+    <div class="chart-tabs">
+      <button class="on" onclick="switchChart('bar')">📊 评测集 avg_score 对比</button>
+      <button onclick="switchChart('radar')">🎯 评测集 avg_score 雷达图</button>
+      <button onclick="switchChart('dist')">📈 avg_score 分布</button>
+      <button onclick="switchChart('token')">⚡ Token 消耗</button>
+    </div>
+    <div class="chart-box"><h3 id="chartTitle">📊 各评测集 avg_score 对比</h3><canvas id="chartCanvas"></canvas></div>
+  </div>
+  <div class="stats-grid" id="stats"></div>
+  <div class="cov-section" id="coverage"></div>
+  <div class="table-area">
+    <h3>📋 明细对比</h3>
+    <div class="toolbar">
+      <input type="text" placeholder="搜索 question_id..." id="kw">
+      <button id="btnAll" class="on" onclick="sortCol=-1;renderAll()">全部</button>
+      <button id="btnDiff" onclick="sortCol=99;sortDir=-1;renderAll()">差值排序</button>
+      <span style="font-size:10px;color:#9ca3af">点击表头可排序</span>
+    </div>
+    <div class="tbl-wrap"><table><thead id="tHead"></thead><tbody id="tBody"></tbody></table></div>
+  </div>
+  <div class="table-area" style="margin-top:14px">
+    <h3>📋 数据明细（按 task 展开）</h3>
+    <div class="tbl-wrap"><table><thead id="dHead"></thead><tbody id="dBody"></tbody></table></div>
+  </div>
+  <div class="cov-section" id="collectionTable"></div>
+</div>
+</div>
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box"><span class="close" onclick="closeModal()">✕</span><div id="modalContent"></div></div>
+</div>
+
+<script>
+const C=['#4f46e5','#16a34a','#ea580c','#dc2626','#8b5cf6','#0891b2','#db2777','#65a30d','#d97706','#2563eb'];
+let DATA={raw:__DATA_PLACEHOLDER__},curChart=null,curChartType='bar',sortCol=-1,sortDir=1,collStates={};
+
+function initData(){
+  if(!DATA||!DATA.raw||!DATA.raw.length){console.error('no data');return;}
+  try{
+    const meta=DATA.raw.find(r=>r._meta)?._meta||{};
+    document.getElementById('topInfo').textContent='insight:'+(meta.insight_id||'-')+' | tasks:'+(Object.keys(meta.task_info||{}).length)+' | cases:'+(DATA.raw.filter(r=>!r._meta).length);
+    buildSidebar(); renderAll();
+  }catch(e){console.error(e);alert('解析失败: '+e.message);}
+}
+
+function parse(){
+  if(!DATA)return null;
+  const cases=DATA.raw.filter(r=>!r._meta),meta=DATA.raw.find(r=>r._meta)?._meta||{};
+  const ti=meta.task_info||{};
+  const tasks=Object.keys(ti).map(Number).sort((a,b)=>a-b);
+  const exercises=[...new Set(cases.map(c=>c.exercise_name))].sort();
+  const cov={}; tasks.forEach(t=>{cov[t]={};exercises.forEach(e=>cov[t][e]=0);});
+  cases.forEach(c=>c.task_case_details.forEach(d=>{if(cov[d.task_id])cov[d.task_id][c.exercise_name]=(cov[d.task_id][c.exercise_name]||0)+1;}));
+  return{cases,meta,ti,tasks,exercises,cov};
+}
+
+function n(tid,ti){const t=ti[tid]||{};return '['+tid+'] '+(t.task_name||t.model_name||'Task '+tid).substring(0,30);}
+
+function filters(){
+  const cbs=[...document.querySelectorAll('#sidebar input[type=checkbox]:checked')];
+  return{
+    tasks:cbs.filter(c=>!isNaN(c.value)).map(c=>Number(c.value)),
+    exercises:cbs.filter(c=>isNaN(c.value)).map(c=>c.value),
+    smin:parseFloat(document.getElementById('smin').value),
+    smax:parseFloat(document.getElementById('smax').value),
+  };
+}
+
+function filt(d,f){
+  return d.cases.filter(c=>{
+    if(!f.exercises.includes(c.exercise_name))return false;
+    return c.task_case_details.some(t=>f.tasks.includes(t.task_id)&&Number(t.avg_score||0)>=f.smin&&Number(t.avg_score||0)<=f.smax);
+  });
+}
+
+function buildSidebar(){
+  const d=parse(); if(!d)return;
+  let h='<h3>任务 ('+d.tasks.length+')</h3><div class="cb-list">';
+  d.tasks.forEach((tid,i)=>h+='<label class="cb-item"><input type="checkbox" value="'+tid+'" checked onchange="renderAll()"><span style="color:'+C[i%C.length]+';font-weight:600">●</span>'+n(tid,d.ti)+'</label>');
+  h+='</div><h3>评测集 ('+d.exercises.length+')</h3><div class="cb-list">';
+  d.exercises.forEach(ex=>{const total=d.tasks.reduce((s,t)=>s+(d.cov[t][ex]||0),0);h+='<label class="cb-item"><input type="checkbox" value="'+ex.replace(/"/g,'&quot;')+'" checked onchange="renderAll()">'+ex+'<span class="badge">'+total+'题</span></label>';});
+  h+='</div><div class="slider-wrap"><label>最低分 ≥ <b id="sminV">0.00</b></label><input type="range" id="smin" min="0" max="1" step="0.01" value="0" oninput="document.getElementById(\'sminV\').textContent=parseFloat(this.value).toFixed(2);renderAll()"><span class="hint">只显示有 task 分数≥此值的题目</span></div>';
+  h+='<div class="slider-wrap"><label>最高分 ≤ <b id="smaxV">1.00</b></label><input type="range" id="smax" min="0" max="1" step="0.01" value="1" oninput="document.getElementById(\'smaxV\').textContent=parseFloat(this.value).toFixed(2);renderAll()"><span class="hint">只显示有 task 分数≤此值的题目</span></div>';
+  document.getElementById('sidebar').innerHTML=h;
+}
+
+function renderAll(){
+  const d=parse(),f=filters();
+  if(!d)return;
+  const flt=filt(d,f);
+  document.getElementById('topInfo').textContent='筛选: '+flt.length+'题 | tasks:'+f.tasks.length+' | ex:'+f.exercises.length+' | score:['+f.smin.toFixed(2)+','+f.smax.toFixed(2)+']';
+  updateCoverage(d,f);
+  updateCollectionTable(d);
+  updateStats(d,flt,f);
+  drawChart(d,flt,f);
+  updateTable(d,flt,f);
+  updateDetailTable(d,flt,f);
+}
+
+function updateCoverage(d,f){
+  let tbl='<h3>覆盖率矩阵</h3><table><tr><th>Task</th>';
+  f.exercises.forEach(e=>tbl+='<th>'+e+'</th>'); tbl+='<th>合计</th></tr>';
+  f.tasks.forEach((tid,i)=>{
+    tbl+='<tr><td style="text-align:left;color:'+C[i%C.length]+';font-weight:600">'+n(tid,d.ti)+'</td>';
+    let sum=0; f.exercises.forEach(ex=>{const v=d.cov[tid][ex]||0;sum+=v;let cls=v>30?'cov-hi':v>0?'cov-md':'cov-lo';if(v===0)cls='cov-na';tbl+='<td class="'+cls+'">'+(v||'-')+'</td>';});
+    tbl+='<td><b>'+sum+'</b></td></tr>';
+  });
+  document.getElementById('coverage').innerHTML=tbl;
+}
+
+function updateStats(d,flt,f){
+  const sums={},cnts={},wins={},tkns={},tknsIn={},mxS={},mnS={};
+  f.tasks.forEach(t=>{sums[t]=0;cnts[t]=0;wins[t]=0;tkns[t]=0;tknsIn[t]=0;mxS[t]=-1;mnS[t]=2;});
+  flt.forEach(c=>{
+    const ds=c.task_case_details.filter(t=>f.tasks.includes(t.task_id));
+    ds.forEach(t=>{sums[t.task_id]=(sums[t.task_id]||0)+Number(t.avg_score||0);cnts[t.task_id]=(cnts[t.task_id]||0)+1;tkns[t.task_id]=(tkns[t.task_id]||0)+(Number(t.avg_completion_tokens)||0);tknsIn[t.task_id]=(tknsIn[t.task_id]||0)+(Number(t.avg_prompt_tokens)||0);if(Number(t.max_score||0)>mxS[t.task_id])mxS[t.task_id]=Number(t.max_score||0);if(Number(t.min_score||0)<mnS[t.task_id])mnS[t.task_id]=Number(t.min_score||0);});
+    if(ds.length>=2){let mx=ds[0];ds.forEach(t=>{if(Number(t.avg_score||0)>Number(mx.avg_score||0))mx=t;});wins[mx.task_id]=(wins[mx.task_id]||0)+1;}
+  });
+  let h='';
+  f.tasks.forEach((tid,i)=>{
+    const avg=cnts[tid]?(sums[tid]/cnts[tid]).toFixed(2):'-';
+    const avgTok=cnts[tid]?Math.round(tkns[tid]/cnts[tid]):'-';
+    h+='<div class="stat-card" style="border-left-color:'+C[i%C.length]+'"><div class="lbl" style="color:'+C[i%C.length]+'">● '+n(tid,d.ti)+'</div><div class="val">'+avg+'</div><div class="sub">胜 '+wins[tid]+'题 | 共 '+cnts[tid]+'题 | 均Token '+avgTok+' | 分范围 ['+mxS[tid].toFixed(1)+','+mnS[tid].toFixed(1)+']</div></div>';
+  });
+  document.getElementById('stats').innerHTML=h;
+}
+
+function switchChart(type){curChartType=type;document.querySelectorAll('.chart-tabs button').forEach(b=>b.classList.remove('on'));event.target.classList.add('on');const d=parse(),f=filters();drawChart(d,filt(d,f),f);}
+
+function drawChart(d,flt,f){
+  const ctx=document.getElementById('chartCanvas').getContext('2d');
+  if(curChart)curChart.destroy();
+  const exScores={}; f.exercises.forEach(e=>exScores[e]={});
+  flt.forEach(c=>c.task_case_details.forEach(t=>{if(!f.tasks.includes(t.task_id))return;if(!exScores[c.exercise_name][t.task_id])exScores[c.exercise_name][t.task_id]=[];exScores[c.exercise_name][t.task_id].push(Number(t.avg_score||0));}));
+  if(curChartType==='radar'){
+    document.getElementById('chartTitle').textContent='🎯 各评测集 avg_score 雷达图';
+    const ds=f.tasks.map((tid,i)=>({label:n(tid,d.ti),data:f.exercises.map(e=>{const a=(exScores[e]||{})[tid]||[];return a.length?a.reduce((x,y)=>x+y,0)/a.length:0;}),borderColor:C[i%C.length],backgroundColor:C[i%C.length]+'22',borderWidth:2}));
+    curChart=new Chart(ctx,{type:'radar',data:{labels:f.exercises,datasets:ds},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:1,ticks:{stepSize:0.2}}}}});
+  }else if(curChartType==='dist'){
+    document.getElementById('chartTitle').textContent='📈 avg_score 区间分布（题目数）';
+    const dist={}; f.tasks.forEach(t=>dist[t]=Array(10).fill(0));
+    flt.forEach(c=>c.task_case_details.forEach(t=>{if(!f.tasks.includes(t.task_id))return;const s=Number(t.avg_score||0);dist[t.task_id][Math.min(Math.floor(s*10),9)]++;}));
+    const ds=f.tasks.map((tid,i)=>({label:n(tid,d.ti),data:dist[tid],backgroundColor:C[i%C.length]+'99'}));
+    curChart=new Chart(ctx,{type:'bar',data:{labels:['0.0-0.1','0.1-0.2','0.2-0.3','0.3-0.4','0.4-0.5','0.5-0.6','0.6-0.7','0.7-0.8','0.8-0.9','0.9-1.0'],datasets:ds},options:{responsive:true,maintainAspectRatio:false,scales:{y:{title:{display:true,text:'题目数'}}}}});
+  }else if(curChartType==='token'){
+    document.getElementById('chartTitle').textContent='⚡ 各任务平均 Token 消耗（按当前筛选的评测集汇总，蓝色=输入，橙色=输出）';
+    const inData=f.tasks.map(tid=>{let s=0,c=0;flt.forEach(r=>r.task_case_details.forEach(t=>{if(t.task_id===tid){s+=Number(t.avg_prompt_tokens)||0;c++;}}));return c?Math.round(s/c):0;});
+    const outData=f.tasks.map(tid=>{let s=0,c=0;flt.forEach(r=>r.task_case_details.forEach(t=>{if(t.task_id===tid){s+=Number(t.avg_completion_tokens)||0;c++;}}));return c?Math.round(s/c):0;});
+    curChart=new Chart(ctx,{type:'bar',data:{labels:f.tasks.map(tid=>n(tid,d.ti)),datasets:[{label:'输入Token',data:inData,backgroundColor:'#3b82f6'},{label:'输出Token',data:outData,backgroundColor:'#f97316'}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{title:{display:true,text:'平均 Token 数'}}}}});
+  }else{
+    document.getElementById('chartTitle').textContent='📊 各评测集 avg_score 对比';
+    const ds=f.tasks.map((tid,i)=>({label:n(tid,d.ti),data:f.exercises.map(e=>{const a=(exScores[e]||{})[tid]||[];return a.length?a.reduce((x,y)=>x+y,0)/a.length:0;}),backgroundColor:C[i%C.length]+'cc'}));
+    curChart=new Chart(ctx,{type:'bar',data:{labels:f.exercises,datasets:ds},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:1}}}});
+  }
+}
+
+function updateTable(d,flt,f){
+  const kw=(document.getElementById('kw').value||'').toLowerCase();
+  let rows=flt.map((c,idx)=>{
+    const dt={}; c.task_case_details.forEach(t=>dt[t.task_id]=t);
+    let cells=[c.question_id,c.exercise_name];
+    const scores=[]; f.tasks.forEach(tid=>{const t=dt[tid];scores.push(t?Number(t.avg_score||0):null);});
+    const valid=scores.filter(s=>s!=null),mx=Math.max(...valid),mn=Math.min(...valid);
+    f.tasks.forEach((tid,i)=>{
+      const s=scores[i];
+      if(s==null){cells.push('-');return;}
+      let cls=''; if(s===mx&&mx>mn)cls='sc-win'; else if(s===mn&&mx>mn)cls='sc-lose';
+      cells.push('<span class="'+cls+'">'+s.toFixed(2)+'<span class="sbar"><span class="sbar-fill" style="width:'+(s*100)+'%"></span></span></span>');
+    });
+    const diff=valid.length>=2?mx-mn:-1;
+    cells.push('<span class="diff-cell'+(diff>0.3?' sc-win':diff>0?' sc-tie':'')+'">'+(diff>=0?'Δ '+diff.toFixed(2):'-')+'</span>');
+    return{idx,row:cells,diff};
+  });
+  if(kw)rows=rows.filter(r=>String(r.row[0]).includes(kw)||String(r.row[1]).includes(kw));
+  if(sortCol>=0)rows.sort((a,b)=>{
+    if(sortCol<2)return sortDir*(String(a.row[sortCol]).localeCompare(String(b.row[sortCol])));
+    if(sortCol===99)return sortDir*(a.diff-b.diff);
+    return 0;
+  });
+  let head='<tr><th onclick="sortCol=0;sortDir=sortCol===0?-sortDir:1;renderAll()">question_id</th><th onclick="sortCol=1;sortDir=sortCol===1?-sortDir:1;renderAll()">评测集</th>';
+  f.tasks.forEach((tid,i)=>head+='<th>'+n(tid,d.ti).substring(0,18)+'</th>');
+  head+='<th onclick="sortCol=99;sortDir=sortCol===99?-sortDir:-1;renderAll()">Δ max-min</th></tr>';
+  document.getElementById('tHead').innerHTML=head;
+  document.getElementById('tBody').innerHTML=rows.map(r=>'<tr onclick="showDetail('+r.idx+')" style="cursor:pointer">'+r.row.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('');
+}
+
+function showDetail(idx){
+  if(!DATA)return;
+  const c=DATA.raw.filter(r=>!r._meta)[idx]; if(!c)return;
+  let html='<h3>Question '+c.question_id+' | '+c.exercise_name+'</h3>';
+  if(c.common){
+    html+='<h4>📝 题目内容</h4><pre>'+JSON.stringify(c.common,null,2).replace(/</g,'&lt;')+'</pre>';
+  }
+  html+='<h4>📊 Task 对比详情</h4><table style="width:100%;font-size:11px;border-collapse:collapse"><tr style="background:#f9fafb"><th>字段</th>';
+  c.task_case_details.forEach(t=>html+='<th>Task '+t.task_id+'</th>');
+  html+='</tr>';
+  const rows=[
+    ['avg_score','平均分'],[['max_score','min_score'].join('/'),'最高/最低分'],
+    ['avg_completion_tokens','输出Token'],['avg_prompt_tokens','输入Token'],
+  ];
+  rows.forEach(r=>{
+    html+='<tr><td>'+r[1]+'</td>';
+    c.task_case_details.forEach(t=>{
+      let v; if(r[0].includes('/')){const parts=r[0].split('/');v=(t[parts[0]]||'-')+' / '+(t[parts[1]]||'-');}else{v=t[r[0]]!=null?t[r[0]]:'-';}
+      html+='<td>'+v+'</td>';
+    });
+    html+='</tr>';
+  });
+  // score
+  html+='<tr><td>原始分数</td>';
+  c.task_case_details.forEach(t=>html+='<td><pre style="font-size:10px;max-height:60px;overflow:auto;margin:0">'+JSON.stringify(t.score||'-')+'</pre></td>');
+  html+='</tr>';
+  // benchmark/dataset from payload
+  html+='<tr><td>Benchmark</td>';
+  c.task_case_details.forEach(t=>html+='<td>'+(t.payload&&t.payload.benchmark?t.payload.benchmark:'-')+'</td>');
+  html+='</tr><tr><td>Dataset</td>';
+  c.task_case_details.forEach(t=>html+='<td>'+(t.payload&&t.payload.dataset?t.payload.dataset:'-')+'</td>');
+  html+='</tr></table>';
+  // model output
+  html+='<h4 style="margin-top:12px">🤖 模型输出</h4>';
+  c.task_case_details.forEach(t=>{
+    const out=t.payload&&t.payload.output?t.payload.output:(t.payload&&t.payload.responses?t.payload.responses:null);
+    html+='<div style="margin-bottom:8px"><b>Task '+t.task_id+':</b><pre style="font-size:10px;max-height:200px;overflow:auto;background:#f9fafb;padding:8px;border-radius:4px">'+(out?JSON.stringify(out,null,2).replace(/</g,'&lt;'):'(无输出)')+'</pre></div>';
+  });
+  document.getElementById('modalContent').innerHTML=html;
+  document.getElementById('modal').classList.add('show');
+}
+
+function updateDetailTable(d,flt,f){
+  let head='<tr><th>question_id</th><th>评测集</th><th>task_id</th><th>task_name</th><th>avg_score</th><th>max_score</th><th>min_score</th><th>输出Token</th><th>输入Token</th><th>benchmark</th><th>dataset</th></tr>';
+  let body='';
+  flt.forEach(c=>{
+    c.task_case_details.forEach(t=>{
+      if(!f.tasks.includes(t.task_id))return;
+      const bm=(t.payload&&t.payload.benchmark)?t.payload.benchmark:'-';
+      const ds=(t.payload&&t.payload.dataset)?t.payload.dataset:'-';
+      body+='<tr><td>'+c.question_id+'</td><td>'+c.exercise_name+'</td><td>'+t.task_id+'</td><td>'+t.task_name.substring(0,30)+'</td><td>'+(t.avg_score||'-')+'</td><td>'+(t.max_score||'-')+'</td><td>'+(t.min_score||'-')+'</td><td>'+(t.avg_completion_tokens||'-')+'</td><td>'+(t.avg_prompt_tokens||'-')+'</td><td>'+bm+'</td><td>'+ds+'</td></tr>';
+    });
+  });
+  document.getElementById('dHead').innerHTML=head;
+  document.getElementById('dBody').innerHTML=body;
+}
+
+function updateCollectionTable(d){
+  const detail=d.meta.insight_detail;
+  if(!detail||!detail.weight_nodes){document.getElementById('collectionTable').innerHTML='';return;}
+  const wn=detail.weight_nodes,bl=detail.base_line_task_id;
+  const f=filters();
+  let tbl='<h3 style="font-size:17px;font-weight:700;text-align:left;color:#1f2937;padding:4px 0;margin:14px 0 8px">📊 Collection 层级对比（子维度得分）</h3>';
+  tbl+='<div class="toolbar" style="margin-bottom:8px"><input type="text" placeholder="筛选 Collection 名称..." oninput="filterCollections()" id="collFilter" style="width:250px"><button onclick="expandAllCollections()">全部展开</button><button onclick="collapseAllCollections()">全部收起</button></div>';
+  wn.forEach((col,ci)=>{
+    const cname=(col.collection_info&&col.collection_info.name)?col.collection_info.name:'Collection '+col.collection_version_id;
+    tbl+='<table class="coll-group" data-cname="'+cname.replace(/"/g,'&quot;')+'" style="margin-bottom:12px"><thead><tr><th colspan="'+(f.tasks.length+2)+'" style="background:#4f46e5;color:#fff;font-size:13px;font-weight:700;text-align:left;padding:10px 14px;cursor:pointer" onclick="toggleCollection('+ci+')"><span id="collArrow'+ci+'" style="margin-right:6px">▼</span>'+cname+'</th></tr></thead><tbody id="collBody'+ci+'">';
+    tbl+='<tr style="background:#f9fafb"><th style="text-align:left">子维度</th><th>权重</th>';
+    f.tasks.forEach(tid=>tbl+='<th style="text-align:center">'+(tid===bl?'📌 ':'')+n(tid,d.ti).substring(0,15)+'</th>');
+    tbl+='</tr>';
+    const root=col.weight_node||{};
+    (root.nodes||[]).forEach(l1=>{
+      const l1w=l1.weight!=null?(l1.weight*100).toFixed(1)+'%':'';
+      tbl+='<tr><td style="font-weight:600;color:#374151;text-align:left">'+l1.node_name+'</td><td style="text-align:center">'+l1w+'</td>';
+      f.tasks.forEach(tid=>tbl+='<td></td>');
+      tbl+='</tr>';
+      (l1.nodes||[]).forEach(l2=>{
+        const s=l2.score||{};
+        tbl+='<tr><td style="padding-left:20px;text-align:left">├ '+l2.node_name+'</td><td style="text-align:center">'+(l2.weight!=null?(l2.weight*100).toFixed(1)+'%':'')+'</td>';
+        f.tasks.forEach(tid=>{
+          const v=s[tid];
+          if(v==null){tbl+='<td style="color:#d1d5db;text-align:center">-</td>';return;}
+          const allVals=Object.values(s).filter(x=>typeof x==='number');
+          const maxV=allVals.length?Math.max(...allVals):0;
+          const cls=v===maxV&&allVals.length>1?'sc-win':'';
+          tbl+='<td class="'+cls+'" style="text-align:center">'+(typeof v==='number'?v.toFixed(4):v)+'</td>';
+        });
+        tbl+='</tr>';
+      });
+    });
+    tbl+='</tbody></table>';
+  });
+  document.getElementById('collectionTable').innerHTML=tbl;
+  // 恢复展开状态
+  wn.forEach((col,ci)=>{
+    if(collStates[ci]===false){
+      const b=document.getElementById('collBody'+ci);
+      const a=document.getElementById('collArrow'+ci);
+      if(b){b.style.display='none';}
+      if(a){a.textContent='▶';}
+    }
+  });
+  // 恢复筛选
+  const fkw=document.getElementById('collFilter')?.value||'';
+  if(fkw)filterCollections();
+}
+
+function toggleCollection(ci){
+  const body=document.getElementById('collBody'+ci);
+  const arrow=document.getElementById('collArrow'+ci);
+  if(!body||!arrow)return;
+  if(body.style.display==='none'){body.style.display='';arrow.textContent='▼';collStates[ci]=true;}
+  else{body.style.display='none';arrow.textContent='▶';collStates[ci]=false;}
+}
+
+function expandAllCollections(){document.querySelectorAll('table.coll-group tbody').forEach(b=>b.style.display='');document.querySelectorAll('[id^=collArrow]').forEach((a,i)=>{a.textContent='▼';collStates[i]=true;});}
+function collapseAllCollections(){document.querySelectorAll('table.coll-group tbody').forEach(b=>b.style.display='none');document.querySelectorAll('[id^=collArrow]').forEach((a,i)=>{a.textContent='▶';collStates[i]=false;});}
+
+function filterCollections(){
+  const kw=(document.getElementById('collFilter')?.value||'').toLowerCase();
+  const groups=document.querySelectorAll('table.coll-group');
+  console.log('[filterCollections] kw="'+kw+'" found',groups.length,'groups');
+  groups.forEach(g=>{
+    const name=(g.getAttribute('data-cname')||'').toLowerCase();
+    if(kw&&!name.includes(kw)){console.log('  hide:',name.substring(0,40));g.style.display='none';}
+    else{console.log('  show:',name.substring(0,40));g.style.display='';}
+  });
+}
+
+function closeModal(){document.getElementById('modal').classList.remove('show');}
+
+document.getElementById('kw').oninput=renderAll;
+document.getElementById('btnAll').onclick=function(){sortCol=-1;this.classList.add('on');document.getElementById('btnDiff').classList.remove('on');renderAll();};
+document.getElementById('btnDiff').onclick=function(){sortCol=99;sortDir=-1;this.classList.add('on');document.getElementById('btnAll').classList.remove('on');renderAll();};
+
+// auto-load on startup
+window.addEventListener('DOMContentLoaded',initData);
+</script>
+</body>
+</html>
