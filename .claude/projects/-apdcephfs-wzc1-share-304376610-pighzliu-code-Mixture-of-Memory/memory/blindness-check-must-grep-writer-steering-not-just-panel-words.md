@@ -78,3 +78,37 @@ critiques/referees/opinions），这样普通研究文句不会误报。
 - **同族**：[[a-green-checker-covers-only-what-it-targets]]（绿灯只覆盖它瞄准的东西）、
   [[selftest-over-invented-inputs-proves-nothing-about-the-pipeline]]。
   共同点：**通过 ≠ 安全，只等于「我列举的那些没中」。**
+
+## ★★ 2026-08-17 第四种外衣：我为消除**假阳性**而加的边界，制造了一个**假阴性**的洞
+
+`_BLIND_FATAL` 里我写 `(?<![A-Za-z])(?:reviewer|referee|rebuttal)(?![A-Za-z])`。
+那个**尾部** `(?![A-Za-z])` 是为了让 `refereed`（"a refereed venue"）不误报 —— 它确实做到了。
+**但 `s` 也是 `[A-Za-z]`，所以它把所有复数形式一并排除了。** 实测（我自己复跑确认，不是转述）：
+
+| 句子 | 我的 pattern |
+|---|---|
+| `the reviewer said` | BLOCK ✅ |
+| **`two reviewers asked`** | **PASS ❌** |
+| **`the reviewers disagreed`** | **PASS ❌** |
+| **`flagged by referees`** | **PASS ❌** |
+| **`our rebuttals addressed it`** | **PASS ❌** |
+
+**而复数恰恰是评审语境最自然的说法**（"the reviewers", "two reviewers"）。
+`_BLIND_SHAPE` 也盖不住它（它只管 N-of-M 和 "N independent <名词>"）。
+我那 19 个控制里**一个复数都没有** —— 因为我在测「refereed 会不会误报」，
+没测「reviewers 会不会漏报」。**为修假阳性而加的约束，必须重测假阴性一侧。**
+
+修法（agent 发现并修，commit `4e3c512`；我复跑验证 6/6 复数 block、7/7 look-alike 仍 pass）：
+尾部不能简单排除所有字母，要允许 `s`/`es` 等屈折后缀。
+
+### How to apply
+- **给屏蔽器加「排除」时，正例一侧要重跑全套**，尤其**屈折变化**（复数/过去式/动名词）。
+  经验规则：安全词表加 negative lookahead 后，**至少测该词的复数**。
+- **控制集要按「两侧」设计**：假阳性一侧（refereed / interviewer / 13 of 27 cells）
+  和假阴性一侧（reviewer**s** / referee**s** / rebuttal**s**）。只测一侧的控制会给出虚假的安全感。
+- **附带发现（结构性，未修）**：`refreeze_from_manuscript.py` 的 `manuscript/` 与 `MANIFEST.json`
+  是在两道 screen **之后**才写的（`man = DEST/"manuscript"` 在 :421，screen 在 :364/:401），
+  所以**它们在构造上不被屏蔽**。今天实测 4 处命中都无害（ICLR 模板自带的
+  `Paper under double-blind review` 署名行、manifest 自指的 `round_dir`、
+  一处 `Seven of the ten cells reading` 被 `_BLIND_SHAPE` 误判），
+  但**正文才是真泄漏最致命的地方，而它恰好没被看**。
