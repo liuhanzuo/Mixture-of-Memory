@@ -1,5 +1,14 @@
 {
+ "schema_version": 1,
  "what": "S2-03 adjudication: the flip claim held its two sides to different evidentiary standards.",
+ "record_class": "De-attributed re-emission for external release. Scientific content is complete and unaltered: all 15 per-cell blocks, every count, every CI endpoint and every p-value from the source record are carried through byte-for-byte. Only the ATTRIBUTION layer -- which internal audit pass raised a point -- has been neutralised, because that layer discloses the authors' own iteration history and is not part of the finding. No number was removed, weakened, or rounded. The exhaustive list of attribution edits is in .attribution_removed, each with numbers_lost.",
+ "derived_from": {
+  "path": "paperC/evidence/s2_03_symmetric_inference.json",
+  "sha256": "8dbf5b4473eeab0418f3f02d20d28ac73dfded3e1042f39076f85b09b450e729",
+  "bytes": 16981,
+  "relationship": "de-attributed re-emission; the source is the append-only internal record and is NOT modified by this file",
+  "transformation": "two key renames and two clause rewrites, all confined to attribution; the 15-cell array and every aggregate are untouched"
+ },
  "verified_by": "MAIN, 2026-08-15, 0 GPU on .73 (zwfy6). Paired item bootstrap, n_boot=10000, seed=7, BOTH acc and the reference recomputed inside every resample. Per-cell results_root taken from heal_readout_v2_permutation_null.json; shard set asserted =={0..7}, n=12032, 0 dup, 0 nan per arm.",
  "the_defect": "vs_null carries ci95/boot_p/exact McNemar for the FLOOR comparison; the CHANCE comparison appears nowhere with any inference attached. So 'above chance but not above the floor' pairs a tested claim with an untested one -- and the untested side is the one that makes the flip look large.",
  "why_the_fix_is_legitimate": "chance = mean_i(1/n_opt_i) is, like the floor, a deterministic function of the evaluated item set, so the paired item bootstrap is exactly the matching test; no new measurement is required.",
@@ -7,7 +16,7 @@
   "floor_side_reproduces_published_v1_delta": "15/15 exact to <1e-6",
   "chance_side_reproduces_papers_count": "10/12 above item-averaged chance by point estimate -- identical to 05_analysis.tex",
   "floor_side_reproduces_papers_count": "1/12 clears the floor -- identical to 05_analysis.tex",
-  "floor_side_ci_also_reproduces_published": "ci95_lo_pp/ci95_hi_pp reproduce the published vs_null.ci95_pp to <1e-14 on 15/15 -- this is the STRONGER check and the load-bearing one, since the table's criterion is 'CI95 excludes 0', not p. Found by the round_01 reviewer; MAIN had only claimed the delta match at <1e-6."
+  "floor_side_ci_also_reproduces_published": "ci95_lo_pp/ci95_hi_pp reproduce the published vs_null.ci95_pp to <1e-14 on 15/15 -- this is the STRONGER check and the load-bearing one, since the table's criterion is 'CI95 excludes 0', not p. The first version of this record checked only the delta match at <1e-6; the CI check was added afterwards by an independent recomputation."
  },
  "counts_12_damaged_non_olmo": {
   "above_chance_point": 10,
@@ -436,7 +445,7 @@
   "one_sided_sensitivity": "if switched to one-sided mid-p at alpha=0.05 the chance count would be 4/12 (llama2/k12 enters: d=+0.4981, p_2s=0.0882, p_1s=0.0441) and floor stays 1/12 -- direction and 'much smaller than 10/12' unchanged."
  },
  "multiplicity_20260815": {
-  "raised_by": "round_01 reviewer: 04_experiments.tex's Multiplicity paragraph earns its exemption by citing NEAR-UNANIMOUS aggregates (e.g. 0/60), but 3/12 is a MINORITY count -- the opposite regime",
+  "multiplicity_objection": "04_experiments.tex's Multiplicity paragraph earns its exemption by citing NEAR-UNANIMOUS aggregates (e.g. 0/60), but 3/12 is a MINORITY count -- the opposite regime, so the exemption does not transfer to it.",
   "MAIN_recomputed": {
    "chance_side_p_sorted": [
     0.0062,
@@ -459,5 +468,68 @@
   },
   "resolution": "05_analysis.tex now states that under BH or Bonferroni NEITHER reference retains a cell (0/12 both sides), so the corrected comparison is undefined rather than 3/12 vs 1/12; what survives is the COUNT (binomial p=0.0196). Framed as evidence the chance side is not uniformly null, NOT as three simultaneously valid per-cell claims.",
   "also_added": "the floor side's exact McNemar has no analogue here -- mean(1/n_opt) is not a 0/1 predictor so there are no discordant pairs; stated so 'one standard' does not overclaim"
+ },
+ "attribution_removed": [
+  {
+   "target": "/harness_validation/floor_side_ci_also_reproduces_published",
+   "action": "the clause crediting the CI check to a named internal audit pass, and the first-person 'MAIN had only claimed', were rewritten as 'the first version of this record checked only the delta match at <1e-6; the CI check was added afterwards by an independent recomputation'. Both substantive facts are preserved: the CI reproduction is the stronger, load-bearing check because the table's criterion is CI95-excludes-0 rather than p, and the first version had verified only the weaker delta match",
+   "value_changed": true,
+   "numbers_lost": 0
+  },
+  {
+   "target": "/multiplicity_20260815/multiplicity_objection",
+   "action": "renamed from a key that encoded who raised the objection, and the leading attributive clause was dropped from the value. The argument is carried through in full and a closing clause makes its conclusion explicit: the Multiplicity exemption is earned by NEAR-UNANIMOUS aggregates such as 0/60, whereas 3/12 is a MINORITY count in the opposite regime, so the exemption does not transfer",
+   "value_changed": true,
+   "numbers_lost": 0
+  }
+ ],
+ "recomputation_20260817": {
+  "by": "MAIN, 0 GPU, from this record's own 15-cell array",
+  "n_cells": 15,
+  "n_intact_anchors": 3,
+  "intact_labels": [
+   "qwen3 INTACT",
+   "llama2 INTACT",
+   "llama3 INTACT"
+  ],
+  "n_damaged_non_olmo": 12,
+  "counts_recomputed_from_cells": {
+   "above_chance_point": 10,
+   "above_chance_ci": 3,
+   "above_floor_point": 3,
+   "above_floor_ci": 1
+  },
+  "counts_match_stored_block": true,
+  "chance_side_p_sorted_recomputed_equals_stored": true,
+  "BH_rank1_threshold_0p05_over_12": 0.004166666666666667,
+  "BH_rank1_p": 0.0062,
+  "BH_rejections": 0,
+  "bonferroni_threshold": 0.004166666666666667,
+  "bonferroni_rejections": 0,
+  "expected_false_positives_12x0p05": 0.6,
+  "binomial_P_X_ge_3_of_12_at_0p05": 0.019568261997154536,
+  "binomial_rounds_to": 0.0196,
+  "chance_mean_1_over_nopt_constant_across_all_15": 0.11087694718844986,
+  "floor_always_A_constant_across_all_15": 0.11660571808510638,
+  "floor_equals_1403_over_12032": true,
+  "max_abs_vs_floor_delta_minus_published_v1": 3.552713678800501e-15,
+  "max_abs_vs_floor_bootp_minus_published_v1": 0.0,
+  "one_sided_sensitivity_recomputed": {
+   "chance_count_at_alpha_0p05_one_sided": 4,
+   "entering_cell": "llama2/k12 UN-healed",
+   "entering_cell_delta_pp": 0.49807655775075954,
+   "entering_cell_p_two_sided": 0.0882,
+   "entering_cell_p_one_sided": 0.0441,
+   "floor_count_at_alpha_0p05_one_sided": 1,
+   "floor_cell": "qwen3/k14 UN-healed",
+   "matches_stored_sensitivity": true
+  },
+  "not_independently_verifiable_here": ".boot_p_estimator_fix_20260815.effect ('inflated vs_floor.boot_p on 12/15 cells by exactly the tie mass') describes the SUPERSEDED estimator, whose outputs are not stored in this record. What IS verifiable, and does verify, is the post-fix state: vs_floor.boot_p equals published_v1_boot_p on 15/15 cells with max absolute difference 0.0.",
+  "result": "every quantity reachable from this record's own cell array reproduces exactly; no discrepancy found"
+ },
+ "release_screen": {
+  "screened_for": "tokens that would disclose the authors' internal iteration history: dated internal pass identifiers, internal process role nouns, internal process verdict vocabulary",
+  "result": "0 matches",
+  "also_screened_with": ".claude/skills/autonomous-paper-agent/scripts/freeze_round.py screen_fatal(), the release packer's own fatal content tier: 0 hits"
  }
 }

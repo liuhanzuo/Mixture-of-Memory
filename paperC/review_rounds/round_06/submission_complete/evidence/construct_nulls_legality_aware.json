@@ -1,7 +1,7 @@
 {
  "schema_version": "1.0.0",
  "what": "nine-row construct winner's-curse calibration under a LEGALITY-AWARE balanced null (each item's gold letter uniform over ITS OWN n_opt legal letters, observed n_opt histogram held fixed)",
- "why": "four of six round_04 blind reviewers (X1/X2/X5/X6) independently flagged that the shipped MMLU-Pro calibration uses a null whose support excludes MMLU-Pro's own legal label assignments; MAIN verified it (evidence/mmlupro_legality_aware_null_MAIN.json). This file extends the correction from that one row to all nine.",
+ "why": "an audit found that the shipped MMLU-Pro calibration uses a null whose support excludes MMLU-Pro's own legal label assignments; MAIN verified it (evidence/mmlupro_legality_aware_null_MAIN.json). This file extends the correction from that one row to all nine.",
  "defect_in_superseded_file": "floor_winners_curse_calibration.json draws all n gold letters uniform over all k letters. For a construct whose option count varies, that assignment is not realizable: an item with 4 options cannot have gold letter J. The null then makes the k letter marginals exchangeable, which MIS-STATES E[max_L] -- understating it when items have fewer options than k (MMLU-Pro) and overstating it when some have more (ARC).",
  "supersedes": {
   "path": "paperC/evidence/floor_winners_curse_calibration.json",
@@ -12,7 +12,7 @@
  "corroborating_records": {
   "main_verification": {
    "path": "paperC/evidence/mmlupro_legality_aware_null_MAIN.json",
-   "sha256": "180cdcc565374220f7b6bf58e843a0d6f9fbd0c090dc0769a3a9d9f507a8f4f8"
+   "sha256": "09df4e06b7b6b0f4e29401c852e88b61c29c6b0fe568185e21ef8e1031fec875"
   },
   "mmlu_pro_n_opt_hist": {
    "path": "paperC/evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json",
@@ -1661,5 +1661,46 @@
    "ARC-Easy letter",
    "ARC-Challenge letter"
   ]
+ },
+ "directionality_summary_superseded_20260817": {
+  "what": "The narrative strings in .directionality and .floor_rounding_convention were written from an EARLIER, smaller Monte-Carlo budget and were never updated when rows[].directionality was recomputed. Where the two disagree, rows[] is authoritative and is what the manuscript prints.",
+  "stale_in_narrative_vs_authoritative_in_rows": {
+   "dp_ARC_Easy": {
+    "narrative": -0.004,
+    "rows": -0.001205,
+    "printed": "-0.0012"
+   },
+   "dp_ARC_Challenge": {
+    "narrative": -0.005,
+    "rows": -0.005213,
+    "printed": "-0.0052"
+   },
+   "sigma": {
+    "narrative": "about -33 (this is dE_max_sigma, not dp_sigma)",
+    "rows": "dp_sigma -3.34 and -7.34",
+    "printed": "-3.3 and -7.3"
+   },
+   "ARC_Challenge_p_after": {
+    "narrative": 0.447,
+    "rows": 0.447647,
+    "printed": "0.448"
+   }
+  },
+  "why_it_matters": "The narrative conflates two different sigmas: -33 is dE_max_sigma (the shift in the expected maximum), while the sentence it appears in is about dp. Quoting it beside a dp would overstate the significance of the p-shift by an order of magnitude. Separately 0.447 vs 0.447647 is a truncation, not a rounding, and prints as 0.448.",
+  "verified_by": "MAIN 2026-08-17, recomputed from rows[].directionality in this same file; no verdict depends on any of these four values.",
+  "no_verdict_changes": true
+ },
+ "reemitted_deattributed_20260817": {
+  "what": "Re-emitted by paperC/code/recompute_legality_aware_nulls.py after the emitter's '.why' string was rewritten to remove review-process attribution. The scientific content of '.why' is unchanged: the defect named, the file named, and the corroborating MAIN record are all identical; only the identity of who raised it was dropped.",
+  "why_the_emitter_and_not_the_json": "The '.why' text is a hardcoded literal in the emitter, so editing the JSON alone would have been reverted by the next re-run. The emitter was fixed first and the JSON regenerated from it.",
+  "numeric_identity_verified": "All 1076 numeric leaves are bit-identical to the pre-re-emission file (recursive leaf diff, 0 mismatches, none lost, none added). The only string diffs are '.why' and the field below. Downstream emit_tab_construct_nulls.py --check-only passes T1-T8, 9/9 rows.",
+  "corroborating_records.main_verification.sha256_refreshed": {
+   "old": "180cdcc565374220f7b6bf58e843a0d6f9fbd0c090dc0769a3a9d9f507a8f4f8",
+   "new": "09df4e06b7b6b0f4e29401c852e88b61c29c6b0fe568185e21ef8e1031fec875",
+   "reason": "The old value was ALREADY STALE before this re-emission, and this re-emission is what surfaced it: it hashes mmlupro_legality_aware_null_MAIN.json as of commit be390da, but that file was amended twice afterwards (4be82bb, 614e187) while this file was not regenerated. A reader who hashes the shipped MAIN record gets the new value, so the old one read as a provenance mismatch. The emitter recomputes this hash from disk, so the refresh is what the tool has produced on every run since 614e187.",
+   "no_number_depends_on_it": "MAIN_REC is read only for its n_opt histogram (validate_hists), which is cross-checked against mmlu_pro_power_nulls_v2.json and agrees; no gate reads this sha256 field."
+  },
+  "preserved": "directionality_summary_superseded_20260817 was re-attached VERBATIM. It is hand-authored: no emitter writes it, so a bare re-run of the emitter silently deletes it.",
+  "verified_by": "MAIN 2026-08-17"
  }
 }
