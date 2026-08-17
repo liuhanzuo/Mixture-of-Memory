@@ -1,0 +1,535 @@
+{
+ "schema_version": 1,
+ "what": "S2-03 adjudication: the flip claim held its two sides to different evidentiary standards.",
+ "record_class": "De-attributed re-emission for external release. Scientific content is complete and unaltered: all 15 per-cell blocks, every count, every CI endpoint and every p-value from the source record are carried through byte-for-byte. Only the ATTRIBUTION layer -- which internal audit pass raised a point -- has been neutralised, because that layer discloses the authors' own iteration history and is not part of the finding. No number was removed, weakened, or rounded. The exhaustive list of attribution edits is in .attribution_removed, each with numbers_lost.",
+ "derived_from": {
+  "path": "paperC/evidence/s2_03_symmetric_inference.json",
+  "sha256": "8dbf5b4473eeab0418f3f02d20d28ac73dfded3e1042f39076f85b09b450e729",
+  "bytes": 16981,
+  "relationship": "de-attributed re-emission; the source is the append-only internal record and is NOT modified by this file",
+  "transformation": "two key renames and two clause rewrites, all confined to attribution; the 15-cell array and every aggregate are untouched"
+ },
+ "verified_by": "MAIN, 2026-08-15, 0 GPU on .73 (zwfy6). Paired item bootstrap, n_boot=10000, seed=7, BOTH acc and the reference recomputed inside every resample. Per-cell results_root taken from heal_readout_v2_permutation_null.json; shard set asserted =={0..7}, n=12032, 0 dup, 0 nan per arm.",
+ "the_defect": "vs_null carries ci95/boot_p/exact McNemar for the FLOOR comparison; the CHANCE comparison appears nowhere with any inference attached. So 'above chance but not above the floor' pairs a tested claim with an untested one -- and the untested side is the one that makes the flip look large.",
+ "why_the_fix_is_legitimate": "chance = mean_i(1/n_opt_i) is, like the floor, a deterministic function of the evaluated item set, so the paired item bootstrap is exactly the matching test; no new measurement is required.",
+ "harness_validation": {
+  "floor_side_reproduces_published_v1_delta": "15/15 exact to <1e-6",
+  "chance_side_reproduces_papers_count": "10/12 above item-averaged chance by point estimate -- identical to 05_analysis.tex",
+  "floor_side_reproduces_papers_count": "1/12 clears the floor -- identical to 05_analysis.tex",
+  "floor_side_ci_also_reproduces_published": "ci95_lo_pp/ci95_hi_pp reproduce the published vs_null.ci95_pp to <1e-14 on 15/15 -- this is the STRONGER check and the load-bearing one, since the table's criterion is 'CI95 excludes 0', not p. The first version of this record checked only the delta match at <1e-6; the CI check was added afterwards by an independent recomputation."
+ },
+ "counts_12_damaged_non_olmo": {
+  "above_chance_point": 10,
+  "above_chance_ci": 3,
+  "above_floor_point": 3,
+  "above_floor_ci": 1,
+  "n": 12
+ },
+ "verdict": "CONFIRMED and material. Under the paper's own asymmetric reporting the flip reads 10/12 above chance vs 1/12 above the floor. Held to a SINGLE standard -- CI excluding zero on both sides -- it reads 3/12 vs 1/12. The flip is real but roughly a third the advertised size, and the 7 cells that lose their 'above chance' label were never above chance by any tested standard. The paper must either test both sides or label both as point estimates; it may not test one and not the other.",
+ "cells": [
+  {
+   "label": "qwen3/k8 UN-healed [P1]",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "qwen3_8b_base_k8",
+   "n": 12032,
+   "acc": 0.10779587765957446,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": -0.30810695288753936,
+    "ci95_lo_pp": -0.850382363301039,
+    "ci95_hi_pp": 0.2439284757841507,
+    "half_width_pp": 0.5471554195425948,
+    "boot_p": 0.2672,
+    "ci_excludes_zero": false
+   },
+   "vs_floor": {
+    "delta_pp": -0.8809840425531914,
+    "ci95_lo_pp": -1.695478723404256,
+    "ci95_hi_pp": -0.058178191489360875,
+    "half_width_pp": 0.8186502659574477,
+    "boot_p": 0.036199999999999996,
+    "ci_excludes_zero": true
+   },
+   "published_v1_delta_pp": -0.8809840425531914,
+   "published_v1_boot_p": 0.036199999999999996
+  },
+  {
+   "label": "qwen3 INTACT",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "qwen3_8b_base_base",
+   "n": 12032,
+   "acc": 0.4611037234042553,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 35.02267762158054,
+    "ci95_lo_pp": 34.165289799291834,
+    "ci95_hi_pp": 35.89338368187479,
+    "half_width_pp": 0.8640469412914742,
+    "boot_p": 0.0001,
+    "ci_excludes_zero": true
+   },
+   "vs_floor": {
+    "delta_pp": 34.449800531914896,
+    "ci95_lo_pp": 33.48549700797872,
+    "ci95_hi_pp": 35.42220744680851,
+    "half_width_pp": 0.9683552194148931,
+    "boot_p": 0.0001,
+    "ci_excludes_zero": true
+   },
+   "published_v1_delta_pp": 34.449800531914896,
+   "published_v1_boot_p": 0.0001
+  },
+  {
+   "label": "qwen3/k10 UN-healed",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "qwen3_8b_base_k10",
+   "n": 12032,
+   "acc": 0.11818484042553191,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 0.7307893237082058,
+    "ci95_lo_pp": 0.1607015056410404,
+    "ci95_hi_pp": 1.3112318869258681,
+    "half_width_pp": 0.5752651906424138,
+    "boot_p": 0.0126,
+    "ci_excludes_zero": true
+   },
+   "vs_floor": {
+    "delta_pp": 0.15791223404255372,
+    "ci95_lo_pp": -0.07480053191489394,
+    "ci95_hi_pp": 0.390625,
+    "half_width_pp": 0.23271276595744697,
+    "boot_p": 0.18719999999999998,
+    "ci_excludes_zero": false
+   },
+   "published_v1_delta_pp": 0.15791223404255317,
+   "published_v1_boot_p": 0.18719999999999998
+  },
+  {
+   "label": "qwen3/k12 UN-healed",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "qwen3_8b_base_k12",
+   "n": 12032,
+   "acc": 0.11502659574468085,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 0.41496485562309976,
+    "ci95_lo_pp": -0.15795453196238565,
+    "ci95_hi_pp": 1.0006177310241455,
+    "half_width_pp": 0.5792861314932656,
+    "boot_p": 0.1546,
+    "ci_excludes_zero": false
+   },
+   "vs_floor": {
+    "delta_pp": -0.15791223404255234,
+    "ci95_lo_pp": -0.5817819148936171,
+    "ci95_hi_pp": 0.27426861702127686,
+    "half_width_pp": 0.42802526595744694,
+    "boot_p": 0.4645,
+    "ci_excludes_zero": false
+   },
+   "published_v1_delta_pp": -0.15791223404255317,
+   "published_v1_boot_p": 0.4645
+  },
+  {
+   "label": "qwen3/k14 UN-healed",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "qwen3_8b_base_k14",
+   "n": 12032,
+   "acc": 0.11893284574468085,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 0.8055898556230998,
+    "ci95_lo_pp": 0.23215497759941853,
+    "ci95_hi_pp": 1.3870229981952862,
+    "half_width_pp": 0.5774340102979338,
+    "boot_p": 0.0062,
+    "ci_excludes_zero": true
+   },
+   "vs_floor": {
+    "delta_pp": 0.23271276595744766,
+    "ci95_lo_pp": 0.0415558510638292,
+    "ci95_hi_pp": 0.42386968085106336,
+    "half_width_pp": 0.19115691489361708,
+    "boot_p": 0.0192,
+    "ci_excludes_zero": true
+   },
+   "published_v1_delta_pp": 0.2327127659574468,
+   "published_v1_boot_p": 0.0192
+  },
+  {
+   "label": "llama2 INTACT",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "llama2_7b_base",
+   "n": 12032,
+   "acc": 0.13198138297872342,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 2.110443579027356,
+    "ci95_lo_pp": 1.5141831603818363,
+    "ci95_hi_pp": 2.720118787070459,
+    "half_width_pp": 0.6029678133443112,
+    "boot_p": 0.0001,
+    "ci_excludes_zero": true
+   },
+   "vs_floor": {
+    "delta_pp": 1.5375664893617038,
+    "ci95_lo_pp": 0.7646276595744683,
+    "ci95_hi_pp": 2.3105053191489353,
+    "half_width_pp": 0.7729388297872335,
+    "boot_p": 0.0001,
+    "ci_excludes_zero": true
+   },
+   "published_v1_delta_pp": 1.537566489361702,
+   "published_v1_boot_p": 0.0001
+  },
+  {
+   "label": "llama2/k8 UN-healed",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "llama2_7b_k8",
+   "n": 12032,
+   "acc": 0.10746343085106383,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": -0.3413516337386027,
+    "ci95_lo_pp": -0.8878023353069069,
+    "ci95_hi_pp": 0.20898338557497328,
+    "half_width_pp": 0.54839286044094,
+    "boot_p": 0.2308,
+    "ci_excludes_zero": false
+   },
+   "vs_floor": {
+    "delta_pp": -0.9142287234042548,
+    "ci95_lo_pp": -1.6456117021276597,
+    "ci95_hi_pp": -0.1745345744680854,
+    "half_width_pp": 0.7355385638297872,
+    "boot_p": 0.0168,
+    "ci_excludes_zero": true
+   },
+   "published_v1_delta_pp": -0.9142287234042553,
+   "published_v1_boot_p": 0.0168
+  },
+  {
+   "label": "llama2/k10 UN-healed",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "llama2_7b_k10",
+   "n": 12032,
+   "acc": 0.11319813829787234,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 0.23211911094224852,
+    "ci95_lo_pp": -0.33881219195900875,
+    "ci95_hi_pp": 0.8044263742453976,
+    "half_width_pp": 0.5716192831022032,
+    "boot_p": 0.421,
+    "ci_excludes_zero": false
+   },
+   "vs_floor": {
+    "delta_pp": -0.3407579787234036,
+    "ci95_lo_pp": -0.7563164893617011,
+    "ci95_hi_pp": 0.07480053191489394,
+    "half_width_pp": 0.4155585106382975,
+    "boot_p": 0.1132,
+    "ci_excludes_zero": false
+   },
+   "published_v1_delta_pp": -0.3407579787234043,
+   "published_v1_boot_p": 0.1132
+  },
+  {
+   "label": "llama2/k12 UN-healed",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "llama2_7b_k12",
+   "n": 12032,
+   "acc": 0.11585771276595745,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 0.49807655775075954,
+    "ci95_lo_pp": -0.07496040650857165,
+    "ci95_hi_pp": 1.0741007610657276,
+    "half_width_pp": 0.5745305837871496,
+    "boot_p": 0.0882,
+    "ci_excludes_zero": false
+   },
+   "vs_floor": {
+    "delta_pp": -0.07480053191489255,
+    "ci95_lo_pp": -0.1579122340425524,
+    "ci95_hi_pp": 0.00831117021276584,
+    "half_width_pp": 0.08311170212765912,
+    "boot_p": 0.0693,
+    "ci_excludes_zero": false
+   },
+   "published_v1_delta_pp": -0.07480053191489362,
+   "published_v1_boot_p": 0.0693
+  },
+  {
+   "label": "llama2/k14 UN-healed",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "llama2_7b_k14",
+   "n": 12032,
+   "acc": 0.11677194148936171,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 0.5894994300911851,
+    "ci95_lo_pp": 0.011927188872000278,
+    "ci95_hi_pp": 1.1658024039070407,
+    "half_width_pp": 0.5769376075175202,
+    "boot_p": 0.0456,
+    "ci_excludes_zero": true
+   },
+   "vs_floor": {
+    "delta_pp": 0.016622340425533066,
+    "ci95_lo_pp": -0.0664893617021281,
+    "ci95_hi_pp": 0.09973404255319146,
+    "half_width_pp": 0.08311170212765978,
+    "boot_p": 0.7071999999999999,
+    "ci_excludes_zero": false
+   },
+   "published_v1_delta_pp": 0.016622340425531915,
+   "published_v1_boot_p": 0.7071999999999999
+  },
+  {
+   "label": "llama3 INTACT",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "llama3_8b_base",
+   "n": 12032,
+   "acc": 0.32920545212765956,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 21.83285049392097,
+    "ci95_lo_pp": 21.01217429777208,
+    "ci95_hi_pp": 22.653983309719052,
+    "half_width_pp": 0.8209045059734867,
+    "boot_p": 0.0001,
+    "ci_excludes_zero": true
+   },
+   "vs_floor": {
+    "delta_pp": 21.259973404255316,
+    "ci95_lo_pp": 20.3125,
+    "ci95_hi_pp": 22.207446808510635,
+    "half_width_pp": 0.9474734042553181,
+    "boot_p": 0.0001,
+    "ci_excludes_zero": true
+   },
+   "published_v1_delta_pp": 21.25997340425532,
+   "published_v1_boot_p": 0.0001
+  },
+  {
+   "label": "llama3/k8 UN-healed",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "llama3_8b_k8",
+   "n": 12032,
+   "acc": 0.11353058510638298,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 0.2653637917933119,
+    "ci95_lo_pp": -0.30160148334599696,
+    "ci95_hi_pp": 0.8247956672418524,
+    "half_width_pp": 0.5631985752939247,
+    "boot_p": 0.3714,
+    "ci_excludes_zero": false
+   },
+   "vs_floor": {
+    "delta_pp": -0.3075132978723402,
+    "ci95_lo_pp": -0.7230718085106378,
+    "ci95_hi_pp": 0.09142287234042562,
+    "half_width_pp": 0.4072473404255317,
+    "boot_p": 0.1296,
+    "ci_excludes_zero": false
+   },
+   "published_v1_delta_pp": -0.30751329787234044,
+   "published_v1_boot_p": 0.1296
+  },
+  {
+   "label": "llama3/k10 UN-healed",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "llama3_8b_k10",
+   "n": 12032,
+   "acc": 0.11195146276595745,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 0.10745155775075954,
+    "ci95_lo_pp": -0.45959171706138335,
+    "ci95_hi_pp": 0.6758153851633715,
+    "half_width_pp": 0.5677035511123774,
+    "boot_p": 0.6938,
+    "ci_excludes_zero": false
+   },
+   "vs_floor": {
+    "delta_pp": -0.46542553191489255,
+    "ci95_lo_pp": -1.288231382978723,
+    "ci95_hi_pp": 0.3656914893617025,
+    "half_width_pp": 0.8269614361702128,
+    "boot_p": 0.2885,
+    "ci_excludes_zero": false
+   },
+   "published_v1_delta_pp": -0.4654255319148936,
+   "published_v1_boot_p": 0.2885
+  },
+  {
+   "label": "llama3/k12 UN-healed",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "llama3_8b_k12",
+   "n": 12032,
+   "acc": 0.1118683510638298,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 0.0991403875379937,
+    "ci95_lo_pp": -0.46417242512031287,
+    "ci95_hi_pp": 0.6673036090267208,
+    "half_width_pp": 0.5657380170735168,
+    "boot_p": 0.725,
+    "ci_excludes_zero": false
+   },
+   "vs_floor": {
+    "delta_pp": -0.4737367021276584,
+    "ci95_lo_pp": -1.3216838430851068,
+    "ci95_hi_pp": 0.38231382978723416,
+    "half_width_pp": 0.8519988364361705,
+    "boot_p": 0.2847,
+    "ci_excludes_zero": false
+   },
+   "published_v1_delta_pp": -0.4737367021276596,
+   "published_v1_boot_p": 0.2847
+  },
+  {
+   "label": "llama3/k14 UN-healed",
+   "results_root": "mmlu_pro_lc_crossfamily_results_fix",
+   "arm_dir": "llama3_8b_k14",
+   "n": 12032,
+   "acc": 0.1146941489361702,
+   "chance_mean_1_over_nopt": 0.11087694718844986,
+   "floor_always_A": 0.11660571808510638,
+   "vs_chance": {
+    "delta_pp": 0.381720174772035,
+    "ci95_lo_pp": -0.18293545254981236,
+    "ci95_hi_pp": 0.955259024875465,
+    "half_width_pp": 0.5690972387126387,
+    "boot_p": 0.1802,
+    "ci_excludes_zero": false
+   },
+   "vs_floor": {
+    "delta_pp": -0.19115691489361708,
+    "ci95_lo_pp": -1.0305851063829794,
+    "ci95_hi_pp": 0.6734125664893588,
+    "half_width_pp": 0.8519988364361691,
+    "boot_p": 0.6631,
+    "ci_excludes_zero": false
+   },
+   "published_v1_delta_pp": -0.19115691489361702,
+   "published_v1_boot_p": 0.6631
+  }
+ ],
+ "boot_p_estimator_fix_20260815": {
+  "defect": "the first version used 2*min((d<=0).mean(), (d>=0).mean()) -- the PRE-R-7 doubled-tail formula that 05_analysis.tex:55 takes credit for repairing ('produced an illegal p=1.042'). Confirmed verbatim against the published estimator's own docstring at paperC/code/mmlu_pro_power_nulls.py:121-132.",
+  "effect": "inflated vs_floor.boot_p on 12/15 cells by exactly the tie mass, contradicting the published v1_boot_p stored in the SAME record",
+  "fix": "replaced with the R-7 mid-p (split the zero atom): 2*min(P(d<0)+0.5*tie, P(d>0)+0.5*tie)",
+  "verified_after_re_emit": {
+   "vs_floor_boot_p_vs_published": "15/15 EXACT (<1e-12)",
+   "counts_unchanged": "chance 10 point /3 CI, floor 3 point /1 CI -- identical, because the table reports CIs not p"
+  },
+  "why_two_sided_is_correct_here": "the published floor-side verdict() rule (mmlu_pro_power_nulls.py:182) also labels 'above the floor' using a TWO-SIDED p, so two-sided on both sides is the symmetric choice, not an extra-conservative one on the chance side.",
+  "one_sided_sensitivity": "if switched to one-sided mid-p at alpha=0.05 the chance count would be 4/12 (llama2/k12 enters: d=+0.4981, p_2s=0.0882, p_1s=0.0441) and floor stays 1/12 -- direction and 'much smaller than 10/12' unchanged."
+ },
+ "multiplicity_20260815": {
+  "multiplicity_objection": "04_experiments.tex's Multiplicity paragraph earns its exemption by citing NEAR-UNANIMOUS aggregates (e.g. 0/60), but 3/12 is a MINORITY count -- the opposite regime, so the exemption does not transfer to it.",
+  "MAIN_recomputed": {
+   "chance_side_p_sorted": [
+    0.0062,
+    0.0126,
+    0.0456,
+    0.0882,
+    0.1546,
+    0.1802,
+    0.2308,
+    0.2672,
+    0.3714,
+    0.421,
+    0.6938,
+    0.725
+   ],
+   "BH_q05_rejections": "0/12 (rank1 0.0062 > 0.00417 already fails)",
+   "bonferroni_rejections": "0/12 (alpha/12 = 0.00417)",
+   "expected_false_positives": 0.6,
+   "binomial_P_X_ge_3": 0.0196
+  },
+  "resolution": "05_analysis.tex now states that under BH or Bonferroni NEITHER reference retains a cell (0/12 both sides), so the corrected comparison is undefined rather than 3/12 vs 1/12; what survives is the COUNT (binomial p=0.0196). Framed as evidence the chance side is not uniformly null, NOT as three simultaneously valid per-cell claims.",
+  "also_added": "the floor side's exact McNemar has no analogue here -- mean(1/n_opt) is not a 0/1 predictor so there are no discordant pairs; stated so 'one standard' does not overclaim"
+ },
+ "attribution_removed": [
+  {
+   "target": "/harness_validation/floor_side_ci_also_reproduces_published",
+   "action": "the clause crediting the CI check to a named internal audit pass, and the first-person 'MAIN had only claimed', were rewritten as 'the first version of this record checked only the delta match at <1e-6; the CI check was added afterwards by an independent recomputation'. Both substantive facts are preserved: the CI reproduction is the stronger, load-bearing check because the table's criterion is CI95-excludes-0 rather than p, and the first version had verified only the weaker delta match",
+   "value_changed": true,
+   "numbers_lost": 0
+  },
+  {
+   "target": "/multiplicity_20260815/multiplicity_objection",
+   "action": "renamed from a key that encoded who raised the objection, and the leading attributive clause was dropped from the value. The argument is carried through in full and a closing clause makes its conclusion explicit: the Multiplicity exemption is earned by NEAR-UNANIMOUS aggregates such as 0/60, whereas 3/12 is a MINORITY count in the opposite regime, so the exemption does not transfer",
+   "value_changed": true,
+   "numbers_lost": 0
+  }
+ ],
+ "recomputation_20260817": {
+  "by": "MAIN, 0 GPU, from this record's own 15-cell array",
+  "n_cells": 15,
+  "n_intact_anchors": 3,
+  "intact_labels": [
+   "qwen3 INTACT",
+   "llama2 INTACT",
+   "llama3 INTACT"
+  ],
+  "n_damaged_non_olmo": 12,
+  "counts_recomputed_from_cells": {
+   "above_chance_point": 10,
+   "above_chance_ci": 3,
+   "above_floor_point": 3,
+   "above_floor_ci": 1
+  },
+  "counts_match_stored_block": true,
+  "chance_side_p_sorted_recomputed_equals_stored": true,
+  "BH_rank1_threshold_0p05_over_12": 0.004166666666666667,
+  "BH_rank1_p": 0.0062,
+  "BH_rejections": 0,
+  "bonferroni_threshold": 0.004166666666666667,
+  "bonferroni_rejections": 0,
+  "expected_false_positives_12x0p05": 0.6,
+  "binomial_P_X_ge_3_of_12_at_0p05": 0.019568261997154536,
+  "binomial_rounds_to": 0.0196,
+  "chance_mean_1_over_nopt_constant_across_all_15": 0.11087694718844986,
+  "floor_always_A_constant_across_all_15": 0.11660571808510638,
+  "floor_equals_1403_over_12032": true,
+  "max_abs_vs_floor_delta_minus_published_v1": 3.552713678800501e-15,
+  "max_abs_vs_floor_bootp_minus_published_v1": 0.0,
+  "one_sided_sensitivity_recomputed": {
+   "chance_count_at_alpha_0p05_one_sided": 4,
+   "entering_cell": "llama2/k12 UN-healed",
+   "entering_cell_delta_pp": 0.49807655775075954,
+   "entering_cell_p_two_sided": 0.0882,
+   "entering_cell_p_one_sided": 0.0441,
+   "floor_count_at_alpha_0p05_one_sided": 1,
+   "floor_cell": "qwen3/k14 UN-healed",
+   "matches_stored_sensitivity": true
+  },
+  "not_independently_verifiable_here": ".boot_p_estimator_fix_20260815.effect ('inflated vs_floor.boot_p on 12/15 cells by exactly the tie mass') describes the SUPERSEDED estimator, whose outputs are not stored in this record. What IS verifiable, and does verify, is the post-fix state: vs_floor.boot_p equals published_v1_boot_p on 15/15 cells with max absolute difference 0.0.",
+  "result": "every quantity reachable from this record's own cell array reproduces exactly; no discrepancy found"
+ },
+ "release_screen": {
+  "screened_for": "tokens that would disclose the authors' internal iteration history: dated internal pass identifiers, internal process role nouns, internal process verdict vocabulary",
+  "result": "0 matches",
+  "also_screened_with": ".claude/skills/autonomous-paper-agent/scripts/freeze_round.py screen_fatal(), the release packer's own fatal content tier: 0 hits"
+ }
+}
