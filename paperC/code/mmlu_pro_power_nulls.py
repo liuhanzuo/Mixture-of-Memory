@@ -93,9 +93,9 @@ OLMO_ARMS = [
     ("keep10", "7B_keep10_step83500"),
     ("keep8", "7B_keep8_step121000"),
 ]
-# EVERY structurally pruned OLMo-2 arm is designated damaged. (Fixed 2026-08-16,
-# round_04 R1-01.) This set was previously {keep8, keep10, keep12} -- inherited from
-# #248, where only three rungs were the relevant power contrast -- and that narrower
+# EVERY structurally pruned OLMo-2 arm is designated damaged. (Fixed 2026-08-16 after an
+# audit of the denominator.) This set was previously {keep8, keep10, keep12} -- inherited
+# from #248, where only three rungs were the relevant power contrast -- and that narrower
 # list silently defined BOTH headline denominators (MMLU-Pro 14/15 and off-MMLU 0/15),
 # omitting shortgpt16 (+3.674 pp above floor, p=0.0001) and keep14 (+0.324, p=0.3234)
 # without naming them, which sections/09a_relocated.tex forbids. The omission was not
@@ -103,6 +103,13 @@ OLMO_ARMS = [
 # of 14 layers as damaged for all three non-OLMo families in the same ratio.
 # paperC/code/gate_designated_denominator.py now asserts this set equals the arm list
 # declared in sections/04_experiments.tex. Do not narrow it without changing both.
+#
+# ⚠️ DE-ATTRIBUTED 2026-08-17, and keep it that way. The two lines above used to name a
+# review round and an issue ID. This file is not cited by the prose today, so it is not
+# copied into the blind submission snapshot -- but it IS imported by
+# code/mmlu_pro_trunc_fix_compare.py, which IS cited, so one citation edit away it ships.
+# An artifact that names the round tells a blind reader the review history; that class of
+# disclosure voided a previous panel's scores. State the finding, not who raised it.
 DAMAGED_OLMO = {"keep8", "keep10", "keep12", "keep14", "shortgpt16"}
 
 XF_FAMILIES = ["llama2_7b", "llama3_8b", "qwen3_8b_base"]

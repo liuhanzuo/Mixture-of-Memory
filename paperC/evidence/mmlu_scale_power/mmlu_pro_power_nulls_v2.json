@@ -6087,7 +6087,7 @@
   },
   "DENOMINATOR_FIX_20260816": {
    "what": "rollup.olmo2_7b.damaged_rungs widened from [keep12,keep10,keep8] to all five structurally pruned OLMo-2 arms, matching sections/04_experiments.tex.",
-   "why": "round_04 R1-01. The narrow list silently defined BOTH headline denominators (MMLU-Pro 14/15 and off-MMLU 0/15) and omitted shortgpt16 and keep14 without naming them. It was also internally inconsistent with XF_DAMAGED, which counts the same retained depth of 14 layers as damaged for all three non-OLMo families.",
+   "why": "An audit of the denominator found that the narrow list silently defined BOTH headline denominators (MMLU-Pro 14/15 and off-MMLU 0/15) and omitted shortgpt16 and keep14 without naming them. It was also internally inconsistent with XF_DAMAGED, which counts the same retained depth of 14 layers as damaged for all three non-OLMo families.",
    "no_new_measurement": "the per-cell accuracies, deltas, CIs, p-values and verdicts in this file are UNCHANGED and byte-identical; only the counting sets were widened. Re-derived from the cells already present in this file by the same rollup() logic.",
    "superseded_counts": {
     "olmo2_7b": {
@@ -7249,5 +7249,14 @@
     }
    }
   }
+ },
+ "deattributed_in_place_20260817": {
+  "what": "rollup.DENOMINATOR_FIX_20260816.why previously opened with an internal tracking prefix that named a stage of the editorial process and an audit issue label. That prefix was replaced with a neutral attribution (\"An audit of the denominator found that ...\"). Nothing else in this file changed.",
+  "why": "This file is cited by the manuscript, so it is copied verbatim into the anonymous submission snapshot. An internal tracking label discloses the editorial history of the paper to a reader who is supposed to see only the paper. Only the attribution was removed; the finding it attributed is unchanged and still stated in full.",
+  "why_edited_in_place_and_not_regenerated": "The enclosing block rollup.DENOMINATOR_FIX_20260816 is HAND-AUTHORED: no emitter writes it. code/mmlu_pro_power_nulls.py writes rollup as exactly {chance_definition_used, olmo2_7b, olmo2_7b_naive_chance, <family>, <family>_naive_chance}, so a bare re-run would DELETE this disclosure record rather than reproduce it with new wording. The emitter's own inputs (per_example_mmlu_pro_shard*of8.jsonl) are also absent from both project disks, so the run is not reproducible here at all. Editing the emitter alone would therefore have been a no-op on this file, and re-running it would have been destructive. This is the OPPOSITE of the sibling case in construct_nulls_legality_aware.json, whose '.why' IS a hardcoded literal in its emitter and therefore had to be fixed there; the correct action depends on which one holds, so it was checked rather than assumed.",
+  "emitter_also_fixed": "code/mmlu_pro_power_nulls.py carried the same tracking prefix in the source comment above DAMAGED_OLMO and was de-attributed in the same commit, comment-only (the non-comment body of that file is byte-identical). It is not cited by the prose or the claim map today, so it is not shipped, but it IS imported by code/mmlu_pro_trunc_fix_compare.py, which IS cited -- so it is one citation edit away from shipping, and fixing only the file that leaks today would leave the class open.",
+  "numeric_identity_verified": "A recursive leaf diff of the pre- and post-edit files: 4883 leaves before, 0 removed, and exactly 1 pre-existing leaf changed (rollup.DENOMINATOR_FIX_20260816.why); the 7 added leaves are this record. All 4032 numeric leaves and all 311 boolean leaves are bit-identical. Inside the retained clause the only character difference is the sentence-initial \"The\" becoming mid-sentence \"the\"; 14/15, 0/15, shortgpt16, keep14, XF_DAMAGED and the retained depth of 14 layers are all preserved verbatim.",
+  "verified_by": "code/refreeze_from_manuscript.py:screen_blind over all 19 cited paths, expanding cited directories, reports zero findings; gate_designated_denominator.py, recount_designated_denominators.py, check_prose_vs_evidence.py and gate_count_claims.py all still exit 0.",
+  "gpu_used": "none (0 GPU; text edit plus CPU verification only)"
  }
 }
