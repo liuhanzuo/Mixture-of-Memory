@@ -104,6 +104,28 @@ class BottleneckLayer(nn.Module):
 
     transformers>=5 LlamaDecoderLayer.forward returns a plain tensor. We keep a
     tuple-safe path just in case.
+
+    Split point for QCMem's d_bottle-width persist path (2026-08-17)
+    ---------------------------------------------------------------
+    ``forward`` computes ``up(act(down(h)))``, so its OUTPUT is back at
+    ``hidden_size``. When this layer is the last layer of a QCMem WRITE band
+    (``resume_j == bottleneck_layer + 1``),
+    :meth:`src.memory.qcmem.qcmem_model.QCMemModel._write_band` deliberately stops
+    ONE OP SHORT and persists ``act(down(h))`` (width ``d_bottle``), re-applying
+    ``self.up`` on the READ side. That is an exact algebraic rearrangement, not an
+    approximation: ``f(up(s))`` with ``s = act(down(h))`` is the same composition as
+    ``f(up(act(down(h))))``.
+
+    Three properties of THIS module are what make the split legal, so a redesign
+    must re-check them:
+      1. ``up`` is a bias-free ``nn.Linear`` — a pure linear map applied last.
+      2. ``act`` is ELEMENTWISE (GELU) and sits BEFORE ``up``, so the stored
+         post-activation value is token-local; nothing after the store mixes
+         tokens except the read band's own attention, which is what it is for.
+      3. There is NO residual bypass and NOTHING between ``up`` and the layer
+         return. If a norm over the d_bottle axis, a second nonlinearity after
+         ``up``, or a residual add were introduced, the split would either change
+         the function or stop saving bytes, and it MUST be revisited.
     """
 
     def __init__(self, inner: nn.Module, hidden_size: int, bottleneck_dim: int):

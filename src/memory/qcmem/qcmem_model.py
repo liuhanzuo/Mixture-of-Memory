@@ -22,6 +22,10 @@ Design notes
   ids — i.e. selective full re-forward (the RAG upper bound). ``j == L`` is the
   closed-book endpoint (chunks never attend to each other or the query at any
   layer; read only re-normalises + projects the stacked depth-L hiddens).
+* ``persist_bottleneck_latent`` (2026-08-17, OFF by default) moves the funnel's
+  ``up`` projection from the WRITE side to the READ side so the store holds the
+  ``d_bottle``-wide latent instead of the restored full-width hidden. See
+  :meth:`QCMemModel._write_band` for the equivalence argument.
 """
 from __future__ import annotations
 
@@ -80,6 +84,21 @@ class QCMemModel:
           MULTI-chunk pack, ``resume_forward_ids`` (single contiguous sequence)
           stays exact for any ``(a, b)`` and is used by the self-test to validate
           the layer-slicing plumbing.
+    persist_bottleneck_latent:
+        ``False`` (default) — every path below is byte-for-byte the historical
+        behaviour and the store holds the full ``hidden_size``-wide ``h_j``. This
+        default is load-bearing: a large number of already-published QCMem numbers
+        in this repo depend on ``write_chunk`` returning exactly today's tensor.
+
+        ``True`` — only legal on a backbone whose ``layers[resume_j - 1]`` is a
+        funnel ``BottleneckLayer`` (``down -> act -> up``, no residual; see
+        ``scripts/semantic_bottleneck_model.py``). The funnel's ``up`` projection is
+        moved from the WRITE side to the READ side, so what the store holds per
+        token is the ``d_bottle``-wide latent ``act(down(h))`` rather than the
+        restored ``up(act(down(h)))``. ``bytes/token`` then drops by exactly
+        ``hidden_size / d_bottle`` (8x for the 8B ``j=12 / d512`` endpoint).
+        Rationale, and why it is an ALGEBRAIC REARRANGEMENT and not an
+        approximation, is in :meth:`_write_band`.
     """
 
     def __init__(
@@ -88,6 +107,7 @@ class QCMemModel:
         resume_j: int,
         top_prepay_b: int = 0,
         block_diagonal: bool = False,
+        persist_bottleneck_latent: bool = False,
     ):
         self.model = model
         inner = getattr(model, "model", model)
@@ -140,6 +160,82 @@ class QCMemModel:
         self.device = next(model.parameters()).device
         self.dtype = next(model.parameters()).dtype
         self.hidden_size = int(self.config.hidden_size)
+
+        # --- d_bottle-width persist path (2026-08-17, B01 blocking_dependency) ---
+        # OFF by default => `self._funnel_up is None` => every write/read path
+        # below takes the identical branch it took before this flag existed.
+        self.persist_bottleneck_latent = bool(persist_bottleneck_latent)
+        self._funnel_up = None          # the deferred `up` Linear, or None
+        self._funnel_dim = None         # d_bottle, for bytes/token accounting
+        if self.persist_bottleneck_latent:
+            self._funnel_up, self._funnel_dim = self._resolve_deferred_funnel()
+
+    def _resolve_deferred_funnel(self):
+        """Locate the funnel whose ``up`` is deferred to READ; validate placement.
+
+        The funnel must be the LAST layer of the WRITE band, i.e. wrap
+        ``layers[resume_j - 1]``. That is exactly the configuration the funnel arms
+        are trained and evaluated in (``eval_qcmem_locomo.py`` prints "RECOMMENDED
+        --resume_j == bottleneck_layer+1"), and it is the only placement for which
+        deferring ``up`` is sound: ``up`` must be the very last op of the write band
+        so that nothing between it and the store consumes the full-width hidden.
+
+        Raises (never silently degrades) if the flag is set but the placement is
+        wrong — a silent fallback here would report an 8x storage saving while
+        actually persisting full-width hiddens, which is precisely the defect this
+        code path exists to remove.
+        """
+        if self.resume_j <= 0:
+            raise ValueError(
+                "persist_bottleneck_latent requires resume_j >= 1 (the funnel must "
+                f"be inside the write band layers[0:resume_j]); got resume_j={self.resume_j}"
+            )
+        last = self.layers[self.resume_j - 1]
+        up = getattr(last, "up", None)
+        down = getattr(last, "down", None)
+        if up is None or down is None:
+            raise ValueError(
+                "persist_bottleneck_latent=True but layers[resume_j-1] "
+                f"(index {self.resume_j - 1}, type {type(last).__name__}) is not a "
+                "BottleneckLayer (no .down/.up). The funnel must wrap the LAST layer "
+                "of the write band, i.e. resume_j == bottleneck_layer + 1."
+            )
+        if getattr(up, "bias", None) is not None:
+            # The rearrangement itself would still be exact with a bias (the bias is
+            # applied at read time either way), but scripts/semantic_bottleneck_model.py
+            # builds `up` with bias=False and a surprise bias would mean the loaded
+            # checkpoint is not the architecture we think it is. Fail loudly.
+            raise ValueError(
+                "persist_bottleneck_latent expects the funnel `up` to be bias-free "
+                "(nn.Linear(..., bias=False), as built by "
+                "scripts/semantic_bottleneck_model.py); found a bias term")
+        d_bottle = int(getattr(last, "bottleneck_dim", up.in_features))
+        if int(up.in_features) != d_bottle or int(up.out_features) != self.hidden_size:
+            raise ValueError(
+                f"funnel `up` shape {tuple(up.weight.shape)} inconsistent with "
+                f"d_bottle={d_bottle} / hidden_size={self.hidden_size}")
+        return up, d_bottle
+
+    # ------------------------------------------------------------------ #
+    # bytes/token accounting for the store (B01's mandatory reported quantity)
+    # ------------------------------------------------------------------ #
+    def store_bytes_per_token(self, dtype_bytes: Optional[int] = None) -> int:
+        """Bytes/token of what WRITE actually hands to the store.
+
+        ``hidden_size * dtype_bytes`` on the legacy path; ``d_bottle * dtype_bytes``
+        when :attr:`persist_bottleneck_latent` is on. This is deliberately the
+        width of the PERSISTED tensor, not of the restored hidden — B01's
+        ``next_gate_executable_20260814`` names that distinction as the mandatory
+        reported quantity, and the two were identical before this flag existed.
+
+        Callers that want a MEASURED figure rather than this arithmetic should use
+        ``h.numel() * h.element_size() / h.shape[1]`` on the actual write output;
+        the persist-path self-test does exactly that and cross-checks it here.
+        """
+        if dtype_bytes is None:
+            dtype_bytes = 2 if self.dtype in (torch.bfloat16, torch.float16) else 4
+        width = self._funnel_dim if self._funnel_up is not None else self.hidden_size
+        return int(width) * int(dtype_bytes)
 
     # ------------------------------------------------------------------ #
     # low-level helpers
@@ -370,6 +466,136 @@ class QCMemModel:
     # ------------------------------------------------------------------ #
     # WRITE side: embed + layers[0:j] over one chunk (chunk-local)
     # ------------------------------------------------------------------ #
+    def _write_band(
+        self,
+        hidden: torch.Tensor,
+        causal_mask,
+        positions: torch.Tensor,
+        position_embeddings,
+        past_key_values=None,
+        use_cache: bool = False,
+    ) -> torch.Tensor:
+        """Run the WRITE band ``layers[0:j]`` and return what gets PERSISTED.
+
+        Legacy path (``persist_bottleneck_latent=False``, the default) — literally
+        the previous single call ``self._run_layers(hidden, slice(0, self.resume_j),
+        ...)``. Same arguments, same order, same tensor out. Nothing about the
+        historical numbers can move.
+
+        Persist path (``True``) — the funnel wrapping ``layers[j-1]`` computes
+        ``up(act(down(h)))``; we stop one op short and return ``act(down(h))``,
+        which is ``d_bottle`` wide instead of ``hidden_size`` wide. The deferred
+        ``up`` is re-applied on the READ side (:meth:`_lift_latent`).
+
+        WHY THIS IS EXACT (and not an approximation)
+        --------------------------------------------
+        The whole write band is::
+
+            h_j = up(act(down(g(x))))          g = layers[0:j-1] + funnel.inner
+
+        and the whole read band is ``f(h_j)`` = ``layers[j:L] -> norm -> lm_head``
+        over the pack. Splitting the composition at a different point,
+
+            store  s = act(down(g(x)))         read  f(up(s))
+
+        computes ``f(up(act(down(g(x)))))`` — the SAME function. Nothing is
+        approximated, dropped or re-ordered: this is only a change of WHERE the
+        composition is cut. The only thing that can differ is floating-point
+        rounding, and even that is avoided here because ``up`` is applied to the
+        SAME per-piece ``[1, T, d_bottle]`` tensors, in the same dtype, with the
+        same matmul shapes as before (see :meth:`_lift_latent`, which deliberately
+        lifts BEFORE the pack rather than after it).
+
+        WHY ``act`` STAYS ON THE WRITE SIDE
+        -----------------------------------
+        ``act`` is a GELU, so it is elementwise and token-local; storing ``down(h)``
+        and applying ``act`` at read time would be equally exact, and equally
+        ``d_bottle``-wide. We store the POST-activation value for two reasons:
+        (1) it makes the read-side lift a SINGLE bias-free linear map, which is the
+        smallest possible deferred computation and the easiest to audit; (2) GELU is
+        saturating, so the stored tensor has a narrower dynamic range — strictly
+        better if the store is ever quantised below bf16, which is the natural next
+        experiment on this axis. What CANNOT be moved:
+          * ``down`` cannot be deferred — it IS the width reduction; deferring it
+            would store the full-width ``h`` and buy nothing.
+          * ``up`` cannot be deferred if the funnel is NOT the last layer of the
+            write band, because then ``layers[bottleneck_layer+1 : j]`` would
+            consume the full-width hidden before the store. This is checked in
+            :meth:`_resolve_deferred_funnel`, which requires
+            ``resume_j == bottleneck_layer + 1``.
+          * a non-elementwise op AFTER ``down`` (e.g. a norm over the d_bottle axis,
+            or anything mixing tokens) could not be moved across the store either;
+            the funnel as built by ``scripts/semantic_bottleneck_model.py`` has
+            none, and the ``.down/.act/.up`` attribute check would not stop such a
+            variant, so any future funnel redesign must revisit this method.
+
+        Gradient checkpointing: intentionally not replicated for the funnel's inner
+        layer call below. Every WRITE entry point in this class is decorated
+        ``@torch.no_grad()``, so ``_run_layers``' checkpoint gate
+        (``torch.is_grad_enabled() and hidden.requires_grad``) is already dead on
+        the write side; the distillation trainer's trainable parameters live in
+        ``layers[j:]``, which is the READ band.
+
+        Subclass compatibility: the cache kwargs are only forwarded when they are
+        non-default. ``QCMemHy3Model._run_layers`` overrides this method with the
+        pre-cache 5-argument signature, so passing ``past_key_values=None,
+        use_cache=False`` unconditionally would raise ``TypeError`` on the sharded
+        Hy3 path for calls (``write_chunk`` / ``write_chunks`` /
+        ``resume_forward_ids``) that never used a cache in the first place. The
+        funnel branch itself is unreachable on Hy3 (that backbone has no
+        ``BottleneckLayer``, so ``_resolve_deferred_funnel`` would refuse the flag),
+        which is why the direct ``funnel.inner(...)`` call below does not replicate
+        Hy3's per-layer device hop.
+        """
+        kw = {}
+        if past_key_values is not None or use_cache:
+            kw = dict(past_key_values=past_key_values, use_cache=use_cache)
+        if self._funnel_up is None:
+            return self._run_layers(
+                hidden, slice(0, self.resume_j),
+                causal_mask, positions, position_embeddings, **kw,
+            )
+        j = self.resume_j
+        funnel = self.layers[j - 1]
+        hidden = self._run_layers(
+            hidden, slice(0, j - 1),
+            causal_mask, positions, position_embeddings, **kw,
+        )
+        # The funnel's WRAPPED decoder layer, called with exactly the kwargs
+        # ``_run_layers`` would have passed it (the funnel wrapper forwards
+        # ``*args, **kwargs`` straight through to ``inner``).
+        out = funnel.inner(
+            hidden,
+            attention_mask=causal_mask,
+            position_ids=positions,
+            position_embeddings=position_embeddings,
+            past_key_values=past_key_values,
+            use_cache=use_cache,
+        )
+        h = self._layer_out_hidden(out)
+        return funnel.act(funnel.down(h))       # [..., d_bottle] — PERSISTED
+
+    def _lift_latent(self, h: Optional[torch.Tensor]) -> Optional[torch.Tensor]:
+        """Re-apply the deferred funnel ``up`` to ONE stored piece; else identity.
+
+        Called per cached piece (sink / each chunk / query) BEFORE the read pack,
+        not once on the packed tensor. That is deliberate: applying the lift to the
+        same ``[1, T_c, d_bottle]`` shapes the legacy path used keeps the matmul
+        shapes — and therefore the bf16 accumulation order — identical to the
+        legacy run, which is what makes the equivalence bit-exact rather than
+        merely mathematical. Lifting the packed ``[1, H, d_bottle]`` in one call
+        would be just as correct mathematically but would change the GEMM shape.
+        """
+        if self._funnel_up is None or h is None:
+            return h
+        if h.shape[-1] != self._funnel_dim:
+            raise ValueError(
+                f"persist_bottleneck_latent read got a piece of width {h.shape[-1]} "
+                f"but the funnel latent is {self._funnel_dim}-wide. Mixing "
+                "full-width cached hiddens with a latent-persist read is a silent "
+                "correctness bug, so this is a hard error.")
+        return self._funnel_up(h)
+
     @torch.no_grad()
     def write_chunk(self, token_ids) -> torch.Tensor:
         """Encode ONE chunk in isolation to depth ``j``.
@@ -378,6 +604,11 @@ class QCMemModel:
         RoPE positions ``0:T``. Returns the depth-``j`` hidden state ``h_j`` of
         shape ``[1, T, d]`` (this is what QCMem caches per chunk). The bottom-j
         KV is discarded; only ``h_j`` survives.
+
+        With ``persist_bottleneck_latent=True`` the returned tensor is instead the
+        ``d_bottle``-wide funnel latent ``[1, T, d_bottle]`` — i.e. what is actually
+        persisted shrinks by ``hidden_size / d_bottle`` — and :meth:`read` /
+        :meth:`read_core` lift it back. See :meth:`_write_band`.
         """
         ids = self._as_ids(token_ids)
         T = ids.shape[1]
@@ -386,11 +617,10 @@ class QCMemModel:
         causal_mask, position_embeddings = self._make_mask_and_rope(
             inputs_embeds, positions
         )
-        h_j = self._run_layers(
-            inputs_embeds, slice(0, self.resume_j),
-            causal_mask, positions, position_embeddings,
+        h_j = self._write_band(
+            inputs_embeds, causal_mask, positions, position_embeddings,
         )
-        return h_j  # [1, T, d]
+        return h_j  # [1, T, d] (or [1, T, d_bottle] on the persist path)
 
     @torch.no_grad()
     def write_chunks(
@@ -417,6 +647,27 @@ class QCMemModel:
         token-local. Chunks of DIFFERENT lengths are grouped separately (each group
         is uniform-length, so no padding is ever introduced).
 
+        ⚠ MEASURED EXCEPTION to the word "bit-identical" above (2026-08-17). The
+        SEMANTIC claim (no cross-chunk information flow) is intact and is what the
+        argument above actually establishes. The stronger BITWISE claim does not
+        hold when a funnel ``BottleneckLayer`` sits in the write band, because a
+        plain ``nn.Linear`` is not bit-reproducible across batch sizes:
+
+          CUDA bf16, hidden 4096 / d_bottle 512, funnel in band
+                                          -> 3764/393216 elems differ, max_abs 1.56e-02
+          CUDA bf16, identical shapes, NO funnel      -> 0/393216 (bit-identical)
+          CPU  fp32, hidden 256 / d_bottle 32, funnel -> 11218/16384, max_abs 5.59e-09
+          CPU  fp32, identical shapes, NO funnel      -> 0/16384
+
+        Isolated to a bare op: ``nn.Linear(4096, 512, bias=False)`` in CUDA bf16 at
+        ``B=2`` differs from two ``B=1`` calls in 82/49152 elements (max_abs
+        3.91e-03) — a batched-vs-unbatched GEMM blocking difference. This PREDATES
+        the persist path (reproduced against the code as committed, with the flag
+        absent) and affects the legacy full-width path identically; it is recorded
+        here rather than silently left in the docstring because "bit-identical" is
+        the kind of claim other gates are built on. Repro + both paths' numbers:
+        ``scripts/qcmem_bottleneck_persist_selftest.py`` check 5.
+
         Parameters
         ----------
         chunk_list:
@@ -430,6 +681,11 @@ class QCMemModel:
         Returns
         -------
         List of ``[1, T_c, d]`` depth-``j`` hiddens aligned with ``chunk_list``.
+        (``[1, T_c, d_bottle]`` when ``persist_bottleneck_latent`` is on — the flag
+        is applied through the SAME :meth:`_write_band` helper ``write_chunk`` uses,
+        so the two stay in the identical relationship they have on the legacy path:
+        the batched forward differs from the per-chunk one only by the batch axis,
+        which neither attention nor the token-local funnel mixes.)
         """
         n = len(chunk_list)
         if n == 0:
@@ -456,10 +712,9 @@ class QCMemModel:
                 causal_mask, position_embeddings = self._make_mask_and_rope(
                     inputs_embeds, positions
                 )
-                h = self._run_layers(
-                    inputs_embeds, slice(0, self.resume_j),
-                    causal_mask, positions, position_embeddings,
-                )  # [B,T,d]
+                h = self._write_band(
+                    inputs_embeds, causal_mask, positions, position_embeddings,
+                )  # [B,T,d] (or [B,T,d_bottle])
                 for b, i in enumerate(batch_idx):
                     results[i] = h[b:b + 1]  # [1,T,d]
         return results  # type: ignore[return-value]
@@ -512,16 +767,23 @@ class QCMemModel:
         (e.g. the distillation trainer) only needs the query-segment logits. The
         pre-``lm_head`` layer stack is unchanged, so the returned tail is
         numerically identical to slicing the full output.
+
+        When ``persist_bottleneck_latent`` is on, each incoming piece is
+        ``d_bottle``-wide and is lifted back to ``hidden_size`` by the deferred
+        funnel ``up`` (:meth:`_lift_latent`) BEFORE the pack. Everything after that
+        — pack, RoPE, mask, layer band, norm, lm_head — is untouched.
         """
         pieces: List[torch.Tensor] = []
         seg_lens: List[tuple] = []
         if sink_hj is not None:
+            sink_hj = self._lift_latent(sink_hj)
             pieces.append(sink_hj)
             seg_lens.append(("sink", int(sink_hj.shape[1])))
         for h in selected_hj_list:
             if h is not None and h.shape[1] > 0:
-                pieces.append(h)
+                pieces.append(self._lift_latent(h))
                 seg_lens.append(("chunk", int(h.shape[1])))
+        query_hj = self._lift_latent(query_hj)
         pieces.append(query_hj)
         seg_lens.append(("query", int(query_hj.shape[1])))
 
@@ -647,7 +909,11 @@ class QCMemModel:
         bottom-band K/V in a fresh ``DynamicCache`` so :meth:`decode_step` can
         extend it one token at a time. Returns ``(h_j [1, T, d], bottom_cache,
         T)`` where ``T`` is the next chunk-local RoPE position for the first
-        generated token."""
+        generated token.
+
+        On the persist path the returned ``h_j`` is ``d_bottle``-wide, exactly as
+        :meth:`write_chunk`'s is, so it can be handed straight to
+        :meth:`read_prefill` (which lifts it)."""
         ids = self._as_ids(token_ids)
         T = ids.shape[1]
         inputs_embeds = self.embed_tokens(ids)
@@ -656,9 +922,8 @@ class QCMemModel:
             inputs_embeds, positions
         )
         cache = DynamicCache(config=self.config)
-        h_j = self._run_layers(
-            inputs_embeds, slice(0, self.resume_j),
-            causal_mask, positions, position_embeddings,
+        h_j = self._write_band(
+            inputs_embeds, causal_mask, positions, position_embeddings,
             past_key_values=cache, use_cache=True,
         )
         return h_j, cache, T
@@ -683,11 +948,11 @@ class QCMemModel:
             )
         pieces: List[torch.Tensor] = []
         if sink_hj is not None:
-            pieces.append(sink_hj)
+            pieces.append(self._lift_latent(sink_hj))
         for h in selected_hj_list:
             if h is not None and h.shape[1] > 0:
-                pieces.append(h)
-        pieces.append(query_hj)
+                pieces.append(self._lift_latent(h))
+        pieces.append(self._lift_latent(query_hj))
         packed = torch.cat(pieces, dim=1)  # [1, H, d]
         H = packed.shape[1]
         positions = torch.arange(H, device=self.device).unsqueeze(0)
@@ -715,7 +980,13 @@ class QCMemModel:
         norm + lm_head → next-token logits.
 
         Returns ``logits_last [1, 1, V]``. Both caches are extended in place by one
-        position, so the caller advances ``q_local_pos`` and ``pack_pos`` by 1."""
+        position, so the caller advances ``q_local_pos`` and ``pack_pos`` by 1.
+
+        On the persist path the single new token goes through the same
+        ``_write_band`` -> ``_lift_latent`` round trip a stored chunk would (its
+        ``d_bottle`` latent is what a real deployment would append to the store),
+        so its composition ``up(act(down(.)))`` is identical to the legacy
+        single-call bottom band."""
         ids = torch.tensor([[int(token_id)]], device=self.device, dtype=torch.long)
         emb = self.embed_tokens(ids)  # [1, 1, d]
         # --- bottom band: layers[0:a] on the single new token (query-local RoPE) ---
@@ -723,11 +994,11 @@ class QCMemModel:
             b_pos = torch.tensor([[int(q_local_pos)]], device=self.device)
             b_pe = self.rotary_emb(emb, position_ids=b_pos)
             b_mask = self._decode_attn_mask(int(q_local_pos) + 1)
-            new_hj = self._run_layers(
-                emb, slice(0, self.resume_j),
-                b_mask, b_pos, b_pe,
+            new_hj = self._write_band(
+                emb, b_mask, b_pos, b_pe,
                 past_key_values=bottom_cache, use_cache=True,
             )
+            new_hj = self._lift_latent(new_hj)
         else:
             # j == 0: h_j IS the embedding (RAG upper bound); bottom band is empty.
             new_hj = emb
@@ -754,6 +1025,9 @@ class QCMemModel:
         no sink and no separate query (the whole sequence IS the query). Used by
         the self-test: at ``j=0`` this must equal the stock ``model(input_ids)``
         forward to floating-point tolerance, mirroring the primitive check.
+
+        Goes through ``_write_band`` + ``_lift_latent`` so the persist path is
+        exercised here too; with the flag off both are the previous single calls.
         """
         ids = self._as_ids(token_ids)
         T = ids.shape[1]
@@ -762,10 +1036,10 @@ class QCMemModel:
         causal_mask, position_embeddings = self._make_mask_and_rope(
             inputs_embeds, positions
         )
-        hidden = self._run_layers(
-            inputs_embeds, slice(0, self.resume_j),
-            causal_mask, positions, position_embeddings,
+        hidden = self._write_band(
+            inputs_embeds, causal_mask, positions, position_embeddings,
         )
+        hidden = self._lift_latent(hidden)
         hidden = self._run_layers(
             hidden, slice(self.resume_j, self.num_layers),
             causal_mask, positions, position_embeddings,

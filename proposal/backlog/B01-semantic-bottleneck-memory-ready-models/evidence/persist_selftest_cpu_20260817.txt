@@ -1,0 +1,53 @@
+[baseline] HEAD:src/memory/qcmem/qcmem_model.py loaded as qcmem_model_prev
+
+=== fixture real/bfloat16  hidden=4096 d_bottle=512 layers=4 funnel@2 resume_j=3 device=cpu ===
+  [PASS] [real/bfloat16] default path == HEAD code (bottleneck arm, 9 tensors)  max_abs=0.000e+00 (worst write_sink) differing_elems=0
+  [PASS] [real/bfloat16] default path == HEAD code (VANILLA bottleneck_dim=0)  max_abs=0.000e+00 (worst write_sink) differing_elems=0
+  [PASS] [real/bfloat16] persist ON == persist OFF (read-side logits)  max_abs=0.000000e+00 (worst read, |logit|max=5.375, tol=5.375e-02) differing_elems=0/98304
+        per-tensor: read:0.000e+00/0  read_tail:0.000e+00/0  resume_ids:0.000e+00/0  decode:0.000e+00/0
+        -> BIT-IDENTICAL (0 differing elements over 98304)
+  [PASS] [real/bfloat16] measured bytes/token ratio == hidden/d_bottle  8192.0 -> 1024.0 B/tok = 8.0000x (expected 8.0000x); shapes (1, 24, 4096) -> (1, 24, 512)
+  [PASS] [real/bfloat16] store_bytes_per_token() agrees with the measured tensors  api=[8192, 1024] measured=[8192.0, 1024.0]
+  [PASS] [real/bfloat16] persist write_chunks==write_chunk no worse than legacy's  legacy max_abs=0.000e+00 (0/393216 elems, rel=0.000e+00) | persist max_abs=0.000e+00 (0/49152, rel=0.000e+00) | rel_floor=1.0e-03
+        -> both BIT-IDENTICAL
+  [PASS] [real/bfloat16] refuses persist on bottleneck_dim=0 (no funnel)  persist_bottleneck_latent=True but layers[resume_j-1] (index 2, type LlamaDecoderLayer) is
+  [PASS] [real/bfloat16] refuses resume_j == bottleneck_layer (funnel not last in band)  persist_bottleneck_latent=True but layers[resume_j-1] (index 1, type LlamaDecoderLayer) is
+  [PASS] [real/bfloat16] refuses resume_j > bottleneck_layer+1 (band reads full width)  persist_bottleneck_latent=True but layers[resume_j-1] (index 3, type LlamaDecoderLayer) is
+  [PASS] [real/bfloat16] refuses resume_j == 0 (empty write band)  persist_bottleneck_latent requires resume_j >= 1 (the funnel must be inside the write band
+  [PASS] [real/bfloat16] persist read rejects full-width cached pieces  persist_bottleneck_latent read got a piece of width 4096 but the funnel latent is 512-wide
+
+=== fixture tiny/float32  hidden=256 d_bottle=32 layers=6 funnel@3 resume_j=4 device=cpu ===
+  [PASS] [tiny/float32] default path == HEAD code (bottleneck arm, 9 tensors)  max_abs=0.000e+00 (worst write_sink) differing_elems=0
+  [PASS] [tiny/float32] default path == HEAD code (VANILLA bottleneck_dim=0)  max_abs=0.000e+00 (worst write_sink) differing_elems=0
+  [PASS] [tiny/float32] persist ON == persist OFF (read-side logits)  max_abs=0.000000e+00 (worst read, |logit|max=1.074, tol=1.074e-04) differing_elems=0/31868
+        per-tensor: read:0.000e+00/0  read_tail:0.000e+00/0  resume_ids:0.000e+00/0  decode:0.000e+00/0
+        -> BIT-IDENTICAL (0 differing elements over 31868)
+  [PASS] [tiny/float32] measured bytes/token ratio == hidden/d_bottle  1024.0 -> 128.0 B/tok = 8.0000x (expected 8.0000x); shapes (1, 12, 256) -> (1, 12, 32)
+  [PASS] [tiny/float32] store_bytes_per_token() agrees with the measured tensors  api=[1024, 128] measured=[1024.0, 128.0]
+  [PASS] [tiny/float32] persist write_chunks==write_chunk no worse than legacy's  legacy max_abs=5.588e-09 (11218/16384 elems, rel=4.407e-07) | persist max_abs=3.725e-08 (1380/2048, rel=4.002e-07) | rel_floor=1.0e-06
+        -> legacy is ALSO not bit-identical here: PRE-EXISTING, reproduced on git-HEAD code alone, and absent when the funnel is removed at identical shapes => batched-vs-unbatched GEMM in the funnel's nn.Linear, not a QCMem or persist-path defect
+  [PASS] [tiny/float32] refuses persist on bottleneck_dim=0 (no funnel)  persist_bottleneck_latent=True but layers[resume_j-1] (index 3, type LlamaDecoderLayer) is
+  [PASS] [tiny/float32] refuses resume_j == bottleneck_layer (funnel not last in band)  persist_bottleneck_latent=True but layers[resume_j-1] (index 2, type LlamaDecoderLayer) is
+  [PASS] [tiny/float32] refuses resume_j > bottleneck_layer+1 (band reads full width)  persist_bottleneck_latent=True but layers[resume_j-1] (index 5, type LlamaDecoderLayer) is
+  [PASS] [tiny/float32] refuses resume_j == 0 (empty write band)  persist_bottleneck_latent requires resume_j >= 1 (the funnel must be inside the write band
+  [PASS] [tiny/float32] persist read rejects full-width cached pieces  persist_bottleneck_latent read got a piece of width 256 but the funnel latent is 32-wide. 
+
+=== fixture tiny/bfloat16  hidden=256 d_bottle=32 layers=6 funnel@3 resume_j=4 device=cpu ===
+  [PASS] [tiny/bfloat16] default path == HEAD code (bottleneck arm, 9 tensors)  max_abs=0.000e+00 (worst write_sink) differing_elems=0
+  [PASS] [tiny/bfloat16] default path == HEAD code (VANILLA bottleneck_dim=0)  max_abs=0.000e+00 (worst write_sink) differing_elems=0
+  [PASS] [tiny/bfloat16] persist ON == persist OFF (read-side logits)  max_abs=0.000000e+00 (worst read, |logit|max=1.078, tol=1.078e-02) differing_elems=0/31868
+        per-tensor: read:0.000e+00/0  read_tail:0.000e+00/0  resume_ids:0.000e+00/0  decode:0.000e+00/0
+        -> BIT-IDENTICAL (0 differing elements over 31868)
+  [PASS] [tiny/bfloat16] measured bytes/token ratio == hidden/d_bottle  512.0 -> 64.0 B/tok = 8.0000x (expected 8.0000x); shapes (1, 12, 256) -> (1, 12, 32)
+  [PASS] [tiny/bfloat16] store_bytes_per_token() agrees with the measured tensors  api=[512, 64] measured=[512.0, 64.0]
+  [PASS] [tiny/bfloat16] persist write_chunks==write_chunk no worse than legacy's  legacy max_abs=0.000e+00 (0/16384 elems, rel=0.000e+00) | persist max_abs=0.000e+00 (0/2048, rel=0.000e+00) | rel_floor=1.0e-03
+        -> both BIT-IDENTICAL
+  [PASS] [tiny/bfloat16] refuses persist on bottleneck_dim=0 (no funnel)  persist_bottleneck_latent=True but layers[resume_j-1] (index 3, type LlamaDecoderLayer) is
+  [PASS] [tiny/bfloat16] refuses resume_j == bottleneck_layer (funnel not last in band)  persist_bottleneck_latent=True but layers[resume_j-1] (index 2, type LlamaDecoderLayer) is
+  [PASS] [tiny/bfloat16] refuses resume_j > bottleneck_layer+1 (band reads full width)  persist_bottleneck_latent=True but layers[resume_j-1] (index 5, type LlamaDecoderLayer) is
+  [PASS] [tiny/bfloat16] refuses resume_j == 0 (empty write band)  persist_bottleneck_latent requires resume_j >= 1 (the funnel must be inside the write band
+  [PASS] [tiny/bfloat16] persist read rejects full-width cached pieces  persist_bottleneck_latent read got a piece of width 256 but the funnel latent is 32-wide. 
+
+========================================================================
+wrote /tmp/b01_final_cpu.json
+ALL CHECKS PASSED

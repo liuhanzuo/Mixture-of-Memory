@@ -1,0 +1,3 @@
+HEAD-only CUDA bf16 funnel=True: write_chunks vs write_chunk max_abs=1.5625e-02 differing=3764/393216 absmax=6.875
+HEAD-only CUDA bf16 funnel=False: write_chunks vs write_chunk max_abs=0.0000e+00 differing=0/393216 absmax=14.688
+bare Linear 4096->512 CUDA bf16 B=2 vs B=1: max_abs=3.9062e-03 differing=82/49152

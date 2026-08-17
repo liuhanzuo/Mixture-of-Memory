@@ -1,0 +1,85 @@
+{
+ "failures": [],
+ "results": {
+  "ckpt": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/qwenbott_funnel_L12_d512/final.pt",
+  "arch_meta": {
+   "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
+   "bottleneck_layer": 12,
+   "bottleneck_dim": 512,
+   "unfreeze_from": 12,
+   "seq_len": 2048,
+   "hidden_size": 4096,
+   "num_hidden_layers": 36,
+   "n_params": 8194929664,
+   "n_trainable": 5257242624
+  },
+  "resume_j": 13,
+  "device": "cuda",
+  "chunks": 3,
+  "chunk_size": 256,
+  "query_len": 64,
+  "equivalence": {
+   "read": {
+    "max_abs": 0.0,
+    "mean_abs": 0.0,
+    "differing_elems": 0,
+    "n": 126562688,
+    "absmax_logit": 17.0
+   },
+   "read_tail": {
+    "max_abs": 0.0,
+    "mean_abs": 0.0,
+    "differing_elems": 0,
+    "n": 1215488,
+    "absmax_logit": 8.9375
+   },
+   "decode": {
+    "max_abs": 0.0,
+    "mean_abs": 0.0,
+    "differing_elems": 0,
+    "n": 607744,
+    "absmax_logit": 9.1875
+   }
+  },
+  "greedy_toks": {
+   "off": [
+    782,
+    2090,
+    288,
+    11
+   ],
+   "on": [
+    782,
+    2090,
+    288,
+    11
+   ]
+  },
+  "bytes_per_token": {
+   "legacy_measured": 8192.0,
+   "persist_measured": 1024.0,
+   "ratio_measured": 8.0,
+   "ratio_expected": 8.0,
+   "legacy_shape": [
+    1,
+    64,
+    4096
+   ],
+   "persist_shape": [
+    1,
+    64,
+    512
+   ],
+   "legacy_dtype": "torch.bfloat16",
+   "persist_dtype": "torch.bfloat16",
+   "api": [
+    8192,
+    1024
+   ],
+   "ctx_total_bytes": [
+    6291456,
+    786432
+   ]
+  }
+ }
+}

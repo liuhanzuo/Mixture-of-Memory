@@ -1,0 +1,7 @@
+/tmp/b01_prewrite2.py:38: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /root/source/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:822.)
+  print(f"    bare Linear B=2 vs B=1 {dt}: max_abs={float((y_b.double()-y_1.double()).abs().max()):.4e} differing={int((y_b!=y_1).sum())}/{y_b.numel()}")
+HEAD-only FUNNEL torch.float32: max_abs=6.9849e-09 differing=11271/16384
+    bare Linear B=2 vs B=1 torch.float32: max_abs=6.1095e-07 differing=1376/1536
+HEAD-only FUNNEL torch.bfloat16: max_abs=0.0000e+00 differing=0/16384
+    bare Linear B=2 vs B=1 torch.bfloat16: max_abs=0.0000e+00 differing=0/1536

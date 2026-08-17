@@ -750,6 +750,18 @@ def main():
     parser.add_argument("--reuse_kv_blockdiag", action="store_true", default=False,
                         help="QCMem ablation (ii): block-diagonal read attention. "
                              "Only valid with --top_prepay_b 0 and --baseline none.")
+    parser.add_argument("--persist_bottleneck_latent", action="store_true",
+                        default=False,
+                        help="B01: cache the d_bottle-wide funnel latent instead "
+                             "of the restored full-width h_j (the funnel's `up` is "
+                             "deferred to the read side). Requires "
+                             "--bottleneck_ckpt with bottleneck_dim>0 and "
+                             "--resume_j == bottleneck_layer+1; the read-side "
+                             "logits are unchanged (equivalence measured by "
+                             "scripts/qcmem_bottleneck_persist_selftest.py), only "
+                             "bytes/token of the STORE drops by "
+                             "hidden_size/d_bottle. Default off keeps every "
+                             "existing number byte-identical.")
     parser.add_argument("--lora_adapter", type=str, default="",
                         help="Optional path to a trained QCMem-distill LoRA "
                              "adapter dir (Direction A). Mutually exclusive with "
@@ -954,6 +966,19 @@ def main():
         parser.error("--reuse_kv_blockdiag is a QCMem ablation and is incompatible "
                      "with --baseline (kvdirect/hcache pack all chunks with the "
                      "standard causal read).")
+    if args.persist_bottleneck_latent:
+        # Fail EARLY and LOUDLY rather than after the 16 GB checkpoint load, and
+        # never silently: the whole point of this flag is a storage claim, and a
+        # quiet fallback to the full-width path would report an 8x saving it did
+        # not get. (QCMemModel also refuses, but that is after model load.)
+        if not args.bottleneck_ckpt:
+            parser.error("--persist_bottleneck_latent requires --bottleneck_ckpt "
+                         "(there is no funnel to defer on a stock backbone).")
+        if args.baseline != "none":
+            parser.error("--persist_bottleneck_latent is a QCMem write/read path "
+                         f"and is incompatible with --baseline {args.baseline}.")
+        if args.top_prepay_b != 0:
+            parser.error("--persist_bottleneck_latent requires --top_prepay_b 0.")
     if no_retrieval and args.selector == "oracle":
         print("[QCMem-LoCoMo] baseline packs all chunks -> selector 'oracle' "
               "has no effect (ignored).")
@@ -1034,6 +1059,20 @@ def main():
         print(f"[QCMem-LoCoMo] funnel-Qwen: arch_meta {meta_path} -> "
               f"bottleneck_layer={b_layer} bottleneck_dim={b_dim} "
               f"num_hidden_layers={meta.get('num_hidden_layers')}")
+        if args.persist_bottleneck_latent:
+            # These are ERRORS, not warnings: on the persist arm the RECOMMENDED
+            # resume_j is mandatory, because deferring `up` is only exact when the
+            # funnel is the last layer of the write band.
+            if b_dim <= 0:
+                parser.error("--persist_bottleneck_latent needs a funnel checkpoint "
+                             f"(arch_meta bottleneck_dim={b_dim}); "
+                             f"{args.bottleneck_ckpt} is the stock-continued control.")
+            if args.resume_j != b_layer + 1:
+                parser.error("--persist_bottleneck_latent requires --resume_j == "
+                             f"bottleneck_layer+1 = {b_layer + 1}; got "
+                             f"{args.resume_j}. At any other j the store would "
+                             "hold a full-width hidden and the reported "
+                             "bytes/token saving would be false.")
         inject_bottleneck(model, b_layer, b_dim, dtype)
         ck = torch.load(args.bottleneck_ckpt, map_location="cpu")
         state = ck.get("model_state", ck)
@@ -1058,7 +1097,17 @@ def main():
         sys.exit(0 if ok else 1)
 
     qc = QCMemModel(model, resume_j=args.resume_j, top_prepay_b=args.top_prepay_b,
-                    block_diagonal=args.reuse_kv_blockdiag)
+                    block_diagonal=args.reuse_kv_blockdiag,
+                    persist_bottleneck_latent=args.persist_bottleneck_latent)
+    if args.persist_bottleneck_latent:
+        # B01's mandatory reported quantity: bytes/token of what is WRITTEN.
+        # Printed unconditionally so the number lands in every arm's log rather
+        # than being reconstructed later from the architecture.
+        print(f"[QCMem-LoCoMo] persist_bottleneck_latent=True: store holds the "
+              f"{qc._funnel_dim}-wide funnel latent; "
+              f"store_bytes_per_token={qc.store_bytes_per_token()} "
+              f"(full-width would be "
+              f"{qc.hidden_size * (2 if dtype in (torch.bfloat16, torch.float16) else 4)})")
 
     # --- load LoCoMo data + flatten to (conv x QA) samples in a stable order ---
     samples = build_locomo_samples(data_path)

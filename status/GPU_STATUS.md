@@ -1,14 +1,94 @@
-# GPU_STATUS.md — 5 节点单一事实来源
+# GPU_STATUS.md — 单一事实来源
 
-**最后实测 2026-08-17 11:57 GMT+8（heartbeat）。32/40 卡占用，LOCAL 8 卡空闲（**故意**）。每节点 8 个 compute PID + 单一 owning script = 无抢卡。四臂全部 0 个 Traceback/OOM/ChildFailedError。**
+**最后实测 2026-08-17 12:50 GMT+8。⚠️ 集群从 5 节点/40 卡 变成 6 节点/48 卡：新增 `.25`（8×B200，第三个盘）。**
+32/48 卡占用；LOCAL 8 卡（B01 agent 在用/待用）+ `.25` 8 卡（刚接入，零资产）。四个训练臂全部 0 Traceback/OOM。
 
-| 节点 | 硬件 | 盘 | 在跑 | ckpt step | log step | 显存/卡 | util | amortised s/step（**ckpt mtime**） | baseline | ckpt 年龄/周期 | 判定 |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| LOCAL(=.21) | 8×B200 sm_100 | wzc1 | **IDLE** | — | — | 0 MiB | 0% | — | — | — | 三判据齐（0 MiB + 0% + 0 PID）；**故意空闲 → 见下方章节** |
-| `.212` | 8×B200 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | **61000** | 61340 | 157.8 GB | 100% | **2.4520 / 2.4480** | 2.4500 | 13.7 / 20.4 min | healthy 1.000× — ETA 08-21 10:16 |
-| `.73` | 8×H20 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` + eval watcher | **196000** | 196200 | 96.4 GB | 99-100% | **7.9200 / 7.9140** | 7.9160 | 26.9 / 65.9 min | healthy 1.000× — **剩 ~3800 步 ≈ 8.4 h** |
-| `.82` | 8×H20 | zwfy6 | `olmo2_probe2_7B_keep8fresh2` | **171500** | 171780 | 78.5 GB | 100% | **5.8580 / 5.8620** | 5.8640 | 27.5 / 48.8 min | healthy 1.000× — ETA 08-19 09:53 |
-| `.104` | 8×H20 | zwfy6 | `paperC_qwen3base_heal_k8f2` | **72000** | 72240 | 78.8 GB | 99-100% | **5.8380 / 5.8420** | 5.8380 | 23.9 / 48.7 min | healthy 1.000× — ETA 08-26 03:33 |
+## ★★ 2026-08-17 拓扑纠正：我们的「5 节点集群」本身就是 taiji 的 pod
+
+`get_general_train_instance_docker_ip` 按 task_id 反查容器 IP，实测五台全部命中：
+
+| taiji task_id | pod IP | 我们叫它 | namespace | 盘 |
+|---|---|---|---|---|
+| `basic_train_pighzliu_20260710175554_15fc7d86` | 28.89.19.21 | LOCAL | `…-wzc3` | wzc1 |
+| `basic_train_pighzliu_20260713190850_5eba9dcd` | 28.89.18.212 | `.212` | `…-wzc3` | wzc1 |
+| `basic_train_pighzliu_20260711153303_3c9c4fd4` | 28.85.35.73 | `.73` | `…-zhongwei-2` | zwfy6 |
+| `basic_train_pighzliu_20260712232924_6e275d82` | 28.82.250.82 | `.82` | `…-zhongwei-2` | zwfy6 |
+| `basic_train_pighzliu_20260710180127_a0e13a61` | 28.83.24.104 | `.104` | `…-zhongwei-2` | zwfy6 |
+| `pighzliu_train3`（inst `8b1d89c79ffa5b95019ffef255bc07b9`） | **28.197.251.25** | **`.25`（新）** | `…-wzz-1` | **wzz** |
+
+**推论**：`root` 密码可由 `auth.passwd` 字段直接取得，**不用扫 `configs/password_*.txt`**
+（我扫了 19 个全 `rc=5`，其实一条 MCP 调用就有）。「节点重启抹掉 conda/sshpass」= **pod 被重建**。
+**taiji 不是「集群之外的另一个算力池」，它就是同一个池子**，我们只是从 pod 内部看它。
+
+## ★★ 第三个盘 `/apdcephfs_wzz`（share_**303419932**，注意 share ID 都不同）
+
+`.25` 上 `ls -d /apdcephfs*` **只有** `/apdcephfs_wzz`；`/apdcephfs_wzc1` 和 `/apdcephfs_zwfy6`
+**都不存在**（不像 `.73` 有 symlink 兜底）。盘上只有 `hunyuan/common` + `test/` ——
+**没有仓库、没有模型、没有数据**。41T 已用 39T = **96% 满，仅剩 1.9T**；
+另有 **23 TB 空闲本地 overlay `/`**（但随 pod 销毁）。
+
+**跨盘带宽实测 7.88 MB/s = 27.7 GB/h**（1 GiB `scp -O` 130 s，两端 md5 一致
+`ec88eb4023898f813471944959e9eec3`，探针已双侧删除）。→ 代码 ~2 GB ≈ **4 min**；
+8B 模型/ckpt 16.4 GB ≈ **35 min**；OLMo2-7B ckpt 39 GB ≈ **1.4 h**。
+比 wzc1↔zwfy6 的 19.2 MB/s 慢 2.4×，但代码/单模型量级完全可接受。
+工具差异：`.25` 有 `rsync`/`scp`/`git` **无 `sshpass`**；本机 **无 `rsync`**（用 `scp -O`）。
+
+## ★ 用户盘策略（2026-08-17，覆盖此前的对称假设）
+
+> 「wzc1 当作主要的盘，以后需要什么就往其他地方 transfer 什么。**模型可以留下但代码最好每次训练都新传**。」
+
+**wzc1 = canonical**。模型/ckpt 远端常驻；**代码每次训练前重传，或先验 sha256 逐文件一致**。
+⚠️ 不能用 commit 比对：实测 wzc1 **解析不出** zwfy6 的 HEAD `2d98c5a`
+（`git cat-file -t` → `could not get object info`），且 zwfy6 有 **1194** 个未提交改动
+→ **「远端是否最新」在 git 层面无法回答**，只能比文件内容。
+
+| 节点 | 硬件 | 盘 | 在跑 | ckpt step | amortised s/step（**ckpt mtime**） | baseline | 判定 |
+|---|---|---|---|---|---|---|---|
+| LOCAL(=.21) | 8×B200 sm_100 | wzc1 | B01 persist-path agent（0-GPU 主体） | — | — | — | 8×0 MiB；agent 在改代码，GPU 待用 |
+| **`.25`（新）** | **8×B200 sm_100**（`nvidia-smi` 老实报 `NVIDIA B200`） | **wzz** | **空闲，零资产** | — | — | — | 8×0 MiB / 0% / 0 PID；192 vCPU、1993 GB RAM、torch 2.8.0 见 8 卡 |
+| `.212` | 8×B200 | wzc1 | `olmo2_probe2_7B_keep14fresh2_distill` | 61000 | 2.4520 / 2.4480 | 2.4500 | healthy — ETA 08-21 10:16 |
+| `.73` | 8×H20 | zwfy6 | `olmo2_probe2_7B_keep12fresh2` + eval watcher | **196500** | **7.9200**（196000→196500 = 66.0 min） | 7.9160 | healthy 1.000× — 剩 3500 步 ≈ 7.7 h |
+| `.82` | 8×H20 | zwfy6 | `olmo2_probe2_7B_keep8fresh2` | 171500 | 5.8580 / 5.8620 | 5.8640 | healthy — ETA 08-19 09:53 |
+| `.104` | 8×H20 | zwfy6 | `paperC_qwen3base_heal_k8f2` | 72000 | 5.8380 / 5.8420 | 5.8380 | healthy — ETA 08-26 03:33 |
+
+> ⚠️ `.25` 的 `nvidia-smi` **老实报 `NVIDIA B200`**，而 LOCAL/`.212` 报 `L20A`。
+> → **name 字符串不可靠是那两台的局部问题，不是全局规律**（见
+> `memory/l20a-name-string-is-really-b200-sm100.md`）。判代际一律看 `compute_cap`（10.0）。
+
+## ★ taiji 可动用配额（实测，2026-08-17）
+
+我们自己的组 `TaiJi_HYAide_Pretrain_Test`，真正能拿的是 **`min(quota_free, phys_free)`**：
+
+| 卡型 | quota_total | used | quota_free | phys_free | **可动用** |
+|---|---|---|---|---|---|
+| **H800** | 384 | 184 | 200 | 295（nanjing-4） | **200 → 25 个 8 卡节点** |
+| H20 | 1016 | 1004 | 12 | 1950（zhongwei-1/2） | 12 |
+| L20A | 32 | 8 | 24 | 48（wzz-1） | 24 |
+| L20A（第二条） | 0 | 16 | **−16（已超配）** | — | 0 |
+| A800 | 16 | 16 | 0 | 16 | 0 |
+
+**只看物理会高估**（H800 物理 295 但配额只给 200）；**只看配额会漏掉超配的负数**。
+全 31 组 normal free 合计 1357 卡；elastic 另有 Exp2_GY_L40S free=595、hy_exp_SH_A100H free=488。
+两盘 ceph 可达性已验（`query_storage_cluster_free_space` 对 wzc1/zwfy6 均 rc=0）。
+
+**待定的关键问题**：taiji 提交新任务能否指定挂 `share_304376610`（我们的项目盘）？
+能 → rsync 问题消失，200 张 H800 立即可用。已派 workflow `wf_d11287fd-a9f` 查证。
+
+## 为什么 LOCAL 之前空着 —— 我报的理由每条都真，但整体结论错了
+
+三条理由（proposal `0 ready_gpu`、keep10 eval 要 sm_90、#245 是 211 GPU-h 未启动）都经得起核，
+但它们回答的是「**这 40 卡里有没有活**」，而用户问的是「**为什么空着**」。
+我把「集群」默认成 CLAUDE.md 里那 5 节点 —— **范围错误，不是事实错误**，所以自查抓不到。
+另外 B01 的 blocker 是**可以派人关的 0-GPU 代码缺口**，我却连报数轮当 blocker
+（见 `memory/reporting-a-gap-is-not-closing-it.md`）。
+
+## ⚠️ 仍然有效的测量陷阱
+
+1. **速率只能用 ckpt mtime**：watcher 每 300 s 采样而 log 每 20 步一行 → aliasing，
+   众数高估（7.50）、跨界窗口低估（8.33），**两个统计量都不收敛**。真值 7.919。
+2. **单点 util 不是状态**：低 util 单次读数总落在 GPU0（rank-0 干额外活）。决定性证据是 ckpt 间隔。
+3. **「文件不存在」现在要查三个盘**（wzc1 / zwfy6 / **wzz**）才成立。
+
 
 > ### ★ 判「ckpt 年龄接近周期」时：用 log 位置做**可证伪的预测**，然后等它落地
 > 11:27 `.73` 的 ckpt 年龄 62.8 min vs 65.9 min 周期 —— 本轮最贴边的一次。
