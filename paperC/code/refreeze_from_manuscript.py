@@ -308,11 +308,62 @@ def copy_tree(src, dst):
     return written
 
 
+def screen_sources(cited):
+    """Screen the SOURCE files a freeze would copy, before DEST is touched.
+
+    WHY THIS RUNS FIRST -- a refusal must not be destructive.
+    --------------------------------------------------------
+    Measured 2026-08-17. main() used to rmtree(DEST) and only screen afterwards, so a
+    refusal DELETED the existing snapshot it declined to replace: round_06's
+    submission_complete (51 files, snapshot 16171eef...) was wiped by a refusal caused by
+    a leak in a file the new freeze had not even reached yet. It was recoverable only
+    because those 52 files happened to be committed at ca33a17.
+
+    A guard whose failure path destroys the artifact it protects is worse than no guard on
+    the day it fires. So: screen the sources, refuse before any mutation, and leave the
+    previous snapshot exactly as it was.
+
+    Expands cited DIRECTORIES the same way copy_tree does. That matters -- my own
+    pre-flight check screened only the top-level cited paths and reported "clean", while
+    the real leak sat in evidence/mmlu_scale_power/mmlu_pro_power_nulls_v2.json, a file
+    INSIDE a cited directory. The screen must walk what the copier walks.
+    """
+    leaks = []
+    for rel in cited:
+        src = ROOT / rel
+        if not src.exists():
+            continue                      # absent -> reported separately by main()
+        if src.is_dir():
+            for f in sorted(src.rglob("*")):
+                if f.is_file():
+                    leaks += screen_blind(f, str(Path(rel) / f.relative_to(src)))
+        else:
+            leaks += screen_blind(src, rel)
+    return leaks
+
+
 def main():
     cited = cited_paths()
     if not cited:
         print("CANNOT FREEZE: no evidence/ or code/ paths extracted from sections/*.tex")
         return 3
+
+    # NON-DESTRUCTIVE REFUSAL: screen before DEST is touched. See screen_sources.
+    leaks = screen_sources(cited)
+    if leaks:
+        print("REFUSING TO FREEZE: review-process language in artifacts a blind "
+              "reviewer would receive.")
+        for rel, ln, tok, line in leaks[:20]:
+            print(f"  {rel}:{ln}  [{tok}]  {line}")
+        if len(leaks) > 20:
+            print(f"  ... and {len(leaks) - 20} more")
+        print("\nRepair: point the citation (claim_evidence_map.tsv row, or the prose)\n"
+              "at a de-attributed record -- e.g. evidence/<name>_shippable.json -- which\n"
+              "keeps every number and drops only 'who raised it in which round'.\n"
+              "Do NOT excuse the file here: dropping it recreates the round_04 defect\n"
+              "where the artifact lacked evidence the paper promises.\n"
+              f"\nThe existing snapshot at {DEST} was NOT modified.")
+        return 4
 
     if DEST.exists():
         shutil.rmtree(DEST)
@@ -326,18 +377,23 @@ def main():
             continue
         written += copy_tree(src, DEST / rel)
 
-    # BLINDNESS SCREEN, fail closed, BEFORE the manifest is written. Runs on what was
-    # actually copied, not on the source list, so a directory pulled in wholesale is
-    # screened file by file. See screen_blind's docstring: this tool shipped two
-    # reviewer-quoting records into round_06 because it had no such screen.
+    # BACKSTOP SCREEN on what was actually COPIED. screen_sources() above already
+    # refused any leak before DEST was touched, so this should never fire -- it exists
+    # because the two screens walk different things (source tree vs written set) and a
+    # divergence between them is itself a bug worth catching loudly.
+    #
+    # The rmtree here is safe in a way the old pre-screen one was NOT: by this point DEST
+    # contains only files this run just wrote, so removing it cannot destroy a previous
+    # snapshot. That is exactly the distinction the 2026-08-17 incident turned on.
     leaks = []
     for p in written:
         if p.is_file():
             leaks += screen_blind(p, str(p.relative_to(DEST)))
     if leaks:
-        shutil.rmtree(DEST)          # never leave a leaking snapshot on disk
+        shutil.rmtree(DEST)          # only newly-written files -- see note above
         print("REFUSING TO FREEZE: review-process language in artifacts a blind "
-              "reviewer would receive.")
+              "reviewer would receive. (Reached the BACKSTOP screen, which means "
+              "screen_sources missed it -- the two screens disagree and that is a bug.)")
         for rel, ln, tok, line in leaks[:20]:
             print(f"  {rel}:{ln}  [{tok}]  {line}")
         if len(leaks) > 20:
