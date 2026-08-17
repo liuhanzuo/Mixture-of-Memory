@@ -34,3 +34,47 @@ A-07 的 "Residual risk" 段**方向写反了**：它精准点名了这个文件
 - 一个 agent 在做别的事时发现比自己 brief 更大的问题、如实上报且不自行改动任何 reviewer 分数 —— **这是正确处理**，要在落账里明确 credit。
 
 见 [[a-hardcoded-list-in-an-emitter-silently-defines-a-headline]]、[[reviewer-observation-right-attribution-may-be-mine]]、[[repo-checkers-are-writers-not-probes]]。
+
+---
+
+## ★ 2026-08-17：同一个病的第三种外衣 —— 词表查得对，但**换成转述就漏**
+
+今天给 `refreeze_from_manuscript.py` 补了 fail-closed blindness screen（它此前**一个屏蔽都没有**），
+词表是 `reviewer|referee|rebuttal|round_0N|NEEDS_REVISION|meta-review|blind review`。
+它确实抓住了真泄漏（`s2_02` 6 行、`s2_03` 2 行，含 `"reviewer_verdict": "NEEDS_REVISION"`）。
+
+**但它挡不住转述。** 反证来自去归属工作本身：agent 写的第一版替换措辞是
+
+> `an audit found, **in several independent readings**, that ...`
+
+**这仍然告诉盲审「有好几个人独立读过」**，而我的词表**放行**。实测同样放行的还有：
+
+| 句子 | 泄漏了什么 |
+|---|---|
+| `four of six independent readers flagged this` | **轮次的人数 + 票数分布** |
+| `multiple independent assessors agreed` | 存在评审团 |
+| `three of the five reports raised it` | 人数 + 票数 |
+
+**这和 round 00-02 那次是同一个病**：我查的是「评审过程的词汇」，不是「有没有泄漏这件事」。
+**「N 个中的 M 个」这种计数构造本身就是泄漏，不管它用什么名词。**
+
+### 修法：加第二个 pattern 查「形状」而不是「词汇」
+
+`_BLIND_SHAPE`：`<N> of <the>? <N> <人称名词>` 以及 `several|multiple|<N> independent <人称名词>`，
+名词表**故意收窄**（readers/readings/assessors/evaluators/respondents/panellists/reports/
+critiques/referees/opinions），这样普通研究文句不会误报。
+
+**19 个控制**：5 个转述全抓；9 个普通句全放行 —— 包括必须活下来的**真 paperC 正文**
+`13 of 27 clear the floor by more than 0.2992 pp`、`0/60 near-unanimous vs 3/12 minority`、
+`15 of 15 cells`、`we independently verified`；回归：两个泄漏文件仍 6/2 命中，两个 `_shippable` 仍 0，
+19 个 cited path 无新误报。commit `56ea891`。
+
+### How to apply（补强本文件开头那条）
+
+- **写屏蔽器时，词表只是第一层。** 第二层必须问：「**不用这些词**，能不能说出同一件事？」
+  能，就补一个查**构造**的 pattern。
+- **让别人（agent）去改措辞时，不能只靠屏蔽器验收** —— 屏蔽器的盲区正好是措辞自由度最大的地方。
+  这次是 agent 自己 grep 了屏蔽器覆盖不到的归属词才发现，值得记：**它报告了自己的失败**。
+- **同族**：[[a-green-checker-covers-only-what-it-targets]]（绿灯只覆盖它瞄准的东西）、
+  [[selftest-over-invented-inputs-proves-nothing-about-the-pipeline]]。
+  共同点：**通过 ≠ 安全，只等于「我列举的那些没中」。**
