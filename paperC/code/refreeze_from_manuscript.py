@@ -161,6 +161,81 @@ def sha256(p):
     return h.hexdigest()
 
 
+# Review-process language that must never reach a blind reviewer. Anchored on words that
+# name the PROCESS (which round, whose verdict), not on words a paper legitimately uses
+# about its own statistics -- "revision" alone would fire on prose about revising a bound.
+#
+# ⚠️ NO \b AROUND THE NOUNS. `_` is a word character, so `\breviewer\b` does NOT match
+# `"reviewer_counterexample_reproduced"` -- and a JSON KEY NAME is the single most common
+# shape these leaks take. Measured 2026-08-17: my first version of this screen reported 5
+# leaks in s2_02 where grep reported 6 lines; the missed line was exactly that key, at
+# line 8. A screen that under-counts relative to a one-line grep is not a screen.
+#
+# The boundary is therefore hand-built: a preceding non-letter, and a trailing character
+# that is anything EXCEPT a letter -- `_`, `"`, `:`, space and end-of-line all count as
+# boundaries, so `reviewer_x` and `"reviewer":` fire, while `interviewer` (letter before)
+# and `refereed` (letter after) do not. Both look-alikes are in the controls; `refereed`
+# was a real false positive in the version before this one, caught by the negative control
+# rather than by inspection, which is the argument for having the negative control.
+_BLIND_FATAL = re.compile(
+    r"round_0[0-9]"
+    r"|(?<![A-Za-z])(?:reviewer|referee|rebuttal)(?![A-Za-z])"
+    r"|NEEDS_REVISION"
+    r"|(?<![A-Za-z])meta.review(?![A-Za-z])"
+    r"|(?<![A-Za-z])blind.review(?![A-Za-z])", re.I)
+
+
+def screen_blind(path, rel):
+    """Return the review-process leaks in one file, as (lineno, text) pairs.
+
+    WHY THIS EXISTS -- this tool created the defect it now blocks.
+    ------------------------------------------------------------
+    Measured 2026-08-17 on round_06/submission_complete/evidence/. This freezer shipped
+    `s2_02_stratified_ordering.json` and `s2_03_symmetric_inference.json` BYTE-IDENTICAL
+    to the live tree, and those files contain, in plain text:
+
+        "round_01_review_findings": { ... }
+        "reviewer_verdict": "NEEDS_REVISION -- the retraction is arithmetically exact..."
+        "reproduced from integer counts independently by the round_01 reviewer"
+
+    A blind reviewer handed that artifact learns that a previous round demanded revision
+    and what it said -- the same class of breach that VOIDED the round 00-02 scores (see
+    memory/blindness-check-must-grep-writer-steering-not-just-panel-words.md).
+
+    The causal chain is two of my own repairs composing into a new defect:
+      1. round_04 shipped only 2 of 29 evidence files -> five reviewers docked the paper
+         for "the artifact does not contain the evidence it claims to publish".
+      2. Fix A (freeze_round.py): pack evidence by default instead of by hand-enumerated
+         whitelist. Fix B (this file + gate_cited_paths_in_artifact.py): also treat
+         claim_evidence_map.tsv rows as citations, because a round_05 reviewer found
+         H-02/H-04 cited there and absent from the snapshot.
+      3. Together they taught this tool to DEMAND exactly the two files whose contents
+         quote a reviewer -- and this tool, unlike freeze_round.py, had no blindness
+         screen at all (grep for screen_fatal/BLIND/LEAK_CONTENT returned 0 hits).
+
+    So the missing-evidence defect was converted into a blindness-leak defect, and the
+    gate that was supposed to certify the artifact was the thing requesting the leak.
+
+    FAIL CLOSED. A leak is not a warning: an artifact that discloses the review process
+    cannot be un-read once a reviewer has it, whereas a refused freeze costs one command.
+    The repair is to cite a de-attributed record (`*_shippable.json`) from the claim map,
+    NOT to add an exclusion here -- an exclusion would silently drop evidence the prose
+    promises, which is defect (1) again.
+    """
+    if path.suffix.lower() not in (".json", ".tsv", ".csv", ".md", ".txt", ".py", ".tex"):
+        return []
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return []
+    hits = []
+    for i, line in enumerate(text.splitlines(), 1):
+        m = _BLIND_FATAL.search(line)
+        if m:
+            hits.append((rel, i, m.group(0), line.strip()[:120]))
+    return hits
+
+
 def copy_tree(src, dst):
     """Copy a file or a directory, returning the list of files written."""
     written = []
@@ -197,6 +272,29 @@ def main():
             continue
         written += copy_tree(src, DEST / rel)
 
+    # BLINDNESS SCREEN, fail closed, BEFORE the manifest is written. Runs on what was
+    # actually copied, not on the source list, so a directory pulled in wholesale is
+    # screened file by file. See screen_blind's docstring: this tool shipped two
+    # reviewer-quoting records into round_06 because it had no such screen.
+    leaks = []
+    for p in written:
+        if p.is_file():
+            leaks += screen_blind(p, str(p.relative_to(DEST)))
+    if leaks:
+        shutil.rmtree(DEST)          # never leave a leaking snapshot on disk
+        print("REFUSING TO FREEZE: review-process language in artifacts a blind "
+              "reviewer would receive.")
+        for rel, ln, tok, line in leaks[:20]:
+            print(f"  {rel}:{ln}  [{tok}]  {line}")
+        if len(leaks) > 20:
+            print(f"  ... and {len(leaks) - 20} more")
+        print("\nRepair: point the citation (claim_evidence_map.tsv row, or the prose)\n"
+              "at a de-attributed record -- e.g. evidence/<name>_shippable.json -- which\n"
+              "keeps every number and drops only 'who raised it in which round'.\n"
+              "Do NOT excuse the file here: dropping it recreates the round_04 defect\n"
+              "where the artifact lacked evidence the paper promises.")
+        return 4
+
     # the manuscript itself, so a reader can follow the citations
     man = DEST / "manuscript"
     man.mkdir(exist_ok=True)
@@ -221,7 +319,13 @@ def main():
 
     manifest = {
         "schema_version": 2,
-        "round": 5,
+        # DERIVED from DEST, not typed. It read `"round": 5` while the tool was writing
+        # into round_06/ -- residue of the same hardcoded-destination bug recorded at
+        # resolve_dest() above. A manifest that misreports which round it belongs to
+        # breaks exactly the provenance the manifest exists to provide.
+        "round": int(DEST.parent.name.split("_")[1])
+        if DEST.parent.name.startswith("round_") else None,
+        "round_dir": DEST.parent.name,
         "paper": "paperC",
         "snapshot_sha256": digest.hexdigest(),
         "n_files": len(files),

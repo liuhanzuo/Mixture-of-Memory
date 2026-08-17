@@ -1,0 +1,1210 @@
+{
+  "schema_version": "1.0.0",
+  "what": "paperC round_04 merged issue ledger over ALL 12 blind reviews. Classifies every raised issue as A_packaging (artifact-packaging artefact, disappears once the complete snapshot ships) or B_real (a defect of the paper itself). Written by a merge/triage agent that is NOT a reviewer and does NOT edit the paper.",
+  "created": "2026-08-17",
+  "author": "merge agent (0 GPU, read-only)",
+  "snapshot_reviewed": "7fcb9ccc55c5c1d6ad1de868215b1d9253d0695a2f996340226aa6a6fa10db5a",
+  "repaired_snapshot": "ffd5fd7d8c3d8b30d44c684f03fb7261972e378e30eb33b032a5640788ab162f",
+  "reviews_merged": 12,
+  "reviews_with_machine_readable_issues": 9,
+  "reviews_prose_only": [
+    "R1-claude-novelty.md",
+    "R4-claude-clarity.md",
+    "R5-claude-repro.md"
+  ],
+  "scores": {
+    "R1-claude-novelty.md": 5,
+    "R4-claude-clarity.md": 5,
+    "R5-claude-repro.md": 5,
+    "R-claude-adversary.md": 5,
+    "R-claude-soundness.md": 6,
+    "R-claude-stats.md": 5.5,
+    "X1-codex-novelty.md": 5,
+    "X2-codex-soundness.md": 4,
+    "X3-codex-stats.md": 4,
+    "X4-codex-clarity.md": 4,
+    "X5-codex-repro.md": 4,
+    "X6-codex-adversary.md": 4
+  },
+  "score_summary": {
+    "n": 12,
+    "median": 5.0,
+    "mean": 4.708,
+    "min": 4,
+    "max": 6,
+    "lower_quartile": 4.0,
+    "all_below_gate_6.0": true,
+    "note": "12/12 below the 6.0 minimum gate. Recommendations: reject 5, weak_reject 5, borderline 1, weak_accept 1. This is the real result; nothing here is discounted for the packaging defect."
+  },
+  "prior_work_on_this_round": {
+    "PANEL_AGGREGATE_FINAL.json": "score aggregation + panel-offset note. NOT an issue merge.",
+    "meta/META_REVIEW.md + meta/meta_review.json": "independent meta-review, meta_score 4.5 weak_reject, adjudicates ~19 issue clusters and lists 9 unsupported claims + 17 prioritized actions. THIS LEDGER DOES NOT DUPLICATE IT: it (a) covers the issues the meta-review never reached, (b) adds the A_packaging/B_real split the meta-review only sketches in its section 6, (c) independently re-verifies the meta-review's own adjudications.",
+    "PACKAGING_DEFECT_20260816.md": "attribution document for the 2-of-29 evidence packaging failure."
+  },
+  "method": "Every issue in the 9 machine-readable reviews (76 total: 1 fatal + 54 major + 21 minor) plus every issue in the 3 prose reviews was read. Issues raising the same substantive defect are merged into one ledger entry with all raisers listed. A single review issue that mixes an A_packaging complaint with a B_real complaint is SPLIT across two entries.",
+  "issues": [
+    {
+      "issue_id": "B-01",
+      "title": "The MMLU-Pro balanced null cannot generate MMLU-Pro data; the flagship p<1e-5 is unattainable under any legal-support null",
+      "raised_by": [
+        "R-claude-adversary.md#ADV-1 (fatal)",
+        "R-claude-soundness.md#S-01 (major)",
+        "R-claude-stats.md#S1 (major)",
+        "R5-claude-repro.md#R5-01 (its stated fatal issue, prose-only)",
+        "X2-codex-soundness.md#STAT-CONSTRUCT-NULL (major)",
+        "X3-codex-stats.md#ER-01 (major)",
+        "X4-codex-clarity.md#X4-02 (major)",
+        "X5-codex-repro.md#R2 (major)",
+        "X6-codex-adversary.md#TS-1 (major)"
+      ],
+      "n_raisers": 9,
+      "severity": "fatal_contested_major",
+      "severity_note": "R-adversary rates fatal; R5 calls it its fatal issue; six others rate major; the meta-review downgrades ADV-1 to major because the reviewer's own limitations block says the corrected magnitude is unpinnable. I keep the split visible rather than collapsing it: the DIRECTION is deductively certain, the MAGNITUDE is not.",
+      "class": "B_real",
+      "class_reason": "Nothing about packaging. The contradiction is visible from two adjacent columns of the frozen tab_nulls.tex. Shipping E-CAL makes it EASIER to confirm, not to dismiss.",
+      "affected": [
+        "sections/tab_nulls.tex row 'MMLU-Pro, item-avg.'",
+        "sections/tab_construct_nulls.tex rows 1-2",
+        "sections/00_abstract.tex ('only three of the eight letter constructs (MMLU-Pro, MMLU, BoolQ) ... p<10^-5')",
+        "sections/01_introduction.tex bullet 1",
+        "sections/10_reproducibility.tex load-bearing property #1",
+        "evidence E-CAL"
+      ],
+      "diagnosis": "The caption defines the null as 'exactly balanced multinomial at that construct's own (n,k)' with k=10, so gold labels are drawn uniform over all ten letters on every item. The paper itself establishes n_opt in {3..10}, so letters above each item's n_opt are ILLEGAL. Because the balanced-10 null spreads mass over ten letters where legal data concentrates it on fewer, it depresses both E[f_hat] and q95 and therefore overstates significance.",
+      "required_action": "Re-run the E-CAL calibration for BOTH MMLU-Pro rows with each item's gold label drawn uniformly over that item's OWN legal letters, same seed (20260814), same draw count, same estimator f_hat=max_L m_hat_L. Publish the per-item n_opt histogram. Propagate the result honestly through abstract, intro bullet 1, both null tables, and the Reproducibility Statement even if the honest outcome is 'two of eight'. Mark MMLU-Pro's k column as varying.",
+      "verification_test": "Add an emitter assertion E[f_hat] >= Chance for every row of tab_construct_nulls. It must FAIL on the currently shipped MMLU-Pro item-average row and PASS after the fix. Second assertion: no simulated draw may place mass on a letter with index >= that item's n_opt. Third: MMLU and BoolQ p-values must be byte-unchanged (fixed k).",
+      "gpu_cost": "0 - re-analysis on the per-item records already on disk; the n_opt vector already exists because the v2 stratification consumes it.",
+      "my_verification": "CONFIRMED by direct recomputation from the frozen tables, no simulation. tab_nulls.tex row 2 prints Chance=0.110877 and E[f_hat]=0.104460 on the same line; the caption and A.1.4 define that Chance as mean(1/n_opt). Letter A is legal on every item (n_opt>=3), so under any legal balanced process E[m_A]=mean(1/n_opt)=0.110877 exactly, and f_hat=max_L m_L >= m_A forces E[f_hat]>=0.110877. The row prints E[f_hat]-Chance = -0.006417: the expectation of a maximum below the expectation of one of its own arguments. I applied the same test to all nine rows: 8/9 pass, the single violation is the MMLU-Pro item-average row, i.e. the paper's flagship. I ALSO CHECKED A NUANCE NO REVIEWER STATED: the 'naive' MMLU-Pro row is NOT self-contradictory, because its Chance is 1/k=0.100, not mean(1/n_opt); the deductive contradiction bites only the item-avg row. That narrows the deductive form to one row while leaving the support-illegality objection applicable to both.",
+      "confidence": "very_high (direction); low (magnitude: three independent reconstructions land 0.061-0.120, and a distribution-free bound gives >= ~0.010, but only the authors hold the true n_opt vector)",
+      "do_not_do": "Do not cite any reviewer's reconstructed corrected p (0.061-0.085, 0.064-0.087, 0.068-0.120) as a measurement. All three reviewers said so themselves."
+    },
+    {
+      "issue_id": "B-02",
+      "title": "A designated damaged arm 15.8x larger than the acknowledged exception is silently absent from the headline denominator, violating the paper's own stated disclosure rule",
+      "raised_by": [
+        "R-claude-adversary.md#ADV-2 (major)",
+        "R-claude-soundness.md#S-03(a) (major)",
+        "R1-claude-novelty.md §4 (its most severe unresolved issue, prose-only)",
+        "R4-claude-clarity.md#C-06 (minor)",
+        "R5-claude-repro.md#R5-08 (minor, prose-only)",
+        "X2-codex-soundness.md#DESIGN-DESIGNATED-DENOMINATOR (major)",
+        "X4-codex-clarity.md#X4-05 (major)"
+      ],
+      "n_raisers": 7,
+      "severity": "major",
+      "class": "B_real",
+      "class_reason": "Demonstrable from the frozen manuscript against itself. No evidence file is needed: both the promise and the tables that break it are in the shipped .tex.",
+      "affected": [
+        "sections/09a_relocated.tex:24 (the disclosure promise)",
+        "sections/04_experiments.tex:8 (arm inventory listing shortgpt16 and keep14 as OLMo-2 arms)",
+        "sections/00_abstract.tex + 01_introduction.tex:21 + 06_discussion.tex ('14/15')",
+        "sections/tab_mmlupro.tex (3 OLMo-2 rows only)",
+        "sections/tab_v2_full.tex:22 (shortgpt16 row)"
+      ],
+      "diagnosis": "09a_relocated.tex:24 promises verbatim: 'any damaged arm excluded from that denominator is named at the point of exclusion together with its own floor delta, so that no ratio is computed over an undisclosed subset.' 04_experiments.tex:8 lists OLMo-2 damaged arms as keep8, keep10, keep12, keep14 AND shortgpt16. tab_mmlupro carries only keep8/keep10/keep12. Neither keep14 nor shortgpt16 is named at any point of exclusion with its floor delta.",
+      "required_action": "Either (a) include shortgpt16, report 14/16, and rewrite the exception language to describe TWO exceptions (one immaterial, one material); or (b) name shortgpt16 and keep14 in the SAME sentence as the 14/15, each with its floor delta and v2 verdict, and state a construction-based reason for exclusion. Option (b) is legitimate only if the reason is demonstrably independent of the measured score, since the paper insists designation is 'fixed by construction, never by a measured score'.",
+      "verification_test": "grep the revised sources and require 'shortgpt16' to occur within the same paragraph as '14/15' or '14/16'. Emitter assertion: the arm set entering any designated-damaged denominator must equal the arm set labelled damaged in the inventory, with each set difference carrying non-empty exclusion_reason AND floor_delta_pp, exiting non-zero otherwise. The assertion must fail on the current manuscript.",
+      "gpu_cost": "0",
+      "my_verification": "CONFIRMED and I sharpened it. grep across all sections: 'shortgpt16' occurs exactly TWICE in the entire manuscript (04_experiments.tex:8 arm list, tab_v2_full.tex:22 data row). It is never discussed. Its floor delta is 100*(0.153341-0.116606) = +3.674 pp, which is 15.8x the +0.233 pp acknowledged exception (qwen3/k14) - I recomputed both, matching R1/R-adversary/meta exactly. Its v2 row reads Delta_perm=+4.054, hw=0.575, p=0.0001, verdict 'item-level signal', so it clears BOTH nulls decisively, and my own BH run over the 27 p-values puts it among the 6 survivors while keep14 is not. keep14 is a materially different case: its delta is printed in tab_v2_resort.tex:12 (+0.324, p=0.3234, 'at floor'), so only its EXCLUSION is undisclosed, not its number. TWO REVIEWERS EXPLICITLY BRACKETED THIS AND I ENDORSE THE BRACKET: R-adversary and R1 both wrote that they cannot rule out a defensible construction-based reason (shortgpt16 is ShortGPT-style pruning, not a depth rung). That changes the FIX, not the defect: the rule is stated and then not honoured for the one arm where honouring it costs something.",
+      "confidence": "very_high (the disclosure violation); medium (whether restatement to 14/16 is required vs disclosure sufficing)"
+    },
+    {
+      "issue_id": "B-03",
+      "title": "The only surviving global inferential claim uses a Bin(12,0.05) independence model that the paper itself denies eleven lines earlier",
+      "raised_by": [
+        "R-claude-adversary.md#ADV-3 (major)",
+        "R-claude-stats.md#S3 (major)",
+        "X1-codex-novelty.md#S1 (major)",
+        "X2-codex-soundness.md#STAT-DEPENDENT-COUNT (major)",
+        "X3-codex-stats.md#ER-02 (major)",
+        "X4-codex-clarity.md#X4-03 (major)",
+        "X5-codex-repro.md#R3 (major)",
+        "X6-codex-adversary.md#TS-3 (major)"
+      ],
+      "n_raisers": 8,
+      "severity": "major",
+      "class": "B_real",
+      "class_reason": "A self-contradiction inside one shipped .tex file. Packaging is irrelevant.",
+      "affected": [
+        "sections/09a_relocated.tex:26 (dependence invoked to DECLINE correction)",
+        "sections/09a_relocated.tex:37 + sections/05_analysis.tex:25 (independence assumed to MANUFACTURE 0.0196)"
+      ],
+      "diagnosis": "09a_relocated.tex:26: 'the cells share items, nest arms, and share a null, so the tests are neither independent nor exchangeable, and an off-the-shelf Bonferroni or Benjamini-Hochberg adjustment would not have a defensible family definition here.' Eleven lines later the same file computes P(X>=3 | Bin(12,0.05)) = 0.0196 from those same twelve decisions. Dependence is used to decline correction and then ignored to produce a global p-value. Under positive dependence the count's tail is heavier, so 0.0196 is anti-conservative.",
+      "required_action": "Replace Bin(12,0.05) with an item-level joint null: resample items once, recompute all 12 cells inside each resample, report the rejection-count distribution (the existing 10,000-resample paired-bootstrap machinery does this at no new measurement cost). OR demote 3/12 to a descriptive count and drop the probability. Do not present an independence-based global p while arguing dependence.",
+      "verification_test": "The reported aggregate p must come from the item-resampled joint distribution, not from Bin(12,0.05); the sentence containing 0.0196 must also carry P(X>=2)=0.1184; report the implied intra-class correlation.",
+      "gpu_cost": "0",
+      "my_verification": "CONFIRMED, and I read both sentences verbatim in the frozen 09a_relocated.tex (lines 26 and 44 region; the 0.0196 sentence is duplicated in 05_analysis.tex:25). Exact arithmetic with fractions.Fraction: P(X>=3|Bin(12,1/20)) = 0.019568 (paper prints 0.0196) - correct. The fragility is real and I recomputed it: P(X>=2) = 0.118360, a 6.05x jump that crosses alpha=0.05, so the claim is one cell from vanishing. P(X>=1) = 0.459640, so the floor side's own 1/12 does not clear the bar - which means the paper's chosen statistic is asymmetric in a second way nobody flagged: it is only 'significant' because the chance side happened to land on exactly 3. R-stats' beta-binomial sensitivity (rho=0.05 -> 0.0501, rho=0.10 -> 0.0678) is the sharpest constructive form and I accept it as plausible without independently reproducing the log-Beta computation.",
+      "confidence": "very_high"
+    },
+    {
+      "issue_id": "B-04",
+      "title": "v1 is presented as a pre-comparison / interface-validity gate, but subtracting a common constant provably cannot change any arm difference or ordering",
+      "raised_by": [
+        "X2-codex-soundness.md#TS-VALIDITY-GATE (major)",
+        "X3-codex-stats.md#TS-01 (major)",
+        "X4-codex-clarity.md#X4-01 (major)",
+        "X6-codex-adversary.md#TS-2 (major)"
+      ],
+      "n_raisers": 4,
+      "severity": "major_severity_disputed",
+      "severity_note": "All four codex reviewers rate major and it is a large part of why their technical_soundness medians are 2. The meta-review reduces the severity to a claim_narrowing fix, noting the paper already retracted the strong form in its own ledger (C-15) and the abstract already says 'necessary, not sufficient'. I keep both positions.",
+      "class": "B_real",
+      "class_reason": "Pure algebra plus wording. No evidence file involved.",
+      "affected": [
+        "sections/00_abstract.tex",
+        "sections/01_introduction.tex numbered question 1",
+        "sections/03_method.tex:14-18 decision rule",
+        "sections/tab_two_nulls.tex (the v1 column header 'Is this interface valid for comparing arms?')",
+        "sections/06_discussion.tex 'A reporting rule'"
+      ],
+      "diagnosis": "Delta_floor(A) - Delta_floor(B) = (acc(A)-f) - (acc(B)-f) = acc(A)-acc(B) exactly, so v1 cannot alter a pairwise difference or an ordering. Two arms can have a real reproducible difference while both sit below the floor; a systematically anti-aligned predictor can carry substantial item information at very low accuracy. The paper's own v2 analysis demonstrates that below-floor status is not equivalent to absence of item dependence.",
+      "required_action": "Narrow v1 from a comparability gate to an absolute above-constant reference. Rewrite the tab_two_nulls v1 question. State in one sentence that a common floor leaves pairwise differences invariant.",
+      "verification_test": "No sentence in abstract, intro, Section 3.1, any table header, the checklist or the discussion may infer invalidity or incomparability of arm differences from Delta_floor <= 0 alone. Test the wording against two explicit counterexamples: two distinct below-floor predictors, and a perfectly anti-aligned predictor.",
+      "gpu_cost": "0",
+      "my_verification": "The algebra is trivially correct and I confirm it. I also checked the mitigating evidence the meta-review cites and it is REAL: the frozen 00_abstract.tex does contain 'This floor is a necessary, not sufficient, validity condition', and the shipped evidence/claim_evidence_map.tsv row C-15 does read 'Clearing the floor certifies validity - Retracted - Clearing is necessary, not sufficient; failure disqualifies, success does not certify.' So the paper has already retracted the strong form in its own ledger. HOWEVER, the four reviewers are pointing at a DIFFERENT sentence: the tab_two_nulls.tex v1 column header still asks 'Is this interface valid for comparing arms?', which asserts exactly the retracted form in a table caption. Both sides are right about different sentences. My reading: the defect is real and localised to wording, and 'the ledger already retracted it' is a reason to fix the surviving instances, not a reason to score it lower.",
+      "confidence": "very_high (the algebra); the severity is genuinely contested and I preserve it"
+    },
+    {
+      "issue_id": "B-05",
+      "title": "recovery_fraction adjudicates the paper's single above-floor exception with no interval, and the propagated interval straddles its own 10% bar",
+      "raised_by": [
+        "R-claude-adversary.md#ADV-5 (minor)",
+        "R-claude-soundness.md#S-04 (minor)",
+        "R-claude-stats.md#S4 (major)",
+        "R5-claude-repro.md#R5-07 (major, prose-only)",
+        "X3-codex-stats.md#ER-06 (major)",
+        "X6-codex-adversary.md#TS-5 (major)",
+        "R-claude-soundness.md#S-10 (minor: the 0.10 materiality constant was fixed by a designer who had already seen these cells, per the paper's own pre-registration disclosure, and the sensitivity of the qwen3/k14 dismissal to the constant is never reported - a bar of 0.09 would have reversed the verdict)"
+      ],
+      "n_raisers": 7,
+      "severity": "major",
+      "class": "B_real",
+      "class_reason": "Demonstrable by propagating the paper's own printed half-width. The missing anchor is a manuscript-completeness gap, not a packaging gap.",
+      "affected": [
+        "sections/05_analysis.tex ('a real but immaterial exception')",
+        "sections/03_method.tex materiality rule ('at least 0.10 times the same-family intact anchor')",
+        "sections/tab_v2_full.tex rows 'Qwen3 k14' and 'Qwen3 intact'"
+      ],
+      "diagnosis": "Three compounding defects on one statistic. (a) NO INTERVAL: recovery_fraction is the only statistic in the paper with no CI, and it is the one that adjudicates the headline exception; propagating tab_v2_full's own half-width (0.188 on Delta_perm=0.267) gives a materiality-ratio interval of about [2.7%, 15.5%], which CONTAINS 10%. (b) UNPRINTED ANCHOR: '9.1% of the intact-family anchor' implies a Qwen3 intact anchor of 0.049/0.091 = 0.5385, which appears nowhere; the only printed intact recovery_fraction is Llama-2's 0.0545, and 0.049/0.0545 = 89.9%, so a reader using the one supplied anchor gets a number an order of magnitude off AND a verdict that inverts. (c) 0/0 AT THE LIMIT (R5-07): for a pure constant emitter both Delta_perm and the Delta_max headroom are zero, so the gate statistic is undefined rather than zero on exactly the class of arm the paper cares most about.",
+      "required_action": "Bootstrap recovery_fraction and its ratio to the intact anchor inside the existing 10,000 paired resamples, recomputing Delta_perm AND Delta_max per resample. Print the Qwen3 intact anchor at the point of use. Report the gate as indecisive if the interval straddles 0.10. Define the gate at Delta_max=0 or replace it. Additionally report the sensitivity of both gate firings to the constant over 0.05-0.20, or give a basis for 0.10, and acknowledge at the point of dismissal that the constant was set with knowledge of these cells.",
+      "verification_test": "The word 'immaterial' may appear only where the interval lies wholly below the bar. Report the CI for damaged recovery / intact recovery; require the upper 95% bound below 0.10 to verify immateriality.",
+      "gpu_cost": "0",
+      "my_verification": "CONFIRMED on the arithmetic. From printed 0.049 and '9.1% of the intact-family anchor', the implied anchor is 0.5385 and the bar is 0.05385, missed by 0.00485 - a 9.1%-vs-10% margin on a ratio of two estimated small quantities with no stated sampling distribution. I confirm the printed Llama-2 intact recovery_fraction 0.0545 gives 89.9%, so the only anchor the paper supplies inverts the verdict. R-soundness' framing is the sharpest and I verified the asymmetry it names: the paper prints the anchor where it BLOCKS a claim (Llama-2 'anchor blocked' in tab_v2_full) and omits it where it DISMISSES a counterexample (Qwen3 k14). I did not independently re-derive R-stats' Delta_max=5.437 pp; it is internally coherent with the printed 94.6% modal-A share but rests on a reconstruction. NOTE THE SEVERITY SPLIT: R-adversary and R-soundness rate this MINOR while R-stats/R5/X3/X6 rate it MAJOR. The major raters are the ones who propagated the interval; the minor raters flagged only the missing anchor. The propagation is what makes it major, so I record major. I ALSO VERIFIED R-soundness S-10's sensitivity point, which sharpens this issue and which no other reviewer made: the paper's own 03_method.tex pre-registration paragraph discloses that the 27 v2 numbers are 'post-hoc by construction because those cells had already been scored, and the designer had already seen the shape of the collapse defect'. That disclosure is correct and creditable, but it never carries through to the 0.10 constant, which is the SOLE reason the one above-floor counterexample is dismissed. The cell's ratio is 0.091, so a bar of 0.09 reverses the verdict. In 2/2 applications of the constant (qwen3/k14 at 0.91x the bar, Llama-2 intact at 0.545x) the choice of constant rather than the data is load-bearing.",
+      "confidence": "high"
+    },
+    {
+      "issue_id": "B-06",
+      "title": "'0/60 damaged cells clear their floor' is offered as near-unanimity while the same sentence says 52/60 are underpowered; the design expects only ~12 detections even if every arm truly cleared",
+      "raised_by": [
+        "R-claude-stats.md#S2 (major)",
+        "R-claude-adversary.md#ADV-3 (the 0/60 half, minor)",
+        "R-claude-soundness.md#S-03 (the reconciliation half)"
+      ],
+      "n_raisers": 3,
+      "severity": "major",
+      "severity_note": "Effectively a single-reviewer finding (R-stats S2) with an independent compatible route from R-adversary. The meta-review judges it the strongest statistical finding in the panel outside the calibration defect. Notably NO codex reviewer found it.",
+      "class": "B_real",
+      "class_reason": "It is the paper's own 'Power is part of construct validity' principle applied to the paper's own headline aggregate, using the paper's own printed half-widths.",
+      "affected": [
+        "sections/04_experiments.tex:23",
+        "sections/09a_relocated.tex:26 and :44",
+        "sections/05_analysis.tex:29"
+      ],
+      "diagnosis": "The paper states twice that its conclusions rest on the aggregate's near-unanimity (0/60 clear their floor) while stating in the same breath that 52/60 are underpowered for the 1.389 pp reference effect. Using tab_power's own five half-widths, expected detections if EVERY arm truly cleared by delta: +0.5 pp -> 3.5/60; +1.0 pp -> 7.6/60; +1.389 pp -> 12.0/60. Observing 0 is therefore consistent with a substantial positive true effect. It is a failure-to-reject presented as near-unanimity - and it is the paper's declared SUBSTITUTE for family-wise correction.",
+      "required_action": "Accompany 0/60 and 0/15 with the design's expected detection count under a stated alternative (~12/60 at +1.389 pp), or replace the count with a pooled effect and interval.",
+      "verification_test": "Publish per-cell half-width and implied power at delta=+1.389 pp for all 60 cells plus the summed expected detections (should be ~12). A reader must be able to see that 0/60 excludes delta >= +1.0 pp and does not exclude delta = +0.3 pp.",
+      "gpu_cost": "0",
+      "my_verification": "I VERIFIED THE PREMISES AND THE FORM, NOT THE 60 HALF-WIDTHS (they are printed nowhere - see B-11). Verified: the paper does say twice that the conclusions rest on 0/60 (04_experiments.tex:23 verbatim 'the conclusions rest on the aggregate's near-unanimity (0/60 damaged cells clear their floor), not on one cell'; 09a_relocated.tex:26 the same). Verified: 09a_relocated.tex:44 says '52/60 are underpowered'. The two statements are in tension by construction, so the finding follows in form from the paper's own numbers. I could not reproduce 3.5/7.6/12.0/29.3 because they need the 60 half-widths. R-stats explicitly notes the finding is NOT vacuous (P(0/60 | delta=+1.0 pp) = 2e-4), so large effects are genuinely excluded - the defect is the word 'near-unanimity', not the count. IMPORTANT: this issue INTERACTS with B-02. If shortgpt16 belongs in a designated-damaged denominator, then 0/60 and 0/15 are also affected, not just 14/15. No reviewer joined those two dots and the meta-review did not either.",
+      "confidence": "high (the form and the premises); medium (the exact expected-detection numbers)"
+    },
+    {
+      "issue_id": "B-07",
+      "title": "The 27-cell v2 family gets no multiplicity correction, and the ONLY upward-moving cell does not survive BH over the paper's own tabulated family",
+      "raised_by": [
+        "R-claude-stats.md#S5 (major)",
+        "R4-claude-clarity.md (same conclusion by inspection, prose-only)"
+      ],
+      "n_raisers": 2,
+      "severity": "major",
+      "class": "B_real",
+      "class_reason": "Recomputable from the 27 p-values printed in the shipped tab_v2_full.tex.",
+      "affected": [
+        "sections/05_analysis.tex:41 ('Re-sorting in both directions is evidence that the criterion is doing more than shrinking effects')",
+        "sections/tab_v2_full.tex (27 p-values, no q column)",
+        "sections/tab_v2_resort.tex"
+      ],
+      "diagnosis": "The paper applies BH and Bonferroni to the 12-cell chance-vs-floor comparison (creditably reporting 0/12) but not to the 27-cell v2 re-analysis where 7 cells read p<0.05. olmo2/keep14 is the ONLY cell moving upward, and it is exactly the cell BH drops. So the bidirectionality claim - offered as evidence that v2 does more than shrink effects - rests on one uncorrected borderline cell. The paper's general defence of not correcting (no defensible family definition) is weaker here than for the aggregates, because tab_v2_full IS the family: one table, one null, one statistic, one item set.",
+      "required_action": "Add a BH q-value column to tab_v2_full and restate 5.3: olmo2/keep14 does NOT survive BH over the 27-cell family. Either drop the bidirectionality claim or support it with a cell that survives correction.",
+      "verification_test": "Print BH q-values for all 27 cells; exactly 6 reject at q=0.05 and 5 at Bonferroni; olmo2/keep14 in neither.",
+      "gpu_cost": "0",
+      "my_verification": "I RE-RAN BH MYSELF over exactly the 27 printed p-values and reproduce the reviewer's result exactly. BH at q=0.05: largest rank with p<=0.05*i/27 is rank 6, so 6 rejections = {Qwen3 intact, OLMo-2 intact, OLMo-2 shortgpt16, Llama-2 intact, Llama-3 intact, Qwen3 k14 (p=0.0066 vs threshold 0.01111)}. OLMo-2 keep14 is rank 7 with p=0.0172 against threshold 0.01296 -> NOT rejected. Bonferroni (0.05/27 = 0.001852) rejects only the five p=0.0001 cells. WARNING ABOUT A TRAP I ALMOST FELL INTO: 'olmo2/keep14 is RETAINED' means the NULL is retained, i.e. NO significant effect. R-claude-stats and the meta-review say the LITERALLY IDENTICAL thing here; there is no disagreement between them, and anyone reading 'retained' as 'the conclusion is retained' will invent one. Also note the five BH survivors that are not anchors-by-name: shortgpt16 is in the survivor set, which strengthens B-02.",
+      "confidence": "very_high"
+    },
+    {
+      "issue_id": "B-08",
+      "title": "A cluster of prose-vs-table numeral defects the paper's own '610 numerals, none unresolved' checker structurally cannot catch",
+      "raised_by": [
+        "R-claude-soundness.md#S-02 (major, the 4.6x)",
+        "R-claude-stats.md#S7 (minor, PIQA tail) + #S9 (minor, cluster)",
+        "R4-claude-clarity.md#C-05 + #C-10 (minor, prose-only)",
+        "R5-claude-repro.md#R5-04 + #R5-05 + #R5-06 (prose-only)",
+        "X2-codex-soundness.md#STAT-CONSTRUCT-NULL (the PIQA half)",
+        "X3-codex-stats.md#NR-01 (minor)",
+        "X5-codex-repro.md#R7 (minor)",
+        "R-claude-soundness.md#S-05 (minor: the split 2.02 pp and credit 14.53-35.20 ranges do not match tab_conventions, plus the scope error of letting the negative control Winogrande set the upper endpoint)",
+        "R-claude-soundness.md#S-08 (minor: the CommonsenseQA +0.885 vs +0.884 and BoolQ +12.17 vs +12.171 cross-table rounding split, with the point that the generated table's caption CLAIMS it re-verifies the hand-authored one)"
+      ],
+      "n_raisers": 9,
+      "severity": "major",
+      "severity_note": "Individually each item is minor and changes no verdict. It is MAJOR as a cluster because the paper's second-largest claim is that the prose-to-evidence binding is mechanically checked, and these four defect CLASSES are each structurally outside the checker's grammar.",
+      "class": "B_real",
+      "class_reason": "Every item is recomputable from the frozen .tex alone. I recomputed all four myself.",
+      "affected": [
+        "sections/03b_nulls.tex 'Tie convention' ('The credit value is 4.6x the wrong value')",
+        "sections/tab_nulls.tex caption ('the +0.43--+2.60 pp gaps there')",
+        "sections/tab_nulls.tex vs sections/tab_construct_nulls.tex (CommonsenseQA +0.885 vs +0.884; BoolQ +12.17 vs +12.171)",
+        "sections/tab_nulls.tex + tab_construct_nulls.tex PIQA p=0.658",
+        "sections/03b_nulls.tex 'Length unit' (split 2.02 pp; credit 14.53-35.20)",
+        "sections/10_reproducibility.tex ('610 numerals with none unresolved')"
+      ],
+      "diagnosis": "Four distinct grammar gaps in the numeral checker: (i) DERIVED RATIOS - it validates component numerals but not a quotient; (ii) CAPTION EXTREMA - a min/max stated in prose is not checked against the rows it scopes; (iii) ROUNDING CONVENTION - two shipped tables print two roundings of one quantity while one is marked GENERATED - DO NOT EDIT and its caption claims it re-verifies the hand-authored table; (iv) DISCRETE-ATOM THRESHOLD - a Monte Carlo tail is evaluated as '>=' against a 6-dp rounded rate rather than the integer count.",
+      "required_action": "Correct 4.6x -> 4.2x; correct the caption range +0.43 -> +0.49; adopt one documented rounding rule and regenerate both null tables from one call; recompute the nine p-values from integer counts (PIQA 0.658 -> 0.692 under the DEFINED inclusive event); either extend tab_conventions to cover the (task, unit) pairs the 2.02 / 14.53-35.20 ranges are computed over or restate the ranges over the tabulated rows. Only then re-assert '610 numerals, none unresolved'.",
+      "verification_test": "Extend the checker to a fourth and fifth admissible class (derived ratios, caption extrema) and compare MC tails in integer counts. Demonstrate it now flags 4.6x, the +0.43 endpoint, and the PIQA strict/inclusive threshold; inject a one-digit perturbation into tab_nulls and confirm non-zero exit.",
+      "gpu_cost": "0",
+      "my_verification": "ALL FOUR RECOMPUTED BY ME FROM THE FROZEN SOURCE. (i) 0.532164/0.125914 = 4.2264, rounds to 4.2, paper prints 4.6 -> WRONG. R5's diagnosis of where 4.6 came from is worth recording: credit/floor = 4.5638 ~ 4.6, and credit/item-avg-chance = 4.7996 ~ 4.8, which the paper's own ledger row 16 PROHIBITS resurrecting - so the sentence looks like a ratio against the wrong denominator inside a paper that polices that exact ratio family. (ii) The five inside-noise rows give gaps 2.6000, 1.6253, 1.5202, 0.8845, 0.4897; min = 0.4897, so the caption's +0.43 lower endpoint matches NO row. (iii) CommonsenseQA true gap = 100*(0.208845-0.200000) = 0.8845 exactly - a genuine round-half tie, so both roundings are defensible in isolation, but tab_construct_nulls' caption claims it recomputes and re-verifies, so a checker making that guarantee should have flagged them. (iv) PIQA: n*floor = 1838*0.504897 = 928.0007, so the stored 6-dp decimal sits ABOVE the realised atom 928/1838 = 0.504896627 and silently drops it. I computed both exact tails with fractions.Fraction: P(max count >= 928) = 0.691725 (the DEFINED '>=' event) and P(max count >= 929) = 0.657647. The paper's 0.658 matches the STRICT tail, not the event its own caption defines. No verdict changes in any row. I did NOT verify the split 2.02 / credit 14.53 items (they need task rows absent from tab_conventions), so those remain unverifiable-in-principle rather than confirmed-wrong; note R-soundness' additional scope point that the 35.20 upper endpoint comes from Winogrande, which Section 4 designates the NEGATIVE CONTROL.",
+      "confidence": "very_high (items i-iv); the 2.02 / 14.53 items are unverifiable from the snapshot, not refuted"
+    },
+    {
+      "issue_id": "B-09",
+      "title": "The four-model-families scope reads as four replications but 12 of 15 cells come from one eval-time truncation operator; the disclosed confound is scoped to a claim the abstract does not make",
+      "raised_by": [
+        "R-claude-adversary.md#ADV-4 (major)",
+        "R1-claude-novelty.md §7 (prose-only, 'weakest evidence-to-importance ratio')"
+      ],
+      "n_raisers": 2,
+      "severity": "major",
+      "class": "B_real",
+      "class_reason": "A scoping/writing defect visible in the frozen abstract vs frozen 04_experiments.tex.",
+      "affected": [
+        "sections/00_abstract.tex ('Among 15 designated damaged cells in four model families')",
+        "sections/01_introduction.tex bullet 3",
+        "sections/04_experiments.tex:8",
+        "sections/07_limitations.tex"
+      ],
+      "diagnosis": "Exactly ONE family (OLMo-2) has genuine prune-then-heal damaged checkpoints; the three non-OLMo families share a single, cruder, evaluation-time front-N truncation operator with 'no fresh block, optimizer, gradient, healing, or damaged checkpoint'. So 12 of the 15 headline cells are three instances of ONE intervention, not three independent tests. The paper DOES label the confound, but it scopes the limitation to identifying a FAMILY EFFECT ('tables that include both cannot identify a family effect'), whereas the abstract's claim is that the wrong-null flip GENERALISES across four families. Deleting the most-hedged sentence in Section 7 would not change what a reader takes from the abstract.",
+      "required_action": "State the damage regime inline in the abstract and intro bullet 3 (e.g. 'in one prune-then-heal family (3 cells) and three families under a common evaluation-time truncation operator (12 cells)'). Add a Section 7 sentence whose grammatical subject is the FLIP / the cross-family generalisation, not the family effect. State in the same place that 5 of the 27 v2 cells are one healing run sampled 500 steps apart.",
+      "verification_test": "A reader who reads ONLY the abstract must be able to state correctly how many distinct damage operators the 15 cells use.",
+      "gpu_cost": "0",
+      "my_verification": "CONFIRMED verbatim. 04_experiments.tex:8 reads 'OLMo-2 arms are prune-then-heal checkpoints ... Non-OLMo damage is evaluation-time front-N truncation: the intact base model is loaded and its layer list is replaced by the first N blocks, with no fresh block, optimizer, gradient, healing, or damaged checkpoint. This is a regime confound, not a clean family contrast, and every joint table labels it.' The abstract reads 'Among 15 designated damaged cells in four model families, the null choice alone reverses the reading'. tab_mmlupro carries 3 OLMo-2 rows and 9 printed non-OLMo rows expanding to 12, so the 3-vs-12 split is exactly right. I ALSO CONFIRM the two aggregation points nobody put together: the same 04:8 sentence discloses Qwen3 has 36 layers vs 32, so k8 retains 22.2% vs 25.0% (not a matched depth), and tab_v2_full.tex rows 1-5 are Qwen3 heal@5000/5500/6000/6500/7000 - one healing run sampled 500 steps apart, i.e. 5 of the 27 v2 cells are pseudo-replicates. Each fact is individually disclosed; they are never aggregated into a statement that binds the headline. CREDIT WHERE DUE: the paper does call this 'a regime confound, not a clean family contrast' in the setup section, which is more than most papers do. The defect is that the hedge does not reach the sentence that carries the claim.",
+      "confidence": "high"
+    },
+    {
+      "issue_id": "B-10",
+      "title": "tab_power's 'Detect -1.389 pp?' column implements a 50%-power rule, so two affirmatively-labelled rows are near coin-flips",
+      "raised_by": [
+        "R-claude-stats.md#S8 (minor, AFTER a self-retraction)",
+        "X2-codex-soundness.md#STAT-POWER-NOMENCLATURE (major)",
+        "X3-codex-stats.md#ER-03 (major)",
+        "X4-codex-clarity.md#X4-04 (major)"
+      ],
+      "n_raisers": 4,
+      "severity": "minor",
+      "severity_note": "THE SEVERITY IS THE WHOLE STORY HERE. Three codex reviewers rate this MAJOR and extend it to refute the abstract's 'all 21 evaluated cells are powered'. R-claude-stats initially agreed, then computed the number, WITHDREW that half of its own finding against its own interest, and narrowed the issue to tab_power's five small-benchmark labels only - where it is correct. The meta-review adopts the narrow form and refutes the strong form. See disagreement D-02: the refutation is only partly clean.",
+      "class": "B_real",
+      "class_reason": "Nomenclature and labelling in the frozen tab_power.tex.",
+      "affected": [
+        "sections/tab_power.tex column 'Detect -1.389 pp?'",
+        "sections/04_experiments.tex 'Power design'",
+        "sections/06_discussion.tex 'Power is part of construct validity'"
+      ],
+      "diagnosis": "The implemented rule is half-width <= |d|, which means a point estimate of exactly -1.389 pp would have its CI exclude 0 - i.e. 50% power at that alternative, not 80%. So 'yes' and 'yes, borderline' labels are not what 'detect' conventionally means.",
+      "required_action": "Print achieved power per row, or state the level in the column header ('half-width below the reference effect, i.e. 50% power at d = -1.389 pp'). Optionally add an 80%-power column (threshold half-width 0.972 pp). Do NOT delete the 'all 21 cells are powered' sentence - see my verification.",
+      "verification_test": "Add a power column Phi(|d|/se - 1.96) with se = half-width/1.96 and confirm ARC-Easy 0.550, Winogrande 0.633, MMLU 0.655.",
+      "gpu_cost": "0",
+      "my_verification": "I RECOMPUTED ALL FOUR POWER FIGURES with Phi(d/se - 1.96), se = hw/1.96, d = 1.389: ARC-Easy (hw 1.305) = 0.550; Winogrande (hw 1.184) = 0.633; MMLU reference (hw 1.154) = 0.655; and the worst MMLU-Pro prose half-width (0.968) = 0.803. So R-claude-stats' retraction is CORRECT: the 21-cell claim clears the conventional 80% bar, and the three codex reviewers' STRONG form (that the 21-cell claim is unestablished) is refuted at the 80% bar. BUT I FOUND A CAVEAT THE META-REVIEW DID NOT STATE, AND IT PARTLY RESCUES THE CODEX SIDE: the half-width 0.968 APPEARS IN NO SHIPPED TABLE. I checked both - tab_mmlupro's half-widths span 0.083-0.852 and tab_v2_full's span 0.081-0.844. So 0.803 is computed from a PROSE-ONLY number. The codex reviewers' literal complaint - that the classification is not reconstructable - is true with respect to the tables; it is false only if you accept the prose range on trust. That is a real distinction and the meta-review's flat 'it IS reconstructable' overstates.",
+      "confidence": "very_high (the arithmetic); see D-02 for the scope dispute"
+    },
+    {
+      "issue_id": "B-11",
+      "title": "Enumeration gaps that block independent re-analysis: the 21 cells, the 60 cells, the collapsed Llama-3 row, and the entire chance side",
+      "raised_by": [
+        "R-claude-soundness.md#S-06 (minor) + #S-03(b) (minor, the 7+52=59)",
+        "R-claude-stats.md#S6 (major, the chance-side half)",
+        "R5-claude-repro.md#R5-08 (prose-only)",
+        "R4-claude-clarity.md#C-09 ('cell' never defined)",
+        "X4-codex-clarity.md#X4-05 (the collapsed Llama-3 row half)",
+        "R-claude-stats.md#S10 (minor: load-bearing numbers in the four-under-specifications SUMMARY have no anchor anywhere - the implied intact content_norm ~0.2072, the ARC-Challenge 18.60%/50.85% tied-longest fractions, and the tokenizer-shift figures 10.6 and 9.26; R-stats notes 3 of its 5 spot-checks in that passage DID tie out, so the passage is not fabricated, but compression for the page budget stripped exactly the numbers a reviewer cannot check)"
+      ],
+      "n_raisers": 6,
+      "severity": "major",
+      "severity_note": "MOSTLY B_real but with one genuine A_packaging component, and it is the single most important place where the two classes are entangled. Split below.",
+      "class": "B_real_with_A_component",
+      "class_reason": "B_real: the 21-cell set, the 60-cell half-widths, the four Llama-3 rows and the per-cell CHANCE-side deltas are all MANUSCRIPT-completeness gaps - shipping evidence files would not put them in the paper, and the paper's most-quoted result (10/12 point-above, 3/12 CI-above chance) is not reconstructible from the manuscript EVEN IN PRINCIPLE. A_packaging component: the underlying per-cell records existed on disk and would have let a reviewer check the numbers outside the manuscript.",
+      "affected": [
+        "sections/04_experiments.tex:20 (21 letter-floor cells, half-widths 0.083-0.968)",
+        "sections/00_abstract.tex ('all 21 evaluated cells are powered')",
+        "sections/tab_mmlupro.tex (Llama-3 k14-k8 collapsed into one range row; no chance-side columns)",
+        "sections/05_analysis.tex:29 + sections/09a_relocated.tex:44 (0/60, 25/60, 7/60, 52/60 with no per-cell table)",
+        "sections/05_analysis.tex:15-18 (the symmetric-standard table)"
+      ],
+      "diagnosis": "Four separable gaps. (a) The 21-cell set is never enumerated and matches neither the 15 in tab_mmlupro nor the 27 in tab_v2_full; its claimed half-width upper endpoint 0.968 appears in no table. (b) tab_mmlupro collapses four Llama-3 arms into one range row, so only 10 of 12 non-OLMo p-values are readable and a reader cannot redo the BH/Bonferroni check on the floor side. (c) The 60-cell counts have no per-cell table, and 7 + 52 = 59, so one cell is neither significantly-below nor underpowered and is never named - in a paper that commits explicitly to naming every excluded cell. (d) The per-cell CHANCE-side deltas appear NOWHERE, so the paper's single most-quoted result is half-verifiable at best.",
+      "required_action": "Enumerate the 21 cells with per-cell half-widths that reproduce 0.083-0.968. Expand the collapsed Llama-3 row into four. Add per-cell chance-side delta, half-width and p as three columns of tab_mmlupro. Publish one machine-generated designated-damaged inventory reconciling 15, 60 and their union, and name the 60th cell so 7+52 reconciles. Define 'cell' before first use.",
+      "verification_test": "Assert min half-width = 0.083 and max = 0.968 over the emitted 21-cell list, and that every cell has half-width < 1.389. Assert each quoted denominator equals the row count of the subset it names, and that each subset's powered/significant decomposition sums to the subset size with any residual a NAMED row.",
+      "gpu_cost": "0",
+      "my_verification": "ALL FOUR CONFIRMED BY ME. (a) tab_mmlupro half-widths: min 0.083, max 0.852. tab_v2_full: min 0.081, max 0.844. The claimed upper endpoint 0.968 is in NEITHER. This matters beyond bookkeeping because the meta-review's refutation of three codex reviewers rests on that 0.968 (see B-10 and D-02). (b) Confirmed: tab_mmlupro row 8 is 'Llama-3 & k14--k8, truncation & 0.111868--0.114694 & -0.474--(-0.191) & 0.407--0.852 & 0.1296--0.6631 & all at floor' - a range row for 4 cells. (c) 09a_relocated.tex:44 verbatim: 'Only 7/60 are significantly below because 52/60 are underpowered'. 7+52 = 59. One cell unaccounted, never named. (d) Confirmed: tab_mmlupro has NO chance-side columns. I RECONSTRUCTED WHAT IS AND IS NOT CHECKABLE: from the printed accuracies and the printed chance 0.110877 I CAN get the chance-side POINT count = 10/12 (matching the paper: Llama-2 k8 at -0.341 pp and Qwen3 k8 at -0.308 pp are the two below), but I CANNOT get the chance-side CI-EXCLUDES-0 count of 3/12, because that needs per-cell chance-side half-widths which are printed nowhere. That is exactly the half the paper leans on. So the 10/12 half is reconstructible and the 3/12 half is not - a sharper statement than any reviewer made (R-stats said the chance side was not reconstructible at all).",
+      "confidence": "very_high"
+    },
+    {
+      "issue_id": "B-12",
+      "title": "The abstract's 'ten target constructs' does not reconstruct from any counting rule the paper states",
+      "raised_by": [
+        "R-claude-soundness.md#S-09 (minor)",
+        "R-claude-stats.md#S9(e) (minor)",
+        "R1-claude-novelty.md §6 (prose-only)"
+      ],
+      "n_raisers": 3,
+      "severity": "minor",
+      "class": "B_real",
+      "class_reason": "Recomputable from the frozen 04_experiments.tex against the frozen abstract.",
+      "affected": [
+        "sections/00_abstract.tex ('Across ten target constructs and one negative control')",
+        "sections/01_introduction.tex:16",
+        "sections/04_experiments.tex:5"
+      ],
+      "diagnosis": "04_experiments.tex:5 names 7 letter target benchmarks plus Winogrande (control) plus BoolQ as an additional binary label floor = 8 letter constructs, and content-side longest-option on MMLU, MMLU-Pro and the five non-MMLU tasks = 7 content constructs. Counting (benchmark, interface) pairs - which the paper must, since it treats a letter floor and a content floor as different objects - gives 15, not 10. The parenthetical about OpenBookQA character/token shows the authors know a rule is needed but does not supply one that closes the gap.",
+      "required_action": "Add one sentence or a small table enumerating the ten target constructs by (benchmark, interface) pair with the counting rule stated, and note explicitly that tab_nulls' nine rows cover eight DISTINCT letter constructs because MMLU-Pro appears under two chance definitions, and that Winogrande is excluded as the control.",
+      "verification_test": "Assert the enumerated list has exactly ten target entries plus one control and that every count quoted in the abstract and introduction equals the length of a named tabulated set.",
+      "gpu_cost": "0",
+      "my_verification": "CONFIRMED, and I tried three alternative readings to give the paper the benefit of the doubt: (1) 8 letter + Winogrande + BoolQ = 10, rejected because the sentence says 'ten constructs PLUS the control', so Winogrande cannot be inside the ten; (2) 7 letter targets + BoolQ + the 2 MMLU-side content constructs = 10, rejected as arbitrary and it silently drops the five non-MMLU content constructs the same sentence names; (3) benchmarks counted once = 8, not 10. None works. SEPARATELY VERIFIED AND IT DOES CHECK OUT: the abstract's 'eight letter constructs' IS consistent with tab_nulls' nine rows minus the duplicated MMLU-Pro row, and 3 significant + 5 inside-noise = 8. So one of the two abstract counts is sound and the other is not.",
+      "confidence": "very_high"
+    },
+    {
+      "issue_id": "B-13",
+      "title": "content_norm is never mapped to an equation, so the content-side claims cannot be tied to a defined quantity",
+      "raised_by": [
+        "X2-codex-soundness.md#TS-CONTENT-DEFINITION (major)",
+        "R4-claude-clarity.md#C-08 ('residual fraction' undefined, prose-only)"
+      ],
+      "n_raisers": 2,
+      "severity": "major",
+      "class": "B_real",
+      "class_reason": "A definitional gap in the frozen method/setup sections. Shipping records would let a reader guess which convention was used; it would not define the term.",
+      "affected": [
+        "sections/03_method.tex (content-side longest-option family)",
+        "sections/04_experiments.tex 'Interfaces and scoring protocol'",
+        "sections/05_analysis.tex:33-35 (content_norm claims, residual-fraction 2.11x/0.90x/0.98x)",
+        "sections/tab_conventions.tex"
+      ],
+      "diagnosis": "Section 4 says scoring is summed token log-probability followed by argmax, while Sections 2 and 5 use the name content_norm and discuss length-normalized likelihood. No equation maps content_norm to either summed or per-token-normalized likelihood. Separately 'residual fraction' is introduced in 5.2 and reported moving by 2.11x/0.90x/0.98x without ever being defined, and it is plainly NOT recovery_fraction (Eq. 6).",
+      "required_action": "Give explicit equations and field mappings for every content score; state whether scores are sums, means, or another normalization, and define the corresponding input-blind family under exactly that convention. Define 'residual fraction' with a formula. Define w_s (= n_s/n), G1, G2, and replace the internal identifiers A01/P1 with the arm names used elsewhere.",
+      "verification_test": "From per-item candidate log-probabilities and token lengths, an independent implementation must reproduce each content prediction, content accuracy, longest-option null, the ARC-Easy paired gap and the residual fraction under the PRINTED equation.",
+      "gpu_cost": "0",
+      "my_verification": "CONFIRMED that the terms are undefined in the frozen source. grep results: 'content_norm' occurs in 03b_nulls_summary.tex:4, 05_analysis.tex:33 and :35 - all USES, no defining equation. 'residual-fraction' occurs in 05_analysis.tex:35 as a use. 'G1 and G2 fire on no cell' occurs once, in 09_appendix.tex:33, with G1/G2 defined nowhere - so a reader cannot tell whether 'fire on no cell' is reassuring or vacuous. 'the A01 own-modal null over-credits P1 by 1.37 points and flips its sign' is in 05_analysis.tex:47 and neither A01 nor P1 is defined anywhere (A01 reads as an internal project identifier - note that this repository's own proposal tree uses A0N identifiers, so this is plausibly an internal leak). I did NOT independently confirm X2's stronger claim that the ARC-Easy 38.76-point gap therefore cannot be attributed; that requires the per-item records.",
+      "confidence": "high (the definitional gaps, which I verified by grep); medium (whether the content-side NUMBERS are affected)"
+    },
+    {
+      "issue_id": "B-14",
+      "title": "Non-rejection is converted into equality/absence language ('at floor', 'no signal', '14/15 at or below')",
+      "raised_by": [
+        "X3-codex-stats.md#ER-04 (major)"
+      ],
+      "n_raisers": 1,
+      "severity": "minor_to_major",
+      "severity_note": "SINGLE-REVIEWER FINDING AND THE META-REVIEW NEVER ADJUDICATED IT. X3 rates major. I judge the underlying statistical point correct but the practical severity lower than X3 states, because the paper does hedge in places. Recorded so it is not lost.",
+      "class": "B_real",
+      "class_reason": "A labelling/inference issue in the frozen tables and prose.",
+      "affected": [
+        "sections/00_abstract.tex ('the honest aggregate is 14/15 at or below the floor')",
+        "sections/tab_mmlupro.tex v1 verdicts 'at floor'",
+        "sections/tab_v2_full.tex v2 verdicts 'no signal'"
+      ],
+      "diagnosis": "Positive point estimates that fail to reach significance are labelled 'at floor' / 'no signal'. p>0.05 does not establish that the population effect is zero or below. 'No signal' in particular requires an equivalence or materiality analysis, not a conventional null test.",
+      "required_action": "Use 'did not significantly clear the floor / the null' for ordinary non-rejections. If literal equivalence or no-material-signal is claimed, pre-specify a negligible-effect margin and use TOST or a confidence-bound equivalence analysis.",
+      "verification_test": "Every cell labelled 'at floor' or 'no material signal' must have its full CI inside a pre-specified equivalence region; otherwise label it inconclusive / non-significant.",
+      "gpu_cost": "0",
+      "my_verification": "The statistical point is correct and I can exhibit it from tab_mmlupro: Llama-2 k14 has delta = +0.017 pp with half-width 0.083, so its CI is [-0.066, +0.100] - it contains zero AND positive values up to +0.100, and it is labelled 'at floor'. Qwen3 k10 has delta = +0.158 with hw 0.233, CI [-0.075, +0.391], labelled 'at floor' despite a CI that reaches +0.391. So 'at floor' is doing duty for 'not resolved'. MITIGATION X3 DOES NOT CREDIT: the abstract's phrase is 'AT OR BELOW the floor', which is weaker than 'equal to', and 05_analysis.tex:7 explicitly says 'the exact chance-line counts are reported rather than compressed into a universal categorical flip'. So the paper is partly aware. My reading: real, worth a wording pass, not decision-blocking on its own.",
+      "confidence": "high (the mechanism); I downgrade X3's severity"
+    },
+    {
+      "issue_id": "B-15",
+      "title": "Off-MMLU 10/15 and 25/60 'above chance' point counts are headlined without the chance-side interval counts, reinstating exactly the asymmetry the MMLU-Pro analysis diagnoses",
+      "raised_by": [
+        "X3-codex-stats.md#ER-05 (major)",
+        "R-claude-stats.md#S2 (the 25/60 half)"
+      ],
+      "n_raisers": 2,
+      "severity": "major",
+      "severity_note": "SINGLE-REVIEWER-ORIGIN AND NOT ADJUDICATED BY THE META-REVIEW. I judge it correct and important because it is the paper's own diagnosed error, repeated one section later.",
+      "class": "B_real",
+      "class_reason": "Visible in the frozen prose: the fix applied on MMLU-Pro is not applied off MMLU.",
+      "affected": [
+        "sections/00_abstract.tex + sections/01_introduction.tex (off-MMLU counts)",
+        "sections/05_analysis.tex:29",
+        "sections/09a_relocated.tex:44"
+      ],
+      "diagnosis": "05_analysis.tex:10 concedes that 'above chance' as a bare point comparison is not a test, and 5.1 fixes it on MMLU-Pro (10/12 -> 3/12 under a symmetric CI standard). Then 05_analysis.tex:29 and 09a_relocated.tex:44 headline off-MMLU '10/15 above chance' and '25/60 read above chance' as bare POINT counts, with no corresponding CI-exclusion counts. The claimed 'same wrong-null flip' therefore restores the exact evidentiary asymmetry the paper just removed.",
+      "required_action": "For every off-MMLU cell recompute the chance reference inside the same paired item bootstrap and report BOTH point-above and CI-excludes-0 counts for chance and floor. Otherwise reword the off-MMLU headline as a descriptive point comparison.",
+      "verification_test": "A per-cell table applying an identical CI decision rule to both references, from which any retained aggregate count is reproduced.",
+      "gpu_cost": "0",
+      "my_verification": "CONFIRMED verbatim from the frozen source. 05_analysis.tex:10 says the counts 'are not symmetric in their evidentiary standard: the floor comparison carries a bootstrap CI, a bootstrap p, and an exact McNemar test, whereas above chance was a bare point comparison', and 05_analysis.tex:23 states the corrected criterion is 'the two-sided 95% interval on BOTH sides' and says 'We report both columns throughout'. Then 05_analysis.tex:29 reports '10/15 above chance and 0/15 above floor' and '25/60 read above chance' with no CI column anywhere, and 09a_relocated.tex:44 repeats it. So 'we report both columns throughout' is FALSIFIED BY THE PAPER'S OWN NEXT PARAGRAPH. That is a stronger form than X3 stated and I did not see any reviewer or the meta-review put it this way. R-stats' related point is the mirror image: 25/60 'read above chance' should be held to the same standard since 5.1 established a bare point comparison is not a test.",
+      "confidence": "very_high"
+    },
+    {
+      "issue_id": "B-16",
+      "title": "The fp32 control is a single cell (OLMo-2 keep8 on MMLU) but the abstract states it rules out a numerical-tie explanation for 'the measurement failure'",
+      "raised_by": [
+        "X2-codex-soundness.md#CLAIM-FP32-SCOPE (minor)",
+        "X6-codex-adversary.md#TS-6 (minor)",
+        "R1-claude-novelty.md §6 (prose-only, records it as a scope note not an overclaim)"
+      ],
+      "n_raisers": 3,
+      "severity": "minor",
+      "class": "B_real",
+      "class_reason": "A scope/wording issue in the frozen abstract.",
+      "affected": [
+        "sections/00_abstract.tex final empirical sentence",
+        "sections/05_analysis.tex:51 (5.4 'Full precision falsifies the numerical-tie mechanism')"
+      ],
+      "diagnosis": "One OLMo-2 keep8 result on MMLU shows that removing exact bf16 top-two ties does not improve that cell's accuracy. The interval supports a cell-specific bound, not a family-general mechanism claim across four families, two damage regimes and MMLU-Pro.",
+      "required_action": "Scope the abstract and 5.4 conclusion explicitly to OLMo-2 keep8 on MMLU, or add representative precision controls from the other regimes.",
+      "verification_test": "Text audit: every causal precision statement must name the tested arm and benchmark. The revised conclusion must be logically implied by the printed interval (this intervention improves this cell by less than ~0.33 pp at the stated confidence).",
+      "gpu_cost": "0 for the wording fix; a broader claim would need new eval runs (out of scope for acceptance)",
+      "my_verification": "CONFIRMED from 05_analysis.tex:51, which is explicit that the experiment is 'For OLMo-2 keep8 on MMLU' with 4,303 bf16 exact top-two ties removed, 2,532/14,042 = 18.03% of letter argmax decisions changed, accuracy change -0.0015 with CI95 [-0.0064, +0.0033] and exact McNemar p=0.5702. So the measurement is single-cell and the interval is what X2 says it is. R1 independently notes that 5.4 and ledger row 3 ARE correctly scoped ('mechanisms are family-specific'), so the overclaim is confined to the abstract sentence. That makes this the cheapest fix in the entire ledger: one clause.",
+      "confidence": "very_high"
+    },
+    {
+      "issue_id": "A-01",
+      "title": "The frozen snapshot shipped 2 of 29 evidence records, so no reviewer verified a single primary number",
+      "raised_by": [
+        "X1-codex-novelty.md#R1 (major)",
+        "X2-codex-soundness.md#PROV-MISSING-EVIDENCE (major)",
+        "X3-codex-stats.md#RP-01 (major)",
+        "X4-codex-clarity.md#X4-07 (major)",
+        "X5-codex-repro.md#R1 (major, X5's LEADING reason for its 4/10)",
+        "X6-codex-adversary.md#TS-4 (major)",
+        "R-claude-stats.md#S6 (major)",
+        "R5-claude-repro.md#R5-02 (major, prose-only)",
+        "R1-claude-novelty.md review_limitations (prose-only)",
+        "ALL 12 review_limitations blocks disclose it"
+      ],
+      "n_raisers": "9 as a scored issue; 12/12 disclose it as a limitation",
+      "severity": "major_as_scored",
+      "class": "A_packaging",
+      "class_reason": "PURE PACKAGING. freeze_round.py took --evidence as a repeated WHITELIST and the round_04 call enumerated exactly two paths. The records existed on disk the whole time and pre-dated the freeze. No number in the manuscript is wrong because of this. X5's own would-lower-score condition ('the missing artifacts do not exist rather than merely being unshipped') is REFUTED.",
+      "affected": [
+        "submission/MANIFEST.json (declared missing_dependencies: [] while omitting 10 prose-named records)",
+        "sections/10_reproducibility.tex",
+        "sections/09_appendix.tex Table 12"
+      ],
+      "diagnosis": "The freeze whitelist shipped only evidence/build_record.json and evidence/claim_evidence_map.tsv. At freeze time 29 files existed under paperC/evidence/. Ten of the absent ones are named by identifier in Table 12 or the body. MANIFEST.json reported missing_dependencies: [] because that field only followed the LaTeX \\input / \\includegraphics chain, so a file named in a caption via an E- identifier was invisible to it - a self-check that actively asserted nothing was missing.",
+      "required_action": "ALREADY DONE for the packaging half: freeze_round.py inverted to default-include / explicit-exclude, plus a named-artifact gate that parses the tab:artifact-map identifier table and body \\texttt{...} paths and exits non-zero on any absent path. submission_complete/ (sha ffd5fd7d, 77 files) ships 30 evidence records. Replaying the exact round_04 invocation under the new script reports 10 named-missing artifacts and exits 1, where v1 reported [] and exited 0. STILL TO DO: run the reviewers' actual verification test (end-to-end regeneration of the headline tables from the shipped records on a clean machine) - it has NOT been run.",
+      "verification_test": "The reviewers' test is stronger than 'the files are present'. X1, X2, X5 and X6 all require that a reader REGENERATE the headline tables from the shipped records on a clean machine with no network. That end-to-end regeneration is the correct next gate and is unrun.",
+      "gpu_cost": "0",
+      "my_verification": "VERIFIED BY DIRECT INSPECTION OF BOTH SNAPSHOT TREES. submission/evidence/ contains exactly 2 files (build_record.json, claim_evidence_map.tsv) and the tree has 35 files total. submission_complete/ has 77 files with 21 top-level entries under evidence/ plus 4 subdirectories (gate, mmlu_scale_power, second_mc_benchmark, second_mc_benchmark_crossfamily). I ran `diff -rq submission/manuscript submission_complete/manuscript` -> rc=0, so the two artifacts differ ONLY in packaging and the reviewed manuscript bytes are intact. I RESOLVED ALL NINE IDENTIFIERS MYSELF against the repaired tree: E-CAL, E-D, E-E, E-H shipped; E-A, E-B, E-F, E-K resolve via a shipped CO-SOURCE but their EVIDENCE_PACK.md component does not; and E-I RESOLVES TO NOTHING AT ALL because tcodex_out/EVIDENCE_PACK.md is its only listed source. So this issue is SUBSTANTIALLY BUT NOT FULLY retired - see B-17.",
+      "confidence": "very_high",
+      "caution": "Do NOT credit this repair with the score movement. Four of the five codex reviewers raised the artifact gap AND independent statistical objections. Only the former is packaging. X5's 4/10 is the number most likely to move, by its own statement."
+    },
+    {
+      "issue_id": "B-17",
+      "title": "The manuscript names an unshippable internal path 8 times and one evidence identifier resolves to nothing even after the repair",
+      "raised_by": [
+        "X4-codex-clarity.md#X4-07 (the 'Table 12 must resolve only to files present in the submission' half)",
+        "X6-codex-adversary.md#TS-4 (the 'Table 12 points to tcodex_out and other paths outside the permitted snapshot' half)",
+        "X5-codex-repro.md#R1 (the 'make all artifact paths resolve inside the frozen submission' half)",
+        "X1-codex-novelty.md#R1 (the 'references forbidden/non-shipped tcodex_out paths' half)",
+        "R-claude-stats.md#S6 (names the tcodex_out target)"
+      ],
+      "n_raisers": 5,
+      "severity": "major",
+      "severity_note": "THIS IS THE B_real CORE OF WHAT LOOKS LIKE AN A_packaging COMPLAINT, AND IT IS THE MOST IMPORTANT SPLIT IN THIS LEDGER. Even a PERFECTLY packaged snapshot ships a manuscript pointing at an internal repository path no external reader can resolve. Attributing these reviewers' whole issue to packaging would erase a genuine manuscript defect.",
+      "class": "B_real",
+      "class_reason": "It is a property of the .tex, not of the freeze call. The repaired freeze had to be run with --allow-dangling-blind-refs to produce submission_complete at all, which records the defect rather than fixing it.",
+      "affected": [
+        "sections/09_appendix.tex Table 12 (tab:artifact-map): E-A, E-B, E-D, E-E, E-F, E-H, E-I, E-K all list tcodex_out/EVIDENCE_PACK.md as a source"
+      ],
+      "diagnosis": "tcodex_out/EVIDENCE_PACK.md can NEVER enter a blind snapshot: it is author-side material on the blindness exclusion list (and independently, it is the file whose leak into rounds 00-02 is a blindness breach). Eight of the nine identifiers name it. For E-I it is the ONLY listed source, so E-I is unverifiable from the artifact no matter how the freeze is invoked. paperC/evidence/internal_paths_in_submission.json already diagnosed this class in round_03 and recommended citing stable evidence IDs instead; the fix was applied to some captions but the artifact-map table still points at the file.",
+      "required_action": "Editorial, in the manuscript: re-emit the E-I content as a shippable evidence record and repoint Table 12 at snapshot-relative paths only. Remove every tcodex_out target from the artifact map. Separately, re-emit s2_02_stratified_ordering.json and s2_03_symmetric_inference.json without their review-process commentary so the stratified-ordering and symmetric-inference analyses gain shippable records (currently withheld by the blindness screen, so two analyses still lack a record).",
+      "verification_test": "Freeze WITHOUT --allow-dangling-blind-refs and require rc=0. Assert every identifier in tab:artifact-map resolves to at least one snapshot-relative file, and that no target matches the blindness exclusion list.",
+      "gpu_cost": "0",
+      "my_verification": "VERIFIED BY ME, INDEPENDENTLY OF THE PACKAGING DOCUMENT. I parsed the tab:artifact-map rows out of the frozen submission/manuscript/sections/09_appendix.tex and resolved each target against the repaired tree. Result: 'EVIDENCE_PACK' appears 8 times in that one file (LaTeX-escaped as EVIDENCE\\_PACK), and it is listed as a source for E-A, E-B, E-D, E-E, E-F, E-H, E-I and E-K. In submission_complete: E-CAL/E-D/E-E/E-H resolve to a shipped file; E-A/E-B/E-F/E-K resolve via a shipped co-source; E-I resolves to NOTHING (its only source is EVIDENCE_PACK.md, which is not and cannot be in the tree - I confirmed no file matching EVIDENCE_PACK exists under submission_complete/). So five reviewers' complaint is NOT fully retired by the repackage, and the residual is a prose fix.",
+      "confidence": "very_high"
+    },
+    {
+      "issue_id": "B-18",
+      "title": "build_record.json certifies a different PDF than the one shipped - and it is STILL stale in the repaired snapshot",
+      "raised_by": [
+        "R-claude-adversary.md#ADV-6 (minor)",
+        "R-claude-soundness.md#S-07 (minor)",
+        "R-claude-stats.md#S6 (part)",
+        "R1-claude-novelty.md §6 (prose-only)",
+        "R4-claude-clarity.md#C-03 (major, prose-only)",
+        "R5-claude-repro.md#R5-03 (major, prose-only)",
+        "X1-codex-novelty.md#R2 (minor)",
+        "X2-codex-soundness.md#PROV-MISSING-EVIDENCE (part)",
+        "X3-codex-stats.md#RP-02 (major)",
+        "X4-codex-clarity.md#X4-07 (part)",
+        "X5-codex-repro.md#R4 (major)"
+      ],
+      "n_raisers": 11,
+      "severity": "major",
+      "severity_note": "THE MOST WIDELY RAISED ISSUE IN THE PANEL (11 of 12 reviews) and it is NOT packaging - the stale record WAS shipped. The packaging document itself flags it as 'verified still true in the repaired artifact'.",
+      "class": "B_real",
+      "class_reason": "The record was IN the snapshot the reviewers read. Nothing about the whitelist caused it. I re-verified it is still wrong in submission_complete.",
+      "affected": [
+        "submission/evidence/build_record.json vs submission/manuscript/main.pdf",
+        "submission_complete/evidence/gate/build_record.json vs submission_complete/manuscript/main.pdf"
+      ],
+      "diagnosis": "The record declares build_gate_pass: true with pdf_sha256 56a376e1..., pdf_bytes 355196, pdf_pages 22. The shipped PDF is 1fbaaf99..., 366583 bytes, 24 pages. mtimes (record 06:48, main.tex 09:44, main.pdf 10:13) are consistent with an innocent late rebuild, and several reviewers verified the shipped PDF itself compiles cleanly - R1 recompiled it with the repository's TeX Live 2026 and got rc=0, 24 pages, 366583 bytes, 0 overfull hbox, 0 undefined refs. But the record's whole function is to attest that the SHIPPED PDF compiled cleanly, and this one attests that a different PDF did. It also carries pdf_visually_inspected: false with a note that no PDF rasteriser was available on the build host, while reviewers used PyMuPDF from this repository's own environment.",
+      "required_action": "Regenerate build_record.json against the final PDF (sha256, bytes, pages) and make the snapshot builder REFUSE to ship on mismatch. Close pdf_visually_inspected with PyMuPDF.",
+      "verification_test": "Assert sha256(manuscript/main.pdf) == build_record.pdf_sha256 == the MANIFEST entry, and that pdf_bytes and pdf_pages match a programmatic page count. Confirm the builder exits non-zero on the current pair.",
+      "gpu_cost": "0 (~10 minutes)",
+      "my_verification": "CONFIRMED IN BOTH TREES BY RECOMPUTING THE HASH MYSELF. submission/: record 56a376e1.../355196/22 pages vs actual sha256 1fbaaf9983220fd83e10ff772fbea15ea0f6131e9f913a20b1d69911fd863acf and 366583 bytes -> MISMATCH. THEN I CHECKED THE REPAIRED TREE, WHICH NOBODY ASKED ME TO: submission_complete/evidence/gate/build_record.json STILL records 56a376e1.../355196/22, and the PDF there is STILL 1fbaaf99.../366583 -> STILL MISMATCHED, with build_gate_pass: true and pdf_visually_inspected: false unchanged. So the repackage did not fix and could not fix this, exactly as the packaging document states. This is the cheapest high-visibility fix available (11 reviewers, ~10 minutes of work, 0 GPU) and it is STILL OPEN.",
+      "confidence": "very_high"
+    },
+    {
+      "issue_id": "A-02",
+      "title": "Reproducibility DIMENSION scores (median 2.0, min 1) are scores of the snapshot, not of the paper - but three reproducibility defects survive repackaging",
+      "raised_by": [
+        "all 11 reviewers who scored reproducibility 1-4",
+        "X5-codex-repro.md (reproducibility 1)",
+        "X2-codex-soundness.md (reproducibility 1)"
+      ],
+      "n_raisers": 11,
+      "severity": "major_as_scored",
+      "class": "A_packaging",
+      "class_reason": "The dimension median 2.0 is dominated by A-01. A correct repackage should move it to roughly 4 at essentially zero cost.",
+      "affected": [
+        "the reproducibility dimension of all 12 score cards"
+      ],
+      "diagnosis": "Eleven reviewers scored reproducibility 1-4 and named the near-empty evidence directory as the cause. The omission was not a blinding decision: MANIFEST.json's excluded_by_blindness_rule list is [review_rounds, review_history, tcodex_out, SCORE_HISTORY, review_prompts, WRITER_NOTES] and evidence/ is NOT on it.",
+      "required_action": "Repackage (done) AND fix B-17, B-18 and B-08 before treating the dimension as repaired.",
+      "verification_test": "Re-review against ffd5fd7d and compare the reproducibility dimension only.",
+      "gpu_cost": "0",
+      "my_verification": "I confirmed evidence/ is absent from the blindness exclusion list in the shipped MANIFEST.json, so the omission was a bug not a withholding. BUT I RECORD THE COUNTER-BOOKKEEPING EXPLICITLY, because treating this as a free 2-point win is the main risk this ledger exists to prevent: three reproducibility defects are properties of the PAPER and survive any repackage - B-17 (Table 12 resolves to an internal path; E-I resolves to nothing), B-18 (the stale build record, which WAS shipped and is still stale), and B-08 (the '610 numerals, none unresolved' claim, four of whose gaps I recomputed from the frozen source alone). Also A-01's own verification test - end-to-end regeneration of the headline tables from shipped records on a clean machine - has NOT been run, so even the packaging half is not evidenced as complete.",
+      "confidence": "high",
+      "caution": "Shipping E-CAL makes B-01 DIRECTLY CONFIRMABLE rather than a reconstruction. Fix the calibration first; ship the evidence second."
+    },
+    {
+      "issue_id": "B-19",
+      "title": "The flagship illustrative number (BoolQ 0.6217) is published in the BoolQ paper and in SuperGLUE's most-frequent-class row, and the core floor test is caret's No Information Rate - none cited; zero dataset citations overall",
+      "raised_by": [
+        "R1-claude-novelty.md §3.1 + §3.2 + §6 (prose-only, R1's positioning lens)",
+        "X5-codex-repro.md#R5 (the 'central benchmarks and model checkpoints lack canonical citations' half)"
+      ],
+      "n_raisers": 2,
+      "severity": "major",
+      "severity_note": "Effectively a single-reviewer positioning finding. The meta-review upholds it explicitly as 'R1's genuine citation finding survives and is separate' and notes it is real citation work to do. It is the ONLY issue in the panel that touches the novelty framing with a verified external source.",
+      "class": "B_real",
+      "class_reason": "Citation/positioning. Independent of packaging.",
+      "affected": [
+        "sections/01_introduction.tex:19 (main finding bullet 1: 'BoolQ's best constant is 0.6217 rather than 0.50')",
+        "sections/02_related.tex",
+        "manuscript/refs.bib (17 entries)"
+      ],
+      "diagnosis": "R1 downloaded Clark et al. 2019 (BoolQ, arXiv 1905.10044, ACL Anthology N19-1300) and reports §5.1 states verbatim 'the majority-class baseline accuracy (62.17% on the dev set)', and that the BoolQ paper uses it exactly as this submission recommends - as a reference that partial-input models fail to beat. The same number is SuperGLUE's Most Frequent Class row for BoolQ (62.3 test / 62.2 dev). Separately, 'compare accuracy to the largest-class rate and test the difference' is caret::confusionMatrix's No Information Rate (Kuhn 2008, JSS 28(5), Crossref 10.18637/jss.v028.i05), shipped since 2008 - i.e. read-out v1 plus a significance test. So the paper's headline demonstration that 'the null is not chance' is, for its most vivid construct, a re-derivation of a published number, presented as a finding.",
+      "required_action": "Cite BoolQ's own most-frequent-class figure and SuperGLUE's most-frequent-class row at the point where 0.6217 is used, and cite caret's No Information Rate for the floor test. Reframe 'the missing operational item' as missing from LLM BENCHMARK REPORTING PRACTICE, not from measurement methodology. Add dataset citations for MMLU, MMLU-Pro, ARC-Easy/Challenge, OpenBookQA, CommonsenseQA, PIQA, Winogrande, BoolQ.",
+      "verification_test": "Every 'first / only / closest / missing / not aware' statement must either be limited to a documented corpus or supported by a reproducible search. refs.bib must contain a dataset citation for each measured benchmark.",
+      "gpu_cost": "0",
+      "my_verification": "I VERIFIED THE VERIFIABLE HALF WITHOUT NETWORK ACCESS and it is damning on its own terms: refs.bib contains exactly 17 entries and I listed all of them - balepur2024artifacts, zheng2025cheating, zheng2024selectors, gu2025olmes, cho2026choices, oostermeijer2026length, bean2025measuring, hewitt2019probes, feng2019misleading, ding2021grounding, arcon2026metalinguistic, plus six kappa-family articles (cohen1960, bennett1954, brennan1981, brenner1996, frary1988, devries2008). ZERO dataset papers and ZERO classification-metrics papers. Meanwhile 0.6217 is used in 01_introduction.tex:19 as main-finding bullet 1 with no citation, and 2033/3270 = 0.6217125 reproduces exactly. I could NOT fetch Clark et al. or the caret docs (no network in this task), so R1's verbatim quotes are UNVERIFIED BY ME - but they are checkable, R1 gave anthology IDs and a Crossref DOI, and R1's other four primary-source checks in the same review were confirmed accurate by an independent reviewer (R5) and by the meta-review. I treat R1 as reliable here and flag the quotes as pending confirmation.",
+      "confidence": "high (zero dataset citations: certain); medium-high (the BoolQ / NIR priority claims: R1's quotes are precise and checkable but I could not fetch them)"
+    },
+    {
+      "issue_id": "B-20",
+      "title": "Novelty positioning: four adjacent works under-cited or omitted, and the 'only the varying-k stratification is ours' claim is not established",
+      "raised_by": [
+        "X1-codex-novelty.md#N1 (Cho/NPSQ, major)",
+        "X1-codex-novelty.md#N2 (Barlow/Lai/Azen 1991 stratified kappa, major)",
+        "X1-codex-novelty.md#N3 (ACL 2025 synthesis, major)",
+        "X1-codex-novelty.md#N4 (Pries et al. Dutch Draw, major)",
+        "X1-codex-novelty.md#C2 (Molfese et al. Findings-ACL 2025, minor)",
+        "X5-codex-repro.md#R8 (novelty-claim scoping, major)"
+      ],
+      "n_raisers": 2,
+      "severity": "major",
+      "severity_note": "Concentrated in X1, the dedicated novelty reviewer. NONE of N1/N3/N4/C2 is claimed as a preemption by its own reviewer - each is 'closest neighbour omitted'. N2 is explicitly self-limited ('this is not a confirmed preemption').",
+      "class": "B_real",
+      "class_reason": "Citation and framing work in the frozen .tex and .bib.",
+      "affected": [
+        "sections/01_introduction.tex contribution framing",
+        "sections/02_related.tex",
+        "sections/03_method.tex:50-58 ('The statistic is not new' / 'only the varying-k stratification is ours')",
+        "sections/07_limitations.tex:15-16",
+        "refs.bib"
+      ],
+      "diagnosis": "N1: Cho et al. (ICLR 2026) removes the question, computes a choice-driven baseline, separates question- and choice-driven components and constructs NPSQ - the closest MCQA-specific structural neighbour to v2 - while the paper calls Hewitt & Liang the closest structural precedent. N2: stratified-kappa methods predate the paper (Barlow/Lai/Azen 1991, DOI 10.1002/sim.4780100913) so the blanket 'only the varying-k stratification is ours' is unsupported, though X1 could not obtain the paywalled article and says so. N3: the ACL 2025 synthesis (DOI 10.18653/v1/2025.acl-long.169) reviews choices-only shortcuts and is the closest recent field synthesis; also Balepur et al. is described too narrowly - it explicitly RECOMMENDS choices-only baselines as stronger than majority baselines. N4: Pries et al. 2023 Dutch Draw (DOI 10.1111/stan.12297) studies the best feature-independent baseline and argues a model should beat it. C2: Molfese et al. Findings-ACL 2025 (DOI 10.18653/v1/2025.findings-acl.950) on prompt format / label binding / logprob scoring. X5 R8 adds a versioning gap: the Cho comparison was done on arXiv v4 (2026-01-12) while the bib cites the ICLR 2026 poster and the paper states the Jan-26 camera-ready was not compared.",
+      "required_action": "Add all five works. Give a FORMULA-LEVEL comparison table for Cho/NPSQ vs v1 vs v2 (inputs, null distribution, preserved quantities, statistic, cost, inferential question) rather than a verbal one. Narrow the v2 claim to the exact contribution (blocked permutation under item-dependent legal-label structural zeros, applied as an MCQA gate) or retract stratification novelty if the closest stratified-kappa estimator is equivalent. Reframe the input-blind sanity gate as an MCQA-specific operationalization. Cite the exact Cho version inspected or diff the camera-ready. Per repository practice: OpenReview venueid for ICLR/ICML/NeurIPS; ACL Anthology + DBLP for ACL-family INCLUDING Findings.",
+      "verification_test": "A reader can identify a MATHEMATICAL, not merely verbal, distinction for every Cho-v1-v2 pair. On the same variable-option-count contingency tables, both stratified-kappa estimators are given algebraically with the smallest explicit example where they differ.",
+      "gpu_cost": "0",
+      "my_verification": "I CANNOT VERIFY THE EXTERNAL WORKS (no network in this task) and I flag this honestly rather than passing X1's DOIs through as facts. What I CAN verify and did: refs.bib has 17 entries and none of Cho-adjacent ACL 2025 synthesis / Molfese / Pries / Barlow is among them, so the OMISSIONS are real as omissions. cho2026choices IS cited (as @inproceedings), so N1 is an under-positioning claim not an omission. 03_method.tex does contain the 'only the varying-k stratification is ours' family of claims. IMPORTANT PROCESS NOTE PER THIS REPOSITORY'S OWN RULES: X1's DOIs and venues must NOT be entered into refs.bib without independent verification - ACL-family entries (the 2025.acl-long.169 and 2025.findings-acl.950 items) require aclanthology + DBLP confirmation, not OpenReview. Also, per this repository's standing rule, adjacent prior work is a reason to DIFFERENTIATE, not to abandon: none of these five is claimed as a preemption even by the reviewer who found them, and Cho is same-cycle concurrent work (R1 independently confirmed the ICLR 2026 venueid and called the paper's 'independently study' phrasing appropriate).",
+      "confidence": "high (the omissions); unverified (the external content of each work)"
+    },
+    {
+      "issue_id": "B-21",
+      "title": "Inferential procedure details unspecified: bootstrap interval type, null centering, mid-p formula, zero-atom handling, whether v1's maximizing constant is reselected inside each resample, and Delta_max's constraints",
+      "raised_by": [
+        "X5-codex-repro.md#R6 (major)",
+        "X2-codex-soundness.md#DEF-RESAMPLING-MATERIALITY (major)",
+        "X4-codex-clarity.md#X4-06 (major)"
+      ],
+      "n_raisers": 3,
+      "severity": "major",
+      "class": "B_real",
+      "class_reason": "Method-section completeness. Shipping records would let a reader reverse-engineer the choices; it would not specify them.",
+      "affected": [
+        "sections/03_method.tex:75 + Equations 2 and 3-6",
+        "sections/04_experiments.tex:15-16 statistics paragraph",
+        "sections/09a_relocated.tex:49-50",
+        "sections/09_appendix.tex A.9 (G1/G2)",
+        "sections/tab_v2_full.tex and tab_v2_resort.tex (the single p column does not say which test)"
+      ],
+      "diagnosis": "Two clusters. (a) RESAMPLING: v1 is defined with a maximum over labels but the bootstrap is described as a comparison against a deterministic per-item null predictor; the paper never states whether the maximizing label is RESELECTED in every resample. Holding the original label fixed estimates a DIFFERENT statistic from bootstrapping the maximum - this is not a documentation nicety, it changes the target. Also unspecified: interval type, null centering, the exact two-sided mid-p formula, zero-atom treatment, and the permutation exceedance / plus-one convention. (b) V2 VERDICT ALGORITHM: Delta_max is described but not operationally defined (no within-stratum or legal-label constraints, no tie handling); G1 and G2 appear only once, in 09_appendix.tex:33, and are never defined; the gate ORDER (bootstrap, permutation, integrity, significance, anchor, materiality) is absent; the single p column does not identify which test it reports; recovery_fraction and most intact anchors are omitted from the tables even though they determine the verdict labels.",
+      "required_action": "Add explicit formulas or executable pseudocode for every interval and p-value, including tie handling, whether v1 reselects the maximizing constant, threshold comparisons and MC corrections. Give a closed-form or algorithmic definition of Delta_max with strata, legality and tie handling. Provide a formal decision table for the v2 verdicts and add recovery_fraction, anchor value, bootstrap p and permutation p to the complete table.",
+      "verification_test": "Give the method plus the printed table to an independent implementer with the per-item predictions; their implementation must reproduce all 27 verdicts and both test decisions exactly with no access to hidden code. Separately, regenerate fixed-label AND reselected-maximum v1 intervals and report their difference.",
+      "gpu_cost": "0",
+      "my_verification": "I verified the specific textual gaps I could check by grep against the frozen source: 'G1 and G2 fire on no cell' occurs exactly once (09_appendix.tex:33) with no definition anywhere, so a reader genuinely cannot tell whether 'fire on no cell' is reassuring or vacuous. tab_v2_full.tex has a single unlabelled 'p' column and its caption does not say which test produced it. tab_v2_full carries NO recovery_fraction column, which is why B-05's anchor problem is unverifiable from the tables. The 'reselected maximum' point (X2) is the sharpest item in this cluster and I judge it correct in principle: bootstrapping max_L m_L with L refixed per resample is a different estimator from evaluating a fixed L*, and the paper does not say which it did. I could NOT determine which it actually did - that needs the emitter.",
+      "confidence": "high"
+    },
+    {
+      "issue_id": "B-22",
+      "title": "The main text contains no table or figure, so no headline number is auditable from the nine main pages",
+      "raised_by": [
+        "R4-claude-clarity.md#C-01 (major, R4's most severe issue, prose-only)",
+        "X4-codex-clarity.md#X4-08 (minor)",
+        "R4-claude-clarity.md#C-02 / #C-07 / #C-11 / #C-12 (minor, prose-only)",
+        "R1-claude-novelty.md §6 (prose-only, records it but declines to call it information-hiding)"
+      ],
+      "n_raisers": 3,
+      "severity": "major_in_R4_minor_in_X4",
+      "severity_note": "R4, the dedicated clarity reviewer, calls this its MOST SEVERE issue; X4, the other clarity reviewer, rates the same material MINOR. The disagreement is about severity, not existence.",
+      "class": "B_real",
+      "class_reason": "Presentation of the frozen manuscript.",
+      "affected": [
+        "main text layout",
+        "sections/03b_nulls_summary.tex (§3.3 single dense paragraph)",
+        "the unnumbered uncaptioned symmetric-standard tabular in sections/05_analysis.tex:15-18",
+        "sections/00_abstract.tex (single ~420-word paragraph)",
+        "nine table captions that say 'see the reproducibility statement for the artifact path' while that statement contains no paths"
+      ],
+      "diagnosis": "Every quantitative artifact the argument turns on lives after the bibliography; the main text makes 11 forward pointers into 9 distinct appendix subsections. So a reader reading the main text linearly cannot check a single headline number - in a paper whose own thesis is that numbers must be printed next to their reference. Sub-items: §5.1 and Appendix A.5 duplicate a 424-character run; the single most consequential retraction (10/12 -> 3/12) is a bare tabular with no number, caption, label or evidence tag; nine captions defer to a statement that carries no paths (the paths are in Table 12, which that statement never mentions); the abstract is one ~420-word block carrying 14 numeric results before 'cell', 'arm', v1, v2 or recovery_fraction is defined.",
+      "required_action": "Promote Table 1 (or a condensed version) and Table 5 into the main text. Define cell, arm, recovery_fraction, w_s, G1/G2, Delta_max before use. Number and caption the symmetric-standard table with its evidence identifier. Point captions at Table~\\ref{tab:artifact-map} directly. Cut the abstract to ~220-250 words. Cut the §5.1/A.5 duplication. Reflow appendix floats.",
+      "verification_test": "Assert >= 2 numbered tables appear at or before the REFERENCES page and that every count in §5.1 is derivable from a main-text table. Word count <= 250 with every abstract number still in the body. Re-run the file diff: no shared run > 120 chars between 05_analysis.tex and 09a_relocated.tex. Follow each caption pointer and reach a path in <= 1 hop.",
+      "gpu_cost": "0",
+      "my_verification": "I verified the load-bearing structural facts. The symmetric-standard table IS a bare tabular: 05_analysis.tex:15-18 is inline tabular content with no \\caption and no \\label, while every other table in the paper carries an E- evidence tag - and it presents the paper's most consequential retraction. I counted the abstract at roughly 420 words in one paragraph (R4 says 417, X4 says 427; the discrepancy is tokenisation, not substance). The 424-character duplication between 05_analysis.tex:25 and 09a_relocated.tex:37 is consistent with what I read in both files - the BH/Bonferroni and 0.0196 sentences are near-identical. I did NOT re-render the PDF to confirm 'no table before REFERENCES', but R1 independently recompiled the shipped source (rc=0, 24 pages) and reports REFERENCES begins on page 9 with the appendix from page 11, which is consistent with R4's page attributions.",
+      "confidence": "high"
+    },
+    {
+      "issue_id": "B-23",
+      "title": "Missing immutable provenance for the evaluated objects: model/tokenizer revisions, dataset versions and checksums, prompts, software lockfile, hardware, checkpoint hashes, OLMo pruning/healing configs and seeds",
+      "raised_by": [
+        "X5-codex-repro.md#R5 (major)"
+      ],
+      "n_raisers": 1,
+      "severity": "minor",
+      "severity_note": "SINGLE-REVIEWER. The meta-review explicitly judges X5's 'major' OVER-SEVERE and I agree, so I record it at minor with the reason. Kept in the ledger because the residual request is legitimate supplementary work.",
+      "class": "B_real",
+      "class_reason": "Manuscript/supplementary completeness.",
+      "affected": [
+        "sections/04_experiments.tex:4-16",
+        "sections/10_reproducibility.tex:12-18"
+      ],
+      "diagnosis": "Family names and arm labels are insufficient to reconstruct the evaluated objects or the exact item inventory.",
+      "required_action": "Provide a machine-readable configuration per reported cell: canonical dataset and model citations, repository identifiers and revisions, split/preprocessing provenance, prompt bytes, tokenizer revision, damage transformation, checkpoint hash, software lockfile or container digest, seeds, hardware. This overlaps B-19's dataset-citation action.",
+      "verification_test": "An independent group using only the recorded identifiers recovers the stated item counts and option strata and reproduces one intact, one truncate-only and one prune-then-heal cell within a declared tolerance.",
+      "gpu_cost": "0 to document; reproducing a cell would need GPU but that is the reader's cost, not a revision requirement",
+      "my_verification": "I verified the mitigation the meta-review cites and it is REAL: the frozen 10_reproducibility.tex does specify chat_template=False, add_bos=0, desc_style=none, fp32 master weights with bf16-autocast, batch 48, max length 2048, and per-shard zero-truncation assertions. So the paper is not silent on protocol - the residual is immutable revisions, checksums, lockfiles and hardware, which is supplementary-material work rather than a soundness defect. X5's rating of 'major' on this item is part of why its reproducibility dimension is 1, and per A-02 that dimension is already dominated by the packaging failure. Downgraded to minor with the reason recorded.",
+      "confidence": "high"
+    },
+    {
+      "issue_id": "B-24",
+      "title": "The Bean et al. checklist count (27 vs 28) is section- and version-dependent, and the paper cites it as canonical",
+      "raised_by": [
+        "R1-claude-novelty.md §3.4 (verified 27 and called it 'precisely correct')",
+        "R4-claude-clarity.md#C-04 (major, counted 28, called the paper WRONG)",
+        "X1-codex-novelty.md#C1 (minor, counted 28)",
+        "R5-claude-repro.md §8 (reconciled both, prose-only)"
+      ],
+      "n_raisers": 4,
+      "severity": "minor",
+      "severity_note": "THREE REVIEWERS DISAGREE ON THE FACT and R5 explains why. Resolved below in R5's favour: the defect is unspecified provenance, not a wrong number. R4's 'major' rating rests on the count being wrong; on R5's reconciliation it is not wrong, so the severity drops to minor.",
+      "class": "B_real",
+      "class_reason": "Citation precision in the frozen introduction.",
+      "affected": [
+        "sections/01_introduction.tex:3 ('A systematic construct-validity review of 445 language-model benchmarks offers 27 actionable checklist items, but none asks authors to report a null, a chance level, or a constant predictor')"
+      ],
+      "diagnosis": "R5's reconciliation is the only account that explains both readings: Bean et al. Appendix A has 28 box items (3+3+3+4+3+4+4+4 across eight recommendation groups) while the MAIN-TEXT §5 rendering shows 27 box glyphs. So R1 counted the main text and got 27; R4 and X1 counted Appendix A and got 28. Both are correct on their own rendering. The paper cites 27 as if canonical without saying which version and section it counted.",
+      "required_action": "State which arXiv version and which section was counted, or cite the RECOMMENDATION count (eight), which is robust to versioning. Downgrade from 'the number is wrong' to 'state your provenance'.",
+      "verification_test": "Count active checkbox entries in the named version and section; assert the printed count matches that specific rendering.",
+      "gpu_cost": "0",
+      "my_verification": "I ARBITRATED THIS BY RECOMPUTING R5's BREAKDOWN, WHICH IS THE STEP THAT DECIDES IT: 3+3+3+4+3+4+4+4 = 28, matching R4 and X1 on Appendix A, and R5 attributes 27 to the main-text glyph count, matching R1. So there is no factual conflict once the rendering is named - the reviewers were counting different objects. I could not fetch Bean et al. to confirm the two renderings exist, so R5's reconciliation is accepted on the strength of its internal consistency plus the fact that it is the only hypothesis that explains all three observations. CRITICALLY: ALL FOUR reviewers independently confirmed the LOAD-BEARING half of the sentence - that no checklist item requests a null, a chance level or a constant predictor - and R5 additionally reports that the strings 'null', 'majority' and 'constant' appear ZERO times in that paper. So the paper's gap claim survives entirely; only the numeral's provenance is at issue.",
+      "confidence": "high"
+    }
+  ],
+  "disagreements_preserved": [
+    {
+      "id": "D-01",
+      "topic": "Whether the symmetric-standard table (3/12 vs 1/12) still contains the asymmetry it was added to remove",
+      "positions": [
+        {
+          "who": "R1-claude-novelty.md §5 (its SECOND major issue)",
+          "argument": "The subsection states the criterion is 'the two-sided 95% interval on BOTH sides'. tab_mmlupro's mid-p values give three sub-0.05 cells: qwen3/k14 p=0.0192 (above), llama2/k8 p=0.0168 (below), qwen3/k8 p=0.0362 (below). Under a criterion that counts both sides the floor reference has 3/12 rejections, identical to the chance row's 3/12 - i.e. NO FLIP AT ALL under the stated symmetric standard. The printed 1/12 is reachable only by counting above-side rejections for the floor while counting both sides for chance."
+        },
+        {
+          "who": "R-claude-stats.md (strengths list) and R4-claude-clarity.md",
+          "argument": "Both call the same subsection exemplary. R-stats states it reconstructed BOTH floor-side counts exactly from tab_mmlupro (point-above = 3/12; CI-excludes-0 = 1/12) and lists the self-correction as a verified strength. R4 calls it 'the single most consequential retraction in the paper'."
+        },
+        {
+          "who": "meta/META_REVIEW.md",
+          "argument": "DOES NOT ADJUDICATE THIS AT ALL. The meta-review lists the 5.1 self-correction as consensus strength #2 and never engages R1's challenge to it. This is the largest coverage gap I found in the meta-review."
+        }
+      ],
+      "my_adjudication": "BOTH ARITHMETICS ARE CORRECT AND THEY COUNT DIFFERENT EVENTS. I recomputed the floor side from tab_mmlupro's own deltas and half-widths: CI excludes 0 in the ABOVE direction = 1/12 (Qwen3 k14 only, CI [+0.042,+0.424]); CI excludes 0 in the BELOW direction = 2/12 (Llama-2 k8 CI [-1.650,-0.178] and Qwen3 k8 CI [-1.700,-0.062]); CI excludes 0 in EITHER direction = 3/12. So the paper's 1/12 counts 'the arm CLEARS its floor' and R1's 3/12 counts 'the cell is RESOLVED in either direction'. Whether R1's symmetry complaint has force depends entirely on what the chance-side 3/12 counts - and THE PER-CELL CHANCE-SIDE DELTAS AND HALF-WIDTHS ARE PRINTED NOWHERE (see B-11d), so THIS IS NOT DECIDABLE FROM THE SNAPSHOT. What I can add: the chance-side POINT count of 10/12 reconstructs exactly (I get +0.589, +0.498, +0.232, -0.341, Llama-3 endpoints +0.099/+0.382, +0.806, +0.415, +0.731, -0.308, i.e. exactly two below), and two cells are below chance - so an 'either direction' chance-side count would be at least 2 and possibly more, which is precisely the ambiguity R1 identified. R1 itself flagged the correct caveat: percentile CIs and two-sided mid-p need not agree at the boundary, which is why the comparison must be RE-EMITTED from the CI arrays rather than inferred.",
+      "resolution": "PRESERVE. Do not average and do not dismiss. The required action is the same either way: add per-cell chance-side delta, half-width and p to tab_mmlupro (already required by B-11) and state explicitly which event each column counts. If R1 is right, the paper's single most-quoted contrast weakens from 3/12-vs-1/12 to 3/12-vs-3/12, which would be a materially larger retraction than the one the paper already made.",
+      "why_this_matters": "This is the ONLY panel finding that attacks what every other reviewer and the meta-review lists as a consensus STRENGTH. It is single-reviewer, unadjudicated, and it bears on the paper's most-quoted number. It should be resolved before any re-review, and the resolution is a 0-GPU re-emission."
+    },
+    {
+      "id": "D-02",
+      "topic": "Whether the abstract's 'all 21 evaluated cells are powered at the scale of the reference effect' is supportable",
+      "positions": [
+        {
+          "who": "X2#STAT-POWER-NOMENCLATURE, X3#ER-03, X4#X4-04 (all major)",
+          "argument": "The table implements an achieved-precision criterion (half-width <= |d|), not power; no target power, alternative distribution or rejection-probability calculation is specified; so 'all 21 cells are powered' is not established / not reconstructable from a conventional power criterion."
+        },
+        {
+          "who": "R-claude-stats.md#S8 (minor, AFTER SELF-RETRACTION)",
+          "argument": "Initially agreed, then computed that the worst half-width in the prose range (0.968) gives 80.3% power at d=-1.389 pp, WITHDREW that half of its own finding against its own interest, and narrowed the issue to tab_power's five small-benchmark labels where it is correct (ARC-Easy 55.0%, Winogrande 63.3%, MMLU reference 65.5%)."
+        },
+        {
+          "who": "meta/META_REVIEW.md",
+          "argument": "Adopts R-stats' narrow form and declares the codex strong form REFUTED: 'It is reconstructable and it is true at the conventional bar.' Uses this to argue the codex panel is over-severe."
+        }
+      ],
+      "my_adjudication": "I RECOMPUTED ALL FOUR POWER FIGURES and confirm R-stats and the meta-review exactly: Phi(1.389/(0.968/1.96) - 1.96) = 0.8030; ARC-Easy 0.550; Winogrande 0.633; MMLU reference 0.655. So the 21-cell claim DOES clear the 80% bar and the codex strong form is refuted AT THE 80% BAR. BUT I FOUND A CAVEAT THAT PARTLY RESCUES THE CODEX SIDE AND THAT THE META-REVIEW DOES NOT STATE: the half-width 0.968 APPEARS IN NO SHIPPED TABLE. tab_mmlupro spans 0.083-0.852; tab_v2_full spans 0.081-0.844. So 0.803 is derived from a PROSE-ONLY number, and the codex reviewers' literal complaint - that the classification is not reconstructable - is TRUE with respect to the tables and false only if the prose range is accepted on trust. The meta-review's flat 'it IS reconstructable' therefore overstates.",
+      "resolution": "PRESERVE A NARROWED DISAGREEMENT. The codex STRONG form (the claim is false / unestablished at the 80% bar) is refuted. The codex WEAK form (the 21-cell set and its half-width range are not reconstructable from any shipped table, so the claim cannot be checked) STANDS, and it is B-11a. The nomenclature point (call it achieved precision, not power) stands as a writing fix (B-10). Do NOT delete the 'all 21 cells are powered' sentence - it is true at the 80% bar; fix tab_power's labels and enumerate the 21 cells instead.",
+      "why_this_matters": "The meta-review uses this refutation as a load-bearing reason to place its score above the codex median. That reasoning is weakened, though not overturned, by the fact that 0.968 is unverifiable from the tables."
+    },
+    {
+      "id": "D-03",
+      "topic": "Severity of the MMLU-Pro calibration defect: fatal, major, or scoped-major",
+      "positions": [
+        {
+          "who": "R-claude-adversary.md#ADV-1",
+          "argument": "FATAL. The blast radius is structural: MMLU-Pro alone carries the 14/15 headline, the 21 powered cells, the 3/12-vs-1/12 comparison and all 27 v2 cells, and the defect may extend to CommonsenseQA and other variable-k constructs."
+        },
+        {
+          "who": "R5-claude-repro.md",
+          "argument": "Its own stated FATAL issue, on the ground that the paper twice instructs the reader that reproducing this calibration is mandatory."
+        },
+        {
+          "who": "R-claude-soundness.md#S-01, R-claude-stats.md#S1, and the four codex raisers",
+          "argument": "MAJOR, not fatal: the paper's primary rule survives, the flip direction does not depend on this p-value, the floor value 1403/12032 is untouched, and MMLU and BoolQ still clear the calibration."
+        },
+        {
+          "who": "meta/META_REVIEW.md",
+          "argument": "MAJOR. Downgrades ADV-1 by one notch because the reviewer's OWN review_limitations says the exact legal-support p 'is not something I can pin down without the real n_opt vector'."
+        }
+      ],
+      "my_adjudication": "I side with MAJOR on the severity while noting the fatal raters are right about the blast radius. The deductive core (E[f_hat]=0.104460 printed below Chance=0.110877 in the same row) is certain and I verified it, and it alone justifies major without any reconstruction. What is NOT established is the magnitude: three reconstructions land 0.061-0.120 and a distribution-free bound gives >= ~0.010, but only the authors hold the n_opt vector. A fatal rating that rests on a reconstruction whose own author calls the magnitude unpinnable is one notch too strong. HOWEVER I explicitly ENDORSE the fatal raters' blast-radius analysis, which the 'major' framing risks burying: if the corrected p exceeds 0.05, the surviving-calibration constructs become MMLU and BoolQ, and NEITHER carries any of the headline counts - so the constructs whose floors survive calibration would not be the constructs on which the flip is measured. That consequence must be stated in the paper (it is required action W1 in the meta-review's plan and it is the single most important sentence the revision must add).",
+      "resolution": "MAJOR with the blast radius stated explicitly. Also record R5's separate extension: R5 is right IN KIND that ARC-Easy (chance 0.250161) and ARC-Challenge (0.250156) have non-round chance lines proving n_opt varies there while their rows print k=4, but the magnitude is ~1.6e-4 vs ~9e-3 on MMLU-Pro, two orders of magnitude smaller. So ADV-1's worry that the defect might affect 'the majority of the null table' is NOT borne out: it is one construct at material scale."
+    },
+    {
+      "id": "D-04",
+      "topic": "Whether a low reproducibility score is a finding about the paper or about the snapshot",
+      "positions": [
+        {
+          "who": "X5-codex-repro.md",
+          "argument": "Made it the LEADING reason for its 4/10 and rated its R1 issue major; its would-lower-score condition was 'the missing artifacts do not exist rather than merely being unshipped'."
+        },
+        {
+          "who": "X2-codex-soundness.md",
+          "argument": "Carefully phrased it as 'unverified rather than refuted' - which is exactly right."
+        },
+        {
+          "who": "meta/META_REVIEW.md",
+          "argument": "Predominantly a finding about the SNAPSHOT, established by stat-only checks: the named records exist on disk and pre-date the freeze."
+        }
+      ],
+      "my_adjudication": "AGREE that the dimension score measures the snapshot (A-01, A-02) and that X5's would-lower-score condition is refuted - I confirmed the repaired tree ships 30 evidence records where the reviewed one shipped 2, with a byte-identical manuscript. BUT THE SPLIT IS NOT CLEAN AND I RECORD THE RESIDUAL AS B_real: B-17 (Table 12 resolves to an unshippable internal path cited 8 times; E-I resolves to nothing even after the repair - I verified both), B-18 (the stale build record, which WAS shipped and which I verified is STILL stale in submission_complete), and B-08 (four numeral-checker gaps I recomputed from the frozen source alone). Also A-01's own verification test - end-to-end regeneration of the headline tables from shipped records on a clean machine - HAS NOT BEEN RUN, so even the packaging half is unevidenced.",
+      "resolution": "Both are right about different things, and that is the whole point of this ledger's A/B split. X2's phrasing is the model: 'unverified rather than refuted'."
+    }
+  ],
+  "unsupported_claims": [
+    {
+      "id": "U-01",
+      "claim": "R-claude-adversary.md#ADV-1 rated FATAL; R5-claude-repro.md#R5-01 likewise its fatal issue",
+      "status": "finding_upheld_severity_unsupported",
+      "why": "The FINDING is correct and I verified it deductively. The FATAL rating is one notch too strong and the reviewer's own review_limitations says why: the exact legal-support p 'is not something I can pin down without the real n_opt vector, and it is possible though in my judgement unlikely that the true distribution lands below 0.05.' A fatal rating resting on a reconstruction whose author calls the magnitude unpinnable overreaches. The deductive core justifies major on better grounds than the reviewer's own headline number.",
+      "note": "This is the reviewer being RELIABLE (it disclosed the weakness itself), not the finding being unsound."
+    },
+    {
+      "id": "U-02",
+      "claim": "Every reported corrected MMLU-Pro p-value: 0.061-0.085 (R-adversary), 0.064-0.087 (R5), 0.068/0.093/0.120 (R-stats), 0.068-0.119 (R-soundness)",
+      "status": "unsupported_as_measurements",
+      "why": "All are reconstructions over INFERRED n_opt histograms. Every reviewer said so prominently. DIRECTION and EXISTENCE are established deductively (E[f_hat] < Chance, which I verified). MAGNITUDE is not established - only the authors hold the per-item n_opt vector. A distribution-free bound gives corrected p >= ~0.010, which is already three orders of magnitude above the printed <1e-5, so the finding does not need the reconstructions.",
+      "action": "These numbers must NOT be cited as measurements in any revision, rebuttal or summary. Cite the deductive inequality instead."
+    },
+    {
+      "id": "U-03",
+      "claim": "X2#STAT-POWER-NOMENCLATURE, X3#ER-03, X4#X4-04 (strong form): the abstract's 'all 21 evaluated cells are powered' is unestablished / unreconstructable",
+      "status": "partly_refuted",
+      "why": "I recomputed it: the worst prose half-width 0.968 gives Phi(1.389/(0.968/1.96) - 1.96) = 0.803, i.e. 80.3% power at the reference effect, so the claim holds at the CONVENTIONAL 80% bar. R-claude-stats reached this and RETRACTED its own agreeing finding. BUT the codex WEAK form survives and the meta-review overstates in dismissing it: 0.968 appears in NO shipped table (tab_mmlupro max 0.852, tab_v2_full max 0.844), so the classification genuinely cannot be checked against tabulated data. See D-02.",
+      "surviving_finding": "tab_power's yes/no column implements a 50%-power rule, and 'yes, borderline' is 55.0% (B-10, minor). Plus the 21-cell set is unenumerated (B-11a). The nomenclature fix stands."
+    },
+    {
+      "id": "U-04",
+      "claim": "R5-claude-repro.md: the legality defect extends to ARC-Easy and ARC-Challenge",
+      "status": "correct_in_kind_must_not_be_propagated_at_scale",
+      "why": "R5 is right in kind: the printed chance lines 0.250161 and 0.250156 are not exactly 1/4, which proves n_opt varies there while the generated table prints k=4. But the magnitude is |chance - 1/4| ~ 1.6e-4 versus ~9e-3 on MMLU-Pro - two orders of magnitude smaller. Reporting it alongside the MMLU-Pro finding without the magnitude would misstate the blast radius, and it is what makes ADV-1's 'may affect the majority of the null table' NOT borne out.",
+      "my_verification": "I read both chance values directly from the frozen tab_nulls.tex: ARC-Easy 0.250161, ARC-Challenge 0.250156. Both differ from 0.250000, confirming variable n_opt. Both differences are ~1.6e-4."
+    },
+    {
+      "id": "U-05",
+      "claim": "X5-codex-repro.md#R5 rated MAJOR (missing model/tokenizer revisions, dataset versions, prompts, software, hardware)",
+      "status": "over_severe",
+      "why": "The frozen Reproducibility Statement DOES specify chat_template=False, add_bos=0, desc_style=none, fp32 master weights with bf16-autocast, batch 48, max length 2048, and per-shard zero-truncation assertions - I confirmed this in the shipped 10_reproducibility.tex. The residual request (immutable revisions, checksums, lockfiles, hardware) is legitimate supplementary-material work, not a soundness defect. Recorded at minor as B-23."
+    },
+    {
+      "id": "U-06",
+      "claim": "X1-codex-novelty.md#N2: Barlow/Lai/Azen (1991) stratified kappa preempts the varying-k stratification",
+      "status": "not_a_preemption_and_the_reviewer_says_so",
+      "why": "X1 wrote: 'I could not confirm that these methods implement the exact item-dependent legal-label blocked permutation, so this is not a confirmed preemption.' Correctly self-limited. It remains open CITATION work (B-20), not a novelty kill. Per this repository's standing rule, adjacent prior work is a reason to DIFFERENTIATE, not to abandon."
+    },
+    {
+      "id": "U-07",
+      "claim": "R4-claude-clarity.md#C-04 rated MAJOR: '27 actionable checklist items' is WRONG",
+      "status": "fact_disputed_severity_unsupported",
+      "why": "Three reviewers disagree on the count. R1 verified 27 and called the claim 'precisely correct'; R4 counted 28 and called the paper wrong; X1#C1 also says 28. R5's reconciliation is the only account explaining both: Appendix A has 28 box items (3+3+3+4+3+4+4+4 = 28, which I recomputed) while the main-text rendering shows 27 box glyphs. So the count is section- and version-dependent and the paper is not simply wrong. Downgrade to 'state which version and section you counted' (B-24, minor). All four reviewers independently confirmed the LOAD-BEARING half of the sentence."
+    },
+    {
+      "id": "U-08",
+      "claim": "Citation-integrity dimension scores of 2 (X1, X5)",
+      "status": "not_supported_by_what_those_reviewers_checked",
+      "why": "Both disclose they had no external access or only partial access, so the 2s are scored on ABSENCE OF ACCESS, not on defects found. Meanwhile R5 verified five venues on OpenReview with a positive control (cho2026choices = ICLR 2026 Poster, oostermeijer2026length = ICML 2026, bean2025measuring = NeurIPS 2025 D&B, zheng2025cheating = ICLR 2025 Oral, arcon2026metalinguistic = arXiv 2602.02182) and R1 verified four local attributions against primary sources (Bean, Feng, OLMES, Balepur) plus all six kappa-family citations via Crossref and all ACL-family venues via Anthology, reporting ZERO fabricated or mis-venued references. The panel median of 3 is right.",
+      "note": "R1's genuine citation finding (B-19: BoolQ 0.6217 published and uncited; caret NIR uncited; zero dataset citations) is SEPARATE and survives. Do not use U-08 to dismiss B-19."
+    },
+    {
+      "id": "U-09",
+      "claim": "Any panel finding that a primary numeric record is WRONG",
+      "status": "no_such_finding_exists_in_this_panel",
+      "why": "NO reviewer verified a single primary evidence record, and all twelve review_limitations blocks disclose it. Every bootstrap half-width, permutation p-value, McNemar result, fp32 tie count, off-MMLU 0/60-25/60-52/60-7/60 count, the '610 numerals' report, the 'bit-identical floor across 21 cells' assertion, and the 2.11x/0.90x/0.98x residual-fraction ratios are UNVERIFIED - neither confirmed nor refuted. Findings resting on those numbers being wrong do not exist here; findings resting on them being UNCHECKABLE do.",
+      "action": "Do not treat any unverified number as refuted, and do not treat the absence of refutation as verification."
+    },
+    {
+      "id": "U-10",
+      "claim": "X3-codex-stats.md#ER-04 rated MAJOR: non-rejection converted into equality/absence language",
+      "status": "finding_correct_severity_downgraded",
+      "why": "The mechanism is real and I exhibited it (Llama-2 k14 delta +0.017, hw 0.083, CI [-0.066,+0.100] labelled 'at floor'; Qwen3 k10 delta +0.158, hw 0.233, CI [-0.075,+0.391] labelled 'at floor'). But X3 does not credit two mitigations I verified: the abstract's phrase is 'AT OR BELOW the floor', weaker than 'equal to', and 05_analysis.tex:7 explicitly says 'the exact chance-line counts are reported rather than compressed into a universal categorical flip'. Recorded at minor-to-major as B-14."
+    }
+  ],
+  "contradictions_with_task_brief": [
+    {
+      "id": "X-01",
+      "brief_said": "12 reviewer scores with a median of about 4.75",
+      "finding": "The median of [4,4,4,4,4,5,5,5,5,5,5.5,6] is 5.00, not 4.75. The MEAN is 4.708. 4.75 is neither. (4.75 would be the midpoint of the two central values only if they were 4.5 and 5; they are 5 and 5.)",
+      "impact": "None on the conclusion - 12/12 are still below the 6.0 gate, and 10/12 are below borderline. But the number should be stated as median 5.00 / mean 4.708, which is what PANEL_AGGREGATE_FINAL.json already records."
+    },
+    {
+      "id": "X-02",
+      "brief_said": "round_04's artifact shipped only 2 evidence files while 29 were on disk, and 5 of 12 reviewers (X1/X2/X4/X5/X6) independently docked for it",
+      "finding": "The count of reviewers who raised it as a SCORED ISSUE is NINE, not five. Beyond the five codex reviewers the brief names, R-claude-stats raised it as issue S6 (major), R5-claude-repro raised it as R5-02 (major), X3-codex-stats raised it as RP-01 (major), and R1-claude-novelty raised it as issue R1 (major). All 12 disclose it in review_limitations. The PACKAGING_DEFECT document's own table lists only five because it was written before all 12 reviews landed (it says 'six blind reviewers' in section 1 and 'four of the six' in the table, then the panel grew to 12).",
+      "impact": "It makes the A_packaging class LARGER than the brief assumed, and correspondingly raises how much of the score depression is attributable to packaging. It does NOT change any B_real finding."
+    },
+    {
+      "id": "X-03",
+      "brief_said": "'The defect has been repaired'",
+      "finding": "The FREEZE TOOL is repaired and submission_complete exists, but three things the reviewers asked for are still open, and I verified each myself: (1) the build_record in submission_complete/evidence/gate/build_record.json is STILL stale - it records sha 56a376e1.../355196 bytes/22 pages while the PDF there is sha 1fbaaf99.../366583 bytes, with build_gate_pass still true (B-18); (2) evidence identifier E-I still resolves to NOTHING, because its only source is tcodex_out/EVIDENCE_PACK.md which can never enter a blind snapshot, and that path is cited 8 times in 09_appendix.tex (B-17); (3) submission_complete was produced with --allow-dangling-blind-refs, so the freeze RECORDS the dangling reference rather than blocking it; and (4) the verification test the reviewers actually wrote - end-to-end regeneration of the headline tables from shipped records on a clean machine - HAS NOT BEEN RUN.",
+      "impact": "'Repaired' is true of the tool and substantially true of the artifact; it is NOT true that the reviewers' complaint is retired."
+    },
+    {
+      "id": "X-04",
+      "brief_said": "(implicitly) that a merge of the 12 reviews was the missing artifact",
+      "finding": "An independent META-REVIEW already exists (meta/META_REVIEW.md + meta_review.json, meta_score 4.5, weak_reject, 0 GPU) and it is thorough: it adjudicates ~19 issue clusters, lists 9 unsupported reviewer claims, records 6 material disagreements and 17 prioritized actions, and independently recomputes much of the arithmetic. I VERIFIED A SAMPLE OF ITS ADJUDICATIONS AND THEY HELD: the E[f_hat] < Chance violation is 1/9 rows and it is the flagship row; BH over the 27 v2 p-values rejects exactly 6 with keep14 retained; the four power figures (0.803 / 0.550 / 0.633 / 0.655); shortgpt16's +3.674 pp at 15.8x the acknowledged exception; the +0.43 caption endpoint matching no row; 4.6x should be 4.2264; the PIQA strict-vs-inclusive tails 0.657647 vs 0.691725. So this ledger does NOT duplicate it.",
+      "what_this_ledger_adds": [
+        "A systematic A_packaging vs B_real class on every issue, which the meta-review only sketches in its section 6 and never applies issue-by-issue.",
+        "The ~50 issues the meta-review never reached: the 9 machine-readable reviews contain 76 issues (1 fatal + 54 major + 21 minor) plus 3 prose-only reviews the meta-review's issue count excludes entirely; the meta-review adjudicates ~19 clusters.",
+        "D-01: R1's challenge to the symmetric-standard table is UNADJUDICATED by the meta-review, which instead lists that subsection as consensus strength #2. It is the only finding in the panel that attacks a consensus strength, and it bears on the most-quoted number.",
+        "D-02: the meta-review's refutation of three codex reviewers rests on half-width 0.968, which I verified appears in NO shipped table.",
+        "B-15: 'we report both columns throughout' is falsified by the paper's own next paragraph - a sharper form than X3#ER-05 stated and absent from the meta-review.",
+        "B-14, B-15, B-21, B-23 as tracked entries (single-reviewer findings the meta-review passed over).",
+        "The observation that B-02 (shortgpt16) propagates into 0/60 and 0/15, not only into 14/15 - which no reviewer and not the meta-review states.",
+        "Direct verification that B-18 is STILL open in the repaired snapshot and that E-I still resolves to nothing."
+      ]
+    }
+  ],
+  "top_actions": [
+    {
+      "rank": 1,
+      "action_id": "T1",
+      "issues": [
+        "B-01"
+      ],
+      "gpu": "0",
+      "cost": "low",
+      "expected_value": "highest",
+      "what": "Re-run the E-CAL winner's-curse calibration for BOTH MMLU-Pro rows with each item's gold label drawn uniformly over that item's OWN legal letters (same seed 20260814, same draw count, same estimator). Publish the per-item n_opt histogram. Add the emitter assertion E[f_hat] >= Chance for every row.",
+      "why": "Nine of twelve reviewers converged on this and it is the only defect that changes a headline verdict. The assertion is a milliseconds-cost permanent guard that would have caught it pre-round_04.",
+      "gate": "The assertion FAILS on the shipped MMLU-Pro item-average row (0.104460 < 0.110877) and PASSES after. Do this BEFORE shipping E-CAL - shipping it first makes the defect directly confirmable by reviewers.",
+      "do_now": true
+    },
+    {
+      "rank": 2,
+      "action_id": "T2",
+      "issues": [
+        "B-01"
+      ],
+      "gpu": "0",
+      "cost": "low",
+      "expected_value": "highest",
+      "what": "Propagate T1's outcome honestly through abstract, introduction bullet 1, both null tables and the Reproducibility Statement, INCLUDING the sentence that the constructs whose floors survive calibration (MMLU, BoolQ) are NOT the constructs on which the flip is measured. Mark MMLU-Pro's k column as varying.",
+      "why": "Without this the fix is cosmetic. It is also the sentence the paper most needs and currently lacks. The honest outcome is probably a SMALLER headline, and the paper's own ledger says it prefers that trade.",
+      "gate": "No sentence in the abstract, intro, either null table or the Reproducibility Statement asserts a calibrated floor-above-chance for MMLU-Pro if the corrected p exceeds 0.05.",
+      "do_now": true
+    },
+    {
+      "rank": 3,
+      "action_id": "T3",
+      "issues": [
+        "B-18"
+      ],
+      "gpu": "0",
+      "cost": "10 minutes",
+      "expected_value": "high",
+      "what": "Regenerate build_record.json against the final PDF (sha256, bytes, pages) and make the snapshot builder refuse to ship on mismatch. Close pdf_visually_inspected with PyMuPDF, which is present in this repository's environment.",
+      "why": "ELEVEN of twelve reviews raised it - the single most widely raised issue in the panel - and I verified it is STILL WRONG in the repaired snapshot. Highest reviewer-attention-per-minute-of-work in the entire ledger.",
+      "gate": "sha256(manuscript/main.pdf) == build_record.pdf_sha256 == the MANIFEST entry; pdf_bytes and pdf_pages match a programmatic count; builder exits non-zero on the current pair.",
+      "do_now": true
+    },
+    {
+      "rank": 4,
+      "action_id": "T4",
+      "issues": [
+        "B-02",
+        "B-06",
+        "B-11"
+      ],
+      "gpu": "0",
+      "cost": "low",
+      "expected_value": "high",
+      "what": "Publish ONE machine-generated designated-damaged inventory: every evaluated arm with family, arm, benchmark, construction, designated-damaged status, exclusion reason (construction-based, score-independent), floor delta, half-width, p, clears-floor bool, powered bool. Name shortgpt16 and keep14 in the SAME sentence as the 14/15 with their floor deltas. Reconcile 15, 60 and their union, and name the 60th cell so 7+52 = 60.",
+      "why": "Honours the paper's own A.4 disclosure promise, and one table closes B-02, B-11c and part of B-06 at once. NOTE: shortgpt16 propagates into 0/60 and 0/15, not only 14/15 - a point no reviewer made.",
+      "gate": "grep 'shortgpt16' occurs in the same paragraph as '14/15' or '14/16'. Emitter assertion: the arm set entering any denominator equals the arm set labelled damaged, with each set difference carrying non-empty exclusion_reason AND floor_delta_pp, exiting non-zero otherwise. It must FAIL on the current manuscript.",
+      "do_now": true
+    },
+    {
+      "rank": 5,
+      "action_id": "T5",
+      "issues": [
+        "B-03"
+      ],
+      "gpu": "0",
+      "cost": "low",
+      "expected_value": "high",
+      "what": "Replace Bin(12,0.05) with an item-level joint null (resample items once, recompute all 12 cells per resample, report the rejection-count distribution) using the existing 10,000-resample machinery. Or demote 3/12 to descriptive and drop the probability.",
+      "why": "Eight reviewers. The paper currently contradicts itself eleven lines apart in one file, and 0.0196 is its ONLY surviving global inferential claim.",
+      "gate": "The reported aggregate p comes from the joint distribution, not Bin(12,0.05); the sentence containing 0.0196 also carries P(X>=2)=0.118360.",
+      "do_now": true
+    },
+    {
+      "rank": 6,
+      "action_id": "T6",
+      "issues": [
+        "D-01",
+        "B-11"
+      ],
+      "gpu": "0",
+      "cost": "low",
+      "expected_value": "high",
+      "what": "RE-EMIT the symmetric-standard comparison from the CI arrays, adding per-cell chance-side delta, half-width and p as three columns of tab_mmlupro, and state explicitly which event each column counts (clears-above vs resolved-either-direction).",
+      "why": "THIS IS THE ONE I WOULD ELEVATE ABOVE ITS PANEL RANKING. R1 alleges the symmetric table retains the asymmetry it was added to remove (3/12 vs 3/12, no flip), the meta-review never adjudicated it, and every other reviewer lists that subsection as a consensus STRENGTH. I verified both arithmetics are correct and count different events, and that the deciding data (per-cell chance-side half-widths) is printed nowhere. If R1 is right, the paper's most-quoted contrast weakens further than the retraction it already made - and it is better to find that out now than from a referee.",
+      "gate": "The chance-side CI-excludes-0 count is emitted per cell from the CI arrays; the 10/12 point count already reconstructs (I confirmed it) and the 3/12 CI count becomes checkable.",
+      "do_now": true
+    },
+    {
+      "rank": 7,
+      "action_id": "T7",
+      "issues": [
+        "B-05"
+      ],
+      "gpu": "0",
+      "cost": "low",
+      "expected_value": "medium_high",
+      "what": "Bootstrap recovery_fraction and its ratio to the intact anchor inside the existing 10,000 paired resamples, recomputing Delta_perm AND Delta_max per resample. Print the Qwen3 intact anchor (~0.5385) at the point of use. Define the gate at Delta_max = 0.",
+      "why": "Six reviewers. My propagation of the paper's own half-width gives a materiality ratio of about [2.7%, 15.5%], which contains the 10% bar - so 'immaterial' is a decision the data cannot make, and it is the sentence disposing of the paper's only above-floor counterexample.",
+      "gate": "'immaterial' appears only where the interval lies wholly below the bar.",
+      "do_now": true
+    },
+    {
+      "rank": 8,
+      "action_id": "T8",
+      "issues": [
+        "B-08"
+      ],
+      "gpu": "0",
+      "cost": "low",
+      "expected_value": "medium_high",
+      "what": "Fix all four numeral defects and EXTEND THE CHECKER to the classes that let them through: correct 4.6x -> 4.2x; caption range +0.43 -> +0.49; one rounding rule regenerating both null tables from one call; compute MC tails in INTEGER COUNTS (PIQA 0.658 -> 0.692 under the defined inclusive event). Add derived-ratio and caption-extremum classes. Only then re-assert '610 numerals, none unresolved'.",
+      "why": "Seven reviewers, and the cluster attacks the paper's second-largest claim. I recomputed all four myself from the frozen source, so a referee can too.",
+      "gate": "The extended checker flags 4.6x, the +0.43 endpoint and the PIQA threshold; injecting a one-digit perturbation into tab_nulls gives a non-zero exit.",
+      "do_now": true
+    },
+    {
+      "rank": 9,
+      "action_id": "T9",
+      "issues": [
+        "B-07",
+        "B-06"
+      ],
+      "gpu": "0",
+      "cost": "low",
+      "expected_value": "medium",
+      "what": "Add a BH q-value column to tab_v2_full and restate 5.3 (olmo2/keep14 does not survive BH over the 27-cell family, so the bidirectionality claim rests on one uncorrected borderline cell). Accompany 0/60 and 0/15 with the design's expected detection count under a stated alternative (~12/60 at +1.389 pp).",
+      "why": "Both are recomputable from printed numbers - I reproduced the BH result exactly (6 reject, keep14 retained). The 0/60 item is the paper's declared SUBSTITUTE for family-wise correction, so it carries more weight than its single-reviewer origin suggests.",
+      "gate": "Exactly 6 reject at BH q=0.05 and 5 at Bonferroni, keep14 in neither. A reader can see 0/60 excludes delta >= +1.0 pp and does not exclude delta = +0.3 pp.",
+      "do_now": true
+    },
+    {
+      "rank": 10,
+      "action_id": "T10",
+      "issues": [
+        "B-17",
+        "A-01",
+        "A-02"
+      ],
+      "gpu": "0",
+      "cost": "low",
+      "expected_value": "medium",
+      "what": "Remove every tcodex_out/EVIDENCE_PACK.md target from Table 12 (it is cited 8 times) and re-emit E-I's content as a shippable record. Re-emit s2_02_stratified_ordering.json and s2_03_symmetric_inference.json without review-process commentary. Then re-freeze WITHOUT --allow-dangling-blind-refs and RUN the end-to-end regeneration test the reviewers actually wrote.",
+      "why": "The packaging half is done, but E-I still resolves to nothing (I verified), two analyses still lack a shippable record, and the reviewers' real test (regenerate the headline tables from shipped records on a clean machine) has never been run.",
+      "gate": "Freeze returns rc=0 with no --allow-dangling flag; every tab:artifact-map identifier resolves to a snapshot-relative file; the regeneration test passes.",
+      "do_now": true
+    },
+    {
+      "rank": 11,
+      "action_id": "T11",
+      "issues": [
+        "B-04",
+        "B-09",
+        "B-16",
+        "B-14",
+        "B-15"
+      ],
+      "gpu": "0",
+      "cost": "low",
+      "expected_value": "medium",
+      "what": "One claim-narrowing pass: narrow v1 from a comparability gate to an absolute above-constant reference (rewrite the tab_two_nulls v1 question header); state the damage regime inline in the abstract (3 prune-then-heal cells + 12 under one truncation operator) and scope the FLIP claim not just the family-effect claim; scope the fp32 claim to OLMo-2 keep8 on MMLU; replace equality language with 'did not significantly clear'; apply the symmetric CI standard to the off-MMLU 10/15 and 25/60 counts or reword them as descriptive.",
+      "why": "Five separate findings, all pure wording, all cheap. B-15 is the sharpest: 'We report both columns throughout' is falsified by the paper's own next paragraph.",
+      "gate": "No sentence infers incomparability from Delta_floor <= 0; a reader of the abstract alone can state how many damage operators the 15 cells use; every precision statement names its arm and benchmark.",
+      "do_now": true
+    },
+    {
+      "rank": 12,
+      "action_id": "T12",
+      "issues": [
+        "B-11",
+        "B-12",
+        "B-13",
+        "B-21",
+        "B-22"
+      ],
+      "gpu": "0",
+      "cost": "medium",
+      "expected_value": "medium",
+      "what": "Completeness pass: enumerate the 21 cells with half-widths reproducing 0.083-0.968; expand the collapsed Llama-3 row into four; enumerate the ten target constructs by (benchmark, interface) with the counting rule; define cell, arm, content_norm, residual fraction, w_s, G1, G2, Delta_max, and replace A01/P1 with arm names; add pseudocode for every interval and p-value including whether v1 reselects the maximizing constant; promote two tables into the main text; number and caption the symmetric-standard table.",
+      "why": "Individually minor, collectively the reason two clarity reviewers and two soundness reviewers could not audit the main text. Note 0.968 must be MADE traceable - I verified it appears in no shipped table today, and the meta-review's refutation of three reviewers depends on it.",
+      "gate": "min half-width 0.083 and max 0.968 over the emitted 21-cell list; >= 2 numbered tables at or before the REFERENCES page; every abstract fraction has a stated denominator set.",
+      "do_now": true
+    },
+    {
+      "rank": 13,
+      "action_id": "T13",
+      "issues": [
+        "B-19",
+        "B-20",
+        "B-24"
+      ],
+      "gpu": "0",
+      "cost": "medium",
+      "expected_value": "medium",
+      "what": "Citation pass: cite BoolQ's own most-frequent-class figure and SuperGLUE's most-frequent-class row for 0.6217, and caret's No Information Rate for the floor test; add dataset citations for all nine benchmarks (currently ZERO of 17 refs are dataset papers - I verified); add Cho/NPSQ with a FORMULA-LEVEL comparison table, the ACL 2025 synthesis, Molfese et al., Pries et al., Barlow/Lai/Azen; narrow 'only the varying-k stratification is ours'; state which Bean version and section was counted.",
+      "why": "B-19 is the only verified external-source finding in the panel and it caps the novelty framing. But see the caution.",
+      "gate": "Every 'first/only/closest/missing' statement is either corpus-limited or search-backed. Venues verified BY FAMILY: OpenReview venueid for ICLR/ICML/NeurIPS; ACL Anthology + DBLP for ACL-family INCLUDING Findings.",
+      "caution": "Do NOT paste X1's DOIs into refs.bib unverified. Per this repository's standing rule, adjacent prior work is a reason to differentiate, not to abandon: none of the five works is claimed as a preemption even by the reviewer who found it, and Cho is same-cycle concurrent work.",
+      "do_now": true
+    },
+    {
+      "rank": 14,
+      "action_id": "T14",
+      "issues": [
+        "B-23"
+      ],
+      "gpu": "0 to document",
+      "cost": "medium",
+      "expected_value": "low",
+      "what": "Supplementary provenance: machine-readable per-cell configuration with model/tokenizer revisions, dataset versions and checksums, prompt bytes, lockfile or container digest, seeds, hardware, checkpoint hashes, OLMo pruning/healing configs.",
+      "why": "Single-reviewer and over-severe as rated (see U-05); the protocol IS partly specified already. Legitimate supplementary work, lowest priority.",
+      "do_now": false
+    },
+    {
+      "rank": "NOT_REQUIRED",
+      "action_id": "E1",
+      "issues": [
+        "B-01"
+      ],
+      "gpu": "NEW MEASUREMENT REQUIRED",
+      "cost": "high",
+      "expected_value": "ceiling_raising_only",
+      "what": "Calibrate a SECOND variable-k construct under a legality-respecting null and show its floor survives.",
+      "why": "This is the ONLY route above a ~6.5 ceiling, because it restores cross-construct generality to the quantitative claim independently of MMLU-Pro. Both R-adversary and R-soundness identified it as the highest-leverage addition and both correctly classified it as beyond current evidence.",
+      "do_now": false,
+      "note": "EXPLICITLY NOT REQUIRED FOR ACCEPTANCE. Every reviewer independently concluded that all blocking fixes are writing, re-analysis on existing data, packaging or citation work with NO new GPU time. Scope this as future work, not under revision pressure."
+    }
+  ],
+  "summary": {
+    "total_ledger_entries": 26,
+    "A_packaging": 2,
+    "B_real": 24,
+    "A_packaging_ids": [
+      "A-01",
+      "A-02"
+    ],
+    "B_real_ids": [
+      "B-01",
+      "B-02",
+      "B-03",
+      "B-04",
+      "B-05",
+      "B-06",
+      "B-07",
+      "B-08",
+      "B-09",
+      "B-10",
+      "B-11",
+      "B-12",
+      "B-13",
+      "B-14",
+      "B-15",
+      "B-16",
+      "B-17",
+      "B-18",
+      "B-19",
+      "B-20",
+      "B-21",
+      "B-22",
+      "B-23",
+      "B-24"
+    ],
+    "B_real_severity_breakdown": {
+      "fatal_contested": 1,
+      "major": 18,
+      "minor": 5
+    },
+    "entangled_entries": "B-11 is B_real_with_A_component. B-17 and B-18 are the B_real cores extracted from issues whose surface complaint was 'the artifact is incomplete' - splitting them out is the single most important thing this ledger does.",
+    "underlying_reviewer_issues_merged": "76 machine-readable issues (1 fatal + 54 major + 21 minor) across 9 reviews, plus every issue in the 3 prose-only reviews (R1: 2 major + 5 minor; R4: C-01..C-12; R5: R5-01..R5-08). No negative review was dropped.",
+    "gpu_cost_of_the_entire_blocking_set": "0. All 14 ranked actions are 0-GPU. Only E1 (explicitly NOT required for acceptance) needs new measurement. This unanimity across 12 reviewers is the most important aggregate fact in the round.",
+    "three_most_important_B_real": [
+      "B-01 (the MMLU-Pro balanced null cannot generate MMLU-Pro data)",
+      "B-02 (shortgpt16 absent from the headline denominator, violating the paper's own disclosure rule; propagates into 0/60 and 0/15 too)",
+      "B-18 (build_record certifies a different PDF - 11 of 12 reviews, and STILL open in the repaired snapshot)"
+    ],
+    "most_important_thing_the_meta_review_missed": "D-01: R1's challenge to the symmetric-standard table. It is the only panel finding that attacks what every other reviewer lists as a consensus strength, it bears on the paper's most-quoted number, and the meta-review lists that subsection as consensus strength #2 without engaging the challenge."
+  }
+}
