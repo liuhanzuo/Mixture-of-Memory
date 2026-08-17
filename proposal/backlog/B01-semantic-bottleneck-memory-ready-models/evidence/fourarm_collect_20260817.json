@@ -1,0 +1,75 @@
+{
+  "root": "/root/b01_fourarm",
+  "arms": [
+    "arm1_stock_readlora",
+    "arm2_bottleneck_persist"
+  ],
+  "expected_n": 1986,
+  "num_shards": 4,
+  "per_arm": {
+    "arm1_stock_readlora": {
+      "n_rows": 1986,
+      "shard_counts": {
+        "0": 497,
+        "1": 497,
+        "2": 496,
+        "3": 496
+      },
+      "shard_sum": 1986,
+      "id_field": "id",
+      "n_unique_ids": 1986,
+      "category_field": "category",
+      "per_category_n": {
+        "1": 282,
+        "2": 321,
+        "3": 96,
+        "4": 841,
+        "5": 446
+      },
+      "n_empty_predictions": 0,
+      "scores_overall": null,
+      "scores_per_category": null
+    },
+    "arm2_bottleneck_persist": {
+      "n_rows": 1986,
+      "shard_counts": {
+        "0": 497,
+        "1": 497,
+        "2": 496,
+        "3": 496
+      },
+      "shard_sum": 1986,
+      "id_field": "id",
+      "n_unique_ids": 1986,
+      "category_field": "category",
+      "per_category_n": {
+        "1": 282,
+        "2": 321,
+        "3": 96,
+        "4": 841,
+        "5": 446
+      },
+      "n_empty_predictions": 0,
+      "scores_overall": null,
+      "scores_per_category": null
+    }
+  },
+  "cross_arm": {
+    "arm1_stock_readlora_vs_arm2_bottleneck_persist": {
+      "per_category_n_identical": true,
+      "sample_id_sets_identical": true,
+      "n_only_in_first": 0,
+      "n_only_in_second": 0
+    }
+  },
+  "problems": [],
+  "verdict": "PASS",
+  "what_was_asserted": [
+    "per-arm total n == expected_n",
+    "per-category n == identical across arms",
+    "sample_id SETS identical across arms (not just counts)",
+    "no shard contributed 0 rows; shard counts sum to merged n",
+    "no duplicate sample ids",
+    "predictions not all-empty"
+  ]
+}

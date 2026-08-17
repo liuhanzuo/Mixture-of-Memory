@@ -1,0 +1,42 @@
+{
+  "definition": "numel * element_size() / T of the tensor write_chunk RETURNS -- i.e. of what is written to the store, NOT of the restored hidden. Measured, not derived from the architecture.",
+  "arms": [
+    {
+      "label": "arm1_stock_readlora",
+      "write_shape": [
+        1,
+        512,
+        4096
+      ],
+      "write_dtype": "torch.bfloat16",
+      "T_tokens": 512,
+      "numel": 2097152,
+      "element_size": 2,
+      "total_bytes": 4194304,
+      "measured_bytes_per_token": 8192.0,
+      "helper_store_bytes_per_token": 8192,
+      "helper_agrees_with_measurement": true
+    },
+    {
+      "label": "arm2_bottleneck_persist",
+      "write_shape": [
+        1,
+        512,
+        512
+      ],
+      "write_dtype": "torch.bfloat16",
+      "T_tokens": 512,
+      "numel": 262144,
+      "element_size": 2,
+      "total_bytes": 524288,
+      "measured_bytes_per_token": 1024.0,
+      "helper_store_bytes_per_token": 1024,
+      "helper_agrees_with_measurement": true
+    }
+  ],
+  "arm1_bytes_per_token": 8192.0,
+  "arm2_bytes_per_token": 1024.0,
+  "ratio_arm1_over_arm2": 8.0,
+  "hidden_size": 4096,
+  "all_helpers_agree": true
+}

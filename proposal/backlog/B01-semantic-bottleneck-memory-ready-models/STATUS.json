@@ -219,5 +219,141 @@
       "CPU fp32, IDENTICAL shapes, funnel REMOVED": "0/16384 -- bit-identical",
       "isolated to a bare op": "nn.Linear(4096, 512, bias=False) in CUDA bf16 at B=2 vs two B=1 calls: 82/49152 elements differ, max_abs 3.91e-03"
     }
+  },
+  "fourarm_gate_result_20260817": {
+    "gate": "next_gate_executable_20260814",
+    "verdict": "PARTIAL -- 2 of 4 arms executed at full n=1986. Arms 3/4 (bottleneck + Read-LoRA [+ Write-LoRA]) NOT RUN because of a MEASURED asset defect, not a compute shortage. See FOURARM_VERDICT_20260817.md.",
+    "kill_gate_adjudication": {
+      "result": "NOT KILLED and NOT PASSED -- INSUFFICIENT",
+      "condition_1_ruler_longeval_exact_evidence": "NOT TESTED. --persist_bottleneck_latent is plumbed ONLY into scripts/eval_qcmem_locomo.py (11 hits); eval_ruler_qcmem.py, eval_qcmem_longeval.py, eval_qcmem_babilong.py and eval_qcmem_longbench.py have 0 hits. The condition names RULER/LongEval explicitly, so it is UNREACHABLE today at any cost, not merely unmeasured.",
+      "condition_2_lm_tax_grows_with_scale": "NOT ADJUDICABLE. Needs an 8B LM-tax (PPL) number to compare against the 1B/3B ladder; this gate measured downstream QA, not PPL. The two 8B CPT endpoints remain never-PPL-evaluated.",
+      "condition_3_full_depth_rag_dominates": "NOT TESTED. No RAG/kvdirect/hcache arm is among the gate's four arms.",
+      "why_not_reported_as_a_pass": "The two arms that ran are not the arms the kill conditions ask about. No condition fired; none was answerable."
+    },
+    "arms_run": {
+      "arm1_stock_readlora": {
+        "config": "stock Qwen3-8B + Read-LoRA outputs/qcmem_distill_qwen_j12_r32_4k/final, resume_j=12",
+        "n": 1986,
+        "bytes_per_token_written_MEASURED": 8192,
+        "overall_f1": 9.238951385814193,
+        "overall_em": 0.4028197381671702,
+        "overall_acc": 24.169184290030213
+      },
+      "arm2_bottleneck_persist": {
+        "config": "funnel CPT outputs/qwenbott_funnel_L12_d512/final.pt (step=2000), resume_j=13 == bottleneck_layer+1, --persist_bottleneck_latent",
+        "n": 1986,
+        "bytes_per_token_written_MEASURED": 1024,
+        "overall_f1": 3.849214723459303,
+        "overall_em": 0.050352467270896276,
+        "overall_acc": 5.589123867069486
+      },
+      "protocol": "LoCoMo n=1986 (all 1986 QA over 10 conversations), selector=iter_bm25 --iter_rounds 2, use_chat_template=False (both repo-mandated), 4 strided shards x 1 B200 each, merged by the driver's own run_scoring(); node .25, disk wzz."
+    },
+    "mandatory_quantity_bytes_per_token": {
+      "definition_used": "numel * element_size() / T of the tensor write_chunk RETURNS -- what is written to the store, NOT the restored hidden. MEASURED off the real tensors, not computed from the arch.",
+      "arm1_stock": "8192 B/tok, write tensor [1, 512, 4096] bf16",
+      "arm2_persist": "1024 B/tok, write tensor [1, 512, 512] bf16",
+      "ratio_measured": 8.0,
+      "helper_cross_check": "store_bytes_per_token() returned 8192 / 1024, checked AGAINST the measurement rather than reported in its place",
+      "independent_confirmation": "all 4 arm-2 shards printed store_bytes_per_token=1024 into their own logs",
+      "evidence": "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/fourarm_bytes_per_token_20260817.json"
+    },
+    "paired_result": {
+      "pairing_is_real": "both arms answered the IDENTICAL 1986-question set; sample-id SET equality asserted (0 exclusive either way), not inferred from equal counts",
+      "f1_diff_pp": 5.39,
+      "f1_ci95_pp": [
+        4.91,
+        5.88
+      ],
+      "acc_diff_pp": 18.58,
+      "acc_ci95_pp": [
+        16.77,
+        20.39
+      ],
+      "em_diff_pp": 0.35,
+      "em_ci95_pp": [
+        0.1,
+        0.65
+      ],
+      "mcnemar_acc": {
+        "n_discordant": 411,
+        "p_exact_two_sided": 3.62e-89
+      },
+      "honest_reading": "Arm 2 is 8x cheaper in storage and significantly worse in quality. This is ONE POINT of a storage-vs-quality tradeoff, NOT a frontier, and it is CONFOUNDED: arm 1 carries a trained Read-LoRA and arm 2 carries none. So 18.58pp is an UPPER BOUND on the bottleneck's cost that also contains the whole Read-LoRA benefit -- it is NOT 'the price of the bottleneck'. Deconfounding it is exactly what arms 3/4 are for.",
+      "evidence": "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/fourarm_paired_stats_20260817.json"
+    },
+    "why_arms_3_and_4_were_not_run": {
+      "headline": "The only Read-LoRA on disk was distilled against the STOCK upper stack, but the funnel CPT RETRAINED that same band (unfreeze_from=12, adapter spans layers 12..35). The base moved FURTHER than the adapter's own correction on 48/48 matched tensors.",
+      "cpt_drift_rel_fro": {
+        "funnel_L12_d512_trained_band_12_35": "0.0503 - 0.0926 (mean 0.0643)",
+        "baseline_L12_trained_band_12_35": "0.0488 - 0.0645 (mean 0.0568)",
+        "frozen_band_0_11_BOTH_endpoints": "BIT-IDENTICAL to stock, 24/24 tensors, 0 differing elements -- this is the negative control that makes the drift attributable; unfreeze_from=12 predicts it and it holds"
+      },
+      "read_lora_delta_rel_fro": "0.0059 - 0.0588 (mean 0.0132), = ||(alpha/r) B@A||_F / ||W_stock||_F at alpha/r=2.0; 168/168 modules scored",
+      "matched_ratio_drift_over_adapter_delta": {
+        "n_matched_tensors": 48,
+        "min": 1.57,
+        "median": 6.06,
+        "max": 8.62,
+        "n_where_drift_exceeds_adapter": "48/48"
+      },
+      "the_mutex_is_only_argparse_deep": "Every driver refuses --bottleneck_ckpt + --lora_adapter (rc=2, verified). But PEFT targets the funnel model CORRECTLY: after inject_bottleneck renames layer 12's submodules to '...layers.12.inner.*', get_peft_model still adapts exactly layers 12..35 with 7 LoRA modules at layer 12, IDENTICAL to the stock control. So the MECHANISM would work and the SCIENCE is what fails. A future agent who deletes the mutex will get a clean-looking run and a wrong conclusion.",
+      "what_arms_3_4_actually_need": "re-distil a Read-LoRA AGAINST the funnel endpoint (~2.9 GPU-h/adapter at the measured rate). That is a MISSING ASSET, not a missing capability.",
+      "evidence": [
+        "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/fourarm_cptdrift_funnel_20260817.json",
+        "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/fourarm_cptdrift_baseline_20260817.json",
+        "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/fourarm_readlora_magnitude_20260817.json",
+        "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/fourarm_peft_funnel_targeting_20260817.json"
+      ]
+    },
+    "gpu_cost_estimate_IS_WRONG_for_arm4": {
+      "supersedes_claim_in": "gpu_cost_estimate.basis[3], which says 'Write-LoRA has NO measured rate in this repo, so the upper end of the range is an extrapolation from the Read-LoRA rate'",
+      "the_rate_DOES_exist": "outputs/qcmem_writepath_distill_qwen_j12_r32 on zwfy6 (read read-only from .82): 4 ckpt intervals 13173/13170/13172/13167 s per 500 steps = 26.341 s/step, spread 6 s",
+      "cross_checked": "the log's own 7.3 win/s at batch 24 x world 8 = 192 win/step -> 26.30 s/step. Two independent sources 0.16% apart.",
+      "read_lora_rate_confirmed": "0.326 s/step from 3 ckpt intervals all 163 s; log's 25.3 samp/s gives 0.316 s/step -> 2.9 GPU-h / 4000 steps",
+      "arm4_write_leg_cost": "4000 steps x 26.341 s x 8 GPU = ~234 GPU-h = 5.9x the ENTIRE 40 GPU-h ceiling. Even the on-disk 2500-step partial is ~146 GPU-h.",
+      "root_cause_of_the_error": "the estimate treats 'steps' as comparable between the two trainers, but the write trainer consumes 24x the data per step (192 windows vs 8 samples)",
+      "also": "the on-disk Write-LoRA stops at step2500/4000 with NO final/, so arm 4 has no completed adapter either",
+      "action_taken": "STOPPED rather than exceed the stated budget, per the gate's own cost ceiling"
+    },
+    "n_integrity_asserted_not_eyeballed": {
+      "verdict": "PASS, problems: []",
+      "asserted": [
+        "per-arm total n == 1986",
+        "per-category n identical across arms (282/321/96/841/446)",
+        "sample-id SETS identical across arms, 0 exclusive either way",
+        "no shard contributed 0 rows; 497+497+496+496 == 1986",
+        "0 duplicate ids; 0 empty predictions"
+      ],
+      "why_not_just_nan": "the known accident is 8 structurally complete shards with every task skipped:true / n=0 while n_nan=0, which a NaN-only aggregator passes",
+      "stats_reconciled": "paired stats recomputed from preds with the driver's OWN score_sample() (it treats the 446 adversarial/abstention rows specially) and reconciled against each committed scores.json to <0.01pp on all 3 metrics (F1 9.238951 vs 9.238951)",
+      "the_reconciliation_guard_was_verified_to_FAIL": "My first version read a nested key that does not exist, got {}, and reported reconciles=true VACUOUSLY -- fail-open, and it passed. Fixed to read the driver's real flat keys (overall_f1/em/acc), to require all 3 metrics AND n_samples agreement, and to return 1. Negative control: overall_f1 += 1.0 on a COPY -> rc=1, abs_delta.f1=1.0000, explicit FAIL.",
+      "evidence": "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/evidence/fourarm_collect_20260817.json"
+    },
+    "gpu_spent": "1.74 GPU-h total on .25 (8x B200): arm1 4 shards 3579 s = 0.994 GPU-h, arm2 4 shards 2264 s = 0.629 GPU-h (from the driver's own per-shard wall times), + ~0.12 GPU-h of 1-GPU probes. 4.3% of the 40 GPU-h ceiling. The CPT-drift, LoRA-magnitude, PEFT-targeting, collector, paired-stats and negative-control runs were all 0 GPU (CPU only).",
+    "node_and_assets": {
+      "node": ".25 = 28.197.251.25, 8x B200 sm_100, THIRD disk wzz (/apdcephfs_wzz/share_303419932/...); wzc1 and zwfy6 do NOT exist there",
+      "assets": "/root/b01_assets/ local overlay because wzz ceph is 96% full: base/ = Qwen3-8B, funnel/ (bottleneck_dim=512 layer=12 step=2000), baseline/ (bottleneck_dim=0), read_lora/final (md5 d0a180a094bdf942b290bf0d6a667eb5 verified post-transfer)",
+      "base_is_INSTRUCT_not_base": "config.json eos_token_id=151645 -> Qwen3-8B-Instruct. This matches what BOTH CPT endpoints were trained from (their train_args.json model_path), so the arms are internally consistent, but no 'Qwen3-8B base' claim may be made from these runs.",
+      "deps_added_outside_the_code_tree": "/root/b01_deps holds the babilong package (the driver imports babilong.metrics) + locomo10.json, kept out of the shipped tree so ship_code_to_node.sh parity stays clean",
+      "pg19_prefix_proof": "RULER's haystack loader reads f.read(8_000_000) CHARACTERS of data/pg19_train.jsonl (11.4 GB). A 24 MB prefix was shipped and PROVEN to yield a byte-identical word list: n_words 1429398, md5 cb0f152eaa89aa85fc92e60fbdd2785a on both sides."
+    },
+    "nodes_not_touched": "LOCAL, .212, .73, .82, .104 -- all carrying multi-day training. .25 verified 0 compute apps immediately before launch and the launcher itself refuses to start if any are present. .82 was read READ-ONLY to inspect the Write-LoRA.",
+    "recommended_next_step": [
+      "Plumb --persist_bottleneck_latent into the RULER driver (0 GPU). Kill condition #1 names RULER explicitly and is currently UNREACHABLE, not merely unmeasured; RULER self-generates from PG19 so no dataset work is needed.",
+      "PPL-evaluate the two existing 8B endpoints (funnel vs stock-continued) -- kill condition #2, cheapest of the three, both ckpts already on .25, still never evaluated.",
+      "Re-distil a Read-LoRA against the funnel endpoint (~2.9 GPU-h) to make arm 3 legitimate and to DECONFOUND the -18.58pp reported here.",
+      "Re-cost arm 4 before committing: 234 GPU-h at the measured write rate, or redesign it."
+    ],
+    "verdict_doc": "proposal/backlog/B01-semantic-bottleneck-memory-ready-models/FOURARM_VERDICT_20260817.md",
+    "generators": [
+      "proposal/shared/code/b01_cpt_drift_probe.py",
+      "proposal/shared/code/b01_lora_magnitude.py",
+      "proposal/shared/code/b01_peft_funnel_probe.py",
+      "proposal/shared/code/b01_fourarm_collect.py",
+      "proposal/shared/code/b01_fourarm_bytes_measure.py",
+      "proposal/shared/code/b01_fourarm_paired_stats.py",
+      "proposal/shared/code/b01_run_fourarm.sh"
+    ]
   }
 }
