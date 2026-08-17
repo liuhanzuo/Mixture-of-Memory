@@ -177,9 +177,21 @@ def sha256(p):
 # and `refereed` (letter after) do not. Both look-alikes are in the controls; `refereed`
 # was a real false positive in the version before this one, caught by the negative control
 # rather than by inspection, which is the argument for having the negative control.
+#
+# ⚠️ THE NOUNS ARE PLURALISED, and the omission was not hypothetical. Until 2026-08-17 the
+# alternation read `(?:reviewer|referee|rebuttal)` with the SAME no-\b trailing rule
+# `(?![A-Za-z])` -- and `s` is a letter, so the trailing guard positively EXCLUDED every
+# plural: `two reviewers asked for this`, `the reviewers disagreed`, `flagged by referees`
+# and `our rebuttals addressed it` all passed both patterns. The singular was blocked and
+# the plural was not, which is backwards: a panel disclosure is more likely to be written
+# in the plural than the singular, and _BLIND_SHAPE does not cover it either (it only
+# fires on N-of-M and "N independent <noun>" constructions, not on a bare plural).
+# The fix is `s?` INSIDE the group, so the trailing guard sits after the optional `s`.
+# `interviewers`, `refereed`, `preferred`, `references` and `a review of the literature`
+# are all still clean -- they are in the controls below.
 _BLIND_FATAL = re.compile(
     r"round_0[0-9]"
-    r"|(?<![A-Za-z])(?:reviewer|referee|rebuttal)(?![A-Za-z])"
+    r"|(?<![A-Za-z])(?:reviewers?|referees?|rebuttals?)(?![A-Za-z])"
     r"|NEEDS_REVISION"
     r"|(?<![A-Za-z])meta.review(?![A-Za-z])"
     r"|(?<![A-Za-z])blind.review(?![A-Za-z])", re.I)
