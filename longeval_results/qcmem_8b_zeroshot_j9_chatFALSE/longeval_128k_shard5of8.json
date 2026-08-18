@@ -1,0 +1,91 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 131380,
+    "avg_read_len": 6472.5,
+    "last_read_len": 6453
+  },
+  "records": [
+    {
+      "sample_index": 5,
+      "label": "rjrfurqnz-kyqzabm",
+      "expected": "354684",
+      "output": "<...> in the data you provided. Let me check the list again to find the line that matches the line number \"rjrfurqnz-kyqzabm\".\n\nLooking through the lines:\n\n- The lines are listed",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131342,
+      "read_len": 6415,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 13,
+      "label": "tpzphqscl-dajqwxx",
+      "expected": "195573",
+      "output": "<...> but I can't see the value. Let me check the data again.\n\nWait, I need to find the line that contains \"tpzphqscl-dajqwxx\" and extract the value inside the <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131543,
+      "read_len": 6616,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 21,
+      "label": "locewh-wfuqveit",
+      "expected": "234712",
+      "output": "<753869>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line locewh-wfuqveit\". Let me go through each line one by",
+      "pred": "753869",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131662,
+      "read_len": 6223,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 257
+    },
+    {
+      "sample_index": 29,
+      "label": "qlhob-xjlvasys",
+      "expected": "859404",
+      "output": "<598043>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the list, the line with \"qlhob-xjlvas",
+      "pred": "598043",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131463,
+      "read_len": 6536,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 37,
+      "label": "ksaqmcx-akliptqxd",
+      "expected": "671473",
+      "output": "<671453>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss it.\n\nLooking through the lines:\n\n- The line with \"ksaqmcx-ak",
+      "pred": "671453",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131519,
+      "read_len": 6592,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 45,
+      "label": "tebnqr-ateoqgm",
+      "expected": "824090",
+      "output": "<715323>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me search for the line that starts with \"tebnqr-ateoqgm\". Sc",
+      "pred": "715323",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131380,
+      "read_len": 6453,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    }
+  ]
+}

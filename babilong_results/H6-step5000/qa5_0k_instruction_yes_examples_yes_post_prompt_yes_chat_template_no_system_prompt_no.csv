@@ -1,0 +1,569 @@
+target,output,question
+Jeff,Answer,Who did Fred give the football to? 
+Bill,Answer,Who did Mary give the milk to? 
+Jeff,"(2005, the the the the the the the take the take the take the take the take",Who did Fred give the milk to? 
+milk,"(2015, the to take the take the take the take the take the take the take the",What did Mary give to Fred? 
+Fred,"(2015, the take the take the take the take the take the take the take the take",Who received the milk? 
+apple,"(2016, the to the take the take the take the take the take the take the take",What did Mary give to Jeff? 
+apple,"(2006, the to the take the take the take the take the take the take the take",What did Mary give to Jeff? 
+apple,"(2016, the to take the take the take the take the take the take the take the",What did Fred give to Bill? 
+Jeff,"(2005, the to the skip, and the take the take the take the take the take",Who gave the milk to Fred? 
+Fred,(2005,Who gave the apple to Mary? 
+Jeff,Answer,Who received the football? 
+Jeff,(2015,Who did Mary give the football to? 
+milk,(2017,What did Mary give to Bill? 
+Bill,Answer,Who did Mary give the milk to? 
+milk,(2016,What did Mary give to Bill? 
+apple,"(2016, the
+
+The the take the take the take the take the take the take the",What did Fred give to Mary? 
+Mary,Answer,Who received the football? 
+apple,"(2017
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and the",What did Fred give to Bill? 
+Jeff,"(2016, and the to take the take the take the take the take the take the take",Who received the apple? 
+Bill,Answer,Who did Mary give the football to? 
+Fred,(2005,Who gave the milk to Jeff? 
+Mary,Answer,Who received the milk? 
+Mary,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the take",Who gave the milk? 
+milk,"(2016, the take the take the take the take the take the take the take the take",What did Bill give to Mary? 
+milk,"(2015
+
+
+
+
+
+
+
+
+
+The the take the take the take the take the take the",What did Jeff give to Bill? 
+football,(2007,What did Jeff give to Fred? 
+Mary,Answer,Who gave the football? 
+Mary,(2017,Who gave the apple to Bill? 
+Fred,"(2015, the to the to the to take the take the to the to the to the",Who received the apple? 
+Mary,(2005,Who gave the milk to Bill? 
+milk,"(2015, the skip, and the take the take the take the take the take the take",What did Mary give to Jeff? 
+Mary,"Answer, the
+
+The the to the take the take the take the take the take the take the",Who gave the milk? 
+Fred,"(2006, the take the take the take the take the take the take the take the take",Who gave the apple to Mary? 
+football,"(2016, the to the take the take the take the take the take the take the take",What did Bill give to Mary? 
+apple,"(2006, the
+
+The the skip, and the take the take the take the take the",What did Fred give to Mary? 
+apple,(2007,What did Fred give to Bill? 
+Jeff,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the the take the the the the take the",Who gave the milk? 
+Bill,(2015,Who did Mary give the apple to? 
+Fred,"Answer, the
+
+
+
+
+
+
+
+The the to the to the to the to the to the to",Who gave the football to Mary? 
+milk,(2007,What did Mary give to Fred? 
+milk,Answer,What did Fred give to Mary? 
+Mary,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the take the take the take the take",Who gave the football? 
+Fred,Answer,Who received the apple? 
+Mary,(2007,Who gave the apple? 
+Fred,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The take the take the take the",Who gave the apple to Bill? 
+apple,"(2003, the take the take the take the take the take the take the take the take",What did Fred give to Bill? 
+Fred,"(2006, the take the take the take the take the take the take the take the take",Who received the apple? 
+Fred,Answer of the to the to the to take the take the take the take the take the take the,Who received the milk? 
+Mary,"(2016, and the skip, and the take the take the take, and the take the",Who received the football? 
+apple,(2015,What did Bill give to Mary? 
+apple,(2015,What did Mary give to Fred? 
+apple,(2015,What did Fred give to Bill? 
+apple,(2007,What did Fred give to Bill? 
+milk,"(2015
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the take",What did Jeff give to Fred? 
+Mary,"(2015, the to take the take the take the take the take the take the take the",Who received the milk? 
+Jeff,Answer,Who gave the football? 
+Bill,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the take the take the take",Who gave the football to Fred? 
+Mary,Answer,Who received the football? 
+Mary,"(2015, the
+
+The the take the take the take the take the take the take the",Who gave the football to Fred? 
+Jeff,"Answer of the
+
+The the to the to take the take the take the to the take the take",Who did Bill give the milk to? 
+Fred,(2007,Who gave the football to Jeff? 
+Jeff,"(2015, to take the take the take the take the take the take the take the take",Who gave the apple to Fred? 
+Bill,"Answer, the
+
+The the to take the take the take the take the take the take the take",Who received the milk? 
+Jeff,"(2016, and the take the take the take the take the take the take the take the",Who did Bill give the apple to? 
+milk,Answer,What did Mary give to Fred? 
+Jeff,"(2015
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the",Who received the apple? 
+Jeff,"Answer
+
+
+
+
+
+
+
+The the take the take the take the take the take the take the take",Who gave the apple to Bill? 
+apple,(2007,What did Mary give to Fred? 
+Bill,"(2015
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the the the the",Who did Fred give the apple to? 
+Jeff,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The take",Who gave the apple? 
+Bill,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the the the the the",Who gave the milk to Fred? 
+Bill,"(2006, the to the to the to the take the take the take the take the take",Who did Jeff give the football to? 
+Fred,"Answer
+
+
+
+
+
+
+
+The the
+
+The the take the take the take the take the take the",Who gave the milk? 
+apple,(2015,What did Mary give to Bill? 
+Jeff,(2005,Who received the milk? 
+Bill,"(2006, the
+
+The take the take the take the take the take the take the take",Who did Fred give the milk to? 
+Bill,"(2015, to take the take the take the take the take the take the take the take",Who gave the apple? 
+Jeff,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the take the take the take the take the take",Who gave the apple? 
+Fred,"Answer, the
+
+The take the take the take the take the take the take the take the take",Who received the football? 
+football,"(2016, the take the take the take the take the take the take the take the take",What did Mary give to Fred? 
+Mary,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the take the take the",Who did Jeff give the apple to? 
+football,"(2015
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the take the take the take",What did Jeff give to Mary? 
+Mary,Answer,Who received the milk? 
+milk,"(2015, the
+
+The the take the take the take the take the take the take the",What did Mary give to Fred? 
+Mary,"Answer of the
+
+
+
+The the to take the take the take the take the take the take the",Who gave the milk? 
+Bill,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the take the take the take the take",Who gave the milk to Mary? 
+Mary,Answer,Who received the football? 
+Fred,Answer,Who gave the apple? 
+milk,"(2006, the to take the take the take the take the take the take the take the",What did Fred give to Bill? 
+Fred,"Answer
+
+
+
+
+
+
+
+The",Who did Bill give the milk to? 
+Jeff,"Answer of the
+
+The the skip, and the take the take the take the take the take the",Who gave the apple? 
+Fred,Answer,Who did Bill give the apple to? 
+Bill,(2015,Who gave the football to Jeff? 
+Bill,(2003,Who did Jeff give the apple to? 
+milk,(2007,What did Mary give to Bill? 
+Mary,Answer,Who did Bill give the milk to? 
+Mary,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the take the take the take the take the take the",Who gave the milk to Jeff? 
+Fred,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+The take the take the take the take the take the take",Who gave the milk? 
+Bill,"(2015, the take the take the take the take the take the take the take the take",Who received the milk? 
+football,"(2015, the
+
+The the take the take the take the take the take the take the",What did Mary give to Bill? 

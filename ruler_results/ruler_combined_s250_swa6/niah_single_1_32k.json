@@ -1,0 +1,811 @@
+{
+  "task": "niah_single_1",
+  "length": "32k",
+  "summary": {
+    "score": 0.0,
+    "n": 100,
+    "approx_tokens": 32034
+  },
+  "records": [
+    {
+      "answers": [
+        "8298668"
+      ],
+      "output": ". There and back again.\nThe grass is green. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sun is yellow. Here we go. There and back again.\nThe grass is green",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "9844467"
+      ],
+      "output": ", and\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "6341509"
+      ],
+      "output": ", and, and back again, and\nThe grass, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and,",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "1429423"
+      ],
+      "output": ", and\nThe sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "1905689"
+      ],
+      "output": ". The sky is blue. Here we go. There and back again. The grass is green. The sky is blue. Here we go. There and back again. The grass is green. Here we go. There and back again.",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "9359330"
+      ],
+      "output": ",...............................................",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "8984155"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "2496441"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "6620272"
+      ],
+      "output": ", and the grass is green. The sun is yellow. Here we go. There and back again. The grass is green. The sun is yellow. Here we go. There and back again. The grass is green. The sun is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "5468543"
+      ],
+      "output": "blue. The sky is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "5151205"
+      ],
+      "output": ", and,, and, and, and back again, the grass, the sky is blue, the sun is yellow. Here we go. There and back again, and, and back again, the grass is green, the sky is",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "9637304"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "7503649"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "9614338"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "9914716"
+      ],
+      "output": ", and back again. The grass is green. The sky is blue. Here we go. There and back again. The grass is green. The sky is blue. Here we go. There and back again. The grass is green.",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "3410526"
+      ],
+      "output": ". The sun is yellow. The sky is blue. The sun is yellow. Here we go. There and back again. The grass is blue. The sun is yellow. Here we go. The sky is blue. The sun is yellow",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "8821076"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "7097770"
+      ],
+      "output": ",. and,. and,. and,.. and,..................................",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "9560014"
+      ],
+      "output": "blue. Here we go. There. The sun is yellow. Here we go. The grass is blue. The sun is yellow. Here we go. There. The sun is blue. Here we go. The grass is green. The",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "6459430"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "5185691"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "5726129"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "4804776"
+      ],
+      "output": ", and the, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and,",
+      "recall": 0.0,
+      "n_tokens": 32022
+    },
+    {
+      "answers": [
+        "1435477"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "8914149"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "6242122"
+      ],
+      "output": ", the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the,",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "5942934"
+      ],
+      "output": ",,, and,,, and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "2084739"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "3067134"
+      ],
+      "output": ", and back again. The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again. The grass is green. The sky is blue. The sun is yellow. Here we go.",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "5724856"
+      ],
+      "output": ", and the, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and,",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "5258450"
+      ],
+      "output": ", and, indeed,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "9279833"
+      ],
+      "output": ", and., and,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "7620191"
+      ],
+      "output": ", and\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "7989960"
+      ],
+      "output": ", and, and back again, and back again, and back again, and back again, and back again, and back again, and back again, and back again, and back again, and back again, and back again, and",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "1112394"
+      ],
+      "output": ", and\nThe grass, and back again, and back again.\nThe grass, and back again, and back again.\nThe grass, and back again, and back again,\nThe grass, and back again, and back again, and",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "2127970"
+      ],
+      "output": "blue. The sky is yellow. Here we go. The sun is blue. The sky is yellow. Here we go. The sun is blue. The sky is yellow. The sun is blue. Here we go. The sky is blue",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "1125238"
+      ],
+      "output": "blue. There. The grass is green. Here we go. There and back again. The grass is green. The sun is yellow. Here we go. There. The grass is green. The sky is blue. Here we go.",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "6613609"
+      ],
+      "output": "................................................",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "6942509"
+      ],
+      "output": ", and\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "7846053"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "4047648"
+      ],
+      "output": ",. The, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and,",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "1823985"
+      ],
+      "output": ", and\nthe. The. The. The. The. The. The. The. The. The. The. The. The. The. The. The. The. The. The. The. The. The. The",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "8865817"
+      ],
+      "output": ", and back again.\nThe grass is green. The sun is yellow. Here we go. There and back again.\nThe grass is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green.",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "3698050"
+      ],
+      "output": "blue. The sun is yellow. Here we go. There and back again. The grass is green. The sun is yellow. Here we go. There and back again. The grass is green. The sun is yellow. Here we go",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "6470102"
+      ],
+      "output": "blue. Here we go. There and back again.\nThe sky is blue. The sun is yellow. Here we go. There and back again.\nThe sky is blue. The sun is yellow. Here we go. There and back again",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "4311481"
+      ],
+      "output": ", and\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "3012437"
+      ],
+      "output": ", and,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "2111119"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "6882770"
+      ],
+      "output": "blue. The sky is blue. The sun is yellow. Here we go. There and back again. The grass is blue. The sky is blue. The sun is yellow. Here we go. There and back again. The grass is",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "3154190"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "9959259"
+      ],
+      "output": ", and that, and that, and that, and that, and that, and that, and that, and that, and that, and that, and that, and that, and that, and that, and that, and that",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "3246343"
+      ],
+      "output": ", and,, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and,",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "9220282"
+      ],
+      "output": "blue. The sky is green. Here we go. There and back again. The grass is green. The sun is yellow. Here we go. There and back again. The grass is green. The sky is blue. The sun is",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "7091140"
+      ],
+      "output": ", and that we, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "7586887"
+      ],
+      "output": ", and. There and back again.\nThe grass, the sky, the sun, and the sun, and, and, and back again,, and, and back again, and, and back again, and back again, and back",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "1129481"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "7225127"
+      ],
+      "output": ", and,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "2109156"
+      ],
+      "output": ", and back again. The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again. The grass is green. The sky is blue. The sun is yellow. Here we go.",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "8482169"
+      ],
+      "output": ", and the grass is green. The sky is blue. The sun is yellow. Here we go. There and back again. The grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "1370184"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "4015526"
+      ],
+      "output": ", and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go.",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "1263301"
+      ],
+      "output": "blue. The grass is green. The sky is blue. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "9139343"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "6240005"
+      ],
+      "output": ", and the, and back again, in the provided text,,, and back again, of the, and back again, and back again, of the, and back again, of the, and back again, of the, and",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "7422947"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "3854321"
+      ],
+      "output": ", and\nthe special magic number for mhyvygoj-culfw, was, in the provided text,\nfor mhyvygoj-culfw, was, in the provided text, and\nthe special magic number for",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "3781151"
+      ],
+      "output": ", in the\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "6066832"
+      ],
+      "output": "The grass is green. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sun is yellow",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "6839181"
+      ],
+      "output": ",. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "5014903"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "5608519"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "1680954"
+      ],
+      "output": "blue. The sky is blue. The sun is yellow. Here we go. There and back again. The grass is blue. The sky is blue. The sun is yellow. Here we go. There and back again. The grass is",
+      "recall": 0.0,
+      "n_tokens": 32040
+    },
+    {
+      "answers": [
+        "3398792"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "4351698"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "8061291"
+      ],
+      "output": ", the, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "8098846"
+      ],
+      "output": ", and, in the end,,,, and back again, to the extent of the,,,,, and back again, of the,,,,, and back again, to the extent of,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "6894339"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "5913494"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "5603388"
+      ],
+      "output": ", and\nthe special magic number for hzaztwmq-eiuyis mentioned in the provided text, and\nthe special magic number for hzaztwmq-eiuyis mentioned in the provided text, and\nthe",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "6938145"
+      ],
+      "output": ", and\nthat it, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and,",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "8901765"
+      ],
+      "output": "and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and,",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "8479235"
+      ],
+      "output": ", and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go.",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "1163247"
+      ],
+      "output": ", and\nand, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "6125079"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "1479760"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "4987234"
+      ],
+      "output": ", and\nThe, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "4801861"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "6989872"
+      ],
+      "output": ", and, and, and back again, and, and back again, and, and back again, and, and back again, and, and back again, and, and back again, and, and back again, and back again",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "8679079"
+      ],
+      "output": "What is the special magic number for ukwcl-gzxyufmv mentioned in the provided text, and\nWhat is the special magic number for ukwcl-gzxyufmv mentioned in the provided text, and\nWhat",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "8720404"
+      ],
+      "output": ", and the special magic number for ezftfwp-tgtv mentioned in the provided text, and the special magic number for ezftfwp-tgtv mentioned in the provided text, and the special magic number for ezftf",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "3905859"
+      ],
+      "output": ", and, and,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "8299327"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "1085912"
+      ],
+      "output": ", and\nThe grass is blue. The sky is yellow. The sun is yellow. The sun is blue. The, and back again.\nThe grass is green. The sky is blue. The sun is yellow. The, and back",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "6609523"
+      ],
+      "output": ", and\nthe, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "9653543"
+      ],
+      "output": ", and, in the,,,,,,, and,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32043
+    },
+    {
+      "answers": [
+        "1679339"
+      ],
+      "output": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "1842205"
+      ],
+      "output": "blue. The sun is yellow. Here we go. There and back again. The grass is green. The sun is yellow. Here we go. There and back again. The grass is green. The sky is blue. Here we go",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "1343325"
+      ],
+      "output": ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "4175543"
+      ],
+      "output": ", and\nthe, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "9666241"
+      ],
+      "output": ", and,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 32034
+    }
+  ]
+}

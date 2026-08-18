@@ -1,0 +1,67 @@
+{
+  "task": "niah_single_2",
+  "length": "16k",
+  "summary": {
+    "score": 0.0,
+    "n": 7,
+    "approx_tokens": 16039
+  },
+  "records": [
+    {
+      "answers": [
+        "2625894"
+      ],
+      "output": "thethe the theEAST thethe I and thethe and thethe,And the also thethe, And thethe theavened the,",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "7457136"
+      ],
+      "output": "theAnd the thethe,And the and thethe, thethe,the,.swinging the, And,",
+      "recall": 0.0,
+      "n_tokens": 16033
+    },
+    {
+      "answers": [
+        "6025769"
+      ],
+      "output": "thethe, thethe,the,.swinging the, And,",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "8026928"
+      ],
+      "output": "the the and thethe, thethe,the,.swinging the, And,",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "1111622"
+      ],
+      "output": "thethe,the,.swinging the, And,",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "4738859"
+      ],
+      "output": "oth the,.swing thethe thethe,the I, versa the and the and the theaven the,the",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "1698307"
+      ],
+      "output": "the and thethe I, thethe,the,.swinging the, And,",
+      "recall": 0.0,
+      "n_tokens": 16039
+    }
+  ]
+}

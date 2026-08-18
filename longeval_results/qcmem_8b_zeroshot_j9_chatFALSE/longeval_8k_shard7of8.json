@@ -1,0 +1,91 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 8340,
+    "avg_read_len": 6290.5,
+    "last_read_len": 6293
+  },
+  "records": [
+    {
+      "sample_index": 7,
+      "label": "uxzkgx-rbgrutb",
+      "expected": "387367",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line uxzkgx-rbgrutb: REGISTER_CONTENT is <...>. \n\nLooking at the provided data, I need to find the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8330,
+      "read_len": 6283,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 15,
+      "label": "jkldiwt-aowtpc",
+      "expected": "123926",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line jkldiwt-aowtpc: REGISTER_CONTENT is <...>. \n\nLooking at the provided data, I need to find the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8353,
+      "read_len": 6306,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 23,
+      "label": "xmbnniv-vhzegnzap",
+      "expected": "866375",
+      "output": "<501343>.\nOkay, let's see. I need to find the REGISTER_CONTENT for the line \"xmbnniv-vhzegnzap\". Let me go through the list again to make sure I don't",
+      "pred": "501343",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8314,
+      "read_len": 6267,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 31,
+      "label": "zemziapo-xjwfslq",
+      "expected": "256210",
+      "output": "<781512>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. Let me go through each line one by one:\n\nLooking for the line that",
+      "pred": "781512",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8316,
+      "read_len": 6269,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 39,
+      "label": "bocdy-ppspbywh",
+      "expected": "694839",
+      "output": "<...> and I need to find the value for this line. Let me check the list again.\n\nLooking through the provided data, I don't see a line that exactly matches \"bocdy-ppspbywh\". However,",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8372,
+      "read_len": 6325,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 47,
+      "label": "tuwaasf-nqkcvjtz",
+      "expected": "679752",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that matches \"tuwaasf-nqkcvjtz\".\n\nLooking through the lines:\n\n- The line starting",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8340,
+      "read_len": 6293,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    }
+  ]
+}

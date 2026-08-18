@@ -1,0 +1,77 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.3333,
+    "correct": 2,
+    "total": 6,
+    "approx_tokens": 16516
+  },
+  "records": [
+    {
+      "sample_index": 7,
+      "label": "slfxoweos-usbcextm",
+      "expected": "236067",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"slfxoweos-usbcextm\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated with that",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16585,
+      "read_len": null
+    },
+    {
+      "sample_index": 15,
+      "label": "glezs-qoxbq",
+      "expected": "698876",
+      "output": "<698876>. I remember that line because it's one of the later entries in the list, and the number 698876 stands out as a unique value. I associated it with the line identifier",
+      "pred": "698876",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16554,
+      "read_len": null
+    },
+    {
+      "sample_index": 23,
+      "label": "slcphw-rteqr",
+      "expected": "432391",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"slcphw-rteqr\". Therefore, I cannot retrieve the corresponding <REGISTER_CONTENT> for that line index. Please check the line index and",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16535,
+      "read_len": null
+    },
+    {
+      "sample_index": 31,
+      "label": "pfafs-seqmw",
+      "expected": "634330",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"pfafs-seqmw.\" If you meant a different line or if there's a typo, please provide the correct line identifier. Otherwise, the requested",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16516,
+      "read_len": null
+    },
+    {
+      "sample_index": 39,
+      "label": "wpdkkl-aazhmckd",
+      "expected": "481219",
+      "output": "<481219>. I remember that line because it's one of the entries listed in the record provided. Each line has a unique identifier followed by its corresponding numerical value enclosed in <>. The line wpdkkl-aaz",
+      "pred": "481219",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16626,
+      "read_len": null
+    },
+    {
+      "sample_index": 47,
+      "label": "jgwmepwn-cmyldgtb",
+      "expected": "589804",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"jgwmepwn-cmyldgtb\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> for that line. Please check the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16516,
+      "read_len": null
+    }
+  ]
+}

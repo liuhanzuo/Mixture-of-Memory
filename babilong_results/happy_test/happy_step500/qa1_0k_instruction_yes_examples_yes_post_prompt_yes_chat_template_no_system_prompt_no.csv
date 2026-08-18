@@ -1,0 +1,6 @@
+"target","output","question"
+"bathroom","Answer: The most recent location of Mary is bathroom.  <context> John travelled to the hallway. Mary","Where is Mary? "
+"kitchen","Answer: The most recent location of Sandra is kitchen.  <example> John travelled to the hallway.","Where is Sandra? "
+"kitchen","Answer: The most recent location of Mary is kitchen.  <context> John travelled to the office. Mary","Where is Mary? "
+"kitchen","Answer: The most recent location of John is kitchen.  <example> John went to the hallway.","Where is John? "
+"bedroom","Answer: The most recent location of Sandra is bedroom.  <context> Sandra moved to the bedroom.","Where is Sandra? "

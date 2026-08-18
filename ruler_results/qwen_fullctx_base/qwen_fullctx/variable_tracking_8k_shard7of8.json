@@ -1,0 +1,83 @@
+{
+  "task": "variable_tracking",
+  "length": "8k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 8098
+  },
+  "records": [
+    {
+      "answers": [
+        "GFYGU",
+        "MDXWZ",
+        "CGBES",
+        "YHGSW",
+        "LWDYR"
+      ],
+      "output": "GFYGU MDXWZ CGBES YHGSW LWDYR\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 44556 in the given text. The user provided a long block of text",
+      "recall": 1.0,
+      "n_tokens": 8104
+    },
+    {
+      "answers": [
+        "TZHDE",
+        "LVXIJ",
+        "BAVRJ",
+        "DSIER",
+        "NZGNA"
+      ],
+      "output": "TZHDE LVXIJ BAVRJ DSIER NZGNA\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 76947 in the given text. The user provided a long block of text with several",
+      "recall": 1.0,
+      "n_tokens": 8101
+    },
+    {
+      "answers": [
+        "ENSXS",
+        "CAPCQ",
+        "NZUJC",
+        "NZTVN",
+        "BRRIR"
+      ],
+      "output": "ENSXS CAPCQ NZUJC NZTVN BRRIR\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 27773 in the given text. The user provided a long block of text with several variables",
+      "recall": 1.0,
+      "n_tokens": 8099
+    },
+    {
+      "answers": [
+        "CWIIC",
+        "IPWPO",
+        "BRCII",
+        "MJRGZ",
+        "DRVRB"
+      ],
+      "output": "CWIIC IPWPO BRCII MJRGZ DRVRB\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 35887 in the given text. The user provided a long text with a lot of repetitive",
+      "recall": 1.0,
+      "n_tokens": 8099
+    },
+    {
+      "answers": [
+        "OXMQP",
+        "GHVBU",
+        "JBZGP",
+        "VYVGP",
+        "SKKEM"
+      ],
+      "output": "OXMQP GHVBU JBZGP VYVGP SKKEM\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 32818 in the given text. The user provided a long block of text with",
+      "recall": 1.0,
+      "n_tokens": 8103
+    },
+    {
+      "answers": [
+        "QWIIV",
+        "XNDPU",
+        "EDMHS",
+        "JCQDG",
+        "QXRUJ"
+      ],
+      "output": "QWIIV XNDPU EDMHS JCQDG QXRUJ\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 48811 in the given text. The user provided a long block of text with several variables",
+      "recall": 1.0,
+      "n_tokens": 8098
+    }
+  ]
+}

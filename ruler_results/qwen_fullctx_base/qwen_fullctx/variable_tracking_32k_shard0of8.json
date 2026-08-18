@@ -1,0 +1,95 @@
+{
+  "task": "variable_tracking",
+  "length": "32k",
+  "summary": {
+    "score": 100.0,
+    "n": 7,
+    "approx_tokens": 32725
+  },
+  "records": [
+    {
+      "answers": [
+        "HEBNX",
+        "ISCWH",
+        "EJUVB",
+        "ZFNWL",
+        "PZZOJ"
+      ],
+      "output": "HEBNX ISCWH EJUVB ZFNWL PZZOJ\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 14182 in the given text. The user mentioned that there's a chain of variable",
+      "recall": 1.0,
+      "n_tokens": 32724
+    },
+    {
+      "answers": [
+        "JWOVD",
+        "UAZOQ",
+        "JTFRB",
+        "XDPXL",
+        "FBDWR"
+      ],
+      "output": "JWOVD UAZOQ JTFRB XDPXL FBDWR\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 72077 in the given text. The user mentioned that there's a chain of variable",
+      "recall": 1.0,
+      "n_tokens": 32725
+    },
+    {
+      "answers": [
+        "USKXZ",
+        "VNWJA",
+        "ZDIMM",
+        "SUPWU",
+        "ZQZFI"
+      ],
+      "output": "USKXZ VNWJA ZDIMM SUPWU ZQZFI\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 83350 in the given text. The user mentioned that there's a chain of",
+      "recall": 1.0,
+      "n_tokens": 32726
+    },
+    {
+      "answers": [
+        "NWFZA",
+        "CGNUU",
+        "HMLTB",
+        "JHWMF",
+        "ZEVDE"
+      ],
+      "output": "NWFZA CGNUU HMLTB JHWMF ZEVDE\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 79904 in the given text. The user mentioned that there's a chain of variable",
+      "recall": 1.0,
+      "n_tokens": 32725
+    },
+    {
+      "answers": [
+        "BFQWD",
+        "ROKIM",
+        "JHYOH",
+        "IDHCI",
+        "UVYPL"
+      ],
+      "output": "BFQWD ROKIM JHYOH IDHCI UVYPL\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 82209 in the given text. The user mentioned that there's a chain of variable assignments,",
+      "recall": 1.0,
+      "n_tokens": 32721
+    },
+    {
+      "answers": [
+        "CEJBY",
+        "FDJQY",
+        "BUQCD",
+        "FLQGA",
+        "MNSAU"
+      ],
+      "output": "CEJBY FLQGA MNSAU BUQCD FDJQY\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 53514 in the given text. From the previous example, I remember that variables",
+      "recall": 1.0,
+      "n_tokens": 32725
+    },
+    {
+      "answers": [
+        "XLFKX",
+        "ZFOKS",
+        "QVEHB",
+        "CYUOX",
+        "SFNYS"
+      ],
+      "output": "XLFKX ZFOKS QVEHB CYUOX SFNYS\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 85736 in the given text. The user mentioned that there's a chain of variable",
+      "recall": 1.0,
+      "n_tokens": 32725
+    }
+  ]
+}

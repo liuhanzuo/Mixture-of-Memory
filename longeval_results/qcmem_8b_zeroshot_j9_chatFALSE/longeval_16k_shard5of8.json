@@ -1,0 +1,91 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 16536,
+    "avg_read_len": 6290.0,
+    "last_read_len": 6297
+  },
+  "records": [
+    {
+      "sample_index": 5,
+      "label": "uhbamygha-sdcmycd",
+      "expected": "164396",
+      "output": "<469196>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss it.\n\nLooking through the lines again:\n\nLooking for the line that starts with \"line uh",
+      "pred": "469196",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16528,
+      "read_len": 6289,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 13,
+      "label": "wcmxjphk-ldvdupv",
+      "expected": "813390",
+      "output": "<...>. Please provide the value.\nOkay, let's see. I need to find the value of the REGISTER_CONTENT for the line that starts with \"wcmxjphk-ldvdupv\". Let me go through the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16555,
+      "read_len": 6316,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 21,
+      "label": "rgtpzeiqx-mszreg",
+      "expected": "501958",
+      "output": "<...> and I need to find the value. Let me check the list again.\n\nLooking through the provided data, I don't see a line with the identifier \"rgtpzeiqx-mszreg\". The closest matches are:",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16498,
+      "read_len": 6259,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 29,
+      "label": "rujshszh-xsqgsdrqg",
+      "expected": "644338",
+      "output": "<...> in the data you provided. Let me check the list again to find the line that matches the line name \"rujshszh-xsqgsdrqg\".\n\nLooking through the list:\n\n- The line \"line r",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16586,
+      "read_len": 6347,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 37,
+      "label": "qmisu-swkyjwjh",
+      "expected": "575346",
+      "output": "<799278> (from line tkyyx-xxqjx). \n\nWait, but I need to check if there's a line with the identifier \"qmisu-swkyjwjh\" in the",
+      "pred": "799278",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16471,
+      "read_len": 6232,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 45,
+      "label": "bfbhtoo-huwgmyyhp",
+      "expected": "848471",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: \n\nline bfbhtoo-huwgmyyhp: REGISTER_CONTENT is <...>\nOkay, let's see. I need to find",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16536,
+      "read_len": 6297,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    }
+  ]
+}

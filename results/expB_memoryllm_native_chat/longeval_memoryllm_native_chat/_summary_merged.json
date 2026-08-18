@@ -1,0 +1,20 @@
+{
+  "8k": {
+    "accuracy": 0.2,
+    "correct": 10,
+    "total": 50,
+    "n_shards": 2
+  },
+  "32k": {
+    "accuracy": 0.08,
+    "correct": 4,
+    "total": 50,
+    "n_shards": 2
+  },
+  "128k": {
+    "accuracy": 0.02,
+    "correct": 1,
+    "total": 50,
+    "n_shards": 2
+  }
+}

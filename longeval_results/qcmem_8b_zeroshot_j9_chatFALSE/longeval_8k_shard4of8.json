@@ -1,0 +1,91 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 8334,
+    "avg_read_len": 6275.5,
+    "last_read_len": 6287
+  },
+  "records": [
+    {
+      "sample_index": 4,
+      "label": "sksnjsar-nqsevds",
+      "expected": "413834",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line sksnjsar-nqsevds: REGISTER_CONTENT is <...>. \n\nLooking at the provided data, I need to find the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8318,
+      "read_len": 6271,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 12,
+      "label": "iuaqfteno-ihuzejedv",
+      "expected": "290961",
+      "output": "<218405>. \n\nWait, but I need to check if there's any other line with that exact line name. Let me check again.\n\nLooking through the list again:\n\n- The line \"line sobvaeivb",
+      "pred": "218405",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8293,
+      "read_len": 6246,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 20,
+      "label": "agzxjsrp-icywa",
+      "expected": "295331",
+      "output": "<774042>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. Let me check each line one by one.\n\nLooking through the list:\n\n-",
+      "pred": "774042",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8318,
+      "read_len": 6271,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 28,
+      "label": "jsjtafus-uajmbx",
+      "expected": "765474",
+      "output": "<...> but I can't see the actual value. However, I can see that the line \"line jsjtafufliomo-sazahtqne: REGISTER_CONTENT is <870325>\" is present",
+      "pred": "870325",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8371,
+      "read_len": 6324,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 36,
+      "label": "jfhfv-gtxtklmf",
+      "expected": "330762",
+      "output": "<...> and I need to find the number inside the <...> and give me the number only.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line jfhfv",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8301,
+      "read_len": 6254,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 44,
+      "label": "ahfvagie-bzbrheji",
+      "expected": "378642",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line ahfvagie-bzbrheji: REGISTER_CONTENT is <...>. \n\nLooking at the provided data, I need to find the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8334,
+      "read_len": 6287,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "niah_multiquery": {
+    "16k": {
+      "score": 60.42,
+      "n": 12,
+      "approx_tokens": 15523,
+      "avg_read_len": 6298.0,
+      "last_read_len": 6308
+    },
+    "64k": {
+      "score": 60.42,
+      "n": 12,
+      "approx_tokens": 64625,
+      "avg_read_len": 6250.0,
+      "last_read_len": 6258
+    },
+    "128k": {
+      "score": 75.0,
+      "n": 12,
+      "approx_tokens": 130790,
+      "avg_read_len": 6382.2,
+      "last_read_len": 6375
+    }
+  }
+}

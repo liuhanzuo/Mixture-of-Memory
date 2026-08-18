@@ -1,0 +1,912 @@
+{
+  "length": "4k",
+  "summary": {
+    "accuracy": 0.05,
+    "correct": 5,
+    "total": 100,
+    "approx_lines": 256,
+    "approx_tokens": 4588
+  },
+  "records": [
+    {
+      "label": "bnpigi-ethvyjeb",
+      "expected": "967423",
+      "output": "<624140>.\nNow the record is over. Tell me what is the <",
+      "pred": "624140",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4570
+    },
+    {
+      "label": "htdpprsr-rinxaaz",
+      "expected": "669545",
+      "output": "<REGISTER_CONTENT> in line jnojas-jrywazosy.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4554
+    },
+    {
+      "label": "sqrrlbkhj-inznwfaj",
+      "expected": "391046",
+      "output": "<REGISTER_CONTENT> in line sqrrlbkhj-inznwfaj.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4578
+    },
+    {
+      "label": "xuztz-mottkx",
+      "expected": "960024",
+      "output": "<177605>\nline jtdzsdsbh-pssexv: REGISTER_CONTENT",
+      "pred": "177605",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4570
+    },
+    {
+      "label": "ewocr-spxeseays",
+      "expected": "593762",
+      "output": "<REGISTER_CONTENT> in line ewocr-spxeseays.\nThe <REGISTER",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4581
+    },
+    {
+      "label": "uctkbpw-kqplygio",
+      "expected": "818446",
+      "output": "<REGISTER_CONTENT> in line uctkbpw-kqplygio.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4582
+    },
+    {
+      "label": "xfokw-oxmxp",
+      "expected": "759049",
+      "output": "<REGISTER_CONTENT> in line <513751>.\nThe <REGISTER_CONTENT>",
+      "pred": "513751",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4548
+    },
+    {
+      "label": "itfphecj-dgrtwwrvr",
+      "expected": "909741",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4588
+    },
+    {
+      "label": "ujgzq-dqfkwjvr",
+      "expected": "897591",
+      "output": "<101147>\nline ujgzq-dqfkwjvr:",
+      "pred": "101147",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4579
+    },
+    {
+      "label": "hnbvubnot-ygajjua",
+      "expected": "656156",
+      "output": "<484886>.\nThe <REGISTER_CONTENT> in line kxqjmy",
+      "pred": "484886",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4568
+    },
+    {
+      "label": "lcdnjrov-plesggxqz",
+      "expected": "967469",
+      "output": "<466422>\nline rwgnbu-nnquvbw: REGISTER_CONTENT",
+      "pred": "466422",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4557
+    },
+    {
+      "label": "zkjvxxxq-dvhthpvi",
+      "expected": "880827",
+      "output": "<REGISTER_CONTENT> in line zkjvxxxq-dvhthpvi",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4544
+    },
+    {
+      "label": "wegdvtgn-hdquron",
+      "expected": "937221",
+      "output": "<REGISTER_CONTENT> in line <657413>.\nNow the record is over",
+      "pred": "657413",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4546
+    },
+    {
+      "label": "hzggsfuqz-paxlv",
+      "expected": "114529",
+      "output": "<REGISTER_CONTENT> in line hzggsfuqz-paxlv",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4564
+    },
+    {
+      "label": "xkdct-ppuornqt",
+      "expected": "510873",
+      "output": "<510873>.\nNow the record is over. Tell me what is the <",
+      "pred": "510873",
+      "correct": true,
+      "n_lines": 256,
+      "n_tokens": 4589
+    },
+    {
+      "label": "gwghsjnvo-aeughna",
+      "expected": "453611",
+      "output": ", and the, and the, and the, and the, and the,",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4616
+    },
+    {
+      "label": "bbfur-wythvf",
+      "expected": "191548",
+      "output": "<REGISTER_CONTENT> in line bbfur-wythvf. Tell me what",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4536
+    },
+    {
+      "label": "smpchn-vtgrr",
+      "expected": "268444",
+      "output": "<REGISTER_CONTENT> in line <821019>.\n\nNow the record is over",
+      "pred": "821019",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4575
+    },
+    {
+      "label": "ctzvbpuoe-eqlkxynzl",
+      "expected": "511320",
+      "output": "<REGISTER_CONTENT> in line ctzvbpuoe-eqlkxyn",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4574
+    },
+    {
+      "label": "wccdpmmx-nrtbjmbfj",
+      "expected": "589492",
+      "output": "<586073>\nline kxiiy-okasq: REGISTER_CONTENT is",
+      "pred": "586073",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4599
+    },
+    {
+      "label": "yjsvvlkgb-cvhfape",
+      "expected": "156448",
+      "output": "<425541>\nline yjsvvlkgb-cvhfape:",
+      "pred": "425541",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4592
+    },
+    {
+      "label": "xscwh-sssdnjc",
+      "expected": "236813",
+      "output": "<444800>.\nNow the record is over. Tell me what is the <",
+      "pred": "444800",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4573
+    },
+    {
+      "label": "njcvhuz-uajyvrs",
+      "expected": "579219",
+      "output": "<579219>.\nNow the record is over. Tell me what is the <",
+      "pred": "579219",
+      "correct": true,
+      "n_lines": 256,
+      "n_tokens": 4580
+    },
+    {
+      "label": "roaxaqe-bhnmwjo",
+      "expected": "966334",
+      "output": "<REGISTER_CONTENT> 1. Tell me what is the <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4575
+    },
+    {
+      "label": "dmearsl-rjqzles",
+      "expected": "741627",
+      "output": "<REGISTER_CONTENT> in line dmearsl-rjqzles.\nThe <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4572
+    },
+    {
+      "label": "wdyvzxp-jttmm",
+      "expected": "464893",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4604
+    },
+    {
+      "label": "bhfyz-jtaice",
+      "expected": "639188",
+      "output": "<REGISTER_CONTENT> in line twlyydrt-ncgmd. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4581
+    },
+    {
+      "label": "cslsqalyr-scwen",
+      "expected": "780523",
+      "output": "<REGISTER_CONTENT> in line cslsqalyr-scwen. Tell me",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4572
+    },
+    {
+      "label": "dygnp-rffqn",
+      "expected": "990562",
+      "output": "<REGISTER_CONTENT> in line dygnp-rffqn.\nNow the record",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4553
+    },
+    {
+      "label": "ueldmdkgy-nntljd",
+      "expected": "235403",
+      "output": "<REGISTER_CONTENT> in line ueldmdkgy-nntljd.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4573
+    },
+    {
+      "label": "glzkc-nrtbb",
+      "expected": "222187",
+      "output": "<REGISTER_CONTENT> in line glzkc-nrtbb.\nThe <REGISTER",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4513
+    },
+    {
+      "label": "vqukya-azbhhqkc",
+      "expected": "169755",
+      "output": "<REGISTER_CONTENT> in line vqukya-azbhhqkc",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4595
+    },
+    {
+      "label": "ajdew-xeclgcbd",
+      "expected": "363904",
+      "output": "<REGISTER_CONTENT> in line ajdew-xeclgcbd.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4560
+    },
+    {
+      "label": "zjlaq-afeeiv",
+      "expected": "840306",
+      "output": "<REGISTER_CONTENT> in line zjlaq-afeeiv.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4571
+    },
+    {
+      "label": "envvz-pkjsvs",
+      "expected": "272227",
+      "output": "<REGISTER_CONTENT> in line envvz-pkjsvs. Tell me",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4590
+    },
+    {
+      "label": "eajkdrqya-wmyqmcok",
+      "expected": "434155",
+      "output": ", and the, and the, and the, and the, and the,",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4621
+    },
+    {
+      "label": "aihodcqjq-bpeytqpq",
+      "expected": "230304",
+      "output": "<471473>\nline bcarykd-lfshib: REGISTER_CONTENT is",
+      "pred": "471473",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4570
+    },
+    {
+      "label": "vseueno-absro",
+      "expected": "368225",
+      "output": "<REGISTER_CONTENT> 1. Tell me what is the <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4580
+    },
+    {
+      "label": "lplhqd-lojdv",
+      "expected": "533744",
+      "output": "<REGISTER_CONTENT> in line lplhqd-lojdv.\nThe <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4586
+    },
+    {
+      "label": "qeazlag-lnsaezbo",
+      "expected": "222647",
+      "output": "<500417>.\n\nNow the record is over. Tell me what is the",
+      "pred": "500417",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4532
+    },
+    {
+      "label": "uvffeyl-iuxrkmw",
+      "expected": "355012",
+      "output": "<REGISTER_CONTENT> in line uvffeyl-iuxrkmw.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4557
+    },
+    {
+      "label": "dcobjir-hnxrxi",
+      "expected": "995128",
+      "output": "<REGISTER_CONTENT> in line dcobjir-hnxrxi.\nThe <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4565
+    },
+    {
+      "label": "itacha-cnxmzs",
+      "expected": "930801",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line itacha-cnx",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4582
+    },
+    {
+      "label": "cvggzrb-zbian",
+      "expected": "582812",
+      "output": "<REGISTER_CONTENT> in line cvggzrb-zbian. Tell me what",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4607
+    },
+    {
+      "label": "dgtmg-fsuaqf",
+      "expected": "854731",
+      "output": "<128591>\nline vdeusht-suquyde: REGISTER_CONTENT",
+      "pred": "128591",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4561
+    },
+    {
+      "label": "jtyfo-silczjb",
+      "expected": "295261",
+      "output": "<295261>.\nNow the record is over. Tell me what is the <",
+      "pred": "295261",
+      "correct": true,
+      "n_lines": 256,
+      "n_tokens": 4576
+    },
+    {
+      "label": "livyhjmwe-ncsfklo",
+      "expected": "692050",
+      "output": ", and, and, and, and, and, and, and, and",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4616
+    },
+    {
+      "label": "zlxqqsoj-wyxiebm",
+      "expected": "439448",
+      "output": "<REGISTER_CONTENT> in line zlxqqsoj-wyxiebm.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4535
+    },
+    {
+      "label": "vqdtffjxv-ahczs",
+      "expected": "776900",
+      "output": "<REGISTER_CONTENT> in line vqdtffjxv-ahcz",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4592
+    },
+    {
+      "label": "ytfdlluv-libqpwleg",
+      "expected": "370272",
+      "output": "<REGISTER_CONTENT> in line <258456>.\nNow the record is over",
+      "pred": "258456",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4571
+    },
+    {
+      "label": "qciyvzi-kroksqtjn",
+      "expected": "410503",
+      "output": "<850254>\nline qciyvzi-kroksqtjn:",
+      "pred": "850254",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4537
+    },
+    {
+      "label": "hvinm-eurvzh",
+      "expected": "817550",
+      "output": "<970101>.\n\nNow the record is over. Tell me what is the",
+      "pred": "970101",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4567
+    },
+    {
+      "label": "bqddbqvu-uehwmalb",
+      "expected": "813923",
+      "output": "the number of the\nbqddbqvu-uehwmalb.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4641
+    },
+    {
+      "label": "lmgjzw-tlchrask",
+      "expected": "138396",
+      "output": "<REGISTER_CONTENT> in line lmgjzw-tlchrask. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4568
+    },
+    {
+      "label": "apvhhwnq-fvxjhom",
+      "expected": "934285",
+      "output": "<324156>\nline snkwrngou-awtznic: REGISTER",
+      "pred": "324156",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4590
+    },
+    {
+      "label": "uiymodta-junwaf",
+      "expected": "848901",
+      "output": "<513984>.\nNow the record is over. Tell me what is the <",
+      "pred": "513984",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4568
+    },
+    {
+      "label": "imzmtupk-tojca",
+      "expected": "602852",
+      "output": "<444562>.\nNow the record is over. Tell me what is the",
+      "pred": "444562",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4582
+    },
+    {
+      "label": "cgevxmx-ywiyufdms",
+      "expected": "883099",
+      "output": "<REGISTER_CONTENT> in line cgevxmx-ywiyufdms",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4562
+    },
+    {
+      "label": "ngftv-cobpn",
+      "expected": "410310",
+      "output": "<REGISTER_CONTENT> in line ngftv-cobpn. Tell me what",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4583
+    },
+    {
+      "label": "tmhktv-pbvmyzqt",
+      "expected": "452081",
+      "output": "<554988>.\nNow the record is over. Tell me what is the <",
+      "pred": "554988",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4529
+    },
+    {
+      "label": "zdjdph-fwcae",
+      "expected": "660518",
+      "output": "<REGISTER_CONTENT> in line zdjdph-fwcae.\nThe <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4526
+    },
+    {
+      "label": "tlxdnmixj-ioxnx",
+      "expected": "559383",
+      "output": "<REGISTER_CONTENT> 1.\nThe <REGISTER_CONTENT> in line tlxd",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4560
+    },
+    {
+      "label": "tjxjkuxzp-niwhjea",
+      "expected": "342318",
+      "output": "<769283>\nline hrzmsm-kpury: REGISTER_CONTENT is",
+      "pred": "769283",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4556
+    },
+    {
+      "label": "vareesyj-eskkmal",
+      "expected": "837354",
+      "output": "<REGISTER_CONTENT> in line vareesyj-eskkmal. Tell me",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4571
+    },
+    {
+      "label": "hdqieck-yudphudmy",
+      "expected": "778784",
+      "output": "<453340>\nline qzrtxiz-nrraxncmy:",
+      "pred": "453340",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4577
+    },
+    {
+      "label": "hhxtpg-syjsetlm",
+      "expected": "509848",
+      "output": "<424837>\nline yhbvcn-tecspjyd: REGISTER",
+      "pred": "424837",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4581
+    },
+    {
+      "label": "hzufqtjq-kbxtsau",
+      "expected": "440059",
+      "output": "<448697>.\nNow the record is over. Tell me what is the <",
+      "pred": "448697",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4570
+    },
+    {
+      "label": "swurvi-lladicfjz",
+      "expected": "144892",
+      "output": "<REGISTER_CONTENT> in line swurvi-lladicfjz.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4580
+    },
+    {
+      "label": "cesyb-arscgtiee",
+      "expected": "901040",
+      "output": "<REGISTER_CONTENT> in line cesyb-arscgtiee. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4556
+    },
+    {
+      "label": "ivgzijm-sfbsutc",
+      "expected": "484545",
+      "output": "<REGISTER_CONTENT> in line qhlihu-jylyaz.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4589
+    },
+    {
+      "label": "tshhfvy-hfpnvhzf",
+      "expected": "500157",
+      "output": "<REGISTER_CONTENT> 1. Tell me what is the <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4586
+    },
+    {
+      "label": "wetdfjomt-jdiqbq",
+      "expected": "455948",
+      "output": "<144281>.\nNow the record is over. Tell me what is the <",
+      "pred": "144281",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4565
+    },
+    {
+      "label": "xwjaxnpri-kpsotbtc",
+      "expected": "845020",
+      "output": "<102410>\nline xwjaxnpri-kpsotbtc: REGISTER",
+      "pred": "102410",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4564
+    },
+    {
+      "label": "wbqasljct-tauaaf",
+      "expected": "429851",
+      "output": "<REGISTER_CONTENT> in line <519793>.\nNow the record is over",
+      "pred": "519793",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4530
+    },
+    {
+      "label": "jyoci-uatlbp",
+      "expected": "639064",
+      "output": "1. Tell me what is the <REGISTER_CONTENT> in line dlgy",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4578
+    },
+    {
+      "label": "bhkhcy-ustdxww",
+      "expected": "854904",
+      "output": "<538456>.\n\nNow the record is over. Tell me what is the",
+      "pred": "538456",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4591
+    },
+    {
+      "label": "efdubjema-pqfnsuw",
+      "expected": "427895",
+      "output": "<REGISTER_CONTENT> in line efdubjema-pqfnsuw",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4583
+    },
+    {
+      "label": "tozrga-itmxqwqr",
+      "expected": "721601",
+      "output": "<REGISTER_CONTENT> in line tozrga-itmxqwqr.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4557
+    },
+    {
+      "label": "ugdpvp-tlhgq",
+      "expected": "174267",
+      "output": "<REGISTER_CONTENT> in line ugdpvp-tlhgq.\nThe <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4598
+    },
+    {
+      "label": "avksk-eubvlawc",
+      "expected": "168589",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4560
+    },
+    {
+      "label": "qytowhg-hcylpacvc",
+      "expected": "149117",
+      "output": "<REGISTER_CONTENT> 1. Tell me what is the <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4549
+    },
+    {
+      "label": "lbqqmgnen-qbmphir",
+      "expected": "609430",
+      "output": "<452710>.\nNow the record is over. Tell me what is the <",
+      "pred": "452710",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4553
+    },
+    {
+      "label": "pzyye-zgnktyt",
+      "expected": "708835",
+      "output": "<REGISTER_CONTENT> in line pzyye-zgnktyt. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4538
+    },
+    {
+      "label": "lcwukuex-lehcg",
+      "expected": "345474",
+      "output": "<REGISTER_CONTENT> in line lcwukuex-lehcg. Tell me",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4555
+    },
+    {
+      "label": "hhdjvk-kffqljeiv",
+      "expected": "128516",
+      "output": "<677558>.\nNow the record is over. Tell me what is the <",
+      "pred": "677558",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4575
+    },
+    {
+      "label": "pmgtdyr-ctcir",
+      "expected": "223121",
+      "output": "<223121>.\nNow the record is over. Tell me what is the <",
+      "pred": "223121",
+      "correct": true,
+      "n_lines": 256,
+      "n_tokens": 4573
+    },
+    {
+      "label": "uobodxxs-npzvpix",
+      "expected": "405490",
+      "output": "<764282>.\nNow the record is over. Tell me what is the <",
+      "pred": "764282",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4560
+    },
+    {
+      "label": "njzki-nqvvf",
+      "expected": "655470",
+      "output": "<655470>.\nNow the record is over. Tell me what is the <",
+      "pred": "655470",
+      "correct": true,
+      "n_lines": 256,
+      "n_tokens": 4589
+    },
+    {
+      "label": "fzkqosqie-mbmfhmt",
+      "expected": "134721",
+      "output": "<408329>.\nNow the record is over. Tell me what is the <",
+      "pred": "408329",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4564
+    },
+    {
+      "label": "gjltyrrk-nlppumy",
+      "expected": "638551",
+      "output": "<REGISTER_CONTENT> in line gjltyrrk-nlppumy",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4548
+    },
+    {
+      "label": "hbsfby-scjqdzav",
+      "expected": "596889",
+      "output": "<834462>.\nNow the record is over. Tell me what is the <",
+      "pred": "834462",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4595
+    },
+    {
+      "label": "byynm-eeopef",
+      "expected": "569497",
+      "output": "<194346>\nline qitrrylhx-wnwdmgky:",
+      "pred": "194346",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4591
+    },
+    {
+      "label": "zsbatfytx-klyjisqf",
+      "expected": "372034",
+      "output": "<154870>.\nNow the record is over. Tell me what is the <",
+      "pred": "154870",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4560
+    },
+    {
+      "label": "jyztms-utpfktdgo",
+      "expected": "507323",
+      "output": "<REGISTER_CONTENT> in line jyztms-utpfktdgo",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4576
+    },
+    {
+      "label": "wyobjphv-elrzamifc",
+      "expected": "139971",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4564
+    },
+    {
+      "label": "scwwss-wifvuibow",
+      "expected": "616336",
+      "output": "<REGISTER_CONTENT> in line <433033> and <683044>.\nThe",
+      "pred": "433033",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4601
+    },
+    {
+      "label": "eenqpmk-wjizjpkfc",
+      "expected": "738918",
+      "output": "<144504>.\nNow the record is over. Tell me what is the <",
+      "pred": "144504",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4568
+    },
+    {
+      "label": "jypxb-yyfttm",
+      "expected": "600896",
+      "output": "<106105>\nline jypxb-yyfttm: REGISTER_CONTENT is",
+      "pred": "106105",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4529
+    },
+    {
+      "label": "pnhna-taeuiak",
+      "expected": "141567",
+      "output": "<REGISTER_CONTENT> in line pnhna-taeuiak.\nThe <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4583
+    },
+    {
+      "label": "wwrbe-mtwkta",
+      "expected": "847650",
+      "output": "<457931>.\nNow tell me what is the <REGISTER_CONTENT> in line",
+      "pred": "457931",
+      "correct": false,
+      "n_lines": 256,
+      "n_tokens": 4588
+    }
+  ]
+}

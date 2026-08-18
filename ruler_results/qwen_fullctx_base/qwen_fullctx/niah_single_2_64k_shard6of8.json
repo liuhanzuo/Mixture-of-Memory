@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "64k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 65503
+  },
+  "records": [
+    {
+      "answers": [
+        "2530695"
+      ],
+      "output": "2530695. This number is highlighted in the text as the special magic number. The number is mentioned in the context of a note that says, \"One of the special magic numbers for wuqoy-d",
+      "recall": 1.0,
+      "n_tokens": 65506
+    },
+    {
+      "answers": [
+        "5364261"
+      ],
+      "output": "5364261. The number is hidden within the text and is related to the story of Joseph, as it is the number of years that Joseph was in Egypt before he was reunited with his family. The number is",
+      "recall": 1.0,
+      "n_tokens": 65506
+    },
+    {
+      "answers": [
+        "5581585"
+      ],
+      "output": "5581585. The number is hidden within the text and is revealed in the context of the story, where it is stated that the number is 5581585. The number is a special",
+      "recall": 1.0,
+      "n_tokens": 65509
+    },
+    {
+      "answers": [
+        "3841952"
+      ],
+      "output": "3841952. The number is hidden within the text and is a key element of the magic number. The number is found in the text and is a significant number that is used in the context of the magic number",
+      "recall": 1.0,
+      "n_tokens": 65503
+    },
+    {
+      "answers": [
+        "2555630"
+      ],
+      "output": "2555630. The number is hidden within the text and is the answer to the quiz. The number is 2555630. The number is mentioned in the text as \"One of the",
+      "recall": 1.0,
+      "n_tokens": 65503
+    },
+    {
+      "answers": [
+        "2008000"
+      ],
+      "output": "2008000.\nThe special magic number for lkabsod-nohjnfc mentioned in the provided text is 2008000.\nThe special magic number for lkabsod-nohjnfc",
+      "recall": 1.0,
+      "n_tokens": 65503
+    }
+  ]
+}

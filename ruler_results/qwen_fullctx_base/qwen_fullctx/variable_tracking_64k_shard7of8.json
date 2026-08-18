@@ -1,0 +1,83 @@
+{
+  "task": "variable_tracking",
+  "length": "64k",
+  "summary": {
+    "score": 96.67,
+    "n": 6,
+    "approx_tokens": 65504
+  },
+  "records": [
+    {
+      "answers": [
+        "LVDOB",
+        "YXCPR",
+        "NBKLU",
+        "GKFPE",
+        "PNMUP"
+      ],
+      "output": "LVDOB YXCPR NBKLU GKFPE PNMUP\n\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 11016 in the given text. Let me start by reading through the text carefully.\n\nFirst,",
+      "recall": 1.0,
+      "n_tokens": 65502
+    },
+    {
+      "answers": [
+        "VQYQI",
+        "ZAKCM",
+        "ZBEDA",
+        "XZGGS",
+        "HXEZV"
+      ],
+      "output": "VQYQI ZAKCM ZBEDA XZGGS HXEZV\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 93837 in the given text. Let me start by reading through the",
+      "recall": 1.0,
+      "n_tokens": 65511
+    },
+    {
+      "answers": [
+        "BUCNZ",
+        "NQYBR",
+        "AMRMH",
+        "FRFQH",
+        "VLZGW"
+      ],
+      "output": "BUCNZ NQYBR AMRMH FRFQH VLZGW\nMemorize and track the chain(s) of variable assignment hidden in the following text.\n\nVAR MAS = 12345\nThe grass is green. The sky is blue. The sun is yellow",
+      "recall": 1.0,
+      "n_tokens": 65508
+    },
+    {
+      "answers": [
+        "MIJEY",
+        "ZVNUS",
+        "TWCOQ",
+        "GNULC",
+        "JNWUT"
+      ],
+      "output": "MIJEY ZVNUS TWCOQ GNULC JNWUT\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 88248 in the given text. The user provided a long text with several variable assignments,",
+      "recall": 1.0,
+      "n_tokens": 65504
+    },
+    {
+      "answers": [
+        "ZSOHY",
+        "TCKMS",
+        "MPKKZ",
+        "BVJAQ",
+        "ODWHS"
+      ],
+      "output": "ZSOHY TCKMS MPKKZ BVJAQ ODWHS\n\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 91909 in the given text. Let me start by reading through the text carefully.\n\nFirst",
+      "recall": 1.0,
+      "n_tokens": 65504
+    },
+    {
+      "answers": [
+        "NXCRT",
+        "GRPYD",
+        "PGCME",
+        "GKCHM",
+        "PLIKD"
+      ],
+      "output": "NXCRT GRPYD PGCME PLIKD VAR\nWait, the answer is not correct. Let me check again. The correct answer is: NXCRT GRPYD PGCME PLIKD VAR. But the question is about variables assigned the value 5460",
+      "recall": 0.8,
+      "n_tokens": 65504
+    }
+  ]
+}

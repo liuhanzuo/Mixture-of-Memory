@@ -1,0 +1,77 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.1667,
+    "correct": 1,
+    "total": 6,
+    "approx_tokens": 65899
+  },
+  "records": [
+    {
+      "sample_index": 5,
+      "label": "kkjwvwffd-mezkt",
+      "expected": "171133",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"kkjwvwffd-mezkt\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> for that line index. Please check the line index",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65836,
+      "read_len": null
+    },
+    {
+      "sample_index": 13,
+      "label": "tdalmrnar-aqslmbjk",
+      "expected": "207258",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"tdalmrnar-aqslmbjk\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65760,
+      "read_len": null
+    },
+    {
+      "sample_index": 21,
+      "label": "phapcd-agivrq",
+      "expected": "652019",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"phapcd-agivrq\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated with",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65639,
+      "read_len": null
+    },
+    {
+      "sample_index": 29,
+      "label": "iytypn-crgho",
+      "expected": "694678",
+      "output": "<484537>. Wait, no, that's the first line. Let me check again.\n\nActually, I need to find the line with the identifier \"iytypn-crgho\" and retrieve its <REGISTER_CONTENT",
+      "pred": "484537",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65814,
+      "read_len": null
+    },
+    {
+      "sample_index": 37,
+      "label": "rwigy-lweft",
+      "expected": "910045",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"rwigy-lweft\". If you have a specific line index or a different identifier, please provide it so I can retrieve the corresponding <REGISTER",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 66074,
+      "read_len": null
+    },
+    {
+      "sample_index": 45,
+      "label": "pmbpsci-icgpzbrg",
+      "expected": "379205",
+      "output": "<379205>. I remember that because I memorized each line's <REGISTER_CONTENT> as per the record provided. The line index \"pmbpsci-icgpzbrg\" corresponds to the value <",
+      "pred": "379205",
+      "correct": true,
+      "n_lines": 3072,
+      "n_tokens": 65899,
+      "read_len": null
+    }
+  ]
+}

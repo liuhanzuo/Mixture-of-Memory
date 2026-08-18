@@ -1,0 +1,27 @@
+{
+  "task": "niah_single_2",
+  "length": "16k",
+  "summary": {
+    "score": 2.0,
+    "n": 50,
+    "approx_tokens": 15393,
+    "avg_read_len": 15385.5,
+    "last_read_len": 15394
+  },
+  "baseline": "hcache",
+  "no_retrieval": true,
+  "qcmem": {
+    "resume_j": 12,
+    "top_prepay_b": 0,
+    "reuse_kv_blockdiag": false,
+    "selector": null,
+    "topk": null,
+    "sink_tokens": "bos",
+    "num_layers": 36,
+    "lora_adapter": null,
+    "chunk_size": 512
+  },
+  "model": {
+    "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b"
+  }
+}

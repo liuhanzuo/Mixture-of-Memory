@@ -1,0 +1,110 @@
+"target","output","question","orig_chunk","full_chunk"
+"Jeff","Answer: Jeff.
+
+Question: Who did Jeff give the football to? Answer: Fred.
+
+Question:","Who did Fred give the football to? ","{6}","{3, 5}"
+"Jeff","Answer: Jeff. Fred gave the milk to Jeff. Fred went back to the garden. Fred picked","Who did Fred give the milk to? ","{7}","{7}"
+"Fred","Answer: Jeff. Fred discarded the milk. Fred discarded the milk. Fred discarded the milk. Fred","Who received the milk? ","{7}","{5}"
+"apple","Answer: The apple. Fred journeyed to the garden. ""Oh, yes,"" corroborated Jimmy","What did Mary give to Jeff? ","{6}","{6}"
+"Jeff","Answer: Jimmy. Jeff gave the milk to Fred. Jeff went to the hallway. The burden of","Who gave the milk to Fred? ","{6}","{6}"
+"Jeff","Answer: Jeff. Question: Who is the football given to? Answer: Jeff. Question: Who","Who received the football? ","{4}","{4}"
+"milk","Answer: the milk. Question: What did Geert give to Bill? Answer: the milk.","What did Mary give to Bill? ","{5}","{5}"
+"milk","Answer: the milk. Question: What did Geertude say about Albertina? Answer: She","What did Mary give to Bill? ","{7}","{7}"
+"Mary","Answer: Mary. Question: Who handed the football to Mary?","Who received the football? ","{6}","{6}"
+"Jeff","Answer: Mary. Question: Who handed the apple to Jeff? Answer: Mary. Question: Who","Who received the apple? ","{6}","{5}"
+"Fred","Answer: Jeff handed the milk to Jeff. Question: Who handed the milk to Jeff? Answer:","Who gave the milk to Jeff? ","{4}","{4}"
+"Mary","Answer: Jeff gave the milk to Mary. Mary gave the milk to Fred. Fred passed the milk","Who gave the milk? ","{6}","{5, 6}"
+"milk","Answer: a bottle of milk.
+
+Question: What did Jeff give to Bill? Answer: a bottle","What did Jeff give to Bill? ","{5}","{5}"
+"Mary","Answer: Jeff.
+
+Question: Who handed the football to Mary? Answer: Jeff.
+
+Question: Who","Who gave the football? ","{6}","{4}"
+"Fred","Answer: Mary.
+
+Question: Who handed the apple to Fred? Answer: Mary.
+
+Question: Who","Who received the apple? ","{6}","{6}"
+"milk","Answer: The milk. Question: Who passed the milk to Jeff? Answer: Mary. Question:","What did Mary give to Jeff? ","{5}","{5}"
+"Fred","Answer: Fred. Fred handed the apple to Mary. Mary discarded the milk. Bill moved to the","Who gave the apple to Mary? ","{0, 6}","{6}"
+"apple","Answer: the football. Mary discarded the milk. In his chapter of ""Woods and Groves","What did Fred give to Mary? ","{7}","{7}"
+"Jeff","Answer: Fred. He says ""his picture was thrice drawn in oil; first,
+in","Who gave the milk? ","{7}","{7}"
+"Fred","Answer: Fred. Fred handed the football to Mary. Fred handed the football to Mary. Fred handed","Who gave the football to Mary? ","{7}","{7}"
+"milk","Answer: Fred gave the milk to Mary. Question: What did Cameron give to the doctor? Answer","What did Fred give to Mary? ","{6}","{3}"
+"Fred","Answer: Fred. Question: Who gave the apple? Answer: Jeff. Question: Who received the","Who received the apple? ","{6}","{3}"
+"Fred","Answer: Fred. Question: Who is the old man? Answer: A beggar. Question:","Who gave the apple to Bill? ","{6}","{6}"
+"Fred","Answer: Fred. Question: Who gave the apple? Answer: Bill. Question: Who travelled to","Who received the apple? ","{6}","{6}"
+"Mary","Answer: Fred. Question: Who was busy disposing of the provisions? Answer: Katy. Question:","Who received the football? ","{7}","{7}"
+"apple","Answer: The apple. Question: What did Fred give to Mary? Answer: The apple. Question","What did Mary give to Fred? ","{6}","{6}"
+"apple","Answer: The apple. Question: What did Fred give to Bill? Answer: The apple. Question","What did Fred give to Bill? ","{3}","{3}"
+"Mary","Answer: Bill. Question: Who journeyed to the hallway? Answer: Mary. Question: Who","Who received the milk? ","{6}","{6}"
+"Bill","Answer: Bill. Question: Who journeyed to the bedroom? Answer: Jeff. Question: Who","Who gave the football to Fred? ","{6}","{3, 6}"
+"Mary","Answer: Bill. Question: Who","Who gave the football to Fred? ","{6}","{6}"
+"Fred","Answer: Bill gave the football to Jeff. Fred journeyed to the bedroom. IV.—Aryan","Who gave the football to Jeff? ","{5}","{3}"
+"Bill","Answer: Jeff. Fred gave the football to Bill. Jeff passed the milk to Bill. Fred gave","Who received the milk? ","{5}","{5}"
+"milk","Answer: The milk.
+
+Question: What did the regiment do to the enemy? Answer: Turned","What did Mary give to Fred? ","{4}","{3}"
+"Jeff","Answer: Mary.
+
+Question: Who was the rebel army? Answer: The localities of the barn","Who gave the apple to Bill? ","{7}","{7}"
+"Bill","Answer: Fred gave the apple to Bill.
+
+Question: Who did Mary go to the kitchen? Answer","Who did Fred give the apple to? ","{6}","{4, 6}"
+"Bill","Answer: Fred gave the milk to Bill.
+
+Question: Who gave the milk to Emil? Answer:","Who gave the milk to Fred? ","{7}","{5}"
+"Fred","Answer: Fred gave the milk.
+
+Question: Who gave the apple? Answer: Jeff put down the","Who gave the milk? ","{5}","{5}"
+"Jeff","Answer: Jeff.
+
+Question: Who gave the milk? Answer: Bill.
+
+Question: Who is Jeff","Who received the milk? ","{4}","{3}"
+"Bill","Answer: Jeff.
+
+Question: Who gave the apple? Answer: Jeff.
+
+Question: Who gave the","Who gave the apple? ","{7}","{6, 7}"
+"Fred","Answer: Mary.
+
+Question: Who gave the football? Answer: Fred.
+
+Question: Who journeyed","Who received the football? ","{7}","{7}"
+"Mary","Answer: Mary.
+
+Question: Who did Mary travel to? Answer: The hallway.
+
+Question: Who","Who did Jeff give the apple to? ","{4}","{3}"
+"Mary","Answer: Mary.
+
+Question: Who passed the milk to Jeff? Answer: Mary.
+
+Question: Who","Who received the milk? ","{6}","{4}"
+"Mary","Answer: Mary.
+
+Question: Who passed the milk? Answer: Mary.
+
+Question: Who handed the","Who gave the milk? ","{7}","{5, 6, 7}"
+"Mary","Answer: Mary.
+
+Question: Who passed the football to Mary? Answer: Jeff.
+
+Question: Who","Who received the football? ","{2}","{2}"
+"milk","Answer: The milk. Jeff went to the garden. The Buddhists introduced from Thibet into","What did Fred give to Bill? ","{6}","{6}"
+"Jeff","Answer: Jeff. Fred gave the apple to Jeff. Jeff handed the apple to Fred. Fred took","Who gave the apple? ","{5}","{5}"
+"Bill","Answer: Bill gave the football to Jeff.
+
+Question: Who gave the football to Jeff? Answer:","Who gave the football to Jeff? ","{6}","{4}"
+"milk","Answer: She gave him the milk.
+
+Question: Who gave the invitation to the boys? Answer:","What did Mary give to Bill? ","{6}","{6}"
+"Mary","Answer: Mary gave the milk to Jeff.
+
+Question: Who gave the milk to Jeff? Answer:","Who gave the milk to Jeff? ","{6}","{3, 6}"
+"Bill","Answer: Mary handed the milk to Bill. Mary handed the milk to Bill. Mary passed the milk","Who received the milk? ","{6}","{6}"

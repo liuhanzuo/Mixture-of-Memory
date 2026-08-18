@@ -1,0 +1,52 @@
+{
+  "status": "completed",
+  "task": "niah_single_3",
+  "length": "64k",
+  "n_requested": 100,
+  "sharding": {
+    "num_shards": 1,
+    "shard_index": 0
+  },
+  "summary": {
+    "score": 100.0,
+    "n": 100,
+    "approx_tokens": 65535,
+    "avg_read_len": 65428.4,
+    "last_read_len": 65536
+  },
+  "score": 100.0,
+  "oom_count": 0,
+  "elapsed_seconds": 2619.581,
+  "runtime": {
+    "node": "TENCENT64.site",
+    "cuda_visible_devices": null,
+    "device": "cuda:5",
+    "pythonhashseed": null,
+    "seed": 42,
+    "dtype": "bfloat16",
+    "attn_implementation": "sdpa"
+  },
+  "chat_template": false,
+  "enable_thinking": false,
+  "scoring": "scripts.eval_ruler_mem_space._string_match_all_one",
+  "baseline": "kvdirect",
+  "no_retrieval": true,
+  "qcmem": {
+    "resume_j": 0,
+    "top_prepay_b": 0,
+    "reuse_kv_blockdiag": false,
+    "selector": null,
+    "topk": null,
+    "iter": null,
+    "sink_tokens": "bos",
+    "num_layers": 36,
+    "lora_adapter": null,
+    "chunk_size": 512
+  },
+  "model": {
+    "model_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
+    "num_hidden_layers": 36,
+    "bottleneck_ckpt": null
+  },
+  "zero_training_no_adapter": false
+}

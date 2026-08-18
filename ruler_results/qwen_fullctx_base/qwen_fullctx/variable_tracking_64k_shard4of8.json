@@ -1,0 +1,83 @@
+{
+  "task": "variable_tracking",
+  "length": "64k",
+  "summary": {
+    "score": 96.67,
+    "n": 6,
+    "approx_tokens": 65508
+  },
+  "records": [
+    {
+      "answers": [
+        "PSMNS",
+        "ETSUP",
+        "ETKVA",
+        "YVHMD",
+        "KRAZJ"
+      ],
+      "output": "PSMNS YVHMD KRAZJ ETKVA DJY LVZ\n\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 60924 in the given text. Let me start by reading through the text",
+      "recall": 0.8,
+      "n_tokens": 65510
+    },
+    {
+      "answers": [
+        "PYZQD",
+        "VVUHQ",
+        "DUCTO",
+        "ZTOOK",
+        "YULKA"
+      ],
+      "output": "PYZQD ZTOOK VVUHQ DUCTO YULKA\n\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 17321 in the given text. Let me start by reading through the text carefully",
+      "recall": 1.0,
+      "n_tokens": 65511
+    },
+    {
+      "answers": [
+        "CSMTO",
+        "ZONNQ",
+        "KTYUR",
+        "JJZJH",
+        "NFZDV"
+      ],
+      "output": "CSMTO ZONNQ JJZJH NFZDV KTYUR\n\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 59473 in the given text. Let me start by reading through the text carefully",
+      "recall": 1.0,
+      "n_tokens": 65511
+    },
+    {
+      "answers": [
+        "ISAMI",
+        "AKGWC",
+        "TTSUF",
+        "NHOLM",
+        "RUZDY"
+      ],
+      "output": "ISAMI  NHOLM  TTSUF  AKGWC  RUZDY\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 36217 in the given text. Let me start by reading through the text",
+      "recall": 1.0,
+      "n_tokens": 65505
+    },
+    {
+      "answers": [
+        "AHEEZ",
+        "VJHGQ",
+        "OWYPG",
+        "TEUFH",
+        "GOEGO"
+      ],
+      "output": "AHEEZ VJHGQ OWYPG TEUFH GOEGO\n\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 88594 in the given text. The user provided a long text with a lot of",
+      "recall": 1.0,
+      "n_tokens": 65509
+    },
+    {
+      "answers": [
+        "DXNBG",
+        "EDZTT",
+        "SBYWS",
+        "ZQTQU",
+        "RDSJY"
+      ],
+      "output": "DXNBG SBYWS ZQTQU RDSJY and another one. Wait, I need to count them again. Let me check. The first variable assigned 73706 is DXNBG. Then SBYWS is assigned to VAR EDZTT, which was assigned",
+      "recall": 1.0,
+      "n_tokens": 65508
+    }
+  ]
+}

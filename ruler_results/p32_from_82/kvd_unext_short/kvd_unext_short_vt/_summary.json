@@ -1,0 +1,18 @@
+{
+  "variable_tracking": {
+    "8k": {
+      "score": 100.0,
+      "n": 100,
+      "approx_tokens": 8103,
+      "avg_read_len": 8099.5,
+      "last_read_len": 8104
+    },
+    "16k": {
+      "score": 99.8,
+      "n": 100,
+      "approx_tokens": 16282,
+      "avg_read_len": 16283.2,
+      "last_read_len": 16283
+    }
+  }
+}

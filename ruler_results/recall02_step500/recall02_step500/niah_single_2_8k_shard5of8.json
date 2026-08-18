@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "8k",
+  "summary": {
+    "score": 16.67,
+    "n": 6,
+    "approx_tokens": 8069
+  },
+  "records": [
+    {
+      "answers": [
+        "7265857"
+      ],
+      "output": ": 726585753. What is the special magic number for xqdi-uukwhr mentioned in the provided text? The special magic number for xqdi-uukwhr mentioned in the provided text is: 726585",
+      "recall": 1.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "2576212"
+      ],
+      "output": ": 257. 10:6 And the sons of Ham; Cush, and Egypt, and Libya. 10:7 And the sons of Cush; Meshech, and Tubal, and all the families of the Canaan",
+      "recall": 0.0,
+      "n_tokens": 8078
+    },
+    {
+      "answers": [
+        "9673251"
+      ],
+      "output": "967. What is the special magic number for orzpr-nvvdi mentioned in the provided text? The special magic number for orzpr-nvvdi mentioned in the provided text is 967. What is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "6988674"
+      ],
+      "output": ": 698667. What is the special magic number for uhchngmzjw mentioned in the provided text? The special magic number for uhchngmzjw mentioned in the provided text is: 698667.",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "1422524"
+      ],
+      "output": ": 142857142857142857142857142857142857142857142857142857142857142857142857142857142857142857142857142857142857142857142857142857142857142857",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "1467381"
+      ],
+      "output": ": 146131. What is the special magic number for dgftc-uodmuabr mentioned in the provided text? The special magic number for dgftc-uodmuabr mentioned in the provided text is: 146131.",
+      "recall": 0.0,
+      "n_tokens": 8069
+    }
+  ]
+}

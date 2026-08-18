@@ -1,0 +1,27 @@
+{
+  "task": "niah_single_2",
+  "length": "64k",
+  "summary": {
+    "score": 100.0,
+    "n": 50,
+    "approx_tokens": 65418,
+    "avg_read_len": 4495.7,
+    "last_read_len": 4491,
+    "secs": 1295.1
+  },
+  "baseline": "none",
+  "no_retrieval": false,
+  "qcmem": {
+    "resume_j": 32,
+    "selector": "bm25",
+    "topk": 8,
+    "sink_tokens": "bos",
+    "num_layers": 80,
+    "lora_adapter": "outputs/qcmem_distill_hy3_j32_r32/final",
+    "chunk_size": 512
+  },
+  "model": {
+    "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Hy3",
+    "backbone": "Hy3"
+  }
+}

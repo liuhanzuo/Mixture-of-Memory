@@ -1,0 +1,38 @@
+{
+  "niah_single_2": {
+    "8k": {
+      "score": 50.0,
+      "n": 6,
+      "approx_tokens": 7504
+    },
+    "16k": {
+      "score": 16.67,
+      "n": 6,
+      "approx_tokens": 15378
+    }
+  },
+  "niah_multikey_1": {
+    "8k": {
+      "score": 0.0,
+      "n": 6,
+      "approx_tokens": 7586
+    },
+    "16k": {
+      "score": 0.0,
+      "n": 6,
+      "approx_tokens": 15454
+    }
+  },
+  "variable_tracking": {
+    "8k": {
+      "score": 6.67,
+      "n": 6,
+      "approx_tokens": 8099
+    },
+    "16k": {
+      "score": 6.67,
+      "n": 6,
+      "approx_tokens": 16283
+    }
+  }
+}

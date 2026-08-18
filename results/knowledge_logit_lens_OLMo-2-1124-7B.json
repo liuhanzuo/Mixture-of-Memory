@@ -1,0 +1,226 @@
+{
+  "meta": {
+    "task": "knowledge_logit_lens",
+    "model": "../models/OLMo-2-1124-7B",
+    "model_tag": "OLMo-2-1124-7B",
+    "dtype": "bf16",
+    "n_mmlu": 1000,
+    "n_layers": 33,
+    "chance": 0.25,
+    "note": "logit-lens per-layer MMLU (flan-style, cais/mmlu all/test); hidden@last-prompt-pos -> final_norm -> lm_head; argmax over {A,B,C,D} letter tokens = mmlu_acc; gold-letter full-vocab log-softmax = mmlu_correct_ll. Forward-only, no grad."
+  },
+  "summary": {
+    "peak_layer": 32,
+    "peak_acc": 0.551,
+    "top_layer": 32,
+    "top_acc": 0.551,
+    "chance": 0.25,
+    "sat95_top_layer": 19,
+    "sat95_frac_depth": 0.594,
+    "sat99_top_layer": 27,
+    "sat99_frac_depth": 0.844,
+    "onset_layer": 18,
+    "onset_frac_depth": 0.562
+  },
+  "per_layer": [
+    {
+      "layer_idx": 0,
+      "frac_depth": 0.0,
+      "mmlu_acc": 0.23,
+      "mmlu_correct_ll": -14.4989
+    },
+    {
+      "layer_idx": 1,
+      "frac_depth": 0.0312,
+      "mmlu_acc": 0.232,
+      "mmlu_correct_ll": -14.0244
+    },
+    {
+      "layer_idx": 2,
+      "frac_depth": 0.0625,
+      "mmlu_acc": 0.276,
+      "mmlu_correct_ll": -13.244
+    },
+    {
+      "layer_idx": 3,
+      "frac_depth": 0.0938,
+      "mmlu_acc": 0.24,
+      "mmlu_correct_ll": -12.939
+    },
+    {
+      "layer_idx": 4,
+      "frac_depth": 0.125,
+      "mmlu_acc": 0.272,
+      "mmlu_correct_ll": -13.1116
+    },
+    {
+      "layer_idx": 5,
+      "frac_depth": 0.1562,
+      "mmlu_acc": 0.259,
+      "mmlu_correct_ll": -12.7931
+    },
+    {
+      "layer_idx": 6,
+      "frac_depth": 0.1875,
+      "mmlu_acc": 0.262,
+      "mmlu_correct_ll": -12.2063
+    },
+    {
+      "layer_idx": 7,
+      "frac_depth": 0.2188,
+      "mmlu_acc": 0.228,
+      "mmlu_correct_ll": -11.7154
+    },
+    {
+      "layer_idx": 8,
+      "frac_depth": 0.25,
+      "mmlu_acc": 0.223,
+      "mmlu_correct_ll": -11.1163
+    },
+    {
+      "layer_idx": 9,
+      "frac_depth": 0.2812,
+      "mmlu_acc": 0.224,
+      "mmlu_correct_ll": -11.294
+    },
+    {
+      "layer_idx": 10,
+      "frac_depth": 0.3125,
+      "mmlu_acc": 0.236,
+      "mmlu_correct_ll": -11.4933
+    },
+    {
+      "layer_idx": 11,
+      "frac_depth": 0.3438,
+      "mmlu_acc": 0.248,
+      "mmlu_correct_ll": -12.0507
+    },
+    {
+      "layer_idx": 12,
+      "frac_depth": 0.375,
+      "mmlu_acc": 0.268,
+      "mmlu_correct_ll": -11.847
+    },
+    {
+      "layer_idx": 13,
+      "frac_depth": 0.4062,
+      "mmlu_acc": 0.228,
+      "mmlu_correct_ll": -11.4993
+    },
+    {
+      "layer_idx": 14,
+      "frac_depth": 0.4375,
+      "mmlu_acc": 0.235,
+      "mmlu_correct_ll": -11.2949
+    },
+    {
+      "layer_idx": 15,
+      "frac_depth": 0.4688,
+      "mmlu_acc": 0.249,
+      "mmlu_correct_ll": -11.5549
+    },
+    {
+      "layer_idx": 16,
+      "frac_depth": 0.5,
+      "mmlu_acc": 0.234,
+      "mmlu_correct_ll": -11.9598
+    },
+    {
+      "layer_idx": 17,
+      "frac_depth": 0.5312,
+      "mmlu_acc": 0.251,
+      "mmlu_correct_ll": -11.9468
+    },
+    {
+      "layer_idx": 18,
+      "frac_depth": 0.5625,
+      "mmlu_acc": 0.326,
+      "mmlu_correct_ll": -11.6523
+    },
+    {
+      "layer_idx": 19,
+      "frac_depth": 0.5938,
+      "mmlu_acc": 0.544,
+      "mmlu_correct_ll": -8.5166
+    },
+    {
+      "layer_idx": 20,
+      "frac_depth": 0.625,
+      "mmlu_acc": 0.541,
+      "mmlu_correct_ll": -8.0376
+    },
+    {
+      "layer_idx": 21,
+      "frac_depth": 0.6562,
+      "mmlu_acc": 0.538,
+      "mmlu_correct_ll": -7.002
+    },
+    {
+      "layer_idx": 22,
+      "frac_depth": 0.6875,
+      "mmlu_acc": 0.542,
+      "mmlu_correct_ll": -5.6939
+    },
+    {
+      "layer_idx": 23,
+      "frac_depth": 0.7188,
+      "mmlu_acc": 0.54,
+      "mmlu_correct_ll": -6.0381
+    },
+    {
+      "layer_idx": 24,
+      "frac_depth": 0.75,
+      "mmlu_acc": 0.535,
+      "mmlu_correct_ll": -4.8474
+    },
+    {
+      "layer_idx": 25,
+      "frac_depth": 0.7812,
+      "mmlu_acc": 0.53,
+      "mmlu_correct_ll": -5.0911
+    },
+    {
+      "layer_idx": 26,
+      "frac_depth": 0.8125,
+      "mmlu_acc": 0.531,
+      "mmlu_correct_ll": -5.7014
+    },
+    {
+      "layer_idx": 27,
+      "frac_depth": 0.8438,
+      "mmlu_acc": 0.548,
+      "mmlu_correct_ll": -5.3448
+    },
+    {
+      "layer_idx": 28,
+      "frac_depth": 0.875,
+      "mmlu_acc": 0.549,
+      "mmlu_correct_ll": -5.4562
+    },
+    {
+      "layer_idx": 29,
+      "frac_depth": 0.9062,
+      "mmlu_acc": 0.545,
+      "mmlu_correct_ll": -5.4015
+    },
+    {
+      "layer_idx": 30,
+      "frac_depth": 0.9375,
+      "mmlu_acc": 0.533,
+      "mmlu_correct_ll": -5.3376
+    },
+    {
+      "layer_idx": 31,
+      "frac_depth": 0.9688,
+      "mmlu_acc": 0.54,
+      "mmlu_correct_ll": -4.4748
+    },
+    {
+      "layer_idx": 32,
+      "frac_depth": 1.0,
+      "mmlu_acc": 0.551,
+      "mmlu_correct_ll": -3.7908
+    }
+  ],
+  "extract_sec": 5.9
+}

@@ -1,0 +1,91 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 8401,
+    "avg_read_len": 6301.5,
+    "last_read_len": 6354
+  },
+  "records": [
+    {
+      "sample_index": 2,
+      "label": "ypofv-tfzptm",
+      "expected": "129771",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line ypofv-tfzptm: REGISTER_CONTENT is <...>. \n\nLooking at the list, I see that the line with the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8353,
+      "read_len": 6306,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 10,
+      "label": "hpowbfgk-yjwfbwx",
+      "expected": "303326",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line hpowbfgk-yjwfbwx: REGISTER_CONTENT is <...>. \n\nLooking at the provided data, I need to find",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8342,
+      "read_len": 6295,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 18,
+      "label": "ymrzk-xqcahi",
+      "expected": "290796",
+      "output": "<...> and I need to find the number inside the <...> and give it to me. Please provide the number.\nOkay, let's see. I need to find the REGISTER_CONTENT for the line that starts with \"line y",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8329,
+      "read_len": 6282,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 26,
+      "label": "ckiuyiuol-hcfdgxf",
+      "expected": "552533",
+      "output": "<...> and I need to find the number inside the <...> and give me the number only. Please make sure to provide the answer in the format: The answer is <number>.\nThe answer should be the number inside the <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8353,
+      "read_len": 6306,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 34,
+      "label": "yanziyjw-gfjlsbzc",
+      "expected": "851588",
+      "output": "<518447>. \n\nWait, let me check again to make sure. Let me go through the list again to find the line with the identifier \"yanziyjw-gfjlsbzc\". \n\nLooking",
+      "pred": "518447",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8313,
+      "read_len": 6266,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 42,
+      "label": "eymzpryra-cespo",
+      "expected": "535537",
+      "output": "<...> but I don't see that line in the provided data. However, I can help you find it if you provide the line. Please check the list again to make sure the line is present. If it's not there,",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8401,
+      "read_len": 6354,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    }
+  ]
+}

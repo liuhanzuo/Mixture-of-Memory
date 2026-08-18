@@ -1,0 +1,77 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.3333,
+    "correct": 2,
+    "total": 6,
+    "approx_tokens": 16516
+  },
+  "records": [
+    {
+      "sample_index": 6,
+      "label": "mraeunr-nqmaw",
+      "expected": "846296",
+      "output": "<846296>. Let me know if you need more help.\nOkay, let's see. The user asked for the REGISTER_CONTENT in line mraeunr-nqmaw. First, I need to go through",
+      "pred": "846296",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16591,
+      "read_len": null
+    },
+    {
+      "sample_index": 14,
+      "label": "ecebons-aysjhaj",
+      "expected": "570379",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"ecebons-aysjhaj\". Please verify the line index and try again. The available line indices are the ones listed in the record above.\n\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16506,
+      "read_len": null
+    },
+    {
+      "sample_index": 22,
+      "label": "xjgbak-bprfclj",
+      "expected": "801122",
+      "output": "<801122>. I remember that line because it's one of the later entries in the list, and the number 801122 stands out as a unique value. I can confirm this by recalling the",
+      "pred": "801122",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16583,
+      "read_len": null
+    },
+    {
+      "sample_index": 30,
+      "label": "yojzi-akwccqla",
+      "expected": "258014",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"yojzi-akwccqla\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated with",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16541,
+      "read_len": null
+    },
+    {
+      "sample_index": 38,
+      "label": "lzqmglby-blpmob",
+      "expected": "599980",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"lzqmglby-blpmob\" does not match any of the line identifiers given. Therefore, there is no <REGISTER_CONTENT> value associated with that specific",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16506,
+      "read_len": null
+    },
+    {
+      "sample_index": 46,
+      "label": "saaby-laziq",
+      "expected": "655193",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"saaby-laziq\" does not match any of the line identifiers given. Therefore, there is no <REGISTER_CONTENT> value associated with line \"saaby",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16516,
+      "read_len": null
+    }
+  ]
+}

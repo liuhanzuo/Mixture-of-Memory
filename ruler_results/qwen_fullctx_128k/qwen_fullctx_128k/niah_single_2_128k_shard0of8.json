@@ -1,0 +1,67 @@
+{
+  "task": "niah_single_2",
+  "length": "128k",
+  "summary": {
+    "score": 0.0,
+    "n": 7,
+    "approx_tokens": 130663
+  },
+  "records": [
+    {
+      "answers": [
+        "3176558"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130669
+    },
+    {
+      "answers": [
+        "3078616"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130669
+    },
+    {
+      "answers": [
+        "7466344"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130678
+    },
+    {
+      "answers": [
+        "7580483"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130672
+    },
+    {
+      "answers": [
+        "9226452"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130669
+    },
+    {
+      "answers": [
+        "4664919"
+      ],
+      "output": "the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130666
+    },
+    {
+      "answers": [
+        "4432915"
+      ],
+      "output": "the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130663
+    }
+  ]
+}

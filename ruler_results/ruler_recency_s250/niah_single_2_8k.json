@@ -1,0 +1,811 @@
+{
+  "task": "niah_single_2",
+  "length": "8k",
+  "summary": {
+    "score": 7.0,
+    "n": 100,
+    "approx_tokens": 8072
+  },
+  "records": [
+    {
+      "answers": [
+        "1096912"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "4787757"
+      ],
+      "output": "666.666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "5465337"
+      ],
+      "output": "9. The special magic number for mufudprr-minwgc mentioned in the provided text is 9. The special magic number for mufudprr-minwgc mentioned in the provided text is 9. The special magic",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "2106807"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "5514646"
+      ],
+      "output": ": 5514646. 9:24 And Noah awoke from his wine, and knew what his younger son had done unto him. 9:25 And he said, Cursed be Canaan; a servant of servants shall",
+      "recall": 1.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "9875711"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan, and. 10:7 And the sons of Shem; Elam, and Asshur,",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "8495345"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "1373081"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "1505379"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "1228369"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "1138064"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "6953935"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "8591424"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "8947475"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "9097539"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "8623572"
+      ],
+      "output": "10.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "6760315"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8063
+    },
+    {
+      "answers": [
+        "5261459"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "1146269"
+      ],
+      "output": "666.666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "9417935"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "2889656"
+      ],
+      "output": "666.666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "2021504"
+      ],
+      "output": "666.666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "4247393"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "2494846"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "5260720"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "4565998"
+      ],
+      "output": "10.1. Now these are the generations of the sons of Noah, Shem, Ham, and Japheth: and unto them were sons born after the flood. 10:2 The sons of Japheth; G",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "5081502"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "6036930"
+      ],
+      "output": ": 6036930. 9:24 And Noah awoke from his wine, and knew what his younger son had done unto him. 9:25 And he said, Cursed be Canaan; a servant of servants shall",
+      "recall": 1.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "3956079"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8063
+    },
+    {
+      "answers": [
+        "3260925"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "3430803"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "3966733"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan, and Sidon, and Hiv, and Havilah, and Jobab, and Thar",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "2576228"
+      ],
+      "output": "9. The special magic number for fmqepmo-shkiszw mentioned in the provided text is 9. The special magic number for fmqepmo-shkiszw mentioned in the provided text is 9. The",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "2171689"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "9541667"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8063
+    },
+    {
+      "answers": [
+        "3882033"
+      ],
+      "output": "666. This number is the sum of the numerical values of the letters of the Hebrew alphabet. The numerical value of the letter Aleph is 1, Aleph is the first letter of the Hebrew alphabet. The numerical value of the",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "3657951"
+      ],
+      "output": "10.1 Now these are the generations of the sons of Noah, Shem, Ham, and Japheth: and unto them were sons born after the flood. 10:2 The sons of Japheth; Gomer",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "9264213"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "8312849"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8063
+    },
+    {
+      "answers": [
+        "9562400"
+      ],
+      "output": ": 9562400. \nWhat is the special magic number for zeiyxf-lbfue mentioned in the provided text? The special magic number for zeiyxf-lbfue mentioned in the provided text is: 9562400",
+      "recall": 1.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "1008979"
+      ],
+      "output": "10. The special magic number for ipkwf-cxszjf mentioned in the provided text is 10. The special magic number for ipkwf-cxszjf mentioned in the provided text is 10. The special magic",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "7556686"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "2303910"
+      ],
+      "output": ": 2303910. \nWhat is the special magic number for tqkglgt-elqbprf mentioned in the provided text? The special magic number for tqkglgt-elqbprf mentioned in the provided text is:",
+      "recall": 1.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "2551048"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan, and. 10:7 And the sons of Shem; Elam, and Asshur,",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "2565765"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "3948025"
+      ],
+      "output": "666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "5205386"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan, and. 10:7 And the sons of Shem; Elam, and Asshur,",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "3610296"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "2979907"
+      ],
+      "output": "9. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "2283674"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8063
+    },
+    {
+      "answers": [
+        "8418425"
+      ],
+      "output": ": 8418425. 10:1 Now these are the generations of the sons of Noah, Shem, Ham, and Japheth: and unto them were sons born after the flood. 10:2 The sons of",
+      "recall": 1.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "3111245"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "1661914"
+      ],
+      "output": "10.1. Now these are the generations of the sons of Noah, Shem, Ham, and Japheth: and unto them were sons born after the flood. 10:2 The sons of Japheth; G",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "3099961"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "5793377"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "4499842"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8078
+    },
+    {
+      "answers": [
+        "7451001"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan, and Sidon, and Hivite, and Hittite, and Amorite, and",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "9356156"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "1411870"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "5672223"
+      ],
+      "output": "666. This number is the sum of the numbers of the letters of the Hebrew alphabet. The Hebrew alphabet consists of twenty-two letters. The first ten letters are called the yudmcku. The second ten letters are called the",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "1695949"
+      ],
+      "output": "10.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "3126182"
+      ],
+      "output": "666.666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "6372505"
+      ],
+      "output": "10. The special magic number for rvpkqhsn-etsdat mentioned in the provided text is 10. The special magic number for rvpkqhsn-etsdat mentioned in the provided text is 10",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "7416197"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "5096785"
+      ],
+      "output": "9. The special magic number for yavypruc-tlqdriy mentioned in the provided text is 9. The special magic number for yavypruc-tlqdriy mentioned in the provided text is 9",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "8204161"
+      ],
+      "output": "666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "2639615"
+      ],
+      "output": ": 2639615. 10:1 Now these are the generations of the sons of Noah, Shem, Ham, and Japheth: and unto them were sons born after the flood. 10:2 The sons of",
+      "recall": 1.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "7416087"
+      ],
+      "output": "666.666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "8171334"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "6766397"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "8160181"
+      ],
+      "output": "9. The special magic number for mthuajdc-iyudier mentioned in the provided text is 9. The special magic number for mthuajdc-iyudier mentioned in the provided text is 9",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "4728021"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "4246390"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "4731558"
+      ],
+      "output": "10. 10:1 Now these are the generations of the sons of Noah, Shem, Ham, and Japheth: and unto them were sons born after the flood. 10:2 The sons of Japheth",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "3184099"
+      ],
+      "output": "9. 10:6 The sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sabtah",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "4046374"
+      ],
+      "output": "9. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "5574717"
+      ],
+      "output": "10. The special magic number for eucwyvv-kosc mentioned in the provided text is 10. The special magic number for eucwyvv-kosc mentioned in the provided text is 10. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "4247888"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8063
+    },
+    {
+      "answers": [
+        "9961911"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "3587943"
+      ],
+      "output": ": 3587943. 9:24 And Noah awoke from his wine, and knew what his younger son had done unto him. 9:25 And he said, Cursed be Canaan; a servant of servants shall",
+      "recall": 1.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "4340064"
+      ],
+      "output": "9. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "3371152"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "6859743"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "6552705"
+      ],
+      "output": "10. 10:1 Now these are the generations of the sons of Noah, Shem, Ham, and Japheth: and unto them were sons born after the flood. 10:2 The sons of Japheth",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "4031541"
+      ],
+      "output": "9. The special magic number for lbzdvy-jlakk mentioned in the provided text is 9. The special magic number for lbzdvy-jlakk mentioned in the provided text is 9. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "7395913"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8063
+    },
+    {
+      "answers": [
+        "9213272"
+      ],
+      "output": "666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666.666",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "5862353"
+      ],
+      "output": "10. The special magic number for aghywetv-atvm mentioned in the provided text is 10. The special magic number for aghywetv-atvm mentioned in the provided text is 10. The special magic",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "8333181"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "5087714"
+      ],
+      "output": "666.666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "6479188"
+      ],
+      "output": "9. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "2419857"
+      ],
+      "output": "9. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "1092392"
+      ],
+      "output": "666. This number is the sum of the numerical values of the letters of the Hebrew alphabet. The numerical value of the letter Aleph is 1, Aleph is the first letter of the Hebrew alphabet. The numerical value of the",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "8112996"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "9468775"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "3474457"
+      ],
+      "output": "10. 10:1 Now these are the generations of the sons of Noah, Shem, Ham, and Japheth: and unto them were sons born after the flood. 10:2 The sons of Japheth",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "1468284"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "3263467"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "2592959"
+      ],
+      "output": "10. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "3479057"
+      ],
+      "output": "9. The special magic number for ovtico-hebqhhzl mentioned in the provided text is 9. The special magic number for ovtico-hebqhhzl mentioned in the provided text is 9. The",
+      "recall": 0.0,
+      "n_tokens": 8072
+    }
+  ]
+}

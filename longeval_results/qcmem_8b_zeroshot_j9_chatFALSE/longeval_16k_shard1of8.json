@@ -1,0 +1,104 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 7,
+    "approx_tokens": 16561,
+    "avg_read_len": 6300.6,
+    "last_read_len": 6322
+  },
+  "records": [
+    {
+      "sample_index": 1,
+      "label": "fnkmhkoeh-clnsmle",
+      "expected": "633773",
+      "output": "<...> I need to find the value for this line. Let me check the list again.\n\nOkay, let's see. I need to find the line that starts with \"line fnkmhkoeh-clnsmle\" and",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16557,
+      "read_len": 6318,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 9,
+      "label": "ktjvznvxi-mxkgwwx",
+      "expected": "373451",
+      "output": "<...> but I can't see the actual value. However, I can help you find it if you can provide more context or clarify what you're referring to. The lines provided don't include a line with the identifier \"ktj",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16525,
+      "read_len": 6286,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 17,
+      "label": "ptbvcnet-rahej",
+      "expected": "999549",
+      "output": "<332311>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. Let me check each line one by one.\n\nLooking through the list:\n\n-",
+      "pred": "332311",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16511,
+      "read_len": 6272,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 25,
+      "label": "nakhza-lczxx",
+      "expected": "898779",
+      "output": "<149402>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"nakhza-lczxx\". Let me go through each line one by one.\n\nFirst",
+      "pred": "149402",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16564,
+      "read_len": 6325,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 33,
+      "label": "svubwnklq-aktxfvnzz",
+      "expected": "560980",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line svubwnklq-aktxfvnzz: REGISTER_CONTENT is <...>. \n\nLooking at the provided data, I need to",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16534,
+      "read_len": 6295,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 41,
+      "label": "itajiyo-bhkbiy",
+      "expected": "273971",
+      "output": "<569278>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. Let me check each line one by one.\n\nLooking at the lines provided,",
+      "pred": "569278",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16525,
+      "read_len": 6286,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 49,
+      "label": "cysfcesz-srcmzo",
+      "expected": "165235",
+      "output": "<...> in the given data. Let me check the list again to find the line that matches the line \"cysfcesz-srcmzo\".\n\nLooking through the lines provided, I don't see a line with the exact string",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16561,
+      "read_len": 6322,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 7,
+    "approx_tokens": 65664
+  },
+  "records": [
+    {
+      "sample_index": 0,
+      "label": "fuqeo-iprycoxa",
+      "expected": "111681",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"fuqeo-iprycoxa\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> value for that line. Please check the line identifier",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65956,
+      "read_len": null
+    },
+    {
+      "sample_index": 8,
+      "label": "xryemmn-ghjjbgge",
+      "expected": "224098",
+      "output": "<988008>. \n\nWait, let me check again. The line with the identifier xryemmn-ghjjbgge is not listed in the provided record. Therefore, I cannot provide a <REGISTER_CONTENT>",
+      "pred": "988008",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65747,
+      "read_len": null
+    },
+    {
+      "sample_index": 16,
+      "label": "yrxxpkqia-zhkomdgds",
+      "expected": "339024",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"yrxxpkqia-zhkomdgds\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65814,
+      "read_len": null
+    },
+    {
+      "sample_index": 24,
+      "label": "hrekxxi-cnpbqt",
+      "expected": "509665",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"hrekxxi-cnpbqt\". Please verify the line index and try again. If the line index is correct, then the requested <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65809,
+      "read_len": null
+    },
+    {
+      "sample_index": 32,
+      "label": "zfsyq-xozhx",
+      "expected": "944807",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"zfsyq-xozhx\" does not match any of the line identifiers provided. Please check the line index and try again. The available lines are as",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65894,
+      "read_len": null
+    },
+    {
+      "sample_index": 40,
+      "label": "zsiohq-yuowuct",
+      "expected": "735211",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"zsiohq-yuowuct\" is not among them. Therefore, there is no <REGISTER_CONTENT> value associated with that line index.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65741,
+      "read_len": null
+    },
+    {
+      "sample_index": 48,
+      "label": "utkqcs-buvwrg",
+      "expected": "612457",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"utkqcs-buvwrg\". If you have a specific line index or a different identifier, please provide it, and I will retrieve the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65664,
+      "read_len": null
+    }
+  ]
+}

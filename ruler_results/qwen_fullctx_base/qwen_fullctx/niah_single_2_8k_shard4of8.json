@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "8k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 7501
+  },
+  "records": [
+    {
+      "answers": [
+        "5625256"
+      ],
+      "output": "5625256.\nThe special magic number for mvrxhyz-sqdr mentioned in the provided text is 5625256.\nThe special magic number for mvrxhyz-sqdr",
+      "recall": 1.0,
+      "n_tokens": 7507
+    },
+    {
+      "answers": [
+        "1764391"
+      ],
+      "output": "1764391.\nThe special magic number for alsawm-tntvqw mentioned in the provided text is 1764391. The number is explicitly stated in the text as: \"One",
+      "recall": 1.0,
+      "n_tokens": 7507
+    },
+    {
+      "answers": [
+        "8291955"
+      ],
+      "output": "8291955.\nThe special magic number for dfjljuzt-ziybs mentioned in the provided text is 8291955. The number is explicitly stated in the text as:",
+      "recall": 1.0,
+      "n_tokens": 7513
+    },
+    {
+      "answers": [
+        "5305987"
+      ],
+      "output": "5305987.\nThe special magic number for vrfqqm-ygczmok mentioned in the provided text is 5305987.\n\nOkay, let me try to figure this out.",
+      "recall": 1.0,
+      "n_tokens": 7513
+    },
+    {
+      "answers": [
+        "1240982"
+      ],
+      "output": "1240982.\nThe special magic number for iovckmpv-ytzbklvz mentioned in the provided text is 1240982.\n\nOkay, let me try to figure out how",
+      "recall": 1.0,
+      "n_tokens": 7516
+    },
+    {
+      "answers": [
+        "2007701"
+      ],
+      "output": "2007701.\nOkay, let's see. The user provided a long text that includes a mention of a special magic number. They mentioned that there's a number hidden in the text and they'll quiz me about",
+      "recall": 1.0,
+      "n_tokens": 7501
+    }
+  ]
+}

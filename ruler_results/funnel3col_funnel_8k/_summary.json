@@ -1,0 +1,20 @@
+{
+  "niah_single_2": {
+    "8k": {
+      "score": 36.0,
+      "n": 50,
+      "approx_tokens": 7504,
+      "avg_read_len": 6484.7,
+      "last_read_len": 6481
+    }
+  },
+  "niah_multikey_1": {
+    "8k": {
+      "score": 12.0,
+      "n": 50,
+      "approx_tokens": 7581,
+      "avg_read_len": 6561.3,
+      "last_read_len": 6558
+    }
+  }
+}

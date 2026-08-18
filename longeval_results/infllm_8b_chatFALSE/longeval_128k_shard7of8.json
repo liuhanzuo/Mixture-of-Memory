@@ -1,0 +1,77 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 131343
+  },
+  "records": [
+    {
+      "sample_index": 7,
+      "label": "ypzryexe-aitdzjahm",
+      "expected": "131531",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"ypzryexe-aitdzjahm\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131270,
+      "read_len": null
+    },
+    {
+      "sample_index": 15,
+      "label": "ujtjk-rdrlbl",
+      "expected": "480138",
+      "output": "<676613>. Wait, let me check again. Oh, I think I made a mistake. Let me find the correct value.\n\nLooking back at the record, the line with index \"ujtjk-rdrl",
+      "pred": "676613",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131538,
+      "read_len": null
+    },
+    {
+      "sample_index": 23,
+      "label": "dnwdqgy-wrequsnbh",
+      "expected": "621814",
+      "output": "<114219>. \n\nWait, let me check again. I don't see a line with the identifier \"dnwdqgy-wrequsnbh\" in the provided record. The line identifiers in the record are",
+      "pred": "114219",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131367,
+      "read_len": null
+    },
+    {
+      "sample_index": 31,
+      "label": "zqcecx-tslopwuy",
+      "expected": "269515",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"zqcecx-tslopwuy.\" Therefore, I cannot retrieve a <REGISTER_CONTENT> value for this line index. Please verify the line index",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131559,
+      "read_len": null
+    },
+    {
+      "sample_index": 39,
+      "label": "emgkeypqn-vcppmb",
+      "expected": "291118",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"emgkeypqn-vcppmb\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131460,
+      "read_len": null
+    },
+    {
+      "sample_index": 47,
+      "label": "mxjoclq-wdtzrzu",
+      "expected": "223134",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"mxjoclq-wdtzrzu\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131343,
+      "read_len": null
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "32k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 31696
+  },
+  "records": [
+    {
+      "answers": [
+        "4034860"
+      ],
+      "output": "4034860. This number is highlighted in the text as a specific reference, and it's the number you should remember as the answer to the quiz.\nThe special magic number for dqbc-flpz is 4",
+      "recall": 1.0,
+      "n_tokens": 31690
+    },
+    {
+      "answers": [
+        "6791494"
+      ],
+      "output": "6791494. This number is highlighted in the text as a unique identifier or code, possibly related to a specific reference or context within the content. It's important to note that this number is not directly related to",
+      "recall": 1.0,
+      "n_tokens": 31696
+    },
+    {
+      "answers": [
+        "7236564"
+      ],
+      "output": "7236564. This number is explicitly stated in the text at the end of verse 3:10, where it says, \"One of the special magic numbers for lxhy-dcdzm is:",
+      "recall": 1.0,
+      "n_tokens": 31693
+    },
+    {
+      "answers": [
+        "6701197"
+      ],
+      "output": "6701197. This number is highlighted in the text as a unique identifier or code, possibly related to a specific reference or data point within the content. It's important to note that this number is not directly related",
+      "recall": 1.0,
+      "n_tokens": 31705
+    },
+    {
+      "answers": [
+        "7953628"
+      ],
+      "output": "7953628. This number is explicitly stated in the text at the end of verse 29:31, where it is written: \"One of the special magic numbers for fmuze-sonq",
+      "recall": 1.0,
+      "n_tokens": 31702
+    },
+    {
+      "answers": [
+        "5011622"
+      ],
+      "output": "5011622. This number is explicitly stated in the text at the end of verse 30:12, where it is written: \"One of the special magic numbers for amity-bouhka",
+      "recall": 1.0,
+      "n_tokens": 31696
+    }
+  ]
+}

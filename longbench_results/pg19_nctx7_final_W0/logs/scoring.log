@@ -1,0 +1,10 @@
+[LongBench] hotpotqa            : F1=6.44  EM=0.00  (n=200)
+[LongBench] narrativeqa         : F1=2.45  EM=0.00  (n=200)
+[LongBench] qasper              : F1=4.86  EM=0.00  (n=200)
+[LongBench] multifieldqa_en     : F1=12.72  EM=1.33  (n=150)
+[LongBench] 2wikimqa            : F1=8.52  EM=0.00  (n=200)
+[LongBench] musique             : F1=3.93  EM=0.00  (n=200)
+
+[LongBench] AVERAGE             : F1=6.49  EM=0.22  (across 6 datasets)
+
+[LongBench] Results saved to: /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/longbench_results/pg19_nctx7_final_W0/scores.json

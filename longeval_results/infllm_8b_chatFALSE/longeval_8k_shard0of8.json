@@ -1,0 +1,88 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.8571,
+    "correct": 6,
+    "total": 7,
+    "approx_tokens": 8401
+  },
+  "records": [
+    {
+      "sample_index": 0,
+      "label": "lakza-faxfhwuh",
+      "expected": "836925",
+      "output": "<836925>. I have memorized that line's value as per the record provided. The line index is identified by the unique identifier \"lakza-faxfhwuh\" and corresponds to the numerical value",
+      "pred": "836925",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8338,
+      "read_len": null
+    },
+    {
+      "sample_index": 8,
+      "label": "mntlkoxn-rbxiyd",
+      "expected": "566985",
+      "output": "<566985>. I remember that line index corresponds to the REGISTER_CONTENT value 566985. Let me confirm once again to ensure accuracy. Yes, the line \"line mntlkoxn-r",
+      "pred": "566985",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8356,
+      "read_len": null
+    },
+    {
+      "sample_index": 16,
+      "label": "xfjofc-uuytijt",
+      "expected": "521357",
+      "output": "<521357>. I have retrieved this value from the record you provided. Let me know if you need anything else!\n\nOkay, let's see. The user asked for the REGISTER_CONTENT of the line with the index \"",
+      "pred": "521357",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8365,
+      "read_len": null
+    },
+    {
+      "sample_index": 24,
+      "label": "pirdh-qbzqnoi",
+      "expected": "350736",
+      "output": "<350736>. I remember that line because it's one of the entries listed towards the end of the record, and I've memorized each line's corresponding numerical value. The line index is pirdh-qb",
+      "pred": "350736",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8309,
+      "read_len": null
+    },
+    {
+      "sample_index": 32,
+      "label": "juwnf-rjckt",
+      "expected": "231664",
+      "output": "<231664>. I remember that line because it's one of the entries listed in the record provided. Each line has a unique identifier followed by its corresponding numerical value enclosed in <>. The line \"line juwnf",
+      "pred": "231664",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8353,
+      "read_len": null
+    },
+    {
+      "sample_index": 40,
+      "label": "sttbsqbv-kaayd",
+      "expected": "503136",
+      "output": "<503136>. I remember that line from the record you provided. Let me double-check to make sure I didn't mix up any numbers. Yes, that's correct. The line \"line sttbsqbv",
+      "pred": "503136",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8299,
+      "read_len": null
+    },
+    {
+      "sample_index": 48,
+      "label": "htphr-jefffggse",
+      "expected": "851729",
+      "output": "<...>. Please provide the number.\nOkay, let me try to figure this out. The user provided a long list of lines, each with a unique identifier and a REGISTER_CONTENT value. They want to know the REGISTER_CONTENT for the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8401,
+      "read_len": null
+    }
+  ]
+}

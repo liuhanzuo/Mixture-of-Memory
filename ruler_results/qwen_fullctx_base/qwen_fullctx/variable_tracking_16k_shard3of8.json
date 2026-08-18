@@ -1,0 +1,83 @@
+{
+  "task": "variable_tracking",
+  "length": "16k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 16286
+  },
+  "records": [
+    {
+      "answers": [
+        "JEPKR",
+        "ACFOF",
+        "INEZV",
+        "AWSDA",
+        "VPPPB"
+      ],
+      "output": "JEPKR ACFOF INEZV AWSDA VPPPB\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 96165 in the given text. From the previous example, I see that the user",
+      "recall": 1.0,
+      "n_tokens": 16283
+    },
+    {
+      "answers": [
+        "UIKDS",
+        "HWKGO",
+        "NBKWJ",
+        "LOOYB",
+        "PJOZW"
+      ],
+      "output": "UIKDS HWKGO NBKWJ LOOYB PJOZW\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 44145 in the given text. From the previous example, I remember that the",
+      "recall": 1.0,
+      "n_tokens": 16285
+    },
+    {
+      "answers": [
+        "LCCZI",
+        "WDOYM",
+        "PAZSJ",
+        "HPGED",
+        "ETUHD"
+      ],
+      "output": "LCCZI WDOYM PAZSJ HPGED ETUHD\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 28929 in the given text. \n\nFirst, I need to understand the structure",
+      "recall": 1.0,
+      "n_tokens": 16285
+    },
+    {
+      "answers": [
+        "SLMPU",
+        "ADUHO",
+        "UIEXV",
+        "DHEMR",
+        "NFAAS"
+      ],
+      "output": "SLMPU ADUHO UIEXV DHEMR NFAAS\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 33248 in the given text. The user provided a long text with a lot of repetitive",
+      "recall": 1.0,
+      "n_tokens": 16283
+    },
+    {
+      "answers": [
+        "FXXCG",
+        "OKYIE",
+        "WLQHR",
+        "ORKLR",
+        "ZDADE"
+      ],
+      "output": "FXXCG OKYIE WLQHR ORKLR ZDADE\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 23438 in the given text. From the previous example, I know that the answer",
+      "recall": 1.0,
+      "n_tokens": 16283
+    },
+    {
+      "answers": [
+        "FQRVH",
+        "XGIFF",
+        "ZWWCE",
+        "IWTOE",
+        "QJSGQ"
+      ],
+      "output": "FQRVH XGIFF ZWWCE IWTOE QJSGQ\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 92969 in the given text. The user provided a long text with a lot",
+      "recall": 1.0,
+      "n_tokens": 16286
+    }
+  ]
+}

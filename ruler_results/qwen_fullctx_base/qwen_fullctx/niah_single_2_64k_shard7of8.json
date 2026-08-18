@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "64k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 65509
+  },
+  "records": [
+    {
+      "answers": [
+        "2344493"
+      ],
+      "output": "2344493. This number is highlighted in the text as part of a specific reference, indicating its significance within the context of the text's content. The number is presented as a unique identifier or a key element within",
+      "recall": 1.0,
+      "n_tokens": 65506
+    },
+    {
+      "answers": [
+        "6519985"
+      ],
+      "output": "6519985. This number is explicitly stated in the text as the number that the angel of the LORD said to the servant of the Lord, and it is also the number that the servant of the Lord used to",
+      "recall": 1.0,
+      "n_tokens": 65509
+    },
+    {
+      "answers": [
+        "9841733"
+      ],
+      "output": "9841733. This number is highlighted in the text as the number that the angel of the LORD spoke to Jacob, and it is also the number that the text refers to as the number of the special magic number",
+      "recall": 1.0,
+      "n_tokens": 65500
+    },
+    {
+      "answers": [
+        "2107416"
+      ],
+      "output": "2107416. This number is highlighted in the text as the one that is memorized. The number is 2107416. The number is a special magic number, which is a unique",
+      "recall": 1.0,
+      "n_tokens": 65500
+    },
+    {
+      "answers": [
+        "1803378"
+      ],
+      "output": "1803378. This number is highlighted in the text as the answer to the query. The number is found in the text where it says, \"One of the special magic numbers for ntye-kuzgu",
+      "recall": 1.0,
+      "n_tokens": 65500
+    },
+    {
+      "answers": [
+        "1933837"
+      ],
+      "output": "1933837. The number is hidden within the text and is mentioned in the context of a specific verse. The number is found in the text as a special magic number, and it is 1933",
+      "recall": 1.0,
+      "n_tokens": 65509
+    }
+  ]
+}

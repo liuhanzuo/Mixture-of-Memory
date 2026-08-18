@@ -1,0 +1,104 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 7,
+    "approx_tokens": 32890,
+    "avg_read_len": 6338.3,
+    "last_read_len": 6267
+  },
+  "records": [
+    {
+      "sample_index": 0,
+      "label": "rjmkj-ycvbje",
+      "expected": "456457",
+      "output": "<570583>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss it.\n\nLooking through the list:\n\n- The line with \"rjmkj-yc",
+      "pred": "570583",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32924,
+      "read_len": 6301,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 8,
+      "label": "mkyjynwrp-lxuoh",
+      "expected": "640787",
+      "output": "<...> but I can't see it in the provided data. However, I can help you find it if you provide the complete list of lines or more context. The lines you've provided don't include the line with \"mky",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33010,
+      "read_len": 6387,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 16,
+      "label": "ihslbqra-gurtk",
+      "expected": "168073",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that matches the line number \"ihslbqra-gurtk\".\n\nLooking through the list:\n\n- The lines",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32975,
+      "read_len": 6352,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 24,
+      "label": "ovyuuzjg-fmjkcad",
+      "expected": "295433",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: \n\nline ovyuuzjg-fmjkcad: REGISTER_CONTENT is <...>\nOkay, let's see. I need to find",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33013,
+      "read_len": 6390,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 32,
+      "label": "erhqxrw-okdoalr",
+      "expected": "182137",
+      "output": "<273336>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the lines, I see the line \"line tvkedxj",
+      "pred": "273336",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32944,
+      "read_len": 6321,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 40,
+      "label": "xihqp-gcgtsqlh",
+      "expected": "947641",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line xihqp-gcgtsqlh: REGISTER_CONTENT is <...>. \n\nLooking at the provided data, I need to find the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32973,
+      "read_len": 6350,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 48,
+      "label": "wmsijimc-sstsyhad",
+      "expected": "652798",
+      "output": "<683143>. \n\nWait, but I need to check if there's a line with that exact line name. Let me check again.\n\nLooking through the list:\n\nLooking for \"wmsijimc-sstsy",
+      "pred": "683143",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32890,
+      "read_len": 6267,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    }
+  ]
+}

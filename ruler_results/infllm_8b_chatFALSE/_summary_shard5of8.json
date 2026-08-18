@@ -1,0 +1,29 @@
+{
+  "variable_tracking": {
+    "8k": {
+      "score": 100.0,
+      "n": 12,
+      "approx_tokens": 8108
+    },
+    "16k": {
+      "score": 100.0,
+      "n": 12,
+      "approx_tokens": 16280
+    },
+    "32k": {
+      "score": 83.33,
+      "n": 12,
+      "approx_tokens": 32729
+    },
+    "64k": {
+      "score": 91.67,
+      "n": 12,
+      "approx_tokens": 65514
+    },
+    "128k": {
+      "score": 80.0,
+      "n": 12,
+      "approx_tokens": 131006
+    }
+  }
+}

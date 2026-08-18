@@ -1,0 +1,77 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.1667,
+    "correct": 1,
+    "total": 6,
+    "approx_tokens": 32970
+  },
+  "records": [
+    {
+      "sample_index": 6,
+      "label": "qonjjws-mtrhcxkq",
+      "expected": "680465",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"qonjjws-mtrhcxkq\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32958,
+      "read_len": null
+    },
+    {
+      "sample_index": 14,
+      "label": "iyhar-isqqw",
+      "expected": "581090",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"iyhar-isqqw\". Please check the line index and provide the correct one if available. If it's a typo or a different identifier, please",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32974,
+      "read_len": null
+    },
+    {
+      "sample_index": 22,
+      "label": "pencftcd-yuwksyafd",
+      "expected": "984583",
+      "output": "<154580>. \n\nWait, I think I made a mistake. Let me check again. The line pencftcd-yuwksyafd is not in the list provided. Let me go through the lines again to",
+      "pred": "154580",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32933,
+      "read_len": null
+    },
+    {
+      "sample_index": 30,
+      "label": "lrmfxel-irlfrgfz",
+      "expected": "903535",
+      "output": "<903535>. I have memorized the values for all the lines provided, and the line with the identifier lrmfxel-irlfrgfz corresponds to the value 903535. Let",
+      "pred": "903535",
+      "correct": true,
+      "n_lines": 1536,
+      "n_tokens": 33020,
+      "read_len": null
+    },
+    {
+      "sample_index": 38,
+      "label": "ehgrex-gqwdyoa",
+      "expected": "198690",
+      "output": "<662000>. \n\nWait, I need to check again. Let me look for the line index \"ehgrex-gqwdyoa\" in the record. \n\nLooking through the lines, I see that line",
+      "pred": "662000",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32879,
+      "read_len": null
+    },
+    {
+      "sample_index": 46,
+      "label": "mdyqm-uljhblzx",
+      "expected": "894888",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"mdyqm-uljhblzx\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32970,
+      "read_len": null
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{"index": 0, "pred": "1\nPassage 11:\nHaf", "answers": ["Ozalj"], "dataset": "2wikimqa", "n_tokens": 7071, "n_chunks": 7}
+{"index": 1, "pred": "1\nPassage 11:\nThe following is a list of the children of", "answers": ["John the Baptist"], "dataset": "2wikimqa", "n_tokens": 6940, "n_chunks": 7}
+{"index": 2, "pred": "1\nPassage 11:\nThe following is a list of the films directed by the following directors:\n  • 1: The Experiment\n  •", "answers": ["Cahiers du cinéma"], "dataset": "2wikimqa", "n_tokens": 6359, "n_chunks": 7}
+{"index": 3, "pred": "1\nPassage 1:\nThe following is a list of films directed by Ken Maynard:\n  • The Experiment (Film) (1931)", "answers": ["no"], "dataset": "2wikimqa", "n_tokens": 11020, "n_chunks": 11}
+{"index": 4, "pred": "2\nPassage 2:\nThe following is a list of the directors of the film, The Wild Child (Film). The list is in alphabetical order", "answers": ["1510"], "dataset": "2wikimqa", "n_tokens": 7181, "n_chunks": 8}
+{"index": 5, "pred": "1\nPassage 1:\nThe following is a list of the members of the Paulet family, the family of the Earls of Hunsdon", "answers": ["Edward Watson"], "dataset": "2wikimqa", "n_tokens": 7321, "n_chunks": 8}
+{"index": 6, "pred": "19 March 1259\nPassage 1:\nThe following is a list of the members of the family of Humphrey de Bohun, 7", "answers": ["16 September 1360"], "dataset": "2wikimqa", "n_tokens": 7434, "n_chunks": 8}
+{"index": 7, "pred": "Humphrey de Bohun, 1st Earl of Essex\nPassage 11:\nHumphrey de Bohun, 1st Earl of", "answers": ["Cunimund"], "dataset": "2wikimqa", "n_tokens": 10922, "n_chunks": 11}
+{"index": 8, "pred": "1\nPassage 1: 1\nPassage 2: 2\nPassage 3: 3\nPassage 4:", "answers": ["St Patrick's College"], "dataset": "2wikimqa", "n_tokens": 5826, "n_chunks": 6}
+{"index": 9, "pred": "1\nPassage 2\nThe following are the following passages. Only give me the answer and do not output any other words.\n\nQuestion: Where does", "answers": ["Bob Jones University"], "dataset": "2wikimqa", "n_tokens": 7434, "n_chunks": 8}
+{"index": 10, "pred": "1\nPassage 1\nThe following are the following are the following are the following are the following are the following are the following are the following are", "answers": ["The House Of The Seven Hawks"], "dataset": "2wikimqa", "n_tokens": 14711, "n_chunks": 15}
+{"index": 11, "pred": "1\nAnswer: 2\nAnswer: 3\nAnswer: 4\nAnswer: 5\nAnswer: 6\nAnswer: 7", "answers": ["Marie of Hohenstaufen"], "dataset": "2wikimqa", "n_tokens": 5430, "n_chunks": 6}
+{"index": 12, "pred": "1\nAnswer: 2\nAnswer: 3\nAnswer: 4\nAnswer: 5\nAnswer: 6\nAnswer: 7", "answers": ["Guy II, Count of Soissons"], "dataset": "2wikimqa", "n_tokens": 2316, "n_chunks": 3}
+{"index": 13, "pred": "1\nAnswer: 3\nAnswer: 4\nAnswer: 5\nAnswer: 6\nAnswer: 7\nAnswer: 8", "answers": ["26 April 1872"], "dataset": "2wikimqa", "n_tokens": 5131, "n_chunks": 6}
+{"index": 14, "pred": "1\nAnswer: 2\nAnswer: 3\nAnswer: 4\nAnswer: 5\nAnswer: 6\nAnswer: 7", "answers": ["America"], "dataset": "2wikimqa", "n_tokens": 6486, "n_chunks": 7}
+{"index": 15, "pred": "1\nAnswer: 2\nAnswer: 3\nAnswer: 4\nAnswer: 5\nAnswer: 6\nAnswer: 7", "answers": ["Ona Munson"], "dataset": "2wikimqa", "n_tokens": 14535, "n_chunks": 15}
+{"index": 16, "pred": "1\nAnswer: 2\nAnswer: 3\nAnswer: 4\nAnswer: 5\nAnswer: 6\nAnswer: 7", "answers": ["The Death Of Black King"], "dataset": "2wikimqa", "n_tokens": 2579, "n_chunks": 3}
+{"index": 17, "pred": "1\nAnswer: 2\nAnswer: 3\nAnswer: 4\nAnswer: 5\nAnswer: 6\nAnswer: 7", "answers": ["no"], "dataset": "2wikimqa", "n_tokens": 8282, "n_chunks": 9}
+{"index": 18, "pred": "1\nAnswer: 2\nAnswer: 3\nAnswer: 4\n\nAnswer the question based on the given passages. Only give me the answer", "answers": ["no"], "dataset": "2wikimqa", "n_tokens": 1147, "n_chunks": 2}
+{"index": 19, "pred": "1\nAnswer: 2\nAnswer: 3\nAnswer: 4\n\nAnswer the question based on the given passages. Only give me the answer", "answers": ["Mysore"], "dataset": "2wikimqa", "n_tokens": 5326, "n_chunks": 6}

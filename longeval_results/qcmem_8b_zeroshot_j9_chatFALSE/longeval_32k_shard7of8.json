@@ -1,0 +1,91 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 32963,
+    "avg_read_len": 6366.2,
+    "last_read_len": 6340
+  },
+  "records": [
+    {
+      "sample_index": 7,
+      "label": "ukyvvcip-mgpbtu",
+      "expected": "119735",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that matches the line number \"ukyvvcip-mgpbtu\".\n\nLooking through the lines provided, I",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32976,
+      "read_len": 6353,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 15,
+      "label": "oueydsjg-elwxe",
+      "expected": "261132",
+      "output": "<617343>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me go through the lines again to find the line that starts with \"line oueydsj",
+      "pred": "617343",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33012,
+      "read_len": 6389,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 23,
+      "label": "rbdnuue-heraxzd",
+      "expected": "774855",
+      "output": "<761234>. \n\nWait, I need to find the line that contains the line \"rbdnuue-heraxzd\" and extract the value of the REGISTER_CONTENT. Let me check the list again.\n\nLooking",
+      "pred": "761234",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33016,
+      "read_len": 6393,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 31,
+      "label": "wxxbngs-cjrwj",
+      "expected": "921180",
+      "output": "<...> and I need to find the number inside the angle brackets. The line with the line \"line wxxbngs-cjrwj\" is not present in the provided data. However, I can see that the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32959,
+      "read_len": 6336,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 39,
+      "label": "mmeisiag-jhxkuhv",
+      "expected": "394643",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line mmeisiag-jhxkuhv: REGISTER_CONTENT is <...>\nOkay, let's see. I need to find the REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33009,
+      "read_len": 6386,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 47,
+      "label": "cujol-eagsbcjkf",
+      "expected": "617006",
+      "output": "<155687>. \n\nWait, but I need to check if that's correct. Let me check again. Let me go through the list again to make sure I didn't miss any lines.\n\nLooking through the list again",
+      "pred": "155687",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32963,
+      "read_len": 6340,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    }
+  ]
+}

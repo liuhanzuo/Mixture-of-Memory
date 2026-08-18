@@ -1,0 +1,1211 @@
+{
+  "task": "variable_tracking",
+  "length": "8k",
+  "summary": {
+    "score": 0.0,
+    "n": 100,
+    "approx_tokens": 8084
+  },
+  "records": [
+    {
+      "answers": [
+        "AGQCP",
+        "UTXZZ",
+        "MAXNN",
+        "NOREU",
+        "SNQUV"
+      ],
+      "output": "5,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,",
+      "recall": 0.0,
+      "n_tokens": 8080
+    },
+    {
+      "answers": [
+        "EMEQJ",
+        "KAYFE",
+        "LWSQJ",
+        "TLNMS",
+        "NTSPP"
+      ],
+      "output": "1899,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "SUOPA",
+        "UPIES",
+        "LYXOL",
+        "IOETT",
+        "AGPJP"
+      ],
+      "output": "4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "TZBKA",
+        "MPFFN",
+        "DLHUO",
+        "VTQDU",
+        "INPAV"
+      ],
+      "output": "6.,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "EEJPV",
+        "AGOGN",
+        "LXLCS",
+        "BQPEV",
+        "QMXDC"
+      ],
+      "output": "5,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "PVUMC",
+        "NFKEB",
+        "MCPXM",
+        "ZRKOP",
+        "OIUWR"
+      ],
+      "output": "1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8080
+    },
+    {
+      "answers": [
+        "HGFJT",
+        "TSSCC",
+        "ACUCA",
+        "HCICH",
+        "CEIDH"
+      ],
+      "output": "100,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8080
+    },
+    {
+      "answers": [
+        "QFKTR",
+        "NIUVY",
+        "RAGWS",
+        "SNRVM",
+        "OGTPV"
+      ],
+      "output": "32184, and, in the case, 5, and, 6, and, 7, and, 8, and, 9, and, 10, and, 10, and, 10, and, 10, and, 10, and,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "BDQJB",
+        "TVGRR",
+        "NDCTG",
+        "OFEJP",
+        "EXONI"
+      ],
+      "output": "31047, and 31048, and 31049, and 31050, and 31051, and 31052, and 31053, and 31054, and 31055, and 31056, and 31057, and 31059, and",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "GRQQT",
+        "JTAKX",
+        "UPYOC",
+        "PWIOR",
+        "DIBLI"
+      ],
+      "output": "6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,",
+      "recall": 0.0,
+      "n_tokens": 8080
+    },
+    {
+      "answers": [
+        "JBLCR",
+        "LAHTB",
+        "CCVPW",
+        "LGJMZ",
+        "GBHDA"
+      ],
+      "output": "5,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "FYWQG",
+        "TCLHQ",
+        "DVAIJ",
+        "TMDAW",
+        "PXBUT"
+      ],
+      "output": "1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 11, 12, 13, 14, 15, 16, 17, 18,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "YIWIL",
+        "RXSLQ",
+        "OSQXW",
+        "QWSZZ",
+        "DURAA"
+      ],
+      "output": "1., 2, 3, 4, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "ZFDMV",
+        "ADWWO",
+        "QPJRO",
+        "DUOLQ",
+        "UIUQM"
+      ],
+      "output": "85251, 85252, 853, 854, 855, 860, 862, 865, 866, 870, 875, 876, 895, 896, 900, 910, 921, 925, 926, 930",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "ZRNYB",
+        "AWMDF",
+        "BWXEF",
+        "AWKCK",
+        "MXKYM"
+      ],
+      "output": "485, 85, 85, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90, 90,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "TIHAK",
+        "YTBXV",
+        "KZXDB",
+        "OUVMN",
+        "ZQEEB"
+      ],
+      "output": "65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,",
+      "recall": 0.0,
+      "n_tokens": 8085
+    },
+    {
+      "answers": [
+        "DATRR",
+        "LRLEG",
+        "YBDPC",
+        "VRPJB",
+        "YEFIU"
+      ],
+      "output": "1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8078
+    },
+    {
+      "answers": [
+        "TPQUI",
+        "FRGNP",
+        "SMQBH",
+        "HBTWQ",
+        "NHBEV"
+      ],
+      "output": "6.,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "TCCVC",
+        "PHLDD",
+        "ZPVUH",
+        "DMMHS",
+        "OXGAI"
+      ],
+      "output": "29, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and,",
+      "recall": 0.0,
+      "n_tokens": 8085
+    },
+    {
+      "answers": [
+        "NJLMM",
+        "BAQBT",
+        "EBQPK",
+        "HRKRR",
+        "INXPX"
+      ],
+      "output": "25, 25, 26, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "KJTOF",
+        "GIBJJ",
+        "JUXWU",
+        "QOSKZ",
+        "LJORP"
+      ],
+      "output": "14, 15, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,",
+      "recall": 0.0,
+      "n_tokens": 8088
+    },
+    {
+      "answers": [
+        "RCWNN",
+        "JSNFO",
+        "NLQIP",
+        "MDWDN",
+        "NVUER"
+      ],
+      "output": "67038, and 670, and 670, and 670, and 670, and 670, and 670, and 670, and 670, and 670, and 670, and 670, and 670, and 670, and 670, and",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "VFBJC",
+        "PHHXZ",
+        "ALBTL",
+        "ZPJET",
+        "TEFNJ"
+      ],
+      "output": "5, and 6, and 6, and 7, and 8, and 9, and 10, and 10, and 10, and 10, and 10, and 10, and 10, and 10, and 10, and",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "AIBKR",
+        "DSPLB",
+        "AOUXQ",
+        "NWYEX",
+        "XCVWT"
+      ],
+      "output": "5, and 10, and 10, and 10, and 10, and 10, and 10, and 10, and 10, and 10, and 10, and 10, and 10, and 10, and 10, and",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "LCLTR",
+        "GUFRT",
+        "FAZIP",
+        "ARETU",
+        "KWQPX"
+      ],
+      "output": "and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and,",
+      "recall": 0.0,
+      "n_tokens": 8078
+    },
+    {
+      "answers": [
+        "IHJNL",
+        "LCAWT",
+        "SJBNR",
+        "RZYNU",
+        "XRVIS"
+      ],
+      "output": "62401, and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green.",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "LYRZA",
+        "PLCIJ",
+        "PXEHL",
+        "UJWFS",
+        "JXGLX"
+      ],
+      "output": "5,000,000000,000000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,",
+      "recall": 0.0,
+      "n_tokens": 8083
+    },
+    {
+      "answers": [
+        "BXKPT",
+        "OUYVO",
+        "MJESW",
+        "IGPZM",
+        "QYXGO"
+      ],
+      "output": "180, 180, 190, 190, 180, 190, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180, 180,",
+      "recall": 0.0,
+      "n_tokens": 8085
+    },
+    {
+      "answers": [
+        "YYTYY",
+        "ORENZ",
+        "PCCZX",
+        "VPNVB",
+        "YVJGQ"
+      ],
+      "output": "5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "ORCSJ",
+        "TBQQM",
+        "QITVI",
+        "XKGJY",
+        "RAZUE"
+      ],
+      "output": "1, 2, 30, 40, 50, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "BNZYG",
+        "XXDNK",
+        "YCOFZ",
+        "IWGTH",
+        "VUPZF"
+      ],
+      "output": "303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303, 303,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "DAJBC",
+        "EQCPN",
+        "HRVOK",
+        "TASFW",
+        "ZMARX"
+      ],
+      "output": "19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19,",
+      "recall": 0.0,
+      "n_tokens": 8080
+    },
+    {
+      "answers": [
+        "PXTKR",
+        "DQPDG",
+        "DQKWS",
+        "PYSWS",
+        "MLDOJ"
+      ],
+      "output": "61044, and, in the case of 61044, and, in the case of 61044, and, in the case of 61044, and, in the case of 61044, and, in the case of 61044, and, in the case of",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "CFLQV",
+        "IGJYP",
+        "HCYTP",
+        "JGPBE",
+        "PMTEN"
+      ],
+      "output": "6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 30, 31, 32, 34,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "OYYOP",
+        "VKWPH",
+        "MGYOH",
+        "LJIBF",
+        "BGJDM"
+      ],
+      "output": "43014, 43014, 43014, 43014, 43014, 43014, 43014, 43014, 43014, 43014, 43014, 43014, 43014, 43014, 43014,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "FJCTH",
+        "XASTN",
+        "HECOP",
+        "JQDEW",
+        "MWTAM"
+      ],
+      "output": "1, 2, 3, 4, and 6, of the, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and,",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "ZCRRW",
+        "OOTQN",
+        "NKWNU",
+        "ABXVZ",
+        "MMTPV"
+      ],
+      "output": "4,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "VFNVC",
+        "XIIQH",
+        "QVBCS",
+        "GQPMS",
+        "TODQW"
+      ],
+      "output": "15. The grass, and, in the, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "ZRRCO",
+        "PTFHO",
+        "THLQR",
+        "FQZRY",
+        "SEFOC"
+      ],
+      "output": "5. The sun is yellow. The sky is blue. Here we go. There and back again. The sky is blue. The sun is yellow. Here we go. There and back again. The sky is blue. The sun is yellow. Here we go. There and back again. The",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "VBFLZ",
+        "DUGRP",
+        "HVZBX",
+        "QGFTM",
+        "OUYCJ"
+      ],
+      "output": "84791, 84791, 84791, 84791, 84791, 84791, 84791, 84791, 84791, 84791, 84791, 84791, 84791, 84791, 84791,",
+      "recall": 0.0,
+      "n_tokens": 8085
+    },
+    {
+      "answers": [
+        "RTSDI",
+        "DAFTQ",
+        "GGPMA",
+        "WYWQO",
+        "VNVGO"
+      ],
+      "output": "390,  and,, and,, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "FGOFL",
+        "NIUKW",
+        "JJPDJ",
+        "TCSPO",
+        "MATLP"
+      ],
+      "output": "5 variables, and,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8081
+    },
+    {
+      "answers": [
+        "DOJLT",
+        "QMKYO",
+        "PSUKM",
+        "DTMRG",
+        "MTOBK"
+      ],
+      "output": "5,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,",
+      "recall": 0.0,
+      "n_tokens": 8080
+    },
+    {
+      "answers": [
+        "RHEJA",
+        "ZPRRR",
+        "GBHEQ",
+        "CAHCE",
+        "ORMGT"
+      ],
+      "output": "79764, 79765, 780, 790, 790, 795, 800, 810, 810, 810, 810, 810, 810, 810, 810, 810, 810, 810, 810, 810",
+      "recall": 0.0,
+      "n_tokens": 8081
+    },
+    {
+      "answers": [
+        "ECODA",
+        "ZWFNY",
+        "JFRVK",
+        "PHBZN",
+        "LUZQR"
+      ],
+      "output": "52234, 525, 526, 527, 528, 529, 530, 532, 534, 535, 536, 539, 540, 541, 542, 544, 545, 556, 559, 560,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "MHEYO",
+        "POYIP",
+        "KBZEN",
+        "EMMLL",
+        "FWOQO"
+      ],
+      "output": "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,",
+      "recall": 0.0,
+      "n_tokens": 8083
+    },
+    {
+      "answers": [
+        "MECYT",
+        "VJHUU",
+        "FGAEM",
+        "ABKZP",
+        "FGEFB"
+      ],
+      "output": "8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "HZPNH",
+        "JLMAW",
+        "JXHGF",
+        "EXRFB",
+        "EVBJU"
+      ],
+      "output": "48834, 48834, 48834, 48834, 48834, 48834, 48834, 48834, 48834, 48834, 48834, 48834, 48834, 48834, 48834,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "KAEDY",
+        "YFQQA",
+        "SDYCM",
+        "TTQFO",
+        "PLNON"
+      ],
+      "output": "850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850,",
+      "recall": 0.0,
+      "n_tokens": 8083
+    },
+    {
+      "answers": [
+        "AFHWJ",
+        "EFDKO",
+        "XMSFE",
+        "BFGDP",
+        "MFVUO"
+      ],
+      "output": "1. 1. 2. 2. 3. 4. 5. 6. 9. 9. 10. 10. 10. 10. 10. 10. 10. 10. 10. 10.",
+      "recall": 0.0,
+      "n_tokens": 8083
+    },
+    {
+      "answers": [
+        "FUAWS",
+        "BJBZA",
+        "ZTAPY",
+        "KJCJH",
+        "MZRMO"
+      ],
+      "output": "77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 89, 90, 90, 90, 90, 90, 90, 90, 90, 90,",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "GGKUV",
+        "BEAGL",
+        "EIZJA",
+        "LEHYB",
+        "XOPGF"
+      ],
+      "output": "158, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "OHCJG",
+        "LCWFB",
+        "FPVKZ",
+        "XUACA",
+        "JVHWE"
+      ],
+      "output": "65539, 65540, 65541, 65542, 65543, 65545, 65546, 65547, 65548, 65549, 65550, 65551, 65552, 65553, 65554,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "OMUVR",
+        "GVSFA",
+        "LPYLQ",
+        "GKRVL",
+        "IWRFF"
+      ],
+      "output": "5, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "ZOIJF",
+        "XXGWT",
+        "ZIUMB",
+        "DBFMC",
+        "SCDCH"
+      ],
+      "output": "59718, 59718, 59718, 59718, 59718, 59718, 59718, 59718, 59718, 59718, 59718, 59718, 59718, 59718, 59718,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "JDYBS",
+        "QLKWR",
+        "BSNTI",
+        "IONFA",
+        "KUOSQ"
+      ],
+      "output": "928,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8083
+    },
+    {
+      "answers": [
+        "NDMKN",
+        "TSMYZ",
+        "HNBZS",
+        "OTBGZ",
+        "TIAQQ"
+      ],
+      "output": "75036, 75036, 75036, 75036, 75036, 75036, 75036, 75036, 75036, 75036, 75036, 75036, 75036, 75036, 75036,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "GVNCR",
+        "BFKFH",
+        "DHJDU",
+        "GIGRR",
+        "JRMCA"
+      ],
+      "output": "81114,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "EKZCD",
+        "MWQXB",
+        "RRUQO",
+        "CHUNQ",
+        "YNECA"
+      ],
+      "output": "588, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "AHRIN",
+        "NIMHN",
+        "ORYJQ",
+        "OZAOJ",
+        "LZGRI"
+      ],
+      "output": "673, 673, 673, 673, 673, 673, 673, 673, 673, 673, 673, 673, 673, 673, 673, 673, 673, 673, 673, 673,",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "THUYV",
+        "YDKGC",
+        "VJGHR",
+        "MQFPZ",
+        "WDIFB"
+      ],
+      "output": "5,000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.000.",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "FOLWR",
+        "UUXJS",
+        "YXEMH",
+        "RSGHP",
+        "DETCM"
+      ],
+      "output": "359, 359, 359, 359, 359, 359, 359, 359, 359, 359, 359, 359, 359, 359, 359, 359, 359, 359, 359, 359,",
+      "recall": 0.0,
+      "n_tokens": 8083
+    },
+    {
+      "answers": [
+        "ZGWXW",
+        "NWVVS",
+        "ZVICH",
+        "YLVTD",
+        "YQBUI"
+      ],
+      "output": "5,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "PIMRZ",
+        "JETDC",
+        "HIMZJ",
+        "CXZIN",
+        "MLBGG"
+      ],
+      "output": "1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,",
+      "recall": 0.0,
+      "n_tokens": 8083
+    },
+    {
+      "answers": [
+        "PKMOG",
+        "FUEZK",
+        "CVFCG",
+        "WGUUI",
+        "OTHIY"
+      ],
+      "output": "60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60,",
+      "recall": 0.0,
+      "n_tokens": 8085
+    },
+    {
+      "answers": [
+        "SYVEF",
+        "KDSGM",
+        "COCGY",
+        "YVDJM",
+        "ZVPNQ"
+      ],
+      "output": "258, 259, 259, 259, 259, 259, 259, 259, 259, 259, 259, 259, 259, 259, 259, 259, 259, 259, 259, 259,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "SJOKE",
+        "IGGPT",
+        "VFSFJ",
+        "FGVUR",
+        "IMJFZ"
+      ],
+      "output": "1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8085
+    },
+    {
+      "answers": [
+        "HJRZA",
+        "UBQBT",
+        "KWGQL",
+        "VVRQK",
+        "LXPBP"
+      ],
+      "output": "640, 650, and 700, and 800, and 790, and 790, and 800, and 790, and 790, and 800, and 790, and 790, and 790, and 790, and 790, and 790",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "LKDHO",
+        "KRYVU",
+        "SBSIH",
+        "AQNUI",
+        "RTHPU"
+      ],
+      "output": "9469, 9469, 9469, 9469, 9469, 9469, 9469, 9469, 9469, 9469, 9469, 9469, 9469, 9469, 9469,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "QTBPO",
+        "FRVLG",
+        "RLUHG",
+        "XJHOR",
+        "EVOKK"
+      ],
+      "output": "5,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "FIVYY",
+        "WWHFP",
+        "TGJLR",
+        "ABGGN",
+        "GSTPC"
+      ],
+      "output": "1., and,, and,, and,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8081
+    },
+    {
+      "answers": [
+        "VBLPQ",
+        "UMUQY",
+        "TSHFL",
+        "XLHZL",
+        "BRVCR"
+      ],
+      "output": "65440, 65440, 65440, 65440, 65440, 65440, 65440, 65440, 65440, 65440, 65440, 65440, 65440, 65440, 65440,",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "RONPO",
+        "GVBTJ",
+        "KHIVR",
+        "NJXSA",
+        "TCSCI"
+      ],
+      "output": "14333, 14333, 14334, 14334, 14334, 14334, 14334, 14334, 14334, 14334, 14334, 14334, 14334, 14334, 14334,",
+      "recall": 0.0,
+      "n_tokens": 8081
+    },
+    {
+      "answers": [
+        "MEYNE",
+        "MUPYT",
+        "IYBES",
+        "MNDYR",
+        "SPTOT"
+      ],
+      "output": "20582, and 20882, in the text below, 20882, and 20882, 20882, and 20882, 20882, and 20882, 20882, and 20882, 20882, and 20882, 208",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "FCSQY",
+        "ZAAET",
+        "BJXLN",
+        "SLMMZ",
+        "KSZAT"
+      ],
+      "output": "30998, 31000, 31000, 31000, 31000, 31000, 31000, 31000, 31000, 31000, 31000, 31000, 31000, 31000, 31000,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "CFHYI",
+        "HPLXB",
+        "TUYHN",
+        "YQKGJ",
+        "KSQRJ"
+      ],
+      "output": "24100, 24100, 24200, 24300, 24400, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "YUWWL",
+        "VDJUU",
+        "OPMYM",
+        "VZLHG",
+        "MOUMN"
+      ],
+      "output": "250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250,",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "AYWUE",
+        "TRQBG",
+        "DHZYH",
+        "GMZRP",
+        "JGJMW"
+      ],
+      "output": "143, 144, 145, 146, 147, 148, 149, 150, 149, 150, 149, 150, 149, 150, 149, 150, 149, 150, 149, 150,",
+      "recall": 0.0,
+      "n_tokens": 8083
+    },
+    {
+      "answers": [
+        "LPDKZ",
+        "IHKJM",
+        "AEGHO",
+        "VDRWO",
+        "EFESL"
+      ],
+      "output": "52140, 52140, 52140, 52140, 52140, 52140, 52140, 52140, 52140, 52140, 52140, 52140, 52140, 52140, 52140,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "QWQVQ",
+        "QAPPI",
+        "XRILI",
+        "WLFUH",
+        "WDKHU"
+      ],
+      "output": "114, 114, 115, 116, 119, 119, 119, 119, 119, 119, 119, 119, 119, 119, 119, 119, 119, 119, 119, 119,",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "RXPDK",
+        "LCZZO",
+        "KLEVS",
+        "WVLZC",
+        "PYADZ"
+      ],
+      "output": "5,000,000000,000000,000000,000000,000000,000000,000000,000000,000000,000000,000000,000000,000000,000000,000000,000000,000000,000000,000000",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "TLSNM",
+        "XSONS",
+        "JLRNT",
+        "TWPHR",
+        "KDXPW"
+      ],
+      "output": "67879 in the text above. There and back again.\nThe grass is green. Here we go. There and back again. The sun is yellow. Here we go. There and back again. The grass is green. The sun is yellow. Here we go. There and back again. The",
+      "recall": 0.0,
+      "n_tokens": 8080
+    },
+    {
+      "answers": [
+        "ZZNTC",
+        "HUFHH",
+        "JZVDF",
+        "PLMPJ",
+        "ABEDT"
+      ],
+      "output": "1, 2, 3, 4, 5, 6, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "SMKWX",
+        "GKPJQ",
+        "PNCFY",
+        "CSQOT",
+        "EOCLO"
+      ],
+      "output": "1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "LIGRT",
+        "ODMQH",
+        "LPLFI",
+        "JHCMH",
+        "RYDSR"
+      ],
+      "output": "1, 64, 64, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65, 65,",
+      "recall": 0.0,
+      "n_tokens": 8087
+    },
+    {
+      "answers": [
+        "XNOPA",
+        "NHELY",
+        "RMTOM",
+        "CVMAV",
+        "NTKUG"
+      ],
+      "output": "5,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "QOHYZ",
+        "PNVKZ",
+        "LRXPM",
+        "HNTUN",
+        "OEVHL"
+      ],
+      "output": "and,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "JKHTT",
+        "OVLNT",
+        "VLOOY",
+        "IPIDI",
+        "IKIFX"
+      ],
+      "output": "6, 10, 15, 20, 20, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "PUCYT",
+        "KVUGC",
+        "YJPBM",
+        "WJTZG",
+        "OAGGA"
+      ],
+      "output": "5, and back again.\nThe sun is yellow. Here we go. There and back again.\nThe grass is green. The sun is yellow. Here we go. There and back again.\nThe sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "EPCDY",
+        "XBKUE",
+        "SAXXI",
+        "RUOZC",
+        "XCAIB"
+      ],
+      "output": "1., and,, and,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "CYZGL",
+        "JEPZX",
+        "UUEGK",
+        "OOMYI",
+        "FKKQB"
+      ],
+      "output": "350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350, 350,",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "OMMCU",
+        "AIIDI",
+        "XKPYE",
+        "AIDDD",
+        "VCWBQ"
+      ],
+      "output": "687, 687, 687, 687, 687, 687, 687, 687, 687, 687, 687, 687, 687, 687, 687, 687, 687, 687, 687, 687,",
+      "recall": 0.0,
+      "n_tokens": 8080
+    },
+    {
+      "answers": [
+        "ZBGZR",
+        "QJEHD",
+        "HFMMQ",
+        "LUIRH",
+        "UHKKO"
+      ],
+      "output": "340, 340, 340, 340, 340, 340, 340, 340, 340, 340, 340, 340, 340, 340, 340, 340, 340, 340, 340, 340,",
+      "recall": 0.0,
+      "n_tokens": 8083
+    },
+    {
+      "answers": [
+        "ETFRJ",
+        "FZPCD",
+        "EQSLC",
+        "AVQRR",
+        "LRQNV"
+      ],
+      "output": "19417, to the extent of 19418, to the extent of 19418, to the extent of 19419, to the extent of 19419, to the extent of 19419, to the extent of 19419, to the extent of 19419, to",
+      "recall": 0.0,
+      "n_tokens": 8084
+    },
+    {
+      "answers": [
+        "OFNAE",
+        "BBXEV",
+        "NDHVM",
+        "CVWQT",
+        "BTUNV"
+      ],
+      "output": "68045, 68050, 68050, 68050, 68050, 68050, 68050, 68050, 68050, 68050, 68050, 68050, 68050, 68050, 68050,",
+      "recall": 0.0,
+      "n_tokens": 8082
+    },
+    {
+      "answers": [
+        "BCDPS",
+        "BOFGO",
+        "SWJLJ",
+        "HSMWQ",
+        "NLBHY"
+      ],
+      "output": "6.,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+      "recall": 0.0,
+      "n_tokens": 8086
+    },
+    {
+      "answers": [
+        "PHIKG",
+        "QKRCK",
+        "ONLVH",
+        "QNNVJ",
+        "DJTAB"
+      ],
+      "output": "37584, 376, 377, 378, 379, 381, 382, 384, 385, 390, 392, 394, 396, 397, 398, 399, 400, 392, 394, 395,",
+      "recall": 0.0,
+      "n_tokens": 8083
+    },
+    {
+      "answers": [
+        "FRWTB",
+        "QYPYT",
+        "FYLXP",
+        "EDNOU",
+        "GQSTH"
+      ],
+      "output": "664, 664, 664, 664, 664, 664, 664, 664, 664, 664, 664, 664, 664, 664, 664, 664, 664, 664, 664, 664,",
+      "recall": 0.0,
+      "n_tokens": 8083
+    },
+    {
+      "answers": [
+        "VVVBS",
+        "NGPVA",
+        "FZGRO",
+        "ZERBL",
+        "PHYQN"
+      ],
+      "output": "589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589, 589,",
+      "recall": 0.0,
+      "n_tokens": 8083
+    },
+    {
+      "answers": [
+        "PPEBZ",
+        "XKEJI",
+        "VAJBJ",
+        "TDAKP",
+        "OAHWT"
+      ],
+      "output": "37655, and 37656, and 3785, and 3789, and 379, and 380, and 380, and 381, and 382, and 379, and 380, and 381, and 382, and 379, and",
+      "recall": 0.0,
+      "n_tokens": 8084
+    }
+  ]
+}

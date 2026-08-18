@@ -1,0 +1,27 @@
+target,output,question
+no,no,Is Sandra in the bedroom? 
+no,Mary journeyed to the kitchen. John is in the bedroom. Sandra is not in the garden.,Is Mary in the bathroom? 
+yes,yes,Is Mary in the kitchen? 
+no,no,Is Sandra in the hallway? 
+no,no,Is Sandra in the hallway? 
+yes,no,Is John in the kitchen? 
+no,John is not in the bathroom. John is not in the hallway.,Is John in the hallway? 
+no,no,Is John in the office? 
+no,no,Is Sandra in the office? 
+yes,no,Is John in the office? 
+yes,no,Is Daniel in the kitchen? 
+yes,no,Is Mary in the hallway? 
+no,no,Is Mary in the bedroom? 
+no,no,Is Sandra in the bedroom? 
+no,no,Is Sandra in the kitchen? 
+yes,no,Is John in the garden? 
+yes,Sandra is not in the garden. Sandra is not in the office.,Is Sandra in the office? 
+yes,no,Is Mary in the kitchen? 
+no,no,Is Sandra in the office? 
+no,no,Is Sandra in the hallway? 
+no,no,Is Sandra in the kitchen? 
+yes,no,Is Sandra in the hallway? 
+yes,The relevant information is: Daniel is in the bedroom. Final answer: yes.,Is Daniel in the bedroom? 
+no,"Daniel journeyed to the bedroom. John is in the bedroom. Is Daniel in the hallway?
+Answer",Is Daniel in the hallway? 
+yes,no,Is John in the bedroom? 

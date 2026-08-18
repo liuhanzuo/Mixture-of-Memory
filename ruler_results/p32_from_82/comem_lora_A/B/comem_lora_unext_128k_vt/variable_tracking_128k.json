@@ -1,0 +1,55 @@
+{
+  "status": "completed",
+  "task": "variable_tracking",
+  "length": "128k",
+  "n_requested": 50,
+  "sharding": {
+    "num_shards": 1,
+    "shard_index": 0
+  },
+  "summary": {
+    "score": 98.4,
+    "n": 50,
+    "approx_tokens": 131003,
+    "avg_read_len": 6589.1,
+    "last_read_len": 6588
+  },
+  "score": 98.4,
+  "oom_count": 0,
+  "elapsed_seconds": 1577.426,
+  "runtime": {
+    "node": "TENCENT64.site",
+    "cuda_visible_devices": null,
+    "device": "cuda:5",
+    "pythonhashseed": null,
+    "seed": 42,
+    "dtype": "bfloat16",
+    "attn_implementation": "sdpa"
+  },
+  "chat_template": false,
+  "enable_thinking": false,
+  "scoring": "scripts.eval_ruler_mem_space._string_match_all_one",
+  "baseline": "none",
+  "no_retrieval": false,
+  "qcmem": {
+    "resume_j": 12,
+    "top_prepay_b": 0,
+    "reuse_kv_blockdiag": false,
+    "selector": "iter_bm25",
+    "topk": 12,
+    "iter": {
+      "rounds": 0,
+      "hop_topk": 4
+    },
+    "sink_tokens": "bos",
+    "num_layers": 36,
+    "lora_adapter": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/qcmem_distill_qwen_j12_r32_4k/final",
+    "chunk_size": 512
+  },
+  "model": {
+    "model_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
+    "num_hidden_layers": 36,
+    "bottleneck_ckpt": null
+  },
+  "zero_training_no_adapter": false
+}

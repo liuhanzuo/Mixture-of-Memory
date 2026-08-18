@@ -1,0 +1,91 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 32940,
+    "avg_read_len": 6350.0,
+    "last_read_len": 6317
+  },
+  "records": [
+    {
+      "sample_index": 3,
+      "label": "djofmasd-rvzfw",
+      "expected": "569465",
+      "output": "<199056>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"djofmasd-rvzfw\". Let me go through the list again to make",
+      "pred": "199056",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32931,
+      "read_len": 6308,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 11,
+      "label": "jesfel-hucogjuv",
+      "expected": "884912",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line jesfel-hucogjuv: REGISTER_CONTENT is <...>. \n\nLooking at the provided data, I need to find the line that",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32982,
+      "read_len": 6359,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 19,
+      "label": "lajkoi-heaiatp",
+      "expected": "244723",
+      "output": "<582632>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. \n\nLooking through the list, I see the line \"line chyxch",
+      "pred": "582632",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32944,
+      "read_len": 6321,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 27,
+      "label": "jntznh-dvmkeoj",
+      "expected": "943119",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line jntznh-dvmkeoj: REGISTER_CONTENT is <...>\nOkay, let's see. I need to find the REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32962,
+      "read_len": 6339,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 35,
+      "label": "lzhbc-yonunup",
+      "expected": "331838",
+      "output": "<543210>. \n\nWait, but I need to check if that's correct. Let me check again. Let me go through the list again to make sure I didn't miss any lines.\n\nLooking through the list again",
+      "pred": "543210",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33079,
+      "read_len": 6456,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 43,
+      "label": "lksgtxhb-lxfkdnk",
+      "expected": "780484",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that matches the line number \"lksgtxhb-lxfkdnk\".\n\nLooking through the lines provided, I",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32940,
+      "read_len": 6317,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    }
+  ]
+}

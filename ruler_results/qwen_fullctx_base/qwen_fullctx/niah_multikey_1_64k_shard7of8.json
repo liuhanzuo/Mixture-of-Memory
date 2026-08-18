@@ -1,0 +1,59 @@
+{
+  "task": "niah_multikey_1",
+  "length": "64k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 64559
+  },
+  "records": [
+    {
+      "answers": [
+        "3502797"
+      ],
+      "output": "3502797. The number is found in the text where it says, \"One of the special magic numbers for bzqzox-imdhrtb is: 3502797.\" This",
+      "recall": 1.0,
+      "n_tokens": 64568
+    },
+    {
+      "answers": [
+        "9197462"
+      ],
+      "output": "9197462. The special magic number for rsdrji-cllamoo mentioned in the provided text is 3441758. The special magic number for yfffcy-ijzbt",
+      "recall": 1.0,
+      "n_tokens": 64565
+    },
+    {
+      "answers": [
+        "4748764"
+      ],
+      "output": "4748764. One of the special magic numbers for mphzoo-kpuzs is: 4748764. One of the special magic numbers for mphzoo-kpuzs",
+      "recall": 1.0,
+      "n_tokens": 64564
+    },
+    {
+      "answers": [
+        "5424349"
+      ],
+      "output": "5424349. The special magic number for zhhkcvij-tmjf is 5546948. The special magic number for sdlumid-ycrfkur is 872",
+      "recall": 1.0,
+      "n_tokens": 64572
+    },
+    {
+      "answers": [
+        "7870761"
+      ],
+      "output": "7870761. The special magic number for kwdj-aghwwko mentioned in the provided text is 6582305. The special magic number for dcyae-hxyeb mentioned",
+      "recall": 1.0,
+      "n_tokens": 64559
+    },
+    {
+      "answers": [
+        "3026069"
+      ],
+      "output": "3026069. The special magic number for agiq-soyuz mentioned in the provided text is 2783234. The special magic number for tapt-btlb mentioned in the provided",
+      "recall": 1.0,
+      "n_tokens": 64559
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "variable_tracking": {
+    "8k": {
+      "score": 46.15,
+      "n": 13,
+      "approx_tokens": 8098,
+      "avg_read_len": 6563.0,
+      "last_read_len": 6563
+    },
+    "16k": {
+      "score": 29.23,
+      "n": 13,
+      "approx_tokens": 16278,
+      "avg_read_len": 6555.5,
+      "last_read_len": 6551
+    },
+    "32k": {
+      "score": 43.08,
+      "n": 13,
+      "approx_tokens": 32721,
+      "avg_read_len": 6613.0,
+      "last_read_len": 6610
+    },
+    "64k": {
+      "score": 15.38,
+      "n": 13,
+      "approx_tokens": 65512,
+      "avg_read_len": 6635.2,
+      "last_read_len": 6633
+    },
+    "128k": {
+      "score": 32.31,
+      "n": 13,
+      "approx_tokens": 131009,
+      "avg_read_len": 6589.9,
+      "last_read_len": 6594
+    }
+  }
+}

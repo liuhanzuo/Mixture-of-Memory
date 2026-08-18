@@ -1,0 +1,100 @@
+{
+  "task": "niah_single_2",
+  "length": "32k",
+  "summary": {
+    "score": 20.0,
+    "n": 10
+  },
+  "records": [
+    {
+      "sample_index": 1,
+      "answers": [
+        "8570328"
+      ],
+      "output": "The special magic number for xxwvc-ceqm mentioned in the provided text is 23.",
+      "recall": 0.0,
+      "n_tokens": 32656
+    },
+    {
+      "sample_index": 3,
+      "answers": [
+        "8713217"
+      ],
+      "output": "The special magic number for jbiyz-msrxny mentioned in the provided text is 871321.",
+      "recall": 0.0,
+      "n_tokens": 32659
+    },
+    {
+      "sample_index": 5,
+      "answers": [
+        "9262232"
+      ],
+      "output": "The special magic number for baoi-ylwcsrxh mentioned in the provided text is 13.",
+      "recall": 0.0,
+      "n_tokens": 32662
+    },
+    {
+      "sample_index": 7,
+      "answers": [
+        "8776102"
+      ],
+      "output": "The special magic number for vpsmzcj-pdovtalt mentioned in the provided text is 13.",
+      "recall": 0.0,
+      "n_tokens": 32671
+    },
+    {
+      "sample_index": 9,
+      "answers": [
+        "2762426"
+      ],
+      "output": "The special magic number for jxtla-xqrx mentioned in the provided text is 13.",
+      "recall": 0.0,
+      "n_tokens": 32659
+    },
+    {
+      "sample_index": 11,
+      "answers": [
+        "7545202"
+      ],
+      "output": "The special magic number for hdirvuf-vzkv mentioned in the provided text is 13.",
+      "recall": 0.0,
+      "n_tokens": 32662
+    },
+    {
+      "sample_index": 13,
+      "answers": [
+        "1355737"
+      ],
+      "output": "The special magic number for bgpmcxi-zewmqn mentioned in the provided text is 13.",
+      "recall": 0.0,
+      "n_tokens": 32665
+    },
+    {
+      "sample_index": 15,
+      "answers": [
+        "4148011"
+      ],
+      "output": "The special magic number for xqrq-wkmdpjww mentioned in the provided text is 13.",
+      "recall": 0.0,
+      "n_tokens": 32665
+    },
+    {
+      "sample_index": 17,
+      "answers": [
+        "9560097"
+      ],
+      "output": "9560097",
+      "recall": 1.0,
+      "n_tokens": 32668
+    },
+    {
+      "sample_index": 19,
+      "answers": [
+        "2321823"
+      ],
+      "output": "2321823",
+      "recall": 1.0,
+      "n_tokens": 32668
+    }
+  ]
+}

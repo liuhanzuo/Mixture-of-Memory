@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "8k",
+  "summary": {
+    "score": 33.33,
+    "n": 6,
+    "approx_tokens": 8072
+  },
+  "records": [
+    {
+      "answers": [
+        "3747191"
+      ],
+      "output": "3747191. 10:6 And these are the generations of the sons of Ham, Canaan, and their settlements were spread abroad; and these are the names of their habitations: Canaan, the chief part of which",
+      "recall": 1.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "1205666"
+      ],
+      "output": ": 1206. What is the special magic number for xrapt-hysphaet mentioned in the provided text? The special magic number for xrapt-hysphaet mentioned in the provided text is: 1206. What is",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "4580694"
+      ],
+      "output": ": 458. What is the special magic number for bfltgsj-kkwv mentioned in the provided text? The special magic number for bfltgsj-kkwv mentioned in the provided text is: 458. What is",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "9040377"
+      ],
+      "output": ": 904237. What is the special magic number for qdji-rqcbbpt mentioned in the provided text? The special magic number for qdji-rqcbbpt mentioned in the provided text is: 904237.",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "9429360"
+      ],
+      "output": ": 9429360. 10:6 And these are the divisions of the sons of Ham: Canaan, and they that are settled in the fields of the Philistines; and they that are in the fields of the Phil",
+      "recall": 1.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "8337250"
+      ],
+      "output": ": 833. 10:6 And these are the divisions of the countries: the Canaanites, and the Philistines, and the inhabitants of the places, and the Jebusites, and the Amorites, and",
+      "recall": 0.0,
+      "n_tokens": 8072
+    }
+  ]
+}

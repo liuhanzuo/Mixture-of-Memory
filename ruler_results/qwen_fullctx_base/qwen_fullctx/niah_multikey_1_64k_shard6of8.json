@@ -1,0 +1,59 @@
+{
+  "task": "niah_multikey_1",
+  "length": "64k",
+  "summary": {
+    "score": 83.33,
+    "n": 6,
+    "approx_tokens": 64566
+  },
+  "records": [
+    {
+      "answers": [
+        "7284789"
+      ],
+      "output": "7284789. The special magic number for otnkhmx-ecohhn mentioned in the provided text is 4520749. The special magic number for gwklacfk-aj",
+      "recall": 1.0,
+      "n_tokens": 64565
+    },
+    {
+      "answers": [
+        "3077617"
+      ],
+      "output": "3195897. The special magic number for hqudvos-gajiw mentioned in the provided text is 2173367. The special magic number for ruob-hpbg mentioned in",
+      "recall": 0.0,
+      "n_tokens": 64559
+    },
+    {
+      "answers": [
+        "9485185"
+      ],
+      "output": "9485185. The special magic number for jhzjp-aixoaw mentioned in the provided text is 4235662. The special magic number for ufxthfub-johq",
+      "recall": 1.0,
+      "n_tokens": 64564
+    },
+    {
+      "answers": [
+        "6043873"
+      ],
+      "output": "6043873. The special magic number for jfvlnwun-dcutexnw mentioned in the provided text is 7192213. The special magic number for mwhsyi-j",
+      "recall": 1.0,
+      "n_tokens": 64571
+    },
+    {
+      "answers": [
+        "3656913"
+      ],
+      "output": "3656913. The special magic number for rxjrs-pmrem is 5687894. The special magic number for uxhroumi-qyafsjb is 99",
+      "recall": 1.0,
+      "n_tokens": 64566
+    },
+    {
+      "answers": [
+        "9216183"
+      ],
+      "output": "9216183. The number is found in the text as follows: \"One of the special magic numbers for tqjoyex-ohgeym is: 9216183.\" This number is",
+      "recall": 1.0,
+      "n_tokens": 64566
+    }
+  ]
+}

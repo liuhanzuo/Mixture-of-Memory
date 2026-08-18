@@ -1,0 +1,589 @@
+{
+  "meta": {
+    "device": "NVIDIA H20",
+    "driver": "535.247.01",
+    "torch": "2.13.0",
+    "cuda": "13.2",
+    "chunk_bytes": 4194304,
+    "pack_bytes": 50331648,
+    "topk": 12,
+    "ts": "2026-08-01T02:21:43"
+  },
+  "results": [
+    {
+      "backend": "gpu",
+      "size": "128k",
+      "tokens": 131072,
+      "n_chunks": 256,
+      "store_bytes": 1073741824,
+      "store_gb": 1.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 1176.6,
+      "retrieve_ms": 0.179,
+      "transfer_ms": 0.0,
+      "qps": {
+        "1": 5447.7,
+        "4": 6415.4,
+        "16": 6443.4
+      },
+      "peak_gpu_gb": 1.984,
+      "peak_host_gb": 0.82,
+      "peak_host_maxrss_gb": 0.851,
+      "status": "ok"
+    },
+    {
+      "backend": "cpu",
+      "size": "128k",
+      "tokens": 131072,
+      "n_chunks": 256,
+      "store_bytes": 1073741824,
+      "store_gb": 1.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 105.2,
+      "store_pinned": true,
+      "retrieve_ms": 0.8438,
+      "transfer_ms": 1.4199,
+      "qps": {
+        "1": 838.2,
+        "4": 585.7,
+        "16": 956.0
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 3.163,
+      "peak_host_maxrss_gb": 3.167,
+      "status": "ok"
+    },
+    {
+      "backend": "nvme",
+      "size": "128k",
+      "tokens": 131072,
+      "n_chunks": 256,
+      "store_bytes": 1073741824,
+      "store_gb": 1.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 2.11,
+      "odirect": true,
+      "retrieve_ms": 13.1593,
+      "transfer_ms": 0.9013,
+      "qps": {
+        "1": 91.0,
+        "4": 197.5,
+        "16": 256.5
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 3.393,
+      "peak_host_maxrss_gb": 3.491,
+      "status": "ok"
+    },
+    {
+      "backend": "network",
+      "size": "128k",
+      "tokens": 131072,
+      "n_chunks": 256,
+      "store_bytes": 1073741824,
+      "store_gb": 1.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 1.35,
+      "odirect": true,
+      "retrieve_ms": 76.9797,
+      "transfer_ms": 1.1857,
+      "qps": {
+        "1": 15.0,
+        "4": 39.0,
+        "16": 47.5
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 3.452,
+      "peak_host_maxrss_gb": 3.577,
+      "status": "ok"
+    },
+    {
+      "backend": "gpu",
+      "size": "1M",
+      "tokens": 1048576,
+      "n_chunks": 2048,
+      "store_bytes": 8589934592,
+      "store_gb": 8.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 1463.86,
+      "retrieve_ms": 0.0618,
+      "transfer_ms": 0.0,
+      "qps": {
+        "1": 13354.0,
+        "4": 18346.3,
+        "16": 15839.9
+      },
+      "peak_gpu_gb": 8.984,
+      "peak_host_gb": 3.459,
+      "peak_host_maxrss_gb": 3.604,
+      "status": "ok"
+    },
+    {
+      "backend": "cpu",
+      "size": "1M",
+      "tokens": 1048576,
+      "n_chunks": 2048,
+      "store_bytes": 8589934592,
+      "store_gb": 8.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 138.96,
+      "store_pinned": true,
+      "retrieve_ms": 0.8158,
+      "transfer_ms": 1.4114,
+      "qps": {
+        "1": 707.2,
+        "4": 577.7,
+        "16": 952.2
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 11.225,
+      "peak_host_maxrss_gb": 11.229,
+      "status": "ok"
+    },
+    {
+      "backend": "nvme",
+      "size": "1M",
+      "tokens": 1048576,
+      "n_chunks": 2048,
+      "store_bytes": 8589934592,
+      "store_gb": 8.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 2.17,
+      "odirect": true,
+      "retrieve_ms": 12.5971,
+      "transfer_ms": 0.9029,
+      "qps": {
+        "1": 86.7,
+        "4": 217.0,
+        "16": 273.0
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 11.476,
+      "peak_host_maxrss_gb": 11.601,
+      "status": "ok"
+    },
+    {
+      "backend": "network",
+      "size": "1M",
+      "tokens": 1048576,
+      "n_chunks": 2048,
+      "store_bytes": 8589934592,
+      "store_gb": 8.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 1.47,
+      "odirect": true,
+      "retrieve_ms": 81.4119,
+      "transfer_ms": 1.1534,
+      "qps": {
+        "1": 13.0,
+        "4": 33.7,
+        "16": 43.7
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 11.477,
+      "peak_host_maxrss_gb": 11.601,
+      "status": "ok"
+    },
+    {
+      "backend": "gpu",
+      "size": "4M",
+      "tokens": 4194304,
+      "n_chunks": 8192,
+      "store_bytes": 34359738368,
+      "store_gb": 32.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 1486.97,
+      "retrieve_ms": 0.0645,
+      "transfer_ms": 0.0,
+      "qps": {
+        "1": 10031.0,
+        "4": 13722.3,
+        "16": 12610.8
+      },
+      "peak_gpu_gb": 32.984,
+      "peak_host_gb": 11.45,
+      "peak_host_maxrss_gb": 11.601,
+      "status": "ok"
+    },
+    {
+      "backend": "cpu",
+      "size": "4M",
+      "tokens": 4194304,
+      "n_chunks": 8192,
+      "store_bytes": 34359738368,
+      "store_gb": 32.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 91.06,
+      "store_pinned": true,
+      "retrieve_ms": 1.2906,
+      "transfer_ms": 1.3834,
+      "qps": {
+        "1": 805.5,
+        "4": 637.2,
+        "16": 973.2
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 43.245,
+      "peak_host_maxrss_gb": 43.252,
+      "status": "ok"
+    },
+    {
+      "backend": "nvme",
+      "size": "4M",
+      "tokens": 4194304,
+      "n_chunks": 8192,
+      "store_bytes": 34359738368,
+      "store_gb": 32.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 2.2,
+      "odirect": true,
+      "retrieve_ms": 19.1697,
+      "transfer_ms": 0.9139,
+      "qps": {
+        "1": 55.2,
+        "4": 169.2,
+        "16": 261.0
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 43.479,
+      "peak_host_maxrss_gb": 43.592,
+      "status": "ok"
+    },
+    {
+      "backend": "network",
+      "size": "4M",
+      "tokens": 4194304,
+      "n_chunks": 8192,
+      "store_bytes": 34359738368,
+      "store_gb": 32.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 1.59,
+      "odirect": true,
+      "retrieve_ms": 85.4658,
+      "transfer_ms": 1.1755,
+      "qps": {
+        "1": 12.0,
+        "4": 32.5,
+        "16": 44.0
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 43.489,
+      "peak_host_maxrss_gb": 43.614,
+      "status": "ok"
+    },
+    {
+      "backend": "gpu",
+      "size": "8M",
+      "tokens": 8388608,
+      "n_chunks": 16384,
+      "store_bytes": 68719476736,
+      "store_gb": 64.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "status": "OOM",
+      "error": "CUDA out of memory. Tried to allocate 64.00 GiB. GPU 0 has a total capacity of 95.00 GiB of which 62.55 GiB is free. Process 3086222 has 32.37 GiB memory in use. Of the allocated memory 128.00 MiB is allocated by PyTorch, and 31.88 GiB is reserved by PyTorch but unallocated. If reserved but unalloca"
+    },
+    {
+      "backend": "cpu",
+      "size": "8M",
+      "tokens": 8388608,
+      "n_chunks": 16384,
+      "store_bytes": 68719476736,
+      "store_gb": 64.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 93.98,
+      "store_pinned": true,
+      "retrieve_ms": 1.1784,
+      "transfer_ms": 1.3919,
+      "qps": {
+        "1": 830.7,
+        "4": 602.2,
+        "16": 995.7
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 107.274,
+      "peak_host_maxrss_gb": 107.277,
+      "status": "ok"
+    },
+    {
+      "backend": "nvme",
+      "size": "8M",
+      "tokens": 8388608,
+      "n_chunks": 16384,
+      "store_bytes": 68719476736,
+      "store_gb": 64.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 2.88,
+      "odirect": true,
+      "retrieve_ms": 10.5985,
+      "transfer_ms": 0.9067,
+      "qps": {
+        "1": 96.7,
+        "4": 216.7,
+        "16": 276.0
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 107.523,
+      "peak_host_maxrss_gb": 107.633,
+      "status": "ok"
+    },
+    {
+      "backend": "network",
+      "size": "8M",
+      "tokens": 8388608,
+      "n_chunks": 16384,
+      "store_bytes": 68719476736,
+      "store_gb": 64.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 1.64,
+      "odirect": true,
+      "retrieve_ms": 77.2871,
+      "transfer_ms": 1.1758,
+      "qps": {
+        "1": 12.7,
+        "4": 34.7,
+        "16": 44.0
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 107.512,
+      "peak_host_maxrss_gb": 107.633,
+      "status": "ok"
+    },
+    {
+      "backend": "gpu",
+      "size": "16M",
+      "tokens": 16777216,
+      "n_chunks": 32768,
+      "store_bytes": 137438953472,
+      "store_gb": 128.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "status": "OOM",
+      "error": "CUDA out of memory. Tried to allocate 128.00 GiB. GPU 0 has a total capacity of 95.00 GiB of which 62.42 GiB is free. Process 3086222 has 32.37 GiB memory in use. Of the allocated memory 128.00 MiB is allocated by PyTorch, and 31.88 GiB is reserved by PyTorch but unallocated. If reserved but unalloc"
+    },
+    {
+      "backend": "cpu",
+      "size": "16M",
+      "tokens": 16777216,
+      "n_chunks": 32768,
+      "store_bytes": 137438953472,
+      "store_gb": 128.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 139.64,
+      "store_pinned": true,
+      "retrieve_ms": 0.8077,
+      "transfer_ms": 1.4065,
+      "qps": {
+        "1": 679.7,
+        "4": 602.0,
+        "16": 940.7
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 235.267,
+      "peak_host_maxrss_gb": 235.274,
+      "status": "ok"
+    },
+    {
+      "backend": "nvme",
+      "size": "16M",
+      "tokens": 16777216,
+      "n_chunks": 32768,
+      "store_bytes": 137438953472,
+      "store_gb": 128.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 2.63,
+      "odirect": true,
+      "retrieve_ms": 11.4717,
+      "transfer_ms": 0.9002,
+      "qps": {
+        "1": 88.5,
+        "4": 190.7,
+        "16": 271.2
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 235.521,
+      "peak_host_maxrss_gb": 235.646,
+      "status": "ok"
+    },
+    {
+      "backend": "network",
+      "size": "16M",
+      "tokens": 16777216,
+      "n_chunks": 32768,
+      "store_bytes": 137438953472,
+      "store_gb": 128.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 1.82,
+      "odirect": true,
+      "retrieve_ms": 79.4693,
+      "transfer_ms": 1.1759,
+      "qps": {
+        "1": 13.0,
+        "4": 35.2,
+        "16": 44.0
+      },
+      "peak_gpu_gb": 0.984,
+      "peak_host_gb": 235.528,
+      "peak_host_maxrss_gb": 235.646,
+      "status": "ok"
+    }
+  ]
+}

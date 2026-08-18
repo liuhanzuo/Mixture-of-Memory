@@ -1,0 +1,67 @@
+{
+  "task": "niah_single_2",
+  "length": "32k",
+  "summary": {
+    "score": 100.0,
+    "n": 7,
+    "approx_tokens": 31699
+  },
+  "records": [
+    {
+      "answers": [
+        "3292544"
+      ],
+      "output": "3292544. This number is explicitly stated in the text as: \"One of the special magic numbers for gedo-ostcsl is: 3292544.\" Therefore, the answer",
+      "recall": 1.0,
+      "n_tokens": 31696
+    },
+    {
+      "answers": [
+        "8238042"
+      ],
+      "output": "8238042. This number is highlighted in the text as a unique identifier or code, possibly used for a specific purpose or reference within the context of the text. It is important to note that this number is not",
+      "recall": 1.0,
+      "n_tokens": 31696
+    },
+    {
+      "answers": [
+        "8703733"
+      ],
+      "output": "8703733. This number is explicitly stated in the text as one of the special magic numbers for kvgbb-cafxs. The text begins with the line: \"One of the special magic numbers for k",
+      "recall": 1.0,
+      "n_tokens": 31696
+    },
+    {
+      "answers": [
+        "5308489"
+      ],
+      "output": "5308489. This number is highlighted in the text as a unique identifier or code, possibly related to a specific reference or context within the content. It's important to note that this number is presented as a key",
+      "recall": 1.0,
+      "n_tokens": 31705
+    },
+    {
+      "answers": [
+        "6873757"
+      ],
+      "output": "6873757. This number is explicitly stated in the text as one of the special magic numbers. The text contains a line that says: \"One of the special magic numbers for ugmuhml-ahj",
+      "recall": 1.0,
+      "n_tokens": 31705
+    },
+    {
+      "answers": [
+        "9441264"
+      ],
+      "output": "9441264. This number is highlighted in the text as a unique identifier or code, possibly related to a specific reference or data point within the content. It's important to note that this number is not directly related",
+      "recall": 1.0,
+      "n_tokens": 31705
+    },
+    {
+      "answers": [
+        "8403432"
+      ],
+      "output": "8403432. The number is explicitly stated in the text as: \"One of the special magic numbers for czxugrz-qrdhm is: 8403432.\" Therefore, the",
+      "recall": 1.0,
+      "n_tokens": 31699
+    }
+  ]
+}

@@ -1,0 +1,345 @@
+{
+  "task": "variable_tracking",
+  "length": "64k",
+  "summary": {
+    "score": 0.0,
+    "n": 25,
+    "approx_tokens": 65488
+  },
+  "records": [
+    {
+      "sample_index": 1,
+      "answers": [
+        "VNTAZ",
+        "JEMKI",
+        "SLJSC",
+        "HRXRH",
+        "CAFHE"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65490
+    },
+    {
+      "sample_index": 3,
+      "answers": [
+        "AXNKV",
+        "WSIZR",
+        "TFSBN",
+        "DMVEM",
+        "SLOLX"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65491
+    },
+    {
+      "sample_index": 5,
+      "answers": [
+        "HSYYZ",
+        "YVIOJ",
+        "EEBES",
+        "RGTDH",
+        "WTGIT"
+      ],
+      "output": "VAR YLR = 55321\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65491
+    },
+    {
+      "sample_index": 7,
+      "answers": [
+        "WYQZY",
+        "EJNZG",
+        "ZFVPF",
+        "GBYUP",
+        "UKOCA"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65496
+    },
+    {
+      "sample_index": 9,
+      "answers": [
+        "DJMGB",
+        "XSFRG",
+        "REZVL",
+        "HANYR",
+        "QFNEF"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65491
+    },
+    {
+      "sample_index": 11,
+      "answers": [
+        "UIZBZ",
+        "GSTNG",
+        "NNCBS",
+        "UNTCI",
+        "KJWQL"
+      ],
+      "output": "VAR YLR = 75809\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65491
+    },
+    {
+      "sample_index": 13,
+      "answers": [
+        "PWFSU",
+        "GWELR",
+        "LEBHP",
+        "WPJJB",
+        "NLUZI"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65491
+    },
+    {
+      "sample_index": 15,
+      "answers": [
+        "FUAAD",
+        "ILYGX",
+        "DLCEL",
+        "DCIDM",
+        "CVNOR"
+      ],
+      "output": "VAR YLR = 92944\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65488
+    },
+    {
+      "sample_index": 17,
+      "answers": [
+        "QJOAZ",
+        "UTBVV",
+        "ZJKGV",
+        "XBDRT",
+        "MEXZE"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65490
+    },
+    {
+      "sample_index": 19,
+      "answers": [
+        "IZIHZ",
+        "NXSLQ",
+        "QAUPZ",
+        "HAQCT",
+        "RMGBV"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "sample_index": 21,
+      "answers": [
+        "DWXON",
+        "WPRLN",
+        "BEYSL",
+        "EQTFL",
+        "MDTZK"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65491
+    },
+    {
+      "sample_index": 23,
+      "answers": [
+        "ORTUE",
+        "TFMWH",
+        "VSOQX",
+        "HGODQ",
+        "BLANH"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "sample_index": 25,
+      "answers": [
+        "FOAKO",
+        "TDWHB",
+        "BYEEX",
+        "RHMSP",
+        "ZZFXS"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65490
+    },
+    {
+      "sample_index": 27,
+      "answers": [
+        "WCNUD",
+        "QZKEN",
+        "UIZCK",
+        "ZJHSH",
+        "FISIW"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "sample_index": 29,
+      "answers": [
+        "QIPKS",
+        "RIWKO",
+        "VCFRO",
+        "ZJDSR",
+        "AUPUG"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "sample_index": 31,
+      "answers": [
+        "RKERS",
+        "QKTMN",
+        "ZVKBW",
+        "GBZOD",
+        "KIJRT"
+      ],
+      "output": "VAR YLR = 89423\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "sample_index": 33,
+      "answers": [
+        "AFHKF",
+        "BGYXG",
+        "NGSDC",
+        "VBJPL",
+        "ENJZA"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "sample_index": 35,
+      "answers": [
+        "CHNBZ",
+        "CAGDN",
+        "OIJHE",
+        "EBSRA",
+        "HIDCD"
+      ],
+      "output": "VAR YLR = 78275\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65489
+    },
+    {
+      "sample_index": 37,
+      "answers": [
+        "QXHLB",
+        "PVJMZ",
+        "WWTFW",
+        "LMDFA",
+        "ZWEEO"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "sample_index": 39,
+      "answers": [
+        "SZWHR",
+        "NEWAD",
+        "RLLDD",
+        "HHEXG",
+        "TMVDF"
+      ],
+      "output": "VAR YLR = 14308\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65490
+    },
+    {
+      "sample_index": 41,
+      "answers": [
+        "WYNIS",
+        "SKIVE",
+        "JAPYU",
+        "ZWFRV",
+        "LDGPF"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "sample_index": 43,
+      "answers": [
+        "AWCTD",
+        "CVIVY",
+        "FNPJH",
+        "PLNPS",
+        "DHSCC"
+      ],
+      "output": "VAR YLR = 17894\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "sample_index": 45,
+      "answers": [
+        "MDUTQ",
+        "KWCEE",
+        "GZDYR",
+        "CTPZI",
+        "MUCCV"
+      ],
+      "output": "VAR YLR = 98147\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "sample_index": 47,
+      "answers": [
+        "XNCSQ",
+        "JBLKM",
+        "XCQXE",
+        "IEUVI",
+        "CTYEF"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "sample_index": 49,
+      "answers": [
+        "KYUHI",
+        "QAXJO",
+        "YHORB",
+        "AGUDO",
+        "FQTAW"
+      ],
+      "output": "VAR YLR = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FFL = VAR YLR \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 65488
+    }
+  ],
+  "config": {
+    "model_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/baselines/memoryllm-8b-chat-hf",
+    "chunk_size": 1024,
+    "max_new_tokens": 60,
+    "use_chat_template": true,
+    "num_shards": 2,
+    "shard_index": 1,
+    "seed": 42
+  }
+}

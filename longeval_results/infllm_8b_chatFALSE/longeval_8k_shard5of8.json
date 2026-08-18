@@ -1,0 +1,77 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.3333,
+    "correct": 2,
+    "total": 6,
+    "approx_tokens": 8333
+  },
+  "records": [
+    {
+      "sample_index": 5,
+      "label": "oqdik-zibww",
+      "expected": "437904",
+      "output": "<437904>. \n\nWait, let me check again. The line with the identifier \"oqdik-zibww\" is not present in the provided record. However, there is a line with the identifier \"o",
+      "pred": "437904",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8300,
+      "read_len": null
+    },
+    {
+      "sample_index": 13,
+      "label": "uvpeqhl-ofxto",
+      "expected": "546294",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"uvpeqhl-ofxto\" does not match any of the line identifiers given. Therefore, there is no corresponding <REGISTER_CONTENT> value for that line index",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8339,
+      "read_len": null
+    },
+    {
+      "sample_index": 21,
+      "label": "hznienl-gcztxqcil",
+      "expected": "183972",
+      "output": "<183972>. I remember that line from the record you provided. Let me double-check to make sure I didn't mix up any numbers. Yes, that's correct. The line with the identifier hznienl",
+      "pred": "183972",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8373,
+      "read_len": null
+    },
+    {
+      "sample_index": 29,
+      "label": "rzlbcgn-mqbpmmvi",
+      "expected": "912845",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"rzlbcgn-mqbpmmvi\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> value for that line. Please check the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8339,
+      "read_len": null
+    },
+    {
+      "sample_index": 37,
+      "label": "wxlwio-icpwhg",
+      "expected": "322497",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"wxlwio-icpwhg\". Therefore, I cannot retrieve the corresponding <REGISTER_CONTENT> for that line index. Please check the line index",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8327,
+      "read_len": null
+    },
+    {
+      "sample_index": 45,
+      "label": "schdcms-smtdiyhaj",
+      "expected": "543373",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"schdcms-smtdiyhaj\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> for that line. Please check the line index and",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8333,
+      "read_len": null
+    }
+  ]
+}

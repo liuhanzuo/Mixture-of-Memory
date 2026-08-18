@@ -1,0 +1,91 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 65759,
+    "avg_read_len": 6394.3,
+    "last_read_len": 6368
+  },
+  "records": [
+    {
+      "sample_index": 2,
+      "label": "ilpvji-ncicez",
+      "expected": "582762",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that matches the line \"line ilpvji-ncicez\" and extract the value inside the angle brackets.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65912,
+      "read_len": 6521,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 10,
+      "label": "droeztkd-mymaj",
+      "expected": "721157",
+      "output": "<619343>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line droeztkd-mymaj\". Let me go through each line one by one",
+      "pred": "619343",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65777,
+      "read_len": 6386,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 18,
+      "label": "tiomhg-lsofobfk",
+      "expected": "203346",
+      "output": "<199022>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the lines, I see the line \"line lavfi-bk",
+      "pred": "199022",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65778,
+      "read_len": 6387,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 26,
+      "label": "kpmbarq-slhbeenez",
+      "expected": "970734",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that starts with \"kpmbarq-slhbeenez\" and extract the number inside the angle brackets.\n\nLooking",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65799,
+      "read_len": 6408,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 34,
+      "label": "vjvis-qhbwxnyo",
+      "expected": "489820",
+      "output": "<613457>\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line vjvis-qhbwxnyo\". Let me go through the list you provided",
+      "pred": "613457",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65687,
+      "read_len": 6296,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 42,
+      "label": "sgzufmbh-hprwwho",
+      "expected": "972183",
+      "output": "<...> and I need to find the value. Let me check the list again.\n\nLooking through the provided data, I don't see a line with the identifier \"sgzufmbh-hprwwho\". All the lines listed",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65759,
+      "read_len": 6368,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 131406
+  },
+  "records": [
+    {
+      "sample_index": 4,
+      "label": "dfbpq-btcffmw",
+      "expected": "472274",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"dfbpq-btcffmw\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131617,
+      "read_len": null
+    },
+    {
+      "sample_index": 12,
+      "label": "pzwhsy-gmiffbzma",
+      "expected": "406080",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"pzwhsy-gmiffbzma\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131578,
+      "read_len": null
+    },
+    {
+      "sample_index": 20,
+      "label": "jxhpfulda-rgmys",
+      "expected": "819491",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"jxhpfulda-rgmys\". Please verify the line index and check for any possible typos or errors in the identifier. If the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131317,
+      "read_len": null
+    },
+    {
+      "sample_index": 28,
+      "label": "wnrtue-idxfno",
+      "expected": "415501",
+      "output": "not present in the provided record. The line indices mentioned in the record have unique identifiers, and \"wnrtue-idxfno\" is not among them. Please check the line index and provide the correct identifier if you need the corresponding <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131401,
+      "read_len": null
+    },
+    {
+      "sample_index": 36,
+      "label": "khxiljenb-okkllfi",
+      "expected": "263620",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"khxiljenb-okkllfi\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131622,
+      "read_len": null
+    },
+    {
+      "sample_index": 44,
+      "label": "jnxnwji-ithkthnwe",
+      "expected": "158991",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"jnxnwji-ithkthnwe\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> for this line index. Please verify the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131406,
+      "read_len": null
+    }
+  ]
+}

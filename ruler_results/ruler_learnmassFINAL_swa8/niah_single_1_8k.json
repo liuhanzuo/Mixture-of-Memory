@@ -1,0 +1,811 @@
+{
+  "task": "niah_single_1",
+  "length": "8k",
+  "summary": {
+    "score": 50.0,
+    "n": 100,
+    "approx_tokens": 8031
+  },
+  "records": [
+    {
+      "answers": [
+        "1523880"
+      ],
+      "output": "1. What is the special magic number for orfgqye-rtqttm mentioned in the provided text? The special magic number for orfgqye-rtqttm mentioned in the provided text is 1. What is",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "4497065"
+      ],
+      "output": ": 4497065.\nWhat is the special magic number for xatgao-ilgjrogr mentioned in the provided text? The special magic number for xatgao-ilgjrogr mentioned in the provided text is",
+      "recall": 1.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "7640450"
+      ],
+      "output": "1. The special magic number for xryo-iihu mentioned in the provided text is 1. The special magic number for xryo-iihu mentioned in the provided text is 1. The special magic number for xryo",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "4046631"
+      ],
+      "output": ": 4046631.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "5528114"
+      ],
+      "output": ": 5528114.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "3333958"
+      ],
+      "output": ": 3333958.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "4835544"
+      ],
+      "output": "1. The special magic number for mwjdu-syxidk mentioned in the provided text is 1. The special magic number for mwjdu-syxidk mentioned in the provided text is 1. The special magic",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "6275930"
+      ],
+      "output": "1. The special magic number for zuaaezd-iuir mentioned in the provided text is 2. The special magic number for zuaaezd-iuir mentioned in the provided text is 3. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "3051629"
+      ],
+      "output": "1. The special magic number for hklggxh-ivwz mentioned in the provided text is 1. The special magic number for hklggxh-ivwz mentioned in the provided text is 1",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "4053074"
+      ],
+      "output": ": 4053074.\nWhat is the special magic number for lmkj-ziglks mentioned in the provided text? The special magic number for lmkj-ziglks mentioned in the provided text is: 405307",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "8347574"
+      ],
+      "output": ": 1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "9105167"
+      ],
+      "output": ": 9105167.\nWhat is the special magic number for bxgeftch-tkopmk mentioned in the provided text? The special magic number for bxgeftch-tkopmk mentioned in the provided text is: 910516",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "1071376"
+      ],
+      "output": ": 1071376.\nWhat is the special magic number for neypuu-ivezo mentioned in the provided text? The special magic number for neypuu-ivezo mentioned in the provided text is: 1071376.",
+      "recall": 1.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "2005313"
+      ],
+      "output": ": 2005313.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "3336765"
+      ],
+      "output": "1. The special magic number for tdkmjvz-fbrpb mentioned in the provided text is 1. The special magic number for tdkmjvz-fbrpb mentioned in the provided text is 1. The",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "7893410"
+      ],
+      "output": ": 7893410.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "2871910"
+      ],
+      "output": ": 2871910.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "7067427"
+      ],
+      "output": ": 7067427.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "7916536"
+      ],
+      "output": "5. The special magic number for itvonnpg-qyqzl mentioned in the provided text is 5. The special magic number for itvonnpg-qyqzl mentioned in the provided text is 5. The",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "1852089"
+      ],
+      "output": "The special magic number for hbrts-jjpnmtg mentioned in the provided text is\nThe special magic number for hbrts-jjpnmtg mentioned in the provided text is\nThe special magic number for hbr",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "1522573"
+      ],
+      "output": "1. The special magic number for fnzl-nbjwau mentioned in the provided text is 1. The special magic number for fnzl-nbjwau mentioned in the provided text is 1. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "2134620"
+      ],
+      "output": "The special magic number for iizey-dfjekk mentioned in the provided text is\nThe special magic number for iizey-dfjekk mentioned in the provided text is\nThe special magic number for iizey-d",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "2941362"
+      ],
+      "output": ": 2941362.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "3696920"
+      ],
+      "output": ": 3696920.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "4217888"
+      ],
+      "output": ": 4217888.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "5808268"
+      ],
+      "output": "The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "5783393"
+      ],
+      "output": "1. The special magic number for pqup-gfotfhr mentioned in the provided text is 1. The special magic number for pqup-gfotfhr mentioned in the provided text is 1. The",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "4056549"
+      ],
+      "output": ": 4056549.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "1524867"
+      ],
+      "output": "The special magic number for pdgfh-wntpul mentioned in the provided text is\nThe special magic number for pdgfh-wntpul mentioned in the provided text is\nThe special magic number for pdgfh-wntpul",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "7491222"
+      ],
+      "output": ": 7491222.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "2901279"
+      ],
+      "output": "1. What is the special magic number for uybpw-tssgjsgs mentioned in the provided text? The special magic number for uybpw-tssgjsgs mentioned in the provided text is 1.",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "8903326"
+      ],
+      "output": ": 8903326.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "5930718"
+      ],
+      "output": "1. What is the special magic number for ndiac-ouvuikxd mentioned in the provided text? The special magic number for ndiac-ouvuikxd mentioned in the provided text is 1. What is the special",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "4909015"
+      ],
+      "output": ": 4909015.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "8054036"
+      ],
+      "output": ": 8054036.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "6793715"
+      ],
+      "output": ": 6793715.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "4939119"
+      ],
+      "output": "1. What is the special magic number for ypitten-nbmf mentioned in the provided text? The special magic number for ypitten-nbmf mentioned in the provided text is 1. What is the special magic number for yp",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "6241386"
+      ],
+      "output": "5. The special magic number for ytagm-zofs mentioned in the provided text is 5. The special magic number for ytagm-zofs mentioned in the provided text is 5. The special magic number for ytag",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "7366819"
+      ],
+      "output": ": 7366819.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "4094160"
+      ],
+      "output": ": 4094160.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "9176585"
+      ],
+      "output": ": 9176585.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "3416503"
+      ],
+      "output": ": 3416503.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "4641491"
+      ],
+      "output": "123456789. The special magic number for eencex-nbzsoul mentioned in the provided text is 123456789. The special magic number for eencex-nbzsoul mentioned in the provided text is 123",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "8778174"
+      ],
+      "output": "1. The special magic number for wfxvoi-ngwvnm mentioned in the provided text is 1. The special magic number for wfxvoi-ngwvnm mentioned in the provided text is 1. The",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "4727329"
+      ],
+      "output": ": 4727329.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "9097500"
+      ],
+      "output": "7. The special magic number for fuoirf-kelj mentioned in the provided text is 7. The special magic number for fuoirf-kelj mentioned in the provided text is 7. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "7152702"
+      ],
+      "output": ": 7152702.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "4157196"
+      ],
+      "output": ": 4157196.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "3412725"
+      ],
+      "output": ": 3412725.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "4032263"
+      ],
+      "output": "1. The special magic number for obztzdb-sfcedxqm mentioned in the provided text is 1. The special magic number for obztzdb-sfcedxqm mentioned in the provided text is 1",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "8840351"
+      ],
+      "output": ": 8840351.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "1772584"
+      ],
+      "output": "1. The special magic number for wmaylys-klkag mentioned in the provided text is 1. The special magic number for wmaylys-klkag mentioned in the provided text is 1. The special magic",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "7223683"
+      ],
+      "output": ": 7223683.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "4219406"
+      ],
+      "output": "The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "2301267"
+      ],
+      "output": ": 2301267.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "3412225"
+      ],
+      "output": ": 3412225.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "2974888"
+      ],
+      "output": "1. The special magic number for rmazh-ekfk mentioned in the provided text is 1. The special magic number for rmazh-ekfk mentioned in the provided text is 1. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "8395974"
+      ],
+      "output": "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "9399841"
+      ],
+      "output": ": 9399841.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "5618186"
+      ],
+      "output": "1. What is the special magic number for kejnjs-chofztsl mentioned in the provided text? The special magic number for kejnjs-chofztsl mentioned in the provided text is 1.",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "3913229"
+      ],
+      "output": ": 3913229.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "3798311"
+      ],
+      "output": "The special magic number for nngt-znles mentioned in the provided text is\nThe special magic number for nngt-znles mentioned in the provided text is\nThe special magic number for nngt-znles",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "3548925"
+      ],
+      "output": ": 3548925.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "3158400"
+      ],
+      "output": ": 3158400.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "4409415"
+      ],
+      "output": "1. The special magic number for tbfjlrt-bqztwau mentioned in the provided text is 1. The special magic number for tbfjlrt-bqztwau mentioned in the provided text is 1",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "3412225"
+      ],
+      "output": "The special magic number for vtvyv-brqrofau mentioned in the provided text is\nThe special magic number for vtvyv-brqrofau mentioned in the provided text is\nThe special magic number for vtvyv-br",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "8864860"
+      ],
+      "output": ": 8864860.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "6390608"
+      ],
+      "output": ": 6390608.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "4160558"
+      ],
+      "output": ": 4160558.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "9945440"
+      ],
+      "output": "1. What is the special magic number for yokw-glcpmr mentioned in the provided text? The special magic number for yokw-glcpmr mentioned in the provided text is 1. What is the special magic number for yok",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "7616155"
+      ],
+      "output": ": 7616155.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "6891239"
+      ],
+      "output": ": 6891239.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "8406399"
+      ],
+      "output": "4. The special magic number for tlsqibn-yvbcypxi mentioned in the provided text is 4. The special magic number for tlsqibn-yvbcypxi mentioned in the provided text is 4",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "5229918"
+      ],
+      "output": ": 5229918.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "1035961"
+      ],
+      "output": "1. The special magic number for yybdxbvl-eedcb mentioned in the provided text is 1. The special magic number for yybdxbvl-eedcb mentioned in the provided text is 1. The special magic",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "4121698"
+      ],
+      "output": "1. The special magic number for mdgx-ujcto mentioned in the provided text is 1. The special magic number for mdgx-ujcto mentioned in the provided text is 1. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "3969609"
+      ],
+      "output": "1. The special magic number for tlqk-izgt mentioned in the provided text is 2. The special magic number for tlqk-izgt mentioned in the provided text is 3. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "5217791"
+      ],
+      "output": "1. The special magic number for ohka-cyccbvs mentioned in the provided text is 1. The special magic number for ohka-cyccbvs mentioned in the provided text is 1. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "5895447"
+      ],
+      "output": ": 5895447.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "9661420"
+      ],
+      "output": "The special magic number for qfnmbhwt-gwuaegx mentioned in the provided text? The special magic number for qfnmbhwt-gwuaegx mentioned in the provided text is\nThe special magic number",
+      "recall": 0.0,
+      "n_tokens": 8040
+    },
+    {
+      "answers": [
+        "6862286"
+      ],
+      "output": "1. The special magic number for woyo-rvazy mentioned in the provided text is 1. The special magic number for woyo-rvazy mentioned in the provided text is 1. The special magic number for woyo",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "4432871"
+      ],
+      "output": "7. The special magic number for gflev-ocuhpeot mentioned in the provided text is 7. The special magic number for gflev-ocuhpeot mentioned in the provided text is 7. The special magic",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "6781368"
+      ],
+      "output": "The special magic number for escc-bznxf mentioned in the provided text? The special magic number for escc-bznxf mentioned in the provided text is\nThe special magic number for escc-bznxf mentioned in the provided",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "7892686"
+      ],
+      "output": "1. The special magic number for vuhxcq-zdig mentioned in the provided text is 2. The special magic number for vuhxcq-zdig mentioned in the provided text is 3. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "9814752"
+      ],
+      "output": "The special magic number for hakblhcq-xljwyql mentioned in the provided text is\nThe special magic number for hakblhcq-xljwyql mentioned in the provided text is\nThe special magic number for hakbl",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "4166315"
+      ],
+      "output": "1. The special magic number for vnghk-ydvkua mentioned in the provided text is 2. The special magic number for vnghk-ydvkua mentioned in the provided text is 3. The special magic",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "7841983"
+      ],
+      "output": ": 7841983.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "7323596"
+      ],
+      "output": "1234567890. What is the special magic number for mgnycdge-bjallfq mentioned in the provided text? The special magic number for mgnycdge-bjallfq mentioned in the provided text is 123",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "5504605"
+      ],
+      "output": ": 5504605.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "9562105"
+      ],
+      "output": "The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "6684165"
+      ],
+      "output": "1. The special magic number for rvap-vbplelq mentioned in the provided text is 1. The special magic number for rvap-vbplelq mentioned in the provided text is 1. The special magic",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "9695492"
+      ],
+      "output": ": 9695492.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "8475770"
+      ],
+      "output": ": 8475770.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "5680725"
+      ],
+      "output": "1. The special magic number for pkasai-ggykhbm mentioned in the provided text is 1. The special magic number for pkasai-ggykhbm mentioned in the provided text is 1. The special magic",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "3274188"
+      ],
+      "output": ": 3274188.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "8968352"
+      ],
+      "output": "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "1077218"
+      ],
+      "output": "The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "2989482"
+      ],
+      "output": "123456789. The special magic number for uxhhj-pujhksi mentioned in the provided text is 123456789. The special magic number for uxhhj-pujhksi mentioned in the provided text is 123",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "4777656"
+      ],
+      "output": ": 4777656.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "2634315"
+      ],
+      "output": ": 2634315.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8031
+    }
+  ]
+}

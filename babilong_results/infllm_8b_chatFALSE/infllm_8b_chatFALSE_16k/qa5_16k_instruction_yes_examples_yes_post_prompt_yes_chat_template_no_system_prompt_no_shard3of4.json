@@ -1,0 +1,68 @@
+{
+    "status": "completed",
+    "task": "qa5",
+    "length": "16k",
+    "n_requested": 100,
+    "sharding": {
+        "num_shards": 4,
+        "shard_index": 3
+    },
+    "prompt": {
+        "instruction": "I will give you context with the facts about locations and their relations hidden in some random text and a question. You need to answer the question based only on the information from the facts.",
+        "examples": "<example>\nMary picked up the apple there. Mary gave the apple to Fred. Mary moved to the bedroom. Bill took the milk there. Who did Mary give the apple to?\nAnswer: Fred\n</example>\n<example>\nJeff took the football there. Jeff passed the football to Fred. Jeff got the milk there. Bill travelled to the bedroom. Who gave the football?\nAnswer: Jeff\n</example>\n<example>\nFred picked up the apple there. Fred handed the apple to Bill. Bill journeyed to the bedroom. Jeff went back to the garden. What did Fred give to Bill?\nAnswer: apple\n</example>",
+        "post_prompt": "Your answer should contain only one word. Do not write anything else after that. Do not explain your answer.",
+        "template": "{instruction}\n\n{examples}\n\n{post_prompt}\n\n<context>\n{context}\n</context>\n\nQuestion: {question}",
+        "chat_template": false,
+        "system_prompt": ""
+    },
+    "generate_kwargs": {
+        "max_new_tokens": 20,
+        "do_sample": false,
+        "num_beams": 1
+    },
+    "baseline": "infllm",
+    "infllm": {
+        "mem_config": {
+            "type": "inf-llm",
+            "block_size": 128,
+            "n_init": 128,
+            "n_local": 4096,
+            "topk": 16,
+            "repr_topk": 4,
+            "max_cached_block": 32,
+            "exc_block_size": 512,
+            "fattn": false,
+            "cache_strategy": "lru",
+            "async_global_stream": false,
+            "pin_memory": false,
+            "faiss": false,
+            "perhead": false,
+            "distance_scale": 1.0,
+            "chunk_size": 8192,
+            "base": 1000000.0
+        },
+        "num_layers": 36
+    },
+    "model": {
+        "model_path": "models/Qwen3-8b-local",
+        "num_hidden_layers": 36
+    },
+    "dataset_name": "RMT-team/babilong",
+    "available_count": 100,
+    "runtime": {
+        "node": "TENCENT64.site",
+        "cuda_visible_devices": "1",
+        "device": "cuda:0",
+        "seed": 42,
+        "dtype": "bfloat16",
+        "attn_implementation": "eager"
+    },
+    "chat_template": false,
+    "enable_thinking": false,
+    "scoring": "babilong.metrics.TASK_LABELS+compare_answers",
+    "n": 25,
+    "oom_count": 0,
+    "correct": 17,
+    "score": 68.0,
+    "elapsed_seconds": 97.413
+}

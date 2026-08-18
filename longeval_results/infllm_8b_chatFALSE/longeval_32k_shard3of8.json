@@ -1,0 +1,77 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.3333,
+    "correct": 2,
+    "total": 6,
+    "approx_tokens": 32940
+  },
+  "records": [
+    {
+      "sample_index": 3,
+      "label": "djofmasd-rvzfw",
+      "expected": "569465",
+      "output": "<569465>. I have retrieved this value from the record you provided. The line index \"djofmasd-rvzfw\" corresponds to the numerical value 569465. Let me know",
+      "pred": "569465",
+      "correct": true,
+      "n_lines": 1536,
+      "n_tokens": 32931,
+      "read_len": null
+    },
+    {
+      "sample_index": 11,
+      "label": "jesfel-hucogjuv",
+      "expected": "884912",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"jesfel-hucogjuv\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32982,
+      "read_len": null
+    },
+    {
+      "sample_index": 19,
+      "label": "lajkoi-heaiatp",
+      "expected": "244723",
+      "output": "<244723>. I remember that line because it's one of the entries listed towards the end of the record, and I've memorized each line's corresponding numerical value. The line index \"lajkoi-he",
+      "pred": "244723",
+      "correct": true,
+      "n_lines": 1536,
+      "n_tokens": 32944,
+      "read_len": null
+    },
+    {
+      "sample_index": 27,
+      "label": "jntznh-dvmkeoj",
+      "expected": "943119",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"jntznh-dvmkeoj\". Please check the line index again or provide additional information if needed. \n\nHowever, if you meant to",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32962,
+      "read_len": null
+    },
+    {
+      "sample_index": 35,
+      "label": "lzhbc-yonunup",
+      "expected": "331838",
+      "output": "not present in the provided record. I have memorized the <REGISTER_CONTENT> values for the lines listed, but \"lzhbc-yonunup\" is not among them. Please check the line index and try again. The line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33079,
+      "read_len": null
+    },
+    {
+      "sample_index": 43,
+      "label": "lksgtxhb-lxfkdnk",
+      "expected": "780484",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"lksgtxhb-lxfkdnk\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> for this line index. Please check the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32940,
+      "read_len": null
+    }
+  ]
+}

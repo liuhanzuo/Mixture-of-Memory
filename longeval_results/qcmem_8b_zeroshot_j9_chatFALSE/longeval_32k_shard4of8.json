@@ -1,0 +1,91 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 32931,
+    "avg_read_len": 6325.7,
+    "last_read_len": 6308
+  },
+  "records": [
+    {
+      "sample_index": 4,
+      "label": "iejjcpbrs-tkdtv",
+      "expected": "576388",
+      "output": "<617347>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me go through the lines again to find the line that starts with \"iejjcpbrs",
+      "pred": "617347",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32938,
+      "read_len": 6315,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 12,
+      "label": "untfybf-yojqqhxei",
+      "expected": "541455",
+      "output": "<617543>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line \"untfybf-yojqqhxei\". \n\nFirst, I'll go through each line one by",
+      "pred": "617543",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32907,
+      "read_len": 6284,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 20,
+      "label": "psvdvllss-tgqbqv",
+      "expected": "639520",
+      "output": "<639543>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line psvdvllss-tgqbqv\". Let me go through the list again",
+      "pred": "639543",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32989,
+      "read_len": 6366,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 28,
+      "label": "vhyhmt-pvxhvq",
+      "expected": "967236",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that starts with \"line vhyhmt-pvxhvq: \".\n\nLooking through the lines provided, I",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32966,
+      "read_len": 6343,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 36,
+      "label": "picvqk-pcaplknha",
+      "expected": "319025",
+      "output": "<...> in the given data. Let me check the data again to find the specific line.\n\nLooking through the lines provided, I see that the line \"line picvqk-pcaplknha\" is not listed. However",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32961,
+      "read_len": 6338,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 44,
+      "label": "wwxxipai-uuyztgnrf",
+      "expected": "328263",
+      "output": "<655891>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss it.\n\nLooking through the lines again:\n\n- The line with \"wwxxipai-u",
+      "pred": "655891",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32931,
+      "read_len": 6308,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    }
+  ]
+}

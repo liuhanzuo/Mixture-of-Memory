@@ -1,0 +1,912 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.03,
+    "correct": 3,
+    "total": 100,
+    "approx_lines": 512,
+    "approx_tokens": 8946
+  },
+  "records": [
+    {
+      "label": "fcyei-lpiygv",
+      "expected": "335146",
+      "output": "<REGISTER_CONTENT> in line fcyei-lpiygv. Tell me",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9033
+    },
+    {
+      "label": "bbiudxvox-cscjo",
+      "expected": "995603",
+      "output": "<REGISTER_CONTENT> in line bbiudxvox-cscjo. The",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8993
+    },
+    {
+      "label": "xbuyyefv-mjtlkmu",
+      "expected": "487730",
+      "output": "<REGISTER_CONTENT> in line xbuyyefv-mjtlkmu",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9031
+    },
+    {
+      "label": "zhcoym-gnzmomoly",
+      "expected": "513237",
+      "output": "<REGISTER_CONTENT> in line zhcoym-gnzmomoly. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9006
+    },
+    {
+      "label": "otvblgnz-jaazqgzj",
+      "expected": "599237",
+      "output": "<REGISTER_CONTENT> in line xjgaunk-bnyphv.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9027
+    },
+    {
+      "label": "cidwgkrd-eueinkk",
+      "expected": "153077",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9002
+    },
+    {
+      "label": "qzooiasz-pkhtn",
+      "expected": "506797",
+      "output": "<REGISTER_CONTENT> in line qzooiasz-pkhtn.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9074
+    },
+    {
+      "label": "opmyppc-gwrfuv",
+      "expected": "951681",
+      "output": "<REGISTER_CONTENT> in line opmyppc-gwrfuv. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8995
+    },
+    {
+      "label": "igblh-jzcbri",
+      "expected": "313182",
+      "output": "<REGISTER_CONTENT> in line igblh-jzcbri. Tell me",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9018
+    },
+    {
+      "label": "yadsd-vcenwm",
+      "expected": "484893",
+      "output": "<875662>.\nThe <REGISTER_CONTENT> in line yadsd-vc",
+      "pred": "875662",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8991
+    },
+    {
+      "label": "dwdwiuia-pbkppvpy",
+      "expected": "984938",
+      "output": "<REGISTER_CONTENT> in line dwdwiuia-pbkppvpy.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8997
+    },
+    {
+      "label": "jankgrs-kwdsf",
+      "expected": "386436",
+      "output": "<REGISTER_CONTENT> in line jankgrs-kwdsf. The",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8958
+    },
+    {
+      "label": "hamgwaxg-ojcbwxymw",
+      "expected": "294641",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT>.\nThe <REGISTER_CONTENT> in",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8974
+    },
+    {
+      "label": "xogigtgxd-kbwnhwxqg",
+      "expected": "229183",
+      "output": "<REGISTER_CONTENT> in line xogigtgxd-kbwnhwx",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9015
+    },
+    {
+      "label": "ovptqia-umuwlyfl",
+      "expected": "286220",
+      "output": "<REGISTER_CONTENT> in line ovptqia-umuwlyfl.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8963
+    },
+    {
+      "label": "umgtitc-krzvvsx",
+      "expected": "490999",
+      "output": "<REGISTER_CONTENT> in line umgtitc-krzvvsx.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8976
+    },
+    {
+      "label": "nniqjerj-ruyzzdjl",
+      "expected": "826096",
+      "output": "<REGISTER_CONTENT> in line xypfl-batutmznb.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9007
+    },
+    {
+      "label": "omamjdejr-prlehuu",
+      "expected": "356153",
+      "output": "<REGISTER_CONTENT> in line omamjdejr-prlehuu. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9003
+    },
+    {
+      "label": "xxdfesali-hnjsfi",
+      "expected": "566506",
+      "output": "<REGISTER_CONTENT> in line xxdfesali-hnjsfi.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9000
+    },
+    {
+      "label": "juafqscli-aactzhqrv",
+      "expected": "733485",
+      "output": "<REGISTER_CONTENT> in line juafqscli-aactzhqrv.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8980
+    },
+    {
+      "label": "futmeinau-qtuxnlfii",
+      "expected": "825414",
+      "output": "<REGISTER_CONTENT> in line futmeinau-qtuxnlfii",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8990
+    },
+    {
+      "label": "btkqs-fjhmrgl",
+      "expected": "466461",
+      "output": "<REGISTER_CONTENT> in line btkqs-fjhmrgl.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9001
+    },
+    {
+      "label": "vffcnimt-zhpqapxx",
+      "expected": "291846",
+      "output": "<REGISTER_CONTENT> in line vffcnimt-zhpqapxx",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9041
+    },
+    {
+      "label": "efabpoqp-yhflmrlz",
+      "expected": "762533",
+      "output": "<REGISTER_CONTENT> in line efabpoqp-yhflmrlz",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8991
+    },
+    {
+      "label": "aaolingn-druiasnmm",
+      "expected": "915667",
+      "output": "<REGISTER_CONTENT> in line aaolingn-druiasnmm. Tell me",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8985
+    },
+    {
+      "label": "cfoxrlymk-xuuafohqe",
+      "expected": "562241",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9008
+    },
+    {
+      "label": "bwoig-hrpxg",
+      "expected": "765134",
+      "output": "<REGISTER_CONTENT> in line bwoig-hrpxg.\nThe <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9029
+    },
+    {
+      "label": "fifla-gfeqtlqw",
+      "expected": "403984",
+      "output": "<REGISTER_CONTENT> in line <724149>.\nThe <REGISTER_CONTENT> in",
+      "pred": "724149",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8966
+    },
+    {
+      "label": "vdpcm-necyxfpk",
+      "expected": "649923",
+      "output": "<793309>\nline wccbztbbr-kiryavvas: REGISTER",
+      "pred": "793309",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9058
+    },
+    {
+      "label": "bzdqenb-pwmycdw",
+      "expected": "821954",
+      "output": "<REGISTER_CONTENT> in line bzdqenb-pwmycdw",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9035
+    },
+    {
+      "label": "gcicllqr-qgpob",
+      "expected": "441061",
+      "output": "<REGISTER_CONTENT> in line gcicllqr-qgpob. Tell me",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9018
+    },
+    {
+      "label": "xzglon-glvwqumb",
+      "expected": "996407",
+      "output": "<REGISTER_CONTENT> in line xzglon-glvwqumb.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9010
+    },
+    {
+      "label": "xjspddtd-rimhn",
+      "expected": "990213",
+      "output": "<REGISTER_CONTENT> in line xjspddtd-rimhn.\nThe <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9029
+    },
+    {
+      "label": "rpvdasere-rlpiylmra",
+      "expected": "896878",
+      "output": "<REGISTER_CONTENT> in line rpvdasere-rlpiylmra",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9018
+    },
+    {
+      "label": "fbqqbs-kfukmww",
+      "expected": "208891",
+      "output": "<REGISTER_CONTENT> in line fbqqbs-kfukmww. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9025
+    },
+    {
+      "label": "kptpye-lhomvizi",
+      "expected": "756028",
+      "output": "<REGISTER_CONTENT> in line vrgwnmr-jyujwekqd",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9055
+    },
+    {
+      "label": "ralfacyy-ddpusgl",
+      "expected": "147303",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9016
+    },
+    {
+      "label": "gdhfjjei-qokfiicn",
+      "expected": "475950",
+      "output": "<REGISTER_CONTENT> in line gdhfjjei-qokfiic",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9026
+    },
+    {
+      "label": "pfktky-zchgiwp",
+      "expected": "826103",
+      "output": "<REGISTER_CONTENT> in line pfktky-zchgiwp.\nThe <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9015
+    },
+    {
+      "label": "wbwojhn-titnrv",
+      "expected": "431134",
+      "output": "<REGISTER_CONTENT> in line abkfcj-mjsyuun. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8978
+    },
+    {
+      "label": "nmoggmmgl-jvnsmps",
+      "expected": "448060",
+      "output": "<REGISTER_CONTENT> in line nmoggmmgl-jvnsmps. The",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9011
+    },
+    {
+      "label": "nixfrjtvc-qwhiour",
+      "expected": "559623",
+      "output": "<REGISTER_CONTENT> in line nixfrjtvc-qwhiour.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9040
+    },
+    {
+      "label": "mfivcxfp-iynytxpcq",
+      "expected": "286125",
+      "output": "<REGISTER_CONTENT> in line mfivcxfp-iynytxpcq",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9027
+    },
+    {
+      "label": "tqydscxh-hvnran",
+      "expected": "416657",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8997
+    },
+    {
+      "label": "yobqought-einanat",
+      "expected": "445003",
+      "output": "<REGISTER_CONTENT> in line yobqought-einanat. The <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8986
+    },
+    {
+      "label": "dqcbzwxik-amrtm",
+      "expected": "888787",
+      "output": "<REGISTER_CONTENT> in line dqcbzwxik-amrtm.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9041
+    },
+    {
+      "label": "raoxrxcrx-ccexx",
+      "expected": "734810",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8967
+    },
+    {
+      "label": "ezlhsyebv-qtlaemvcc",
+      "expected": "330454",
+      "output": "<REGISTER_CONTENT> in line xddvfuab-atwlnwv",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9038
+    },
+    {
+      "label": "urisn-qldmgrol",
+      "expected": "630215",
+      "output": "<REGISTER_CONTENT> in line urisn-qldmgrol. The <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9023
+    },
+    {
+      "label": "zyncdypxa-isilv",
+      "expected": "888297",
+      "output": "<REGISTER_CONTENT> in line zyncdypxa-isilv.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9033
+    },
+    {
+      "label": "nengwdpff-tlavu",
+      "expected": "297047",
+      "output": "<REGISTER_CONTENT> in line nengwdpff-tlavu.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8947
+    },
+    {
+      "label": "mzturtye-rwdxtdz",
+      "expected": "278935",
+      "output": "<REGISTER_CONTENT> in line mzturtye-rwdxtdz.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9020
+    },
+    {
+      "label": "wbimbcsp-gicfonaj",
+      "expected": "375389",
+      "output": "<REGISTER_CONTENT> in line wjgnyoq-ksrkig.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9017
+    },
+    {
+      "label": "eioizmow-vbuctpu",
+      "expected": "666828",
+      "output": "<REGISTER_CONTENT> in line eioizmow-vbuctpu.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9048
+    },
+    {
+      "label": "uohtyu-eibldnk",
+      "expected": "214884",
+      "output": "<214884>.\nNow the record is over. Tell me what is the <",
+      "pred": "214884",
+      "correct": true,
+      "n_lines": 512,
+      "n_tokens": 8998
+    },
+    {
+      "label": "kdeupan-utifk",
+      "expected": "357577",
+      "output": "<REGISTER_CONTENT> in line jfbbpbau-fcuck. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9041
+    },
+    {
+      "label": "bfpjljhwb-vpvxr",
+      "expected": "181908",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9046
+    },
+    {
+      "label": "nyqtunte-phjinth",
+      "expected": "452710",
+      "output": "<REGISTER_CONTENT> in line jomczhl-amhhjpm. The",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8960
+    },
+    {
+      "label": "dpgblo-rkztasr",
+      "expected": "541241",
+      "output": "<172928>\nline dpgblo-rkztasr: REGISTER_CONTENT",
+      "pred": "172928",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9033
+    },
+    {
+      "label": "yqhbr-brgqlxgbw",
+      "expected": "274258",
+      "output": "<REGISTER_CONTENT> in line yqhbr-brgqlxgbw.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9041
+    },
+    {
+      "label": "ddzklgx-navbp",
+      "expected": "830153",
+      "output": "<REGISTER_CONTENT> in line ddzklgx-navbp. The <REGISTER",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9059
+    },
+    {
+      "label": "tfdumphjd-luvyehk",
+      "expected": "740867",
+      "output": "<REGISTER_CONTENT> in line tfdumphjd-luvyehk.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9043
+    },
+    {
+      "label": "rbzqk-ppriwzas",
+      "expected": "759365",
+      "output": "<REGISTER_CONTENT> in line rbzqk-ppriwzas.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9021
+    },
+    {
+      "label": "xouxh-sqhsnce",
+      "expected": "935542",
+      "output": "<REGISTER_CONTENT> in line xouxh-sqhsnce. The <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9026
+    },
+    {
+      "label": "gwfimdf-pewwsamv",
+      "expected": "129608",
+      "output": "<REGISTER_CONTENT> in line gwfimdf-pewwsamv.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9010
+    },
+    {
+      "label": "dylnfvns-hplcubon",
+      "expected": "453202",
+      "output": "453202.\nThe <REGISTER_CONTENT> in line dylnfvns-h",
+      "pred": "453202",
+      "correct": true,
+      "n_lines": 512,
+      "n_tokens": 9009
+    },
+    {
+      "label": "wvqlujcly-ofvdzbzk",
+      "expected": "212074",
+      "output": "<REGISTER_CONTENT> in line wvqlujcly-ofvdzbzk.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9016
+    },
+    {
+      "label": "aoqgalhve-eiwoo",
+      "expected": "361028",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9014
+    },
+    {
+      "label": "tthubw-fdirawrgv",
+      "expected": "819001",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8965
+    },
+    {
+      "label": "edlzacme-mqssx",
+      "expected": "424572",
+      "output": "<REGISTER_CONTENT> in line edlzacme-mqssx. The",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9008
+    },
+    {
+      "label": "kebcummjz-whqgv",
+      "expected": "473859",
+      "output": "<REGISTER_CONTENT> in line kebcummjz-whqgv. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9016
+    },
+    {
+      "label": "gfyvll-xwdpdj",
+      "expected": "419666",
+      "output": "<REGISTER_CONTENT> in line gfyvll-xwdpdj.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9029
+    },
+    {
+      "label": "qqwylxdvz-lzsfqudv",
+      "expected": "204328",
+      "output": "<REGISTER_CONTENT> in line qqwylxdvz-lzsfqu",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9013
+    },
+    {
+      "label": "szaudlup-eadomnmd",
+      "expected": "692406",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8977
+    },
+    {
+      "label": "sgjqxwj-lmkxuvlhh",
+      "expected": "841511",
+      "output": "<REGISTER_CONTENT> in line sgjqxwj-lmkxuvlhh",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9003
+    },
+    {
+      "label": "osfqjycwu-khfto",
+      "expected": "573763",
+      "output": "<REGISTER_CONTENT> in line osfqjycwu-khfto.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8999
+    },
+    {
+      "label": "nohklkp-jdocokwr",
+      "expected": "604593",
+      "output": "<REGISTER_CONTENT> in line xecmj-midezo. Tell me what",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9006
+    },
+    {
+      "label": "mxfomuta-neqdpec",
+      "expected": "219155",
+      "output": "<REGISTER_CONTENT> in line mxfomuta-neqdpec. Tell me",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9020
+    },
+    {
+      "label": "pgveopfu-bwrjodzv",
+      "expected": "536684",
+      "output": "<REGISTER_CONTENT> in line pgveopfu-bwrjodzv.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9037
+    },
+    {
+      "label": "bmitqdxd-mjgowif",
+      "expected": "286398",
+      "output": "<REGISTER_CONTENT> in line bmitqdxd-mjgowif.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9038
+    },
+    {
+      "label": "dabcab-ydgvcn",
+      "expected": "133050",
+      "output": "<REGISTER_CONTENT> in line dabcab-ydgvcn.\nThe <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9029
+    },
+    {
+      "label": "dvppqxfir-ggwzgpx",
+      "expected": "962744",
+      "output": "<REGISTER_CONTENT> in line dvppqxfir-ggwzgpx",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8977
+    },
+    {
+      "label": "jtmtvau-gujbpar",
+      "expected": "295250",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9025
+    },
+    {
+      "label": "mbkzl-pjbir",
+      "expected": "601612",
+      "output": "<REGISTER_CONTENT> in line mbkzl-pjbir. Tell me what",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8992
+    },
+    {
+      "label": "aiqnnt-dvjsadlq",
+      "expected": "463361",
+      "output": "<462252>.",
+      "pred": "462252",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9006
+    },
+    {
+      "label": "vhzteiioz-omwwwtuk",
+      "expected": "139060",
+      "output": "<857109>.",
+      "pred": "857109",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9041
+    },
+    {
+      "label": "bwpagd-bruhg",
+      "expected": "226077",
+      "output": "<REGISTER_CONTENT> in line <300636>.\nThe <REGISTER_CONTENT> in",
+      "pred": "300636",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9004
+    },
+    {
+      "label": "ryfbchuuo-cqlstoqbh",
+      "expected": "180253",
+      "output": "<REGISTER_CONTENT> in line ryfbchuuo-cqlstoqbh.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9060
+    },
+    {
+      "label": "femid-cewjosjb",
+      "expected": "286792",
+      "output": "<REGISTER_CONTENT> in line femid-cewjosjb. The <REGISTER",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9047
+    },
+    {
+      "label": "awydbdimx-rpxohj",
+      "expected": "446450",
+      "output": "<REGISTER_CONTENT> in line awydbdimx-rpxohj.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9010
+    },
+    {
+      "label": "dhhhyd-capxqvh",
+      "expected": "418208",
+      "output": "<REGISTER_CONTENT> in line dhhhyd-capxqvh. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8962
+    },
+    {
+      "label": "xfkcpc-fweqxwj",
+      "expected": "357562",
+      "output": "<REGISTER_CONTENT> in line xfkcpc-fweqxwj. The <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9002
+    },
+    {
+      "label": "fjirui-hkrschxcf",
+      "expected": "270559",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8990
+    },
+    {
+      "label": "fzfflygg-ctjpbghy",
+      "expected": "546644",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8984
+    },
+    {
+      "label": "zxgnhpne-xfalq",
+      "expected": "143538",
+      "output": "<REGISTER_CONTENT> in line xctllt-spxezog.\nThe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9023
+    },
+    {
+      "label": "znbzgt-bfgoel",
+      "expected": "475443",
+      "output": "<REGISTER_CONTENT> in line znbzgt-bfgoel. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8999
+    },
+    {
+      "label": "ulfdgxfkd-qvnryoqq",
+      "expected": "498612",
+      "output": "<REGISTER_CONTENT> in line ulfdgxfkd-qvnryoqq.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9027
+    },
+    {
+      "label": "ljuzehzpa-hkoiek",
+      "expected": "973758",
+      "output": "<REGISTER_CONTENT> in line <REGISTER_CONTENT> in line <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9052
+    },
+    {
+      "label": "pgqxth-cyucplyy",
+      "expected": "444546",
+      "output": "<REGISTER_CONTENT> in line pgqxth-cyucplyy. Tell",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8987
+    },
+    {
+      "label": "grorkl-dyfgsidfh",
+      "expected": "163228",
+      "output": "<163228>\nline grorkl-dyfgsidfh: REGISTER_CONTENT",
+      "pred": "163228",
+      "correct": true,
+      "n_lines": 512,
+      "n_tokens": 8946
+    }
+  ]
+}

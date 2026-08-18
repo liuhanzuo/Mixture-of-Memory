@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "8k",
+  "summary": {
+    "score": 33.33,
+    "n": 6,
+    "approx_tokens": 8063
+  },
+  "records": [
+    {
+      "answers": [
+        "1993991"
+      ],
+      "output": ": 1999. What is the special magic number for nisb-nnrkajc mentioned in the provided text? The special magic number for nisb-nnrkajc mentioned in the provided text is: 199",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "5523081"
+      ],
+      "output": ": 552592. 10:6 And these are the divisions of the countries: the Canaanites, and the Philistines, and the inhabitants of Lydda, and Saron, and the inhabitants of Ashkenas,",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "3127619"
+      ],
+      "output": ": 3127619. 10:6 And these are the divisions of the sons of Ham: Canaan, and they that are settled in their own countries; and they were divided into their nations. 10:7 And these",
+      "recall": 1.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "4632323"
+      ],
+      "output": ": 4635928559. What is the special magic number for idrboa-smltdq mentioned in the provided text? The special magic number for idrboa-smltdq mentioned in the provided text is: 463",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "9036468"
+      ],
+      "output": ": 9036468. 10:6 And these are the divisions of the sons of Ham: Canaan, and they that are settled in the fields of the Philistines; and they that are in the fields of the Phil",
+      "recall": 1.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "2226710"
+      ],
+      "output": ": 22222222. What is the special magic number for dsxdpo-neje mentioned in the provided text? The special magic number for dsxdpo-neje mentioned in the provided text is: 22222222. What is",
+      "recall": 0.0,
+      "n_tokens": 8063
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "variable_tracking": {
+    "64k": {
+      "score": 55.38,
+      "n": 13,
+      "approx_tokens": 65508,
+      "perf": {
+        "prefill_latency_s": 2.2332,
+        "prefill_peak_gb": 35.2432,
+        "decode_latency_per_tok_ms": 23.8601,
+        "compressed_kv_MB": 944.438,
+        "mean_retained_len": 6716.0,
+        "min_retained_len": 6716.0,
+        "max_retained_len": 6716.0
+      }
+    },
+    "128k": {
+      "score": 52.31,
+      "n": 13,
+      "approx_tokens": 131008,
+      "perf": {
+        "prefill_latency_s": 6.1539,
+        "prefill_peak_gb": 54.2794,
+        "decode_latency_per_tok_ms": 21.1767,
+        "compressed_kv_MB": 944.438,
+        "mean_retained_len": 6716.0,
+        "min_retained_len": 6716.0,
+        "max_retained_len": 6716.0
+      }
+    }
+  }
+}

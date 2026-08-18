@@ -1,0 +1,88 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 7,
+    "approx_tokens": 32890
+  },
+  "records": [
+    {
+      "sample_index": 0,
+      "label": "rjmkj-ycvbje",
+      "expected": "456457",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"rjmkj-ycvbje\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32924,
+      "read_len": null
+    },
+    {
+      "sample_index": 8,
+      "label": "mkyjynwrp-lxuoh",
+      "expected": "640787",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"mkyjynwrp-lxuoh\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33010,
+      "read_len": null
+    },
+    {
+      "sample_index": 16,
+      "label": "ihslbqra-gurtk",
+      "expected": "168073",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"ihslbqra-gurtk\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32975,
+      "read_len": null
+    },
+    {
+      "sample_index": 24,
+      "label": "ovyuuzjg-fmjkcad",
+      "expected": "295433",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"ovyuuzjg-fmjkcad\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33013,
+      "read_len": null
+    },
+    {
+      "sample_index": 32,
+      "label": "erhqxrw-okdoalr",
+      "expected": "182137",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"erhqxrw-okdoalr\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated with that",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32944,
+      "read_len": null
+    },
+    {
+      "sample_index": 40,
+      "label": "xihqp-gcgtsqlh",
+      "expected": "947641",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"xihqp-gcgtsqlh.\" Therefore, I cannot retrieve a <REGISTER_CONTENT> value for this line. Please verify the line index or",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32973,
+      "read_len": null
+    },
+    {
+      "sample_index": 48,
+      "label": "wmsijimc-sstsyhad",
+      "expected": "652798",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"wmsijimc-sstsyhad\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32890,
+      "read_len": null
+    }
+  ]
+}

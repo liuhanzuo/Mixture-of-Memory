@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "16k",
+  "summary": {
+    "score": 0.0,
+    "n": 6,
+    "approx_tokens": 16036
+  },
+  "records": [
+    {
+      "answers": [
+        "9365022"
+      ],
+      "output": "thethe, thethe,the,.swinging the, And,",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "1866516"
+      ],
+      "output": "thethe,And the and thethe, And thethe,.swinging the and the, and the andthe and the theaven thes theaveno thethe 1 theth thethe,the thethe and.swinging the",
+      "recall": 0.0,
+      "n_tokens": 16036
+    },
+    {
+      "answers": [
+        "8692399"
+      ],
+      "output": "thethe Lord of the, And,",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "1255508"
+      ],
+      "output": "the and thethe I, thethe,the,.swinging the, and the and theaven and the theaven thes theaveno thethe 1 theth thethe,the,.swinging and versa thethe,the",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "8850957"
+      ],
+      "output": "thethe Lord of the, And,",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "6576182"
+      ],
+      "output": "thethe,And the and thethe, thethe,the Lord, versa the, And,",
+      "recall": 0.0,
+      "n_tokens": 16036
+    }
+  ]
+}

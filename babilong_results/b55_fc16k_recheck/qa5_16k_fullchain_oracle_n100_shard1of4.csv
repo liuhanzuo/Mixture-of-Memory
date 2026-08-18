@@ -1,0 +1,58 @@
+"target","output","question","orig_chunk","full_chunk"
+"Bill","Mary gave the milk to Bill. Mary passed the milk to Bill. Mary gave the milk to Bill","Who did Mary give the milk to? ","{24}","{24, 21}"
+"apple","What did she give to Nils?
+
+Question: What did Mary give to Jeff? What did she","What did Mary give to Jeff? ","{26}","{26}"
+"Fred","Answer: Fred gave the apple to Mary.
+
+Question: Who gave the apple to Fred? Answer:","Who gave the apple to Mary? ","{8}","{8}"
+"Bill","Answer: Bill.
+
+Question: What did Heywood say? Answer: ""Very.""
+
+Question: What","Who did Mary give the milk to? ","{25}","{23}"
+"apple","What was the result of this action?
+
+Question: What was the result of this action?
+
+Question:","What did Fred give to Bill? ","{27}","{22}"
+"Mary","Mary. Fred. Amy. Webb.
+
+Question:","Who received the milk? ","{23}","{21, 23}"
+"football","Fred gave the football to Jeff. Jeff gave the football to Fred. Fred gave the football to Jeff","What did Jeff give to Fred? ","{24}","{24, 13}"
+"Mary","Answer: Mary. Question: Who was the Comptroller of the Inner Temple? Answer: Bill","Who gave the milk to Bill? ","{25}","{25}"
+"football","Answer: The apple.
+
+Question: What did Mary give to Bill? Answer: The football.
+
+Question","What did Bill give to Mary? ","{27}","{27}"
+"Bill","A. Chris B. Bill C. Miss Trotter D. Judge Boompointer
+
+Question: What","Who did Mary give the apple to? ","{25}","{25}"
+"Mary","Fred gave the football to Mary. Fred gave the football to Mary. Fred gave the football to Mary","Who gave the football? ","{25}","{15}"
+"apple","Answer: Fred gave the apple to Bill.
+
+Question: What did Fred give to Bill? Answer:","What did Fred give to Bill? ","{28}","{28}"
+"apple","""Well, Maggie, I'm going to tell you
+the whole story, and you can tell","What did Bill give to Mary? ","{30}","{30}"
+"milk","""The milk to Fred."" ""The milk to Fred."" ""The milk to Fred."" ""The","What did Jeff give to Fred? ","{30}","{30}"
+"Mary","Fred gave the football to Mary. No Aunt Tidman flickers a smile at me! I","Who received the football? ","{21}","{18, 21}"
+"Jeff","Jeff. Fred. The King. The Mayor. The Bishop. The Secretary. The
+Mayor and","Who gave the apple to Fred? ","{0, 29}","{28}"
+"Jeff","Answer: Fred gave the apple to Jeff. Fred gave the apple to Jeff. Fred gave the apple","Who received the apple? ","{28}","{28}"
+"Jeff","Answer: Charles gave the apple. Question: Who was the Cornish born? Answer: Jeff was","Who gave the apple? ","{27}","{27}"
+"apple","a. the apple b. the apple and the apple and the apple and the apple and the apple","What did Mary give to Bill? ","{15}","{15}"
+"Jeff","Answer: George III. Question: Who received the apple? Answer: George Washington. Question: Who","Who gave the apple? ","{27}","{27}"
+"football","for circulars and full particulars. Address:
+
+M. J. LAWRENCE, Ed. [","What did Jeff give to Mary? ","{21}","{21}"
+"Bill","What was the name of the girl in the blue serge dress?
+
+Question: What was the name of","Who gave the milk to Mary? ","{27}","{27}"
+"Fred","Fred. Bill gave the milk to Fred. *       *       *       *       *
+
+A Question","Who did Bill give the milk to? ","{27}","{17, 27}"
+"Bill","What did he say to Bill?
+
+Answer: He gave the apple to Bill. He said to Bill","Who did Jeff give the apple to? ","{25}","{25}"
+"Fred","Mary handed the milk to Fred. Fred handed the milk to Mary. Fred handed the milk to Mary","Who gave the milk? ","{27}","{25, 19}"

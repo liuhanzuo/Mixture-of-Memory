@@ -1,0 +1,91 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.1667,
+    "correct": 1,
+    "total": 6,
+    "approx_tokens": 131514,
+    "avg_read_len": 6478.0,
+    "last_read_len": 6587
+  },
+  "records": [
+    {
+      "sample_index": 3,
+      "label": "nihconm-oldxerh",
+      "expected": "212502",
+      "output": "<212502>. \n\nWait, but in the provided data, the line \"line nihconm-oldxerh: REGISTER_CONTENT is <212502>\" is present. So the answer is",
+      "pred": "212502",
+      "correct": true,
+      "n_lines": 6144,
+      "n_tokens": 131473,
+      "read_len": 6546,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 11,
+      "label": "yrtolp-xnoegu",
+      "expected": "330268",
+      "output": "<...> but I can't see the value. Let me check the data again.\n\nWait, I need to find the line that contains \"yrtolp-xnoegu\" and extract the value inside the <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131505,
+      "read_len": 6578,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 19,
+      "label": "obgjirm-cozirxhlp",
+      "expected": "877353",
+      "output": "<477483>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the lines provided, the line with the identifier \"obgj",
+      "pred": "477483",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131732,
+      "read_len": 6293,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 257
+    },
+    {
+      "sample_index": 27,
+      "label": "vhkdv-jgmomniq",
+      "expected": "613415",
+      "output": "<...> and I need to find the value. Let me check the list again.\n\nLooking through the provided data, I see that the line \"line vhkdv-jgmomniq\" is not listed. However, there is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131303,
+      "read_len": 6376,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 35,
+      "label": "sznvu-zzynritx",
+      "expected": "842875",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that matches the line number \"sznvu-zzynritx\".\n\nLooking through the list:\n\n- The line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131415,
+      "read_len": 6488,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 43,
+      "label": "ehmltn-xyrrnu",
+      "expected": "853198",
+      "output": "<150539>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss it.\n\nLooking through the lines:\n\n- The line with \"ehmltn-xyrr",
+      "pred": "150539",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131514,
+      "read_len": 6587,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    }
+  ]
+}

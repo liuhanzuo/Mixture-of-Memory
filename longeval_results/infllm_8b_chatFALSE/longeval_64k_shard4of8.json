@@ -1,0 +1,77 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 65766
+  },
+  "records": [
+    {
+      "sample_index": 4,
+      "label": "gnfookrw-rdsjerslc",
+      "expected": "849913",
+      "output": "<738429>. Let me know if you need any other information. The line index \"gnfookrw-rdsjerslc\" corresponds to the REGISTER_CONTENT value of 738429. I",
+      "pred": "738429",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65689,
+      "read_len": null
+    },
+    {
+      "sample_index": 12,
+      "label": "jmwiozage-jvzvnspxp",
+      "expected": "383553",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"jmwiozage-jvzvnspxp\" does not match any of the line identifiers provided. Therefore, there is no <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65865,
+      "read_len": null
+    },
+    {
+      "sample_index": 20,
+      "label": "maeaueknz-iqlgyga",
+      "expected": "438067",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"maeauenkz-iqlgyga\" does not match any of the line indices provided. Therefore, there is no corresponding <REGISTER_CONTENT> value for",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65843,
+      "read_len": null
+    },
+    {
+      "sample_index": 28,
+      "label": "imycuqcg-qoawshkem",
+      "expected": "621640",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"imycuqcg-qoawshkem\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> for that line index. Please check",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65715,
+      "read_len": null
+    },
+    {
+      "sample_index": 36,
+      "label": "rnpapod-grmfooek",
+      "expected": "170560",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"rnpapod-grmfooek\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> for this line index. Please check the line index",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65851,
+      "read_len": null
+    },
+    {
+      "sample_index": 44,
+      "label": "bkjdsk-pzqyxzps",
+      "expected": "455963",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"bkjdsk-pzqyxzps\". Therefore, I cannot retrieve the corresponding <REGISTER_CONTENT> for that line index. Please check the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65766,
+      "read_len": null
+    }
+  ]
+}

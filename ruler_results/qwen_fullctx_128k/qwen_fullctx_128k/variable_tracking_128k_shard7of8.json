@@ -1,0 +1,83 @@
+{
+  "task": "variable_tracking",
+  "length": "128k",
+  "summary": {
+    "score": 0.0,
+    "n": 6,
+    "approx_tokens": 131003
+  },
+  "records": [
+    {
+      "answers": [
+        "QABHX",
+        "ZERJV",
+        "CQUNU",
+        "YVUJQ",
+        "KWZHE"
+      ],
+      "output": "83547. Here we go. There and back again.\nThe grass is green. The sun is blue. The sun is blue. Here we go. There and back again.\nThe grass is green. The sun is blue. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "n_tokens": 131009
+    },
+    {
+      "answers": [
+        "XSKWO",
+        "FMLMR",
+        "DWEUQ",
+        "ZDPXJ",
+        "LKARL"
+      ],
+      "output": "72680. Here we go. There and back again.\nThe grass is green. The sun is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sun is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 131006
+    },
+    {
+      "answers": [
+        "YYBEK",
+        "DSRMD",
+        "MWEHL",
+        "THQCD",
+        "VSIYG"
+      ],
+      "output": "56036. The sun is blue. The sun is blue. Here we go. There and back again.\nThe grass is blue. The sun is blue. Here we go. There and back again.\nThe grass is blue. The sun is blue. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 131003
+    },
+    {
+      "answers": [
+        "WMPHL",
+        "NQFUN",
+        "WGFNH",
+        "WKWJH",
+        "CHQNC"
+      ],
+      "output": "89204. Here we go. There and back again.\nThe grass is green. The sun is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sun is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 131005
+    },
+    {
+      "answers": [
+        "ZZNRH",
+        "YDHTF",
+        "PUYKL",
+        "EXWEG",
+        "BHKRK"
+      ],
+      "output": "50926. Here we go. There and back again.\nThe grass is green. The sun is blue. Here we go. There and back again.\nThe grass is blue. The sun is blue. Here we go. There and back again.\nThe grass is green. The sun",
+      "recall": 0.0,
+      "n_tokens": 131005
+    },
+    {
+      "answers": [
+        "SUZAQ",
+        "KDQKM",
+        "CKQIB",
+        "CZTKM",
+        "TWXOG"
+      ],
+      "output": "23514. Here we go. There and back again.\nThe grass is green. The sun is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sun is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 131003
+    }
+  ]
+}

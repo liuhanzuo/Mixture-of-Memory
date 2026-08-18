@@ -1,0 +1,74 @@
+{
+  "variable_tracking": {
+    "8k": {
+      "score": 100.0,
+      "n": 13,
+      "approx_tokens": 8099,
+      "perf": {
+        "prefill_latency_s": 0.2726,
+        "prefill_peak_gb": 18.5585,
+        "decode_latency_per_tok_ms": 26.097,
+        "compressed_kv_MB": 944.438,
+        "mean_retained_len": 6716.0,
+        "min_retained_len": 6716.0,
+        "max_retained_len": 6716.0
+      }
+    },
+    "16k": {
+      "score": 100.0,
+      "n": 13,
+      "approx_tokens": 16283,
+      "perf": {
+        "prefill_latency_s": 0.3873,
+        "prefill_peak_gb": 20.9377,
+        "decode_latency_per_tok_ms": 23.1187,
+        "compressed_kv_MB": 944.438,
+        "mean_retained_len": 6716.0,
+        "min_retained_len": 6716.0,
+        "max_retained_len": 6716.0
+      }
+    },
+    "32k": {
+      "score": 100.0,
+      "n": 13,
+      "approx_tokens": 32726,
+      "perf": {
+        "prefill_latency_s": 0.8675,
+        "prefill_peak_gb": 25.7156,
+        "decode_latency_per_tok_ms": 22.6442,
+        "compressed_kv_MB": 944.438,
+        "mean_retained_len": 6716.0,
+        "min_retained_len": 6716.0,
+        "max_retained_len": 6716.0
+      }
+    },
+    "64k": {
+      "score": 12.31,
+      "n": 13,
+      "approx_tokens": 40960,
+      "perf": {
+        "prefill_latency_s": 1.1249,
+        "prefill_peak_gb": 28.11,
+        "decode_latency_per_tok_ms": 22.9312,
+        "compressed_kv_MB": 944.438,
+        "mean_retained_len": 6716.0,
+        "min_retained_len": 6716.0,
+        "max_retained_len": 6716.0
+      }
+    },
+    "128k": {
+      "score": 18.46,
+      "n": 13,
+      "approx_tokens": 40960,
+      "perf": {
+        "prefill_latency_s": 1.1232,
+        "prefill_peak_gb": 28.11,
+        "decode_latency_per_tok_ms": 22.9108,
+        "compressed_kv_MB": 944.438,
+        "mean_retained_len": 6716.0,
+        "min_retained_len": 6716.0,
+        "max_retained_len": 6716.0
+      }
+    }
+  }
+}

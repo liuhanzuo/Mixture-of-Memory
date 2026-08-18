@@ -1,0 +1,88 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.2857,
+    "correct": 2,
+    "total": 7,
+    "approx_tokens": 33017
+  },
+  "records": [
+    {
+      "sample_index": 1,
+      "label": "yvsstit-sjfcqbxuo",
+      "expected": "185646",
+      "output": "not present in the provided record. The line indices provided in the record do not include \"yvsstit-sjfcqbxuo\". Please check the line index and try again. The available line indices are the ones listed in the record",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32909,
+      "read_len": null
+    },
+    {
+      "sample_index": 9,
+      "label": "orcmzgq-fqvdit",
+      "expected": "187311",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"orcmzgq-fqvdit\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> for that line index. Please check the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32900,
+      "read_len": null
+    },
+    {
+      "sample_index": 17,
+      "label": "mzkrtgdwu-afhtokcar",
+      "expected": "686053",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"mzkrtgdwu-afhtokcar\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33019,
+      "read_len": null
+    },
+    {
+      "sample_index": 25,
+      "label": "jdjylk-iyyem",
+      "expected": "737478",
+      "output": "<737478>. I remember that line index jdjylk-iyyem corresponds to the numerical value 737478. I memorized each line's <REGISTER_CONTENT> as per the record provided",
+      "pred": "737478",
+      "correct": true,
+      "n_lines": 1536,
+      "n_tokens": 32849,
+      "read_len": null
+    },
+    {
+      "sample_index": 33,
+      "label": "bzkddv-cunce",
+      "expected": "479720",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"bzkddv-cunce\". Please check the line identifier and try again. If it's a typo, please provide the correct line identifier so",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33025,
+      "read_len": null
+    },
+    {
+      "sample_index": 41,
+      "label": "oeivewk-zzhchzhrg",
+      "expected": "446910",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"oeivewk-zzhchzhrg\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32962,
+      "read_len": null
+    },
+    {
+      "sample_index": 49,
+      "label": "ljqajmhx-wydklyegh",
+      "expected": "266503",
+      "output": "<266503>. I remember that line from the record you provided. Let me double-check to make sure I didn't mix up any numbers. Yes, that's correct. The line with the identifier ljqajmh",
+      "pred": "266503",
+      "correct": true,
+      "n_lines": 1536,
+      "n_tokens": 33017,
+      "read_len": null
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "16k",
+  "summary": {
+    "score": 0.0,
+    "n": 6,
+    "approx_tokens": 16039
+  },
+  "records": [
+    {
+      "answers": [
+        "3570590"
+      ],
+      "output": "thethe,And the and thethe, thethe,the,.swinging the, And,",
+      "recall": 0.0,
+      "n_tokens": 16036
+    },
+    {
+      "answers": [
+        "9227928"
+      ],
+      "output": "thethe Lord of the, and the,the and the,And theaven theavened thethe 1theo thethe,And thethe And and.the,the and theth thethe and thethe thethe",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "8624183"
+      ],
+      "output": "thethe,the,.swinging the, and the and theaven and the theaven the and theaveno thethe 1 theth thethe,the,.swinging and able and thethe and theth thethe and the",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "7536939"
+      ],
+      "output": "thethe, thethe,the,.swinging the, And,",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "6338964"
+      ],
+      "output": "thethe the theEAST the thethe and thethe and thethe,And theaven theaven that was that,the Lord, versa thecovenant the,the and and theaven theaven and theaven thetheaththe",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "3132070"
+      ],
+      "output": "the the and thethe, thethe,the,.swinging the, And,",
+      "recall": 0.0,
+      "n_tokens": 16039
+    }
+  ]
+}

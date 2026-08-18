@@ -1,0 +1,37 @@
+"target","output","question","orig_chunk","full_chunk"
+"milk","Answer: The milk. Question: What did Jeff get there? Answer: The milk there. Question","What did Mary give to Fred? ","{14}","{13}"
+"apple","Answer: The apple. Question: What did Cameron do with his supplies? Answer: He drew them","What did Fred give to Bill? ","{14}","{14}"
+"Jeff","Answer: Jeff. Question: Who did Jeff pass the football to? Answer: Mary. Question:","Who did Mary give the football to? ","{12}","{10, 11}"
+"apple","Answer:","What did Fred give to Mary? ","{14}","{14}"
+"Bill","Answer: Bill. Mary handed the football to Bill. Got up, and by and by walked into","Who did Mary give the football to? ","{13}","{10}"
+"milk","Answer:","What did Bill give to Mary? ","{13}","{11}"
+"Mary","Answer: Mary. Mary handed the apple to Bill. Mary handed the apple to Bill. Mary handed","Who gave the apple to Bill? ","{9}","{8, 9}"
+"Mary","Answer: Mary. Mary handed the milk to Jeff. Mary handed the milk to Jeff. Mary handed","Who gave the milk? ","{14}","{14}"
+"apple","Answer: Fred gave the apple to Bill.
+
+Question: What did Mary journey to the garden? Answer","What did Fred give to Bill? ","{9}","{5}"
+"milk","Answer: Mary handed the milk to Fred.
+
+Question: What did Alfred do to Fred? Answer:","What did Mary give to Fred? ","{14}","{14}"
+"Mary","Answer: Mary gave the apple to Bill.
+
+Question: Who gave the apple to Bill? Answer:","Who gave the apple? ","{13}","{12}"
+"Fred","Answer: Jeff handed the milk to Fred. Jeff journeyed to the office. He published
+H","Who received the milk? ","{13}","{12, 13}"
+"apple","Answer: the apple. Fred gave the apple to Bill. Fred gave the apple to Bill. Fred","What did Fred give to Bill? ","{12}","{12}"
+"Jeff","Answer: Fred. Fred gave the football to Bill. Bill travelled to the bedroom. Bill travelled to","Who gave the football? ","{12}","{10}"
+"Jeff","Answer: Bill gave the milk to Jeff.
+
+Question: Who did Jeff give the milk to? Answer","Who did Bill give the milk to? ","{14}","{14}"
+"Jeff","Answer: Jeff.
+
+Question: What did Bill say he was going to say? Answer: When you","Who did Bill give the apple to? ","{14}","{14}"
+"apple","Answer: Fred gave the apple to Fred. Mary gave the apple to Fred. Fred gave the apple","What did Mary give to Fred? ","{12}","{12}"
+"Bill","Answer: Bill. Question: Who did Jeff give the football to? Answer: Bill. Question:","Who did Jeff give the football to? ","{10, 14}","{13}"
+"Bill","""I","Who did Fred give the milk to? ","{14}","{13}"
+"football","Answer: The football. Mary gave the football to Fred. You should not therefore consult fancy with regard","What did Mary give to Fred? ","{13}","{11}"
+"milk","Answer: The milk. Mary handed the milk to Fred. Fred gave the milk to Mary. Mary","What did Mary give to Fred? ","{14}","{10, 14}"
+"Fred","Answer: Fred handed the apple to Mary. Question: Who gave the apple? Answer: Fred handed","Who gave the apple? ","{12}","{12}"
+"Fred","Answer: Fred. Question: Who was the acquaintance? Answer: The acquaintance was the raccoon.","Who did Bill give the apple to? ","{14}","{13, 14}"
+"Mary","Answer: Mary. Question: What did the germ of the idea of the true cause and cure of","Who did Bill give the milk to? ","{12}","{11}"
+"Fred","Answer: Fred. Question: Who gave the football? Answer: Fred. Question: Who gave the","Who gave the football? ","{11}","{11}"

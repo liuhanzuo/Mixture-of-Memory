@@ -15,166 +15,166 @@
     "bottleneck_layer": 6,
     "bottleneck_dim": 0,
     "full_forward": {
-      "acc": 0.3192,
-      "nll": 4.1283
+      "acc": 0.3775,
+      "nll": 3.4931
     },
     "compressibility": {
       "n_vectors": 49152,
       "d": 2048,
-      "dim_90": 925,
-      "dim_95": 1340,
-      "dim_99": 1859,
-      "effective_rank_spectral_entropy": 406.55,
-      "participation_ratio": 48.49,
-      "top1_var_frac": 0.1332,
-      "int4_recon_relerr": 0.337
+      "dim_90": 993,
+      "dim_95": 1373,
+      "dim_99": 1864,
+      "effective_rank_spectral_entropy": 377.7,
+      "participation_ratio": 22.26,
+      "top1_var_frac": 0.2087,
+      "int4_recon_relerr": 0.3627
     },
     "readout": {
       "none": {
-        "acc": 0.3192,
-        "nll": 4.1283,
+        "acc": 0.3775,
+        "nll": 3.4931,
         "acc_drop": 0.0
       },
       "pca_rank512": {
-        "acc": 0.3099,
-        "nll": 4.2189,
-        "acc_drop": 0.0093
+        "acc": 0.3619,
+        "nll": 3.6026,
+        "acc_drop": 0.0157
       },
       "pca_rank256": {
-        "acc": 0.2911,
-        "nll": 4.3601,
-        "acc_drop": 0.0281
+        "acc": 0.3233,
+        "nll": 3.8755,
+        "acc_drop": 0.0543
       },
       "pca_rank128": {
-        "acc": 0.2593,
-        "nll": 4.6682,
-        "acc_drop": 0.06
+        "acc": 0.2429,
+        "nll": 4.5737,
+        "acc_drop": 0.1346
       },
       "pca_rank64": {
-        "acc": 0.1867,
-        "nll": 5.4136,
-        "acc_drop": 0.1325
+        "acc": 0.1567,
+        "nll": 5.6089,
+        "acc_drop": 0.2208
       },
       "int4": {
-        "acc": 0.3146,
-        "nll": 4.1711,
-        "acc_drop": 0.0046
+        "acc": 0.371,
+        "nll": 3.5487,
+        "acc_drop": 0.0065
       }
     }
   },
   "bottleneck": {
     "bottleneck_layer": 6,
-    "bottleneck_dim": 512,
+    "bottleneck_dim": 256,
     "full_forward": {
-      "acc": 0.3154,
-      "nll": 4.1809
+      "acc": 0.3715,
+      "nll": 3.5601
     },
     "compressibility": {
       "n_vectors": 49152,
       "d": 2048,
-      "dim_90": 202,
-      "dim_95": 287,
-      "dim_99": 427,
-      "effective_rank_spectral_entropy": 149.23,
-      "participation_ratio": 59.76,
-      "top1_var_frac": 0.0767,
-      "int4_recon_relerr": 0.2576
+      "dim_90": 151,
+      "dim_95": 188,
+      "dim_99": 236,
+      "effective_rank_spectral_entropy": 101.31,
+      "participation_ratio": 23.23,
+      "top1_var_frac": 0.1934,
+      "int4_recon_relerr": 0.2907
     },
     "readout": {
       "none": {
-        "acc": 0.3154,
-        "nll": 4.1809,
+        "acc": 0.3715,
+        "nll": 3.5601,
         "acc_drop": 0.0
       },
       "pca_rank512": {
-        "acc": 0.3158,
-        "nll": 4.181,
-        "acc_drop": -0.0004
+        "acc": 0.3714,
+        "nll": 3.5602,
+        "acc_drop": 0.0001
       },
       "pca_rank256": {
-        "acc": 0.3143,
-        "nll": 4.2018,
-        "acc_drop": 0.0011
+        "acc": 0.3714,
+        "nll": 3.5601,
+        "acc_drop": 0.0001
       },
       "pca_rank128": {
-        "acc": 0.3046,
-        "nll": 4.2813,
-        "acc_drop": 0.0108
+        "acc": 0.3629,
+        "nll": 3.6439,
+        "acc_drop": 0.0087
       },
       "pca_rank64": {
-        "acc": 0.2799,
-        "nll": 4.5047,
-        "acc_drop": 0.0355
+        "acc": 0.2883,
+        "nll": 4.3622,
+        "acc_drop": 0.0832
       },
       "int4": {
-        "acc": 0.3114,
-        "nll": 4.2102,
-        "acc_drop": 0.004
+        "acc": 0.3598,
+        "nll": 3.6476,
+        "acc_drop": 0.0117
       }
     }
   },
   "layerwise_baseline": {
     "2": {
-      "dim99": 1831,
-      "eff_rank": 545.86,
-      "int4_relerr": 0.2394
+      "dim99": 1695,
+      "eff_rank": 95.96,
+      "int4_relerr": 0.4301
     },
     "4": {
-      "dim99": 1858,
-      "eff_rank": 525.33,
-      "int4_relerr": 0.2957
+      "dim99": 1811,
+      "eff_rank": 173.29,
+      "int4_relerr": 0.4091
     },
     "6": {
-      "dim99": 1859,
-      "eff_rank": 406.55,
-      "int4_relerr": 0.337
+      "dim99": 1864,
+      "eff_rank": 377.7,
+      "int4_relerr": 0.3627
     },
     "8": {
-      "dim99": 1887,
-      "eff_rank": 600.87,
-      "int4_relerr": 0.2838
+      "dim99": 1893,
+      "eff_rank": 611.13,
+      "int4_relerr": 0.3346
     },
     "10": {
-      "dim99": 1888,
-      "eff_rank": 672.03,
-      "int4_relerr": 0.2328
+      "dim99": 1900,
+      "eff_rank": 766.83,
+      "int4_relerr": 0.2933
     },
     "12": {
-      "dim99": 1871,
-      "eff_rank": 599.46,
-      "int4_relerr": 0.2132
+      "dim99": 1890,
+      "eff_rank": 797.87,
+      "int4_relerr": 0.2541
     }
   },
   "layerwise_bottleneck": {
     "2": {
-      "dim99": 1827,
-      "eff_rank": 567.65,
-      "int4_relerr": 0.2143
+      "dim99": 1756,
+      "eff_rank": 554.93,
+      "int4_relerr": 0.2033
     },
     "4": {
-      "dim99": 1873,
-      "eff_rank": 665.29,
-      "int4_relerr": 0.209
+      "dim99": 1813,
+      "eff_rank": 645.12,
+      "int4_relerr": 0.2034
     },
     "6": {
-      "dim99": 427,
-      "eff_rank": 149.23,
-      "int4_relerr": 0.2576
+      "dim99": 236,
+      "eff_rank": 101.31,
+      "int4_relerr": 0.2907
     },
     "8": {
-      "dim99": 1708,
-      "eff_rank": 357.08,
-      "int4_relerr": 0.2839
+      "dim99": 1494,
+      "eff_rank": 26.77,
+      "int4_relerr": 0.4162
     },
     "10": {
-      "dim99": 1862,
-      "eff_rank": 658.14,
-      "int4_relerr": 0.2254
+      "dim99": 1792,
+      "eff_rank": 132.47,
+      "int4_relerr": 0.3969
     },
     "12": {
-      "dim99": 1875,
-      "eff_rank": 658.85,
-      "int4_relerr": 0.2121
+      "dim99": 1869,
+      "eff_rank": 418.15,
+      "int4_relerr": 0.36
     }
   }
 }

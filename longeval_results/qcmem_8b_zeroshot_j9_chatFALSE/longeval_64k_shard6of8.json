@@ -1,0 +1,91 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 65690,
+    "avg_read_len": 6362.3,
+    "last_read_len": 6299
+  },
+  "records": [
+    {
+      "sample_index": 6,
+      "label": "mdxqdx-wlict",
+      "expected": "730214",
+      "output": "<543210>. \n\nWait, but I need to check if that's correct. Let me check again. Let me look through the list again.\n\nLooking through the lines provided, I see that the line with the identifier",
+      "pred": "543210",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65820,
+      "read_len": 6429,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 14,
+      "label": "pjaoklp-jhknh",
+      "expected": "478248",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that matches the line number \"pjaoklp-jhknh\".\n\nLooking through the list:\n\n- The line with",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65790,
+      "read_len": 6399,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 22,
+      "label": "fbsfco-cwaynh",
+      "expected": "286981",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line fbsfco-cwaynh: REGISTER_CONTENT is <...>. \n\nLooking at the list, I see that the line with the identifier",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65664,
+      "read_len": 6273,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 30,
+      "label": "oqkze-dbnmklxgm",
+      "expected": "817735",
+      "output": "<...> but I can't see it in the provided data. Please check the data again.\n\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line oqkze-d",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65757,
+      "read_len": 6366,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 38,
+      "label": "mcnajl-zhkzwg",
+      "expected": "688118",
+      "output": "<...> and I need to find the number inside the angle brackets. The line with the line is line mcnajl-zhkzwg: REGISTER_CONTENT is <...>. So I need to find the number inside the angle brackets",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65799,
+      "read_len": 6408,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 46,
+      "label": "oznaeoji-lhskfxphq",
+      "expected": "570110",
+      "output": "<902784>. \n\nWait, let me check again. Let me look through the lines provided to find the line that starts with \"oznaeoji-lhskfxphq\" and extract the value of REGISTER",
+      "pred": "902784",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65690,
+      "read_len": 6299,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    }
+  ]
+}

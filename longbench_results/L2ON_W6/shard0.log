@@ -1,0 +1,12 @@
+[LongBench] Configuration:
+  Model:         /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/models/Meta-Llama-3-8B
+  Checkpoint:    /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/expL2ON_N128/mem_space_adapter_step000500.pt
+  Adapter cfg:   /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/expL2ON_N128/adapter_config.json
+  Output dir:    longbench_results/L2ON_W6
+  Datasets:      ['hotpotqa', 'narrativeqa', 'qasper', 'multifieldqa_en', '2wikimqa', 'musique']
+  Chunk size:    512
+  GPU:           0/4
+  Chat template: False
+[LongBench] MemorySpaceConfig: num_slots=128, top_k=16, shared_bank=True
+[LongBench] Loading base model from: /apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/models/Meta-Llama-3-8B
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights: 100%|██████████| 291/291 [00:00<00:00, 6794.80it/s]

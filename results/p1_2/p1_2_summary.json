@@ -1,0 +1,188 @@
+{
+  "Meta-Llama-3-8B": {
+    "L": 32,
+    "content_j_layer_mean": 8.6,
+    "content_j_layer_ci95": [
+      6.52,
+      10.68
+    ],
+    "content_j_frac_mean": 0.2688,
+    "content_j_frac_ci95": [
+      0.2037,
+      0.3338
+    ],
+    "content_j_frac_std": 0.1174,
+    "n_points": 15,
+    "per_task": {
+      "RTE": {
+        "knee98_layer_mean": 10.8,
+        "knee98_frac_mean": 0.3375,
+        "ci95_frac": [
+          0.305,
+          0.37
+        ],
+        "peak_acc": 0.6414,
+        "lexical_only": 0.5341,
+        "position_only": 0.4835,
+        "random_label_peak": 0.5345,
+        "majority": 0.5016,
+        "native_knee_frac": 0.9688,
+        "native_peak_acc": 0.53
+      },
+      "SST2": {
+        "knee98_layer_mean": 8.8,
+        "knee98_frac_mean": 0.275,
+        "ci95_frac": [
+          0.2244,
+          0.3256
+        ],
+        "peak_acc": 0.8967,
+        "lexical_only": 0.7067,
+        "position_only": 0.5647,
+        "random_label_peak": 0.536,
+        "majority": 0.5577,
+        "native_knee_frac": 1.0,
+        "native_peak_acc": 0.752
+      },
+      "WiC": {
+        "knee98_layer_mean": 6.2,
+        "knee98_frac_mean": 0.1937,
+        "ci95_frac": [
+          -0.0315,
+          0.419
+        ],
+        "peak_acc": 0.6997,
+        "lexical_only": 0.598,
+        "position_only": 0.5363,
+        "random_label_peak": 0.545,
+        "majority": 0.5,
+        "native_knee_frac": 0.125,
+        "native_peak_acc": 0.529
+      }
+    }
+  },
+  "OLMo-2-1124-7B": {
+    "L": 32,
+    "content_j_layer_mean": 9.13,
+    "content_j_layer_ci95": [
+      6.84,
+      11.42
+    ],
+    "content_j_frac_mean": 0.2854,
+    "content_j_frac_ci95": [
+      0.2138,
+      0.357
+    ],
+    "content_j_frac_std": 0.1293,
+    "n_points": 15,
+    "per_task": {
+      "RTE": {
+        "knee98_layer_mean": 13.0,
+        "knee98_frac_mean": 0.4063,
+        "ci95_frac": [
+          0.2719,
+          0.5407
+        ],
+        "peak_acc": 0.6361,
+        "lexical_only": 0.5341,
+        "position_only": 0.4827,
+        "random_label_peak": 0.5458,
+        "majority": 0.5016,
+        "native_knee_frac": 1.0,
+        "native_peak_acc": 0.791
+      },
+      "SST2": {
+        "knee98_layer_mean": 9.0,
+        "knee98_frac_mean": 0.2813,
+        "ci95_frac": [
+          0.1715,
+          0.391
+        ],
+        "peak_acc": 0.9053,
+        "lexical_only": 0.7067,
+        "position_only": 0.5647,
+        "random_label_peak": 0.54,
+        "majority": 0.5577,
+        "native_knee_frac": 0.75,
+        "native_peak_acc": 0.913
+      },
+      "WiC": {
+        "knee98_layer_mean": 5.4,
+        "knee98_frac_mean": 0.1688,
+        "ci95_frac": [
+          0.0931,
+          0.2444
+        ],
+        "peak_acc": 0.6957,
+        "lexical_only": 0.598,
+        "position_only": 0.5363,
+        "random_label_peak": 0.5513,
+        "majority": 0.5,
+        "native_knee_frac": 0.875,
+        "native_peak_acc": 0.601
+      }
+    }
+  },
+  "Qwen--Qwen3-8b": {
+    "L": 36,
+    "content_j_layer_mean": 14.13,
+    "content_j_layer_ci95": [
+      11.5,
+      16.77
+    ],
+    "content_j_frac_mean": 0.3926,
+    "content_j_frac_ci95": [
+      0.3193,
+      0.4659
+    ],
+    "content_j_frac_std": 0.1323,
+    "n_points": 15,
+    "per_task": {
+      "RTE": {
+        "knee98_layer_mean": 19.0,
+        "knee98_frac_mean": 0.5278,
+        "ci95_frac": [
+          0.401,
+          0.6545
+        ],
+        "peak_acc": 0.6293,
+        "lexical_only": 0.5341,
+        "position_only": 0.4787,
+        "random_label_peak": 0.5434,
+        "majority": 0.5016,
+        "native_knee_frac": 0.9444,
+        "native_peak_acc": 0.813
+      },
+      "SST2": {
+        "knee98_layer_mean": 14.0,
+        "knee98_frac_mean": 0.3889,
+        "ci95_frac": [
+          0.3343,
+          0.4434
+        ],
+        "peak_acc": 0.9017,
+        "lexical_only": 0.7067,
+        "position_only": 0.5643,
+        "random_label_peak": 0.5387,
+        "majority": 0.5577,
+        "native_knee_frac": 0.6389,
+        "native_peak_acc": 0.938
+      },
+      "WiC": {
+        "knee98_layer_mean": 9.4,
+        "knee98_frac_mean": 0.2611,
+        "ci95_frac": [
+          0.1781,
+          0.3442
+        ],
+        "peak_acc": 0.6953,
+        "lexical_only": 0.598,
+        "position_only": 0.5327,
+        "random_label_peak": 0.545,
+        "majority": 0.5,
+        "native_knee_frac": 0.8889,
+        "native_peak_acc": 0.69
+      }
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "niah_single_2": {
+    "8k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 7513
+    },
+    "16k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 15384
+    },
+    "32k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 31696
+    },
+    "64k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 65500
+    }
+  },
+  "niah_multikey_1": {
+    "8k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 7582
+    },
+    "16k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 15468
+    },
+    "32k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 31783
+    },
+    "64k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 64574
+    }
+  },
+  "variable_tracking": {
+    "8k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 8101
+    },
+    "16k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 16286
+    },
+    "32k": {
+      "score": 96.67,
+      "n": 6,
+      "approx_tokens": 32721
+    },
+    "64k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 65510
+    }
+  }
+}

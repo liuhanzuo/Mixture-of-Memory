@@ -1,0 +1,811 @@
+{
+  "task": "niah_multikey_1",
+  "length": "8k",
+  "summary": {
+    "score": 6.0,
+    "n": 100,
+    "approx_tokens": 8127
+  },
+  "records": [
+    {
+      "answers": [
+        "4040810"
+      ],
+      "output": ": 1623518. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8134
+    },
+    {
+      "answers": [
+        "3767196"
+      ],
+      "output": "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,",
+      "recall": 0.0,
+      "n_tokens": 8133
+    },
+    {
+      "answers": [
+        "7809486"
+      ],
+      "output": ": 7809486. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 1.0,
+      "n_tokens": 8136
+    },
+    {
+      "answers": [
+        "4863881"
+      ],
+      "output": "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,",
+      "recall": 0.0,
+      "n_tokens": 8136
+    },
+    {
+      "answers": [
+        "1162191"
+      ],
+      "output": "666. This number is the sum of the letters of the name of the beast, and the number of the beast is 666. The beast, and the number of his name, are the same that both were and are not yet",
+      "recall": 0.0,
+      "n_tokens": 8133
+    },
+    {
+      "answers": [
+        "1454161"
+      ],
+      "output": "666. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast.",
+      "recall": 0.0,
+      "n_tokens": 8130
+    },
+    {
+      "answers": [
+        "3887240"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8127
+    },
+    {
+      "answers": [
+        "8167421"
+      ],
+      "output": "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,",
+      "recall": 0.0,
+      "n_tokens": 8134
+    },
+    {
+      "answers": [
+        "9752504"
+      ],
+      "output": "666. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast.",
+      "recall": 0.0,
+      "n_tokens": 8135
+    },
+    {
+      "answers": [
+        "5930384"
+      ],
+      "output": "666. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast.",
+      "recall": 0.0,
+      "n_tokens": 8146
+    },
+    {
+      "answers": [
+        "5008423"
+      ],
+      "output": ": 5763177. \nWhat is the special magic number for orvmo-sdnazrji mentioned in the provided text? The special magic number for orvmo-sdnazrji mentioned in the provided text is:",
+      "recall": 0.0,
+      "n_tokens": 8137
+    },
+    {
+      "answers": [
+        "7607682"
+      ],
+      "output": ": 7607682. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 1.0,
+      "n_tokens": 8138
+    },
+    {
+      "answers": [
+        "8326460"
+      ],
+      "output": ": 9308380. \nWhat is the special magic number for ydmily-ezqz mentioned in the provided text? The special magic number for ydmily-ezqz mentioned in the provided text is: 930",
+      "recall": 0.0,
+      "n_tokens": 8130
+    },
+    {
+      "answers": [
+        "2609579"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8131
+    },
+    {
+      "answers": [
+        "1795601"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8140
+    },
+    {
+      "answers": [
+        "4220434"
+      ],
+      "output": ": 4220434. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur",
+      "recall": 1.0,
+      "n_tokens": 8130
+    },
+    {
+      "answers": [
+        "4733579"
+      ],
+      "output": ": 3869084. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8131
+    },
+    {
+      "answers": [
+        "7096427"
+      ],
+      "output": ": 7974163. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8131
+    },
+    {
+      "answers": [
+        "9561852"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8136
+    },
+    {
+      "answers": [
+        "8806603"
+      ],
+      "output": ": 8195549. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8135
+    },
+    {
+      "answers": [
+        "2507428"
+      ],
+      "output": ": 6448168. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8137
+    },
+    {
+      "answers": [
+        "6223492"
+      ],
+      "output": "666. The special magic number for erxiyuw-ssvdbeb mentioned in the provided text is 666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Can",
+      "recall": 0.0,
+      "n_tokens": 8138
+    },
+    {
+      "answers": [
+        "5887455"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8131
+    },
+    {
+      "answers": [
+        "4307674"
+      ],
+      "output": "666. The special magic number for xsiywlyp-aqxsiyvy mentioned in the provided text is 666. The special magic number for xsiywlyp-aqxsiyvy mentioned in the provided text is 666",
+      "recall": 0.0,
+      "n_tokens": 8136
+    },
+    {
+      "answers": [
+        "1805753"
+      ],
+      "output": ": 1775829. \nWhat is the special magic number for npbd-bltqnrgx mentioned in the provided text? The special magic number for npbd-bltqnrgx mentioned in the provided text is: 177",
+      "recall": 0.0,
+      "n_tokens": 8137
+    },
+    {
+      "answers": [
+        "3534735"
+      ],
+      "output": ": 5667015. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8129
+    },
+    {
+      "answers": [
+        "1417337"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8131
+    },
+    {
+      "answers": [
+        "1781656"
+      ],
+      "output": "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,",
+      "recall": 0.0,
+      "n_tokens": 8137
+    },
+    {
+      "answers": [
+        "9909179"
+      ],
+      "output": ": 7647872. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur",
+      "recall": 0.0,
+      "n_tokens": 8140
+    },
+    {
+      "answers": [
+        "3918232"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8138
+    },
+    {
+      "answers": [
+        "3000723"
+      ],
+      "output": "0. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8128
+    },
+    {
+      "answers": [
+        "4739789"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16.",
+      "recall": 0.0,
+      "n_tokens": 8138
+    },
+    {
+      "answers": [
+        "6783517"
+      ],
+      "output": "666. 666 is the sum of the numbers of the letters in the name of the beast. 666 is the sum of the numbers of the letters in the name of the beast. 666 is the sum of the numbers of",
+      "recall": 0.0,
+      "n_tokens": 8137
+    },
+    {
+      "answers": [
+        "5101870"
+      ],
+      "output": ": 7154777. \nWhat is the special magic number for wqkgi-enfe mentioned in the provided text? The special magic number for wqkgi-enfe mentioned in the provided text is: 7154777",
+      "recall": 0.0,
+      "n_tokens": 8126
+    },
+    {
+      "answers": [
+        "2083209"
+      ],
+      "output": ": 2083209. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur",
+      "recall": 1.0,
+      "n_tokens": 8134
+    },
+    {
+      "answers": [
+        "2987488"
+      ],
+      "output": ": 4574505. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8125
+    },
+    {
+      "answers": [
+        "3052551"
+      ],
+      "output": "666. 666. 666. 666. 666. 666. 666. 666. 666. 666. 666. 666. 666. 666. 666. 666.",
+      "recall": 0.0,
+      "n_tokens": 8121
+    },
+    {
+      "answers": [
+        "8083743"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8135
+    },
+    {
+      "answers": [
+        "7351180"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8133
+    },
+    {
+      "answers": [
+        "8195909"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8128
+    },
+    {
+      "answers": [
+        "8576568"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8134
+    },
+    {
+      "answers": [
+        "1070974"
+      ],
+      "output": "666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8140
+    },
+    {
+      "answers": [
+        "9878319"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8133
+    },
+    {
+      "answers": [
+        "7459226"
+      ],
+      "output": "100. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8137
+    },
+    {
+      "answers": [
+        "1839914"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8130
+    },
+    {
+      "answers": [
+        "4712451"
+      ],
+      "output": "10. 10:6 And Ham, the father of Canaan, saw the nakedness of his father, and told his two brethren without. 10:7 And Shem and Japheth took a garment, and laid",
+      "recall": 0.0,
+      "n_tokens": 8129
+    },
+    {
+      "answers": [
+        "4089365"
+      ],
+      "output": ": 7934310. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8127
+    },
+    {
+      "answers": [
+        "7109859"
+      ],
+      "output": "1. The special magic number for xpsrwgro-lvumdb mentioned in the provided text is 2. The special magic number for xpsrwgro-lvumdb mentioned in the provided text is 3. The",
+      "recall": 0.0,
+      "n_tokens": 8135
+    },
+    {
+      "answers": [
+        "8833445"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8139
+    },
+    {
+      "answers": [
+        "7333796"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8126
+    },
+    {
+      "answers": [
+        "4542602"
+      ],
+      "output": "666. This number is the sum of the letters of the name of the beast, and the number of the name of the beast is 666. The beast is the Antichrist, and the number of his name is 666",
+      "recall": 0.0,
+      "n_tokens": 8134
+    },
+    {
+      "answers": [
+        "7488431"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8136
+    },
+    {
+      "answers": [
+        "4324678"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8134
+    },
+    {
+      "answers": [
+        "7214680"
+      ],
+      "output": "666. The special magic number for idcxguko-mrsgg mentioned in the provided text is 666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Can",
+      "recall": 0.0,
+      "n_tokens": 8132
+    },
+    {
+      "answers": [
+        "7214022"
+      ],
+      "output": "1. The special magic number for pbzo-mncjlp mentioned in the provided text is 2. The special magic number for pbzo-mncjlp mentioned in the provided text is 3. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 8131
+    },
+    {
+      "answers": [
+        "7221377"
+      ],
+      "output": ": 5462968. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8128
+    },
+    {
+      "answers": [
+        "8649225"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8133
+    },
+    {
+      "answers": [
+        "6444561"
+      ],
+      "output": "1. 10:6 And Ham, the father of Canaan, saw the nakedness of his father, and told his two brethren without. 10:7 And Shem and Japheth took a garment, and laid",
+      "recall": 0.0,
+      "n_tokens": 8128
+    },
+    {
+      "answers": [
+        "3682407"
+      ],
+      "output": ": 6358837. \nWhat is the special magic number for gpfkxlx-izixoafe mentioned in the provided text? The special magic number for gpfkxlx-izixoafe mentioned in the provided text",
+      "recall": 0.0,
+      "n_tokens": 8134
+    },
+    {
+      "answers": [
+        "5861637"
+      ],
+      "output": "666. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast.",
+      "recall": 0.0,
+      "n_tokens": 8132
+    },
+    {
+      "answers": [
+        "6828503"
+      ],
+      "output": ": 5742807. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8142
+    },
+    {
+      "answers": [
+        "8908694"
+      ],
+      "output": "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,",
+      "recall": 0.0,
+      "n_tokens": 8132
+    },
+    {
+      "answers": [
+        "8137396"
+      ],
+      "output": "666. The special magic number for mczyvgg-cppvt mentioned in the provided text is 666. The special magic number for mczyvgg-cppvt mentioned in the provided text is 666. The special magic",
+      "recall": 0.0,
+      "n_tokens": 8134
+    },
+    {
+      "answers": [
+        "3982395"
+      ],
+      "output": ": 3982395. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur",
+      "recall": 1.0,
+      "n_tokens": 8136
+    },
+    {
+      "answers": [
+        "3531323"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8136
+    },
+    {
+      "answers": [
+        "8712160"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8132
+    },
+    {
+      "answers": [
+        "2983885"
+      ],
+      "output": "666. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast.",
+      "recall": 0.0,
+      "n_tokens": 8134
+    },
+    {
+      "answers": [
+        "4237535"
+      ],
+      "output": "666. 10:6 And Japheth: the father of Gomer; and Gomer the father of Ashkenaz; and Ashkenaz the father of Elam, and Elam the father of Shem, and",
+      "recall": 0.0,
+      "n_tokens": 8134
+    },
+    {
+      "answers": [
+        "2321112"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8135
+    },
+    {
+      "answers": [
+        "8465490"
+      ],
+      "output": "0. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8129
+    },
+    {
+      "answers": [
+        "9136226"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8127
+    },
+    {
+      "answers": [
+        "7987032"
+      ],
+      "output": ": 5157846. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8133
+    },
+    {
+      "answers": [
+        "7302503"
+      ],
+      "output": "666. What is the special magic number for kveag-xjtsck mentioned in the provided text? The special magic number for kveag-xjtsck mentioned in the provided text is 666. What is the special",
+      "recall": 0.0,
+      "n_tokens": 8131
+    },
+    {
+      "answers": [
+        "5566438"
+      ],
+      "output": "1. What is the special magic number for saletrs-qrbj mentioned in the provided text? The special magic number for saletrs-qrbj mentioned in the provided text is 1. What is the special magic number for sale",
+      "recall": 0.0,
+      "n_tokens": 8126
+    },
+    {
+      "answers": [
+        "6288601"
+      ],
+      "output": ": 8564097. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8139
+    },
+    {
+      "answers": [
+        "4503777"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8131
+    },
+    {
+      "answers": [
+        "8036923"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8130
+    },
+    {
+      "answers": [
+        "9172939"
+      ],
+      "output": ": 1234429. 10:6 And Ham, the father of Canaan, took a wife, and begat, Ezr, and Chus, and Chus begat, Nimrod. 10:7 And",
+      "recall": 0.0,
+      "n_tokens": 8136
+    },
+    {
+      "answers": [
+        "9363742"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8134
+    },
+    {
+      "answers": [
+        "7166897"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8128
+    },
+    {
+      "answers": [
+        "5595842"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8132
+    },
+    {
+      "answers": [
+        "5289621"
+      ],
+      "output": ": 2815617. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur",
+      "recall": 0.0,
+      "n_tokens": 8131
+    },
+    {
+      "answers": [
+        "9029162"
+      ],
+      "output": ": 3899278. \nWhat is the special magic number for ezyjxnvu-mcpfhw mentioned in the provided text? The special magic number for ezyjxnvu-mcpfhw mentioned in the provided text",
+      "recall": 0.0,
+      "n_tokens": 8135
+    },
+    {
+      "answers": [
+        "6316233"
+      ],
+      "output": "1. 10:6 And Japheth: Gomer, and Magog, and Madai, and Javan, and Tubal, and Meshech, and Tiras. 10:7 And the sons of",
+      "recall": 0.0,
+      "n_tokens": 8139
+    },
+    {
+      "answers": [
+        "7851790"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8131
+    },
+    {
+      "answers": [
+        "7269218"
+      ],
+      "output": "1. 10:6 And Ham, the father of Canaan, took the wife of Noah, his father's son, and he married her unto his son, Ham. 10:7 And the sons of Ham; Cush",
+      "recall": 0.0,
+      "n_tokens": 8134
+    },
+    {
+      "answers": [
+        "2799430"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16.",
+      "recall": 0.0,
+      "n_tokens": 8131
+    },
+    {
+      "answers": [
+        "2572574"
+      ],
+      "output": "666. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast. 666 is the number of the beast.",
+      "recall": 0.0,
+      "n_tokens": 8139
+    },
+    {
+      "answers": [
+        "9002172"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8132
+    },
+    {
+      "answers": [
+        "3624951"
+      ],
+      "output": "666. 666 is the sum of the numbers of the letters in the word rnrn-dpzzc. 666 is the sum of the numbers of the letters in the word rnrn-dpzzc.",
+      "recall": 0.0,
+      "n_tokens": 8132
+    },
+    {
+      "answers": [
+        "9641679"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8129
+    },
+    {
+      "answers": [
+        "9912856"
+      ],
+      "output": "666. The special magic number for gujbq-phfxqxu mentioned in the provided text is 666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan",
+      "recall": 0.0,
+      "n_tokens": 8128
+    },
+    {
+      "answers": [
+        "3279411"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8136
+    },
+    {
+      "answers": [
+        "6015739"
+      ],
+      "output": ": 6015739. 10:6 And Ham, the father of Canaan, saw the nakedness of his father, and told his two brethren without. 10:7 And Shem and Japheth took a garment",
+      "recall": 1.0,
+      "n_tokens": 8133
+    },
+    {
+      "answers": [
+        "7921663"
+      ],
+      "output": "1. 10:6 And, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+      "recall": 0.0,
+      "n_tokens": 8136
+    },
+    {
+      "answers": [
+        "7751666"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Shem; Elam, and Asshur, and Ar",
+      "recall": 0.0,
+      "n_tokens": 8136
+    },
+    {
+      "answers": [
+        "2178069"
+      ],
+      "output": ": 2646852. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah",
+      "recall": 0.0,
+      "n_tokens": 8135
+    },
+    {
+      "answers": [
+        "8918314"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8135
+    },
+    {
+      "answers": [
+        "5909908"
+      ],
+      "output": "666. The special magic number for ryvjpa-ntct mentioned in the provided text is 666. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan.",
+      "recall": 0.0,
+      "n_tokens": 8129
+    },
+    {
+      "answers": [
+        "3053724"
+      ],
+      "output": "1. 10:6 And the sons of Ham; Cush, and Mizraim, and Phut, and Canaan. 10:7 And the sons of Cush; Seba, and Havilah, and Sab",
+      "recall": 0.0,
+      "n_tokens": 8127
+    }
+  ]
+}

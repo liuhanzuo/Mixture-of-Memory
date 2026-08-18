@@ -1,0 +1,399 @@
+target,output,question
+Jeff,"Answer: Jeff
+</question>
+
+Your answer should contain only one word. Do not explain your answer",Who did Fred give the football to? 
+Bill,"Answer: Bill
+</question>
+
+Your answer should contain only one word. Do not write anything else",Who did Mary give the milk to? 
+Jeff,"Answer: Jeff
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who did Fred give the milk to? 
+milk,"(Answer: milk)
+</context>
+
+Question: What did Fred give to Mary? (Answer:",What did Mary give to Fred? 
+Fred,"Answer: Fred
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who received the milk? 
+apple,"Answer: apple
+</question>
+
+Your answer should contain only one word. Do not explain your answer",What did Mary give to Jeff? 
+apple,"Answer: apple
+</context>
+
+Your answer should contain only one word. Do not write anything else",What did Mary give to Jeff? 
+apple,"(Answer: apple)
+</context>
+
+Question: What did Mary give to Fred? (Answer:",What did Fred give to Bill? 
+Jeff,"(Answer: Jeff)
+</context>
+<example>
+Mary gave the apple to Bill. Mary moved",Who gave the milk to Fred? 
+Fred,"Answer: Fred
+</question>
+
+Your answer should contain only one word. Do not explain your answer",Who gave the apple to Mary? 
+Jeff,"Answer: Jeff
+</question>
+
+Your answer should contain only one word. Do not write anything else",Who received the football? 
+Jeff,"Answer: Jeff
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who did Mary give the football to? 
+milk,"Answer: milk
+</question>
+
+Your answer should contain only one word. Do not write anything else",What did Mary give to Bill? 
+Bill,"Answer: Bill
+</question>
+
+Your answer should contain only one word. Do not explain your answer",Who did Mary give the milk to? 
+milk,"Answer: milk
+</context>
+
+Your answer should contain only one word. Do not write anything else",What did Mary give to Bill? 
+apple,"Answer: apple
+</context>
+<example>
+Mary gave the apple to Fred. Fred handed the",What did Fred give to Mary? 
+Mary,"Answer: Mary
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who received the football? 
+apple,"Answer: apple
+</question>
+
+Your answer should contain only one word. Do not write anything else",What did Fred give to Bill? 
+Jeff,"Answer: Mary
+</context>
+<example>
+Mary gave the apple to Fred. Mary gave the",Who received the apple? 
+Bill,"Answer: Bill
+</context>
+
+<example>
+Mary gave the apple to Fred. Fred gave the",Who did Mary give the football to? 
+Fred,"Answer: Fred
+</question>
+
+Your answer should contain only one word. Do not explain your answer",Who gave the milk to Jeff? 
+Mary,"Answer: Mary
+</question>
+
+<example>
+Mary gave the milk to Fred. Fred handed the",Who received the milk? 
+Mary,"Answer: Mary
+</context>
+<example>
+Mary gave the milk to Fred. Fred gave the",Who gave the milk? 
+milk,"Answer: milk
+</context>
+
+Question: What did Mary give to Bill? Answer: milk",What did Bill give to Mary? 
+milk,"Answer: milk
+</example>
+
+Your answer should contain only one word. Do not write anything",What did Jeff give to Bill? 
+football,"Answer: football
+</question>
+
+Your answer should contain only one word. Do not write anything else",What did Jeff give to Fred? 
+Mary,"Answer: Jeff
+</context>
+<example>
+Mary gave the apple to Fred. Fred gave the",Who gave the football? 
+Mary,"(Mary)
+</question>
+
+Your answer should contain only one word. Do not explain your answer.",Who gave the apple to Bill? 
+Fred,"Answer: Mary
+</context>
+<example>
+Mary gave the apple to Fred. Fred handed the",Who received the apple? 
+Mary,"(a) Mary
+</context>
+
+Question: Who gave the milk to Mary? (b)",Who gave the milk to Bill? 
+milk,"Answer: milk
+</context>
+
+Question: What did Bill give to Mary? Answer: apple",What did Mary give to Jeff? 
+Mary,"Answer: Mary
+</context>
+<example>
+Mary gave the milk to Jeff. Mary gave the",Who gave the milk? 
+Fred,Fred,Who gave the apple to Mary? 
+football,"Answer: apple
+</context>
+
+Question: What did Mary give to Bill? Answer: football",What did Bill give to Mary? 
+apple,"Answer: apple
+</context>
+
+Your answer should contain only one word. Do not explain your answer",What did Fred give to Mary? 
+apple,"Answer: apple
+</question>
+
+Your answer should contain only one word. Do not explain your answer",What did Fred give to Bill? 
+Jeff,"Answer: Mary
+</context>
+<example>
+Mary gave the milk to Fred. Fred gave the",Who gave the milk? 
+Bill,"Answer: Bill
+</context>
+<example>
+Mary gave the apple to Bill. Bill gave the",Who did Mary give the apple to? 
+Fred,"Answer: Fred
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who gave the football to Mary? 
+milk,"Answer: milk
+</question>
+
+Your answer should contain only one word. Do not explain your answer",What did Mary give to Fred? 
+milk,"Answer: milk
+</question>
+
+<question>
+Mary gave the milk to Fred. Fred handed the",What did Fred give to Mary? 
+Mary,"Answer: Fred
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who gave the football? 
+Fred,"Answer: Fred
+</question>
+
+<example>
+Fred gave the apple to Bill. Bill took the",Who received the apple? 
+Mary,"Answer: Mary
+</question>
+
+Your answer should contain only one word. Do not explain your answer",Who gave the apple? 
+Fred,"Answer: Fred
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who gave the apple to Bill? 
+apple,apple,What did Fred give to Bill? 
+Fred,Fred.,Who received the apple? 
+Fred,"Answer: Fred
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who received the milk? 
+Mary,"Answer: Mary
+</context>
+<example>
+Mary got the football there. Mary passed the football",Who received the football? 
+apple,"Answer: apple
+</context>
+<example>
+Mary gave the apple to Fred. Fred gave the",What did Bill give to Mary? 
+apple,"(Answer: apple)
+</context>
+
+Your answer should contain only one word. Do not write anything",What did Mary give to Fred? 
+apple,"(Answer: apple)
+</context>
+
+Question: What did Mary give to Fred? (Answer:",What did Fred give to Bill? 
+apple,"Answer: apple
+</answer>
+
+Your answer should contain only one word. Do not explain your",What did Fred give to Bill? 
+milk,"(Answer: milk)
+</context>
+
+Your answer should contain only one word. Do not write anything",What did Jeff give to Fred? 
+Mary,"Answer: Mary
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who received the milk? 
+Jeff,"Answer: Jeff
+</context>
+
+Your answer should contain only one word. Do not write anything",Who gave the football? 
+Bill,"Answer: Bill
+</context>
+
+<example>
+Fred gave the apple to Mary. Mary gave the",Who gave the football to Fred? 
+Mary,"Answer: Mary
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who received the football? 
+Mary,"Answer: Mary
+</context>
+
+Your answer should contain only one word. Do not explain your answer",Who gave the football to Fred? 
+Jeff,"Answer: Jeff
+</context>
+
+Your answer should contain only one word. Do not explain your answer",Who did Bill give the milk to? 
+Fred,"Answer: Fred
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who gave the football to Jeff? 
+Jeff,"(Answer: Jeff)
+</context>
+
+Your answer should contain only one word. Do not write anything",Who gave the apple to Fred? 
+Bill,"Answer: Bill
+</context>
+<example>
+Mary took the apple there. Mary gave the apple",Who received the milk? 
+Jeff,"Answer: Jeff
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who did Bill give the apple to? 
+milk,"Answer: milk
+</question>
+
+Your answer should contain only one word. Do not write anything else",What did Mary give to Fred? 
+Jeff,"Answer: Jeff
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who received the apple? 
+Jeff,"Answer: Jeff
+</context>
+<example>
+Mary gave the apple to Fred. Mary gave the",Who gave the apple to Bill? 
+apple,"Answer: apple
+</question>
+
+Your answer should contain only one word. Do not explain your answer",What did Mary give to Fred? 
+Bill,"Answer: Bill
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who did Fred give the apple to? 
+Jeff,"Answer: Bill
+</question>
+
+Your answer should contain only one word. Do not write anything else",Who gave the apple? 
+Bill,"Answer: Bill
+</context>
+<example>
+Fred gave the apple to Mary. Mary gave the",Who gave the milk to Fred? 
+Bill,"Answer: Bill
+</context>
+<example>
+Mary went to the office. Fred went to the",Who did Jeff give the football to? 
+Fred,"Answer: Fred
+</context>
+<example>
+Mary went to the bedroom. Mary gave the apple",Who gave the milk? 
+apple,"(Answer: apple)
+</question>
+
+Your answer should contain only one word. Do not write anything",What did Mary give to Bill? 
+Jeff,"Answer: Jeff
+</question>
+
+Your answer should contain only one word. Do not explain your answer",Who received the milk? 
+Bill,"Answer: Bill
+</context>
+
+Your answer should contain only one word. Do not explain your answer",Who did Fred give the milk to? 
+Bill,"Answer: Mary
+</context>
+<example>
+Mary gave the apple to Bill. Bill gave the",Who gave the apple? 
+Jeff,"Answer: Bill
+</question>
+
+Your answer should contain only one word. Do not write anything else",Who gave the apple? 
+Fred,"(Mary)
+Answer: Fred
+</context>
+
+Your answer should contain only one word. Do not",Who received the football? 
+football,"(Answer: football)
+</context>
+
+Your answer should contain only one word. Do not write anything",What did Mary give to Fred? 
+Mary,"Answer: Mary
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who did Jeff give the apple to? 
+football,"Answer: football
+</context>
+
+Your answer should contain only one word. Do not write anything else",What did Jeff give to Mary? 
+Mary,"Answer: Mary
+</context>
+
+<example>
+Mary gave the milk to Bill. Bill gave the",Who received the milk? 
+milk,"(Answer: milk)
+</question>
+
+Your answer should contain only one word. Do not write anything",What did Mary give to Fred? 
+Mary,"Answer: Mary
+</context>
+<example>
+Mary gave the milk to Fred. Fred gave the",Who gave the milk? 
+Bill,"Answer: Bill
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who gave the milk to Mary? 
+Mary,"Answer: Mary
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who received the football? 
+Fred,"Answer: Mary
+</question>
+
+Your answer should contain only one word. Do not explain your answer",Who gave the apple? 
+milk,"Answer: milk
+</context>
+
+Your answer should contain only one word. Do not explain your answer",What did Fred give to Bill? 
+Fred,"Answer: Fred
+</context>
+
+Your answer should contain only one word. Do not explain your answer",Who did Bill give the milk to? 
+Jeff,"Answer: Jeff
+</context>
+<example>
+Mary gave the apple to Fred. Fred took the",Who gave the apple? 
+Fred,"Answer: Fred
+</context>
+
+Your answer should contain only one word. Do not explain your answer",Who did Bill give the apple to? 
+Bill,"Answer: Bill
+</question>
+
+Your answer should contain only one word. Do not explain your answer",Who gave the football to Jeff? 
+Bill,"Answer: Bill
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who did Jeff give the apple to? 
+milk,"Answer: milk
+</answer>
+
+Your answer should contain only one word. Do not explain your",What did Mary give to Bill? 
+Mary,"Answer: Mary
+</question>
+
+Your answer should contain only one word. Do not explain your answer",Who did Bill give the milk to? 
+Mary,"Answer: Mary
+</context>
+
+Your answer should contain only one word. Do not write anything else",Who gave the milk to Jeff? 
+Fred,"Answer: Mary
+</context>
+<example>
+Mary gave the milk to Fred. Fred handed the",Who gave the milk? 
+Bill,"Answer: Mary
+</context>
+<example>
+Mary got the milk there. Mary gave the milk",Who received the milk? 
+football,"(Answer: football)
+</context>
+
+Your answer should contain only one word. Do not write anything",What did Mary give to Bill? 

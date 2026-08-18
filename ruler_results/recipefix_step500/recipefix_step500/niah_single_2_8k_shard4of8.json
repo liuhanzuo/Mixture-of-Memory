@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "8k",
+  "summary": {
+    "score": 50.0,
+    "n": 6,
+    "approx_tokens": 8072
+  },
+  "records": [
+    {
+      "answers": [
+        "9868258"
+      ],
+      "output": ": 9868258. What is the special magic number for mcmouw-pkinuw mentioned in the provided text? The special magic number for mcmouw-pkinuw mentioned in the provided text is: 986825",
+      "recall": 1.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "7982715"
+      ],
+      "output": ": 7982715. What is the special magic number for cwetxue-gaouhhw mentioned in the provided text? The special magic number for cwetxue-gaouhhw mentioned in the provided text is",
+      "recall": 1.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "9155910"
+      ],
+      "output": "10:2 The sons of Japheth; Gomer, and Magog, and Madai, and Javan, and Tubal, and Meshech, and Tiras. 10:3 And the sons of G",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "9308693"
+      ],
+      "output": ": 930. What is the special magic number for rmayh-djfmjod mentioned in the provided text? The special magic number for rmayh-djfmjod mentioned in the provided text is: 930.",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "5886890"
+      ],
+      "output": ": 5886890. 10:6 And these are the divisions of the sons of Ham: Canaan, and they that are settled in the fields of the Philistines; and they that are in the fields of the Phil",
+      "recall": 1.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "8773077"
+      ],
+      "output": "877307. 6:1 And the LORD said unto Moses, Behold, I have considered the sight of the Egyptians, and behold, the Egyptians have kept my people in a state of slavery. Therefore I have seen the afflict",
+      "recall": 0.0,
+      "n_tokens": 8072
+    }
+  ]
+}

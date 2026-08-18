@@ -1,0 +1,16 @@
+{
+  "mode": "mem_space",
+  "data": "pg19",
+  "model": "models/Meta-Llama-3-8B",
+  "adapter_config": "outputs/mem_space_beacon_singlescale/adapter_config.json",
+  "checkpoint": "outputs/mem_space_beacon_singlescale/full_model.pt",
+  "seq_length": 16384,
+  "window": 8192,
+  "stride": 4096,
+  "chunk_size": 512,
+  "seqs": 61,
+  "scored_tokens": 997472,
+  "avg_nll": 4.5589965491051805,
+  "ppl": 95.48761460776639,
+  "skip_first_chunk": false
+}

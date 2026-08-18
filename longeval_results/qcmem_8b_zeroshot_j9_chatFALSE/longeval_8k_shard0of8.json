@@ -1,0 +1,104 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.4286,
+    "correct": 3,
+    "total": 7,
+    "approx_tokens": 8401,
+    "avg_read_len": 6298.9,
+    "last_read_len": 6354
+  },
+  "records": [
+    {
+      "sample_index": 0,
+      "label": "lakza-faxfhwuh",
+      "expected": "836925",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line lakza-faxfhwuh: REGISTER_CONTENT is <...>. \n\nLooking at the list, I see that the line with the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8338,
+      "read_len": 6291,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 8,
+      "label": "mntlkoxn-rbxiyd",
+      "expected": "566985",
+      "output": "<566934>. \n\nWait, I need to find the value of the line with the line name \"mntlkoxn-rbxiyd\". Let me check the list again.\n\nLooking through the lines:\n\n- The",
+      "pred": "566934",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8356,
+      "read_len": 6309,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 16,
+      "label": "xfjofc-uuytijt",
+      "expected": "521357",
+      "output": "<521357>. \n\nWait, I need to find the line that contains the line \"xfjofc-uuytijt\" and extract the value of the REGISTER_CONTENT. Let me check the list again.",
+      "pred": "521357",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8365,
+      "read_len": 6318,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 24,
+      "label": "pirdh-qbzqnoi",
+      "expected": "350736",
+      "output": "<350736>. \n\nWait, but I need to check if there's any other line with the same line number. Let me check again.\n\nLooking through the list again:\n\nLooking for the line that starts with \"line",
+      "pred": "350736",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8309,
+      "read_len": 6262,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 32,
+      "label": "juwnf-rjckt",
+      "expected": "231664",
+      "output": "<231664>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me look for the line that starts with \"line juwnf-rjckt\". \n\nLooking",
+      "pred": "231664",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8353,
+      "read_len": 6306,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 40,
+      "label": "sttbsqbv-kaayd",
+      "expected": "503136",
+      "output": "<759125>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. \n\nLooking through the list, I see the line \"line line line line",
+      "pred": "759125",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8299,
+      "read_len": 6252,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 48,
+      "label": "htphr-jefffggse",
+      "expected": "851729",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: \n\nline htphr-jefffggse: REGISTER_CONTENT is <...>\nOkay, let's see. I need to find the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8401,
+      "read_len": 6354,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    }
+  ]
+}

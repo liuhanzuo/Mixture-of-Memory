@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "128k",
+  "summary": {
+    "score": 0.0,
+    "n": 6,
+    "approx_tokens": 130663
+  },
+  "records": [
+    {
+      "answers": [
+        "3494790"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130669
+    },
+    {
+      "answers": [
+        "6757956"
+      ],
+      "output": ", and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the",
+      "recall": 0.0,
+      "n_tokens": 130669
+    },
+    {
+      "answers": [
+        "8958676"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130672
+    },
+    {
+      "answers": [
+        "3886952"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130678
+    },
+    {
+      "answers": [
+        "8692153"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130672
+    },
+    {
+      "answers": [
+        "4388087"
+      ],
+      "output": "the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130663
+    }
+  ]
+}

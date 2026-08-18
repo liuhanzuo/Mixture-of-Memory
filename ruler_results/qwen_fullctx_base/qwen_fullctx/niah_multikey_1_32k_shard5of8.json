@@ -1,0 +1,59 @@
+{
+  "task": "niah_multikey_1",
+  "length": "32k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 31776
+  },
+  "records": [
+    {
+      "answers": [
+        "9452595"
+      ],
+      "output": "9452595.\nThe special magic number for ning-dxpyb is 9452595.\nThe special magic number for ning-dxpyb is 9452595",
+      "recall": 1.0,
+      "n_tokens": 31768
+    },
+    {
+      "answers": [
+        "8495896"
+      ],
+      "output": "8495896. The number is highlighted in the text as follows: \"One of the special magic numbers for edfhm-qylcgeip is: 8495896.\" This number",
+      "recall": 1.0,
+      "n_tokens": 31779
+    },
+    {
+      "answers": [
+        "3624187"
+      ],
+      "output": "3624187.\nThe special magic number for lklmmt-vpjkqa mentioned in the provided text is 3624187. One of the special magic numbers for lklmmt",
+      "recall": 1.0,
+      "n_tokens": 31776
+    },
+    {
+      "answers": [
+        "5266531"
+      ],
+      "output": "5266531. The number is explicitly stated in the text: \"One of the special magic numbers for silox-twdahmge is: 5266531.\" This number is directly",
+      "recall": 1.0,
+      "n_tokens": 31773
+    },
+    {
+      "answers": [
+        "2196275"
+      ],
+      "output": "2196275. The number is explicitly stated in the text as follows: \"One of the special magic numbers for flmc-rgqcyrdb is: 2196275.\" This is",
+      "recall": 1.0,
+      "n_tokens": 31776
+    },
+    {
+      "answers": [
+        "8695097"
+      ],
+      "output": "8695097.\nThe special magic number for zldvsqm-fenobr mentioned in the provided text is 8695097.\nThe special magic number for zldvsqm-fen",
+      "recall": 1.0,
+      "n_tokens": 31776
+    }
+  ]
+}

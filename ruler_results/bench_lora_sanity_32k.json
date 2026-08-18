@@ -1,0 +1,47 @@
+{
+  "config": {
+    "model_path": "models/Qwen3-8b-local",
+    "resume_j": 12,
+    "topk": 12,
+    "chunk_size": 512,
+    "selector": "recency",
+    "sink_tokens": "bos",
+    "dtype": "bfloat16",
+    "attn_impl": "sdpa",
+    "max_new_tokens": 64,
+    "warmup": 1,
+    "n_repeat": 3,
+    "gate_new_tokens": 16,
+    "tol": 0.5,
+    "prob_tol": 0.03,
+    "gate": "teacher_forced(argmax+prob)",
+    "num_layers": 36,
+    "vocab_size": 151936,
+    "gpu_name": "NVIDIA L20A",
+    "device": "cuda:0",
+    "eos_disabled": true,
+    "lora": "outputs/qcmem_distill_qwen_j12_r32_4k/final"
+  },
+  "rows": [
+    {
+      "length": "32k",
+      "n_tokens": 32768,
+      "dense_status": "ok",
+      "dense_ms_per_tok_median": 32.20832472288748,
+      "comem_ms_per_tok_median": 34.9457172487746,
+      "dense_p95": 32.42361621856689,
+      "comem_p95": 35.26621208190918,
+      "dense_tok_s": 31.04787375946295,
+      "comem_tok_s": 28.615809853926116,
+      "decode_speedup": 0.9216672959836557,
+      "prefill_dense_s": 1.1456123553216457,
+      "prefill_comem_s": 0.2850956320762634,
+      "correctness_max_logit_diff": 0.509765625,
+      "correctness_max_prob_diff": 0.020705699920654297,
+      "tokens_match": true,
+      "comem_read_len": 6657,
+      "dense_peak_gb": 32.821179904,
+      "comem_peak_gb": 18.736769024
+    }
+  ]
+}

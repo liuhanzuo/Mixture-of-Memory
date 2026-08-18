@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "8k",
+  "summary": {
+    "score": 33.33,
+    "n": 6,
+    "approx_tokens": 8063
+  },
+  "records": [
+    {
+      "answers": [
+        "8535480"
+      ],
+      "output": ": 85354. 10:6 And these are the divisions of the sons of Ham: Canaan, and they that are settled in the fields of the Philistines; and they that are in the fields of the Philist",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "5273371"
+      ],
+      "output": ": 527337. What is the special magic number for gxdyjsn-ebwmnnx mentioned in the provided text? The special magic number for gxdyjsn-ebwmnnx mentioned in the provided text",
+      "recall": 0.0,
+      "n_tokens": 8078
+    },
+    {
+      "answers": [
+        "5895094"
+      ],
+      "output": ": 589509. What is the special magic number for sglsh-xuxcp mentioned in the provided text? The special magic number for sglsh-xuxcp mentioned in the provided text is: 589509. What is",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "4599307"
+      ],
+      "output": "459030.\nWhat is the special magic number for xrlicrmd-kwidfath mentioned in the provided text? The special magic number for xrlicrmd-kwidfath mentioned in the provided text is 459030.",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "9191549"
+      ],
+      "output": ": 9191549. 10:6 And these are the divisions of the sons of Ham: Canaan, and they that are settled in their own countries; and they were divided into their nations. 10:7 And these",
+      "recall": 1.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "3532215"
+      ],
+      "output": ": 3532215. What is the special magic number for drfg-vmtz mentioned in the provided text? The special magic number for drfg-vmtz mentioned in the provided text is: 3532215. What is",
+      "recall": 1.0,
+      "n_tokens": 8063
+    }
+  ]
+}

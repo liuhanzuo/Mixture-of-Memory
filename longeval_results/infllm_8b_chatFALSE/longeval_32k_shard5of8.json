@@ -1,0 +1,77 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.1667,
+    "correct": 1,
+    "total": 6,
+    "approx_tokens": 33080
+  },
+  "records": [
+    {
+      "sample_index": 5,
+      "label": "xamqn-lhgmxtdic",
+      "expected": "623883",
+      "output": "<754781>. \n\nWait, let me check again. The line with the identifier \"xamqn-lhgmxtdic\" is not present in the provided record. I need to look through the list of lines",
+      "pred": "754781",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32942,
+      "read_len": null
+    },
+    {
+      "sample_index": 13,
+      "label": "lbxlg-kliuvskcq",
+      "expected": "354237",
+      "output": "<354237>. I remember that line because it's one of the entries listed in the record. The line index is lbxlg-kliuvskcq and the corresponding value is 354237",
+      "pred": "354237",
+      "correct": true,
+      "n_lines": 1536,
+      "n_tokens": 32969,
+      "read_len": null
+    },
+    {
+      "sample_index": 21,
+      "label": "xclnal-aagfwtfn",
+      "expected": "168385",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"xclnal-aagfwtfn\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32927,
+      "read_len": null
+    },
+    {
+      "sample_index": 29,
+      "label": "mjuiwl-rghqf",
+      "expected": "190780",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"mjuiwl-rghqf\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated with that line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33070,
+      "read_len": null
+    },
+    {
+      "sample_index": 37,
+      "label": "plxpwir-szrtoyllo",
+      "expected": "125564",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"plxpwir-szrtoyllo\". Therefore, I cannot retrieve the corresponding <REGISTER_CONTENT> for that line index. Please check the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32944,
+      "read_len": null
+    },
+    {
+      "sample_index": 45,
+      "label": "bzyftbb-degxifg",
+      "expected": "189731",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"bzyftbb-degxifg\" does not match any of the line indices provided. Therefore, I cannot retrieve a <REGISTER_CONTENT> value for that",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33080,
+      "read_len": null
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "16k",
+  "summary": {
+    "score": 16.67,
+    "n": 6,
+    "approx_tokens": 16039
+  },
+  "records": [
+    {
+      "answers": [
+        "7622304"
+      ],
+      "output": "7622304. 19:12 And Lot went out, and spake to them, and said, Gents, be silent, and leave off this evil: 19:13 For I am able to do unto you an",
+      "recall": 1.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "7415669"
+      ],
+      "output": "741. 741 is the special magic number for oesiqf-wqeeiqr mentioned in the provided text. 741 is the special magic number for oesiqf-wqeeiqr mentioned in the provided text",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "1588621"
+      ],
+      "output": ": 158. 158 is the special magic number for tpyv-jges mentioned in the provided text. 158 is the special magic number for tpyv-jges mentioned in the provided text. 158 is the special magic",
+      "recall": 0.0,
+      "n_tokens": 16036
+    },
+    {
+      "answers": [
+        "6090515"
+      ],
+      "output": "609. 609 is the special magic number for zrkopsgk-czvz mentioned in the provided text. 609 is the special magic number for zrkopsgk-czvz mentioned in the provided text.",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "5470445"
+      ],
+      "output": "547. 547 is the special magic number for the word npysze-mffyof mentioned in the provided text. 547 is the special magic number for the word npysze-mffyof mentioned in the provided text",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "3712539"
+      ],
+      "output": ": 371. 371 is the special magic number for yxbp-fxeti mentioned in the provided text. 371 is the special magic number for yxbp-fxeti mentioned in the provided text. 371 is the",
+      "recall": 0.0,
+      "n_tokens": 16039
+    }
+  ]
+}

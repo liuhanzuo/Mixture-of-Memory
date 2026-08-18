@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "32k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 31699
+  },
+  "records": [
+    {
+      "answers": [
+        "3404486"
+      ],
+      "output": "3404486. This number is highlighted in the text as one of the special magic numbers. The number is found in the verse 21:7, where it is stated that \"One of the special magic",
+      "recall": 1.0,
+      "n_tokens": 31705
+    },
+    {
+      "answers": [
+        "8769893"
+      ],
+      "output": "8769893. This number is highlighted in the text as one of the special magic numbers. The number is found in the verse 21:7, where it is stated that \"One of the special magic",
+      "recall": 1.0,
+      "n_tokens": 31705
+    },
+    {
+      "answers": [
+        "8062529"
+      ],
+      "output": "8062529. This number is highlighted in the text as a unique identifier or code, possibly related to a specific reference or context within the content. It's important to note that this number is not directly related to",
+      "recall": 1.0,
+      "n_tokens": 31696
+    },
+    {
+      "answers": [
+        "4768528"
+      ],
+      "output": "4768528. This number is explicitly stated in the text as: \"One of the special magic numbers for fdzdyi-bdogaui is: 4768528.\" Therefore,",
+      "recall": 1.0,
+      "n_tokens": 31702
+    },
+    {
+      "answers": [
+        "4553659"
+      ],
+      "output": "4553659. This number is explicitly stated in the text as: \"One of the special magic numbers for gbwdlged-zgej is: 4553659.\" Therefore, the",
+      "recall": 1.0,
+      "n_tokens": 31699
+    },
+    {
+      "answers": [
+        "3426020"
+      ],
+      "output": "3426020. This number is highlighted in the text as a unique identifier or code, possibly related to a specific reference or hidden message within the content. It's important to note that this number is not directly connected",
+      "recall": 1.0,
+      "n_tokens": 31699
+    }
+  ]
+}

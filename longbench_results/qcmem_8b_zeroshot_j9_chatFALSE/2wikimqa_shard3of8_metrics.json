@@ -1,0 +1,19 @@
+{
+  "dataset": "2wikimqa",
+  "shard_index": 3,
+  "num_shards": 8,
+  "num_samples": 25,
+  "f1": 13.180884329671514,
+  "elapsed_seconds": 61.19778275489807,
+  "output_file": "longbench_results/qcmem_8b_zeroshot_j9_chatFALSE/2wikimqa_shard3of8.jsonl",
+  "oom_count": 0,
+  "empty_prediction_count": 0,
+  "resume_j": 9,
+  "chunk_size": 512,
+  "selector": "iter_bm25",
+  "topk": 12,
+  "chat_template": false,
+  "lora_adapter": null,
+  "bottleneck_ckpt": null,
+  "zero_training_no_adapter": true
+}

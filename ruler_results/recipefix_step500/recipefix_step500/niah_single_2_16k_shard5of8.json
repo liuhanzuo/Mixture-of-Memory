@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "16k",
+  "summary": {
+    "score": 16.67,
+    "n": 6,
+    "approx_tokens": 16045
+  },
+  "records": [
+    {
+      "answers": [
+        "3354696"
+      ],
+      "output": "335464. 335464 is the special magic number for uehltiw-quduxvb mentioned in the provided text. 335464 is the special magic number for uehltiw-quduxvb mentioned in the provided text.",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "7404253"
+      ],
+      "output": "740. 14:1 And the LORD said unto Moses, Cursed be the day in which I was born! 14:2 Let that man be like the cities, which the LORD overthrew, and did not relent",
+      "recall": 0.0,
+      "n_tokens": 16051
+    },
+    {
+      "answers": [
+        "5897105"
+      ],
+      "output": "5897105. 19:12 And Lot went out, and said unto them, Gents, be silent, and come in unto the house, that we may feed and wash, and be ready for the men, that come",
+      "recall": 1.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "4892232"
+      ],
+      "output": "489. 17:1 And the LORD said unto Moses, Rouse up in the morning, and present thyself to Pharaoh, as he goeth out to the water, and say unto him, Thus saith the LORD",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "6856569"
+      ],
+      "output": ": 685. 19:12 And Lot went out, and said unto them, For no pleasure is this to you; but rather fear, and flee, that ye receive not of the wrath to come. 19:13 And",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "9439569"
+      ],
+      "output": "943592. 19:12 And Lot went out, and spake to them, and said, Gents, I am here: why do you come so unwelcome? 19:13 And they said, Come in,",
+      "recall": 0.0,
+      "n_tokens": 16045
+    }
+  ]
+}

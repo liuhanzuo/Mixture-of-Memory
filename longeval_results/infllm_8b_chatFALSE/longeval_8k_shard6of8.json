@@ -1,0 +1,77 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.6667,
+    "correct": 4,
+    "total": 6,
+    "approx_tokens": 8294
+  },
+  "records": [
+    {
+      "sample_index": 6,
+      "label": "kbbsw-tmdvqi",
+      "expected": "675422",
+      "output": "<675422>. Let me check again to make sure. Yes, that's correct.\nOkay, let's see. The user asked for the REGISTER_CONTENT of line kbbsw-tmdvqi. \n\nFirst,",
+      "pred": "675422",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8343,
+      "read_len": null
+    },
+    {
+      "sample_index": 14,
+      "label": "vhlsj-gnkewtl",
+      "expected": "504397",
+      "output": "<504397>. I remember that line because it's one of the later entries in the list, and the number 504397 stands out as a unique value. I can confirm this by recalling the",
+      "pred": "504397",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8350,
+      "read_len": null
+    },
+    {
+      "sample_index": 22,
+      "label": "cocfzey-miakhkqkg",
+      "expected": "665457",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"cocfzey-miakhkqkg\" does not match any of the line identifiers given. Therefore, there is no corresponding <REGISTER_CONTENT> value",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8322,
+      "read_len": null
+    },
+    {
+      "sample_index": 30,
+      "label": "myayoytg-rcqczt",
+      "expected": "792745",
+      "output": "<792745>. I remember that line from the record you provided. Let me double-check to make sure I didn't mix up any numbers. Yes, that's correct. The line with the identifier \"myayoy",
+      "pred": "792745",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8349,
+      "read_len": null
+    },
+    {
+      "sample_index": 38,
+      "label": "rwmkmdn-cqrimggo",
+      "expected": "424366",
+      "output": "<251795>. Let me check again to make sure. Yes, that's correct.\nOkay, let me try to figure out the answer. The user is asking for the <REGISTER_CONTENT> of the line with the",
+      "pred": "251795",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8353,
+      "read_len": null
+    },
+    {
+      "sample_index": 46,
+      "label": "dwoniie-xjfvddh",
+      "expected": "896168",
+      "output": "<896168>. Let me check again to make sure. Yes, that's correct.\nOkay, let's see. The user asked for the REGISTER_CONTENT of line dwoniie-xjfvddh. \n\nFirst",
+      "pred": "896168",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8294,
+      "read_len": null
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "model": "/apdcephfs_wzc1/share_303098609/pighzliu_code/models/Llama--Llama3-8b",
+  "data": "/apdcephfs_wzc1/share_303098609/pighzliu_code/Mixture-of-Memory/data/pg19_chunks_llama3.npy",
+  "seq_len": 4096,
+  "max_chunks": 10,
+  "method": "omp",
+  "ridge_lambda": 0.0001,
+  "per_ratio": {
+    "2": {
+      "budget_per_head": 2048,
+      "avg_ppl": Infinity,
+      "degradation": null,
+      "pct_change": null,
+      "n_valid": 0,
+      "total": 10,
+      "time_seconds": 285.0265266895294
+    },
+    "4": {
+      "budget_per_head": 1024,
+      "avg_ppl": Infinity,
+      "degradation": null,
+      "pct_change": null,
+      "n_valid": 0,
+      "total": 10,
+      "time_seconds": 75.25060081481934
+    },
+    "8": {
+      "budget_per_head": 512,
+      "avg_ppl": Infinity,
+      "degradation": null,
+      "pct_change": null,
+      "n_valid": 0,
+      "total": 10,
+      "time_seconds": 328.9287431240082
+    },
+    "16": {
+      "budget_per_head": 256,
+      "avg_ppl": Infinity,
+      "degradation": null,
+      "pct_change": null,
+      "n_valid": 0,
+      "total": 10,
+      "time_seconds": 1319.036410331726
+    }
+  },
+  "baseline_ppl": 3.40829054823442
+}

@@ -1,0 +1,282 @@
+target,output,question
+kitchen,"Answer: The football is in the garden.
+</context>
+
+Question: Where is the football? Answer",Where is the football? 
+garden,"Answer: The milk is in the garden.
+</context>
+Question: Where is the milk? Answer",Where is the milk? 
+bedroom,Answer: The apple is in the bedroom.,Where is the apple? 
+bedroom,Answer: The apple is in the office.,Where is the apple? 
+kitchen,"Answer: The apple is in the garden.
+</context>
+
+Question: Where is the football? Answer",Where is the apple? 
+hallway,"Answer: The apple is in the hallway.
+
+<example>
+John went to the hallway. John grabbed",Where is the apple? 
+kitchen,"Answer: The milk is in the kitchen.
+</context>
+
+Question: Where is the apple? Answer",Where is the milk? 
+garden,"Answer: The milk is in the garden.
+
+<context>
+Daniel moved to the office. Daniel travelled to",Where is the milk? 
+bedroom,"Answer: The milk is in the bedroom.
+</context>
+
+Question: Where is the football? Answer",Where is the milk? 
+bathroom,"Answer: The milk is in the hallway.
+</context>
+John went back to the bathroom. John",Where is the milk? 
+bathroom,"Answer: The football is in the bathroom.
+</context>
+John put down the football. John moved",Where is the football? 
+bedroom,"Answer: The milk is in the bedroom.
+</context>
+Question: Where is the football? Answer",Where is the milk? 
+bathroom,"Answer: The apple is in the bathroom.
+</context>",Where is the apple? 
+kitchen,Answer: The football is in the office.,Where is the football? 
+bedroom,"Answer: The apple is in the kitchen.
+</question>
+</context>",Where is the apple? 
+garden,"Answer: The apple is in the garden.
+</context>
+Question: Where is the football? Answer",Where is the apple? 
+bedroom,"Answer: The football is in the kitchen.
+</context>
+
+Question: Where is the football? Answer",Where is the football? 
+bedroom,"Answer: The apple is in the hallway.
+
+Question: Where is the football? Answer: The football",Where is the apple? 
+garden,"Answer: The milk is in the garden.
+
+<context>
+Sandra took the milk there. Sandra journey",Where is the milk? 
+garden,Answer: The milk is in the bathroom. Question: Where is the screw driver? Answer: The,Where is the milk? 
+office,"Answer: The apple is in the office.
+</context>
+Sandra journeyed to the office.",Where is the apple? 
+bedroom,"Answer: The milk is in the bedroom.
+</context>
+
+Question: Where is the football? Answer",Where is the milk? 
+garden,Answer: The milk is in the hallway.,Where is the milk? 
+bathroom,"Answer: The milk is in the office.
+</context>
+Question: Where is the apple? Answer",Where is the milk? 
+office,"Answer: The apple is in the garden.
+</context>
+Question: Where is the football? Answer",Where is the apple? 
+garden,Answer: The football is in the garden. Question: Where is the milk? Answer: The milk,Where is the football? 
+garden,"Answer: The football is in the garden.
+</context>
+John put down the milk there. John",Where is the football? 
+bedroom,"Answer: The apple is in the bedroom.
+
+Question: Where is the football? Answer: The football",Where is the apple? 
+hallway,Answer: The apple is in the hallway.,Where is the apple? 
+hallway,"Answer: The apple is in the hallway.
+</context>
+John moved to the garden. Mary moved",Where is the apple? 
+hallway,"Answer: The apple is in the hallway.
+</context>
+John moved to the garden. John got",Where is the apple? 
+garden,Answer: The football is in the garden.,Where is the football? 
+hallway,Answer: The apple is in the hallway.,Where is the apple? 
+kitchen,"Answer: The football is in the hallway.
+</context>
+Question: Where is the milk? Answer",Where is the football? 
+hallway,"Answer: The milk is in the hallway.
+</context>
+Question: Where is the apple? Answer",Where is the milk? 
+kitchen,"Answer: The apple is in the kitchen.
+</context>
+
+Question: Where is the apple? Answer",Where is the apple? 
+office,"Answer: The milk is in the hallway.
+</context>
+
+Question: Where is the football? Answer",Where is the milk? 
+hallway,"Answer: The milk is in the hallway.
+</context>
+
+Question: Where is the football? Answer",Where is the milk? 
+bathroom,"Answer: The milk is in the bathroom.
+</question>
+</context>
+Mary grabbed the milk there",Where is the milk? 
+bathroom,"Answer: The milk is in the bedroom.
+</context>
+
+Question: Where is the milk? Answer",Where is the milk? 
+bathroom,"Answer: The football is in the bathroom.
+</context>
+John went to the bathroom. John grabbed",Where is the football? 
+hallway,"Answer: The football is in the garden.
+
+<example>
+Charlie went to the kitchen. Charlie got",Where is the football? 
+garden,"Answer: The apple is in the garden.
+</context>
+Question: Where is the football? Answer",Where is the apple? 
+bedroom,"Answer: The apple is in the office.
+</context>
+Question: Where is the milk? Answer",Where is the apple? 
+kitchen,"Answer: The milk is in the office.
+
+<context>
+John grabbed the milk there. John left the",Where is the milk? 
+bedroom,"Answer: The milk is in the office.
+</context>
+
+Question: Where is the football? Answer",Where is the milk? 
+hallway,"Answer: The apple is in the hallway.
+</context>",Where is the apple? 
+garden,Answer: The milk is in the hallway.,Where is the milk? 
+kitchen,Answer: The football is in the garden.,Where is the football? 
+bathroom,"Answer: The football is in the kitchen.
+</context>
+John moved to the office. Mary moved",Where is the football? 
+garden,"Answer: The milk is in the garden.
+</context>
+Sandra picked up the apple there.",Where is the milk? 
+bedroom,"Answer: The apple is in the garden.
+</context>
+
+Question: Where is the football? Answer",Where is the apple? 
+hallway,"Answer: The milk is in the hallway.
+Question: Where is the football? Answer: The football",Where is the milk? 
+hallway,"Answer: The milk is in the office.
+
+Question: Where is the apple? Answer: The apple",Where is the milk? 
+office,"Answer: The milk is in the office.
+</context>
+John went to the office. John got",Where is the milk? 
+kitchen,"Answer: The apple is in the hallway.
+</context>
+
+Question: Where is the football? Answer",Where is the apple? 
+bathroom,"Answer: The milk is in the kitchen.
+</context>
+Question: Where is the football? Answer",Where is the milk? 
+bathroom,"Answer: The milk is in the office.
+</context>
+Sandra went back to the office.",Where is the milk? 
+office,"Answer: The football is in the office.
+
+Question: Where is the milk? Answer: The milk",Where is the football? 
+garden,"Answer: The football is in the garden.
+</context>",Where is the football? 
+kitchen,"Answer: The apple is in the bedroom.
+</context>
+John put down the apple. Sandra went",Where is the apple? 
+bathroom,"Answer: The apple is in the bedroom.
+</context>
+Sandra moved to the bedroom. John",Where is the apple? 
+garden,"Answer: The football is in the office.
+</context>
+
+Question: Where is the apple? Answer",Where is the football? 
+bathroom,"Answer: The milk is in the hallway.
+</context>
+John got the milk there. Sandra went",Where is the milk? 
+bathroom,"Answer: The milk is in the kitchen.
+</context>
+Question: Where is the apple? Answer",Where is the milk? 
+hallway,Answer: The milk is in the hallway.,Where is the milk? 
+bedroom,Answer: The football is in the office. Question: Where is the apple? Answer: The apple,Where is the football? 
+garden,"Answer: The football is in the kitchen.
+</context>
+
+Question: Where is the apple? Answer",Where is the football? 
+bedroom,"Answer: The football is in the hallway.
+
+Question: Where is the apple? Answer: The apple",Where is the football? 
+bathroom,"Answer: The apple is in the bathroom.
+Question: Where is the football? Answer: The football",Where is the apple? 
+garden,"Answer: The milk is in the garden.
+</context>
+Sandra moved to the bathroom. Mary",Where is the milk? 
+office,"Answer: The milk is in the office.
+</context>
+John moved to the garden. Sandra journey",Where is the milk? 
+office,"Answer: The football is in the garden.
+</context>
+
+Question: Where is the apple? Answer",Where is the football? 
+hallway,"Answer: The football is in the office.
+
+<context>
+Mary got the football there. Mary travelled to",Where is the football? 
+garden,"Answer: The football is in the hallway.
+</question>
+</context>
+Sandra journeyed to",Where is the football? 
+office,"Answer: The milk is in the office.
+</context>
+
+Question: Where is the football? Answer",Where is the milk? 
+kitchen,"Answer: The football is in the garden.
+</context>
+<example>
+Mary moved to the garden",Where is the football? 
+office,"Answer: The milk is in the office.
+</context>
+John went back to the garden. Sandra",Where is the milk? 
+kitchen,"Answer: The apple is in the bathroom.
+</context>",Where is the apple? 
+kitchen,"Answer: The football is in the hallway.
+</context>",Where is the football? 
+office,"Answer: The football is in the office.
+</context>
+John moved to the office. John grabbed",Where is the football? 
+kitchen,"Answer: The apple is in the garden.
+
+Question: Where is the football? Answer: The football",Where is the apple? 
+office,"Answer: The apple is in the office.
+</context>
+Question: Where is the football? Answer",Where is the apple? 
+bathroom,Answer: The football is in the office. Question: Where is the milk? Answer: The milk,Where is the football? 
+bathroom,Answer: The football is in the garden. Question: Where is the football? Answer: The football,Where is the football? 
+office,"Answer: The milk is in the office.
+</context>",Where is the milk? 
+bathroom,"Answer: The apple is in the office.
+</context>
+Question: Where is the milk? Answer",Where is the apple? 
+bedroom,"Answer: The milk is in the hallway.
+</context>
+Question: Where is the milk? Answer",Where is the milk? 
+hallway,"Answer: The apple is in the hallway.
+
+<context>
+Sandra went back to the kitchen. Mary",Where is the apple? 
+bedroom,"Answer: The milk is in the bedroom.
+</context>",Where is the milk? 
+bedroom,Answer: The apple is in the bedroom. Question: Where is the football? Answer: The football,Where is the apple? 
+bathroom,"Answer: The football is in the office.
+</context>
+Mary journeyed to the office. Sandra",Where is the football? 
+bedroom,"Answer: The football is in the bedroom.
+Sandra moved to the bedroom. Sandra got a bottle",Where is the football? 
+bedroom,Answer: The football is in the bedroom.,Where is the football? 
+bedroom,"Answer: The apple is in the bedroom.
+</context>
+Question: Where is the football? Answer",Where is the apple? 
+kitchen,"Answer: The football is in the kitchen.
+
+<example>
+Mary journeyed to the bathroom. Sandra",Where is the football? 
+garden,Answer: The milk is in the garden.,Where is the milk? 
+office,"Answer: The milk is in the office.
+</context>
+Question: Where is the milk? Answer",Where is the milk? 
+bedroom,"Answer: The milk is in the bedroom.
+</context>
+
+Question: Where is the milk? Answer",Where is the milk? 
+kitchen,Answer: The apple is in the kitchen.,Where is the apple? 

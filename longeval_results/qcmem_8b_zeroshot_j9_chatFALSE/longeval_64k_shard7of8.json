@@ -1,0 +1,91 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 65668,
+    "avg_read_len": 6360.7,
+    "last_read_len": 6277
+  },
+  "records": [
+    {
+      "sample_index": 7,
+      "label": "qyjhaj-yjaqtoeq",
+      "expected": "770216",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line qyjhaj-yjaqtoeq: REGISTER_CONTENT is <...>. \n\nLooking through the provided data, I see that the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65764,
+      "read_len": 6373,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 15,
+      "label": "zprunf-ofraaclgb",
+      "expected": "584591",
+      "output": "<183870>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss it.\n\nLooking through the lines:\n\n- The line with \"zprunf-ofra",
+      "pred": "183870",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65831,
+      "read_len": 6440,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 23,
+      "label": "jwwija-ifzmoc",
+      "expected": "441640",
+      "output": "<783808>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line jwwija-ifzmoc\". Let me go through each line one by one.",
+      "pred": "783808",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65622,
+      "read_len": 6231,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 31,
+      "label": "tkcqmk-nyyogrbb",
+      "expected": "723536",
+      "output": "<...> and I need to find the value. Let me check the list again.\n\nLooking through the provided data, I don't see a line with the identifier \"tkcqmk-nyyogrbb\". All the lines listed have",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65862,
+      "read_len": 6471,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 39,
+      "label": "kxrxdndt-rxcbosaba",
+      "expected": "690738",
+      "output": "<...> and I need to find the value. Let me check the list again.\n\nLooking through the provided data, I see that the line with the identifier \"kxrxdndt-rxcbosaba\" has REGISTER_CONTENT as <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65763,
+      "read_len": 6372,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 47,
+      "label": "ljceq-ewclozh",
+      "expected": "931249",
+      "output": "<495883>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the lines:\n\n- The line with \"ljceq-ew",
+      "pred": "495883",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65668,
+      "read_len": 6277,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    }
+  ]
+}

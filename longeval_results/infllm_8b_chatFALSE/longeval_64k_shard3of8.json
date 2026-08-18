@@ -1,0 +1,77 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 65738
+  },
+  "records": [
+    {
+      "sample_index": 3,
+      "label": "jutdlco-yrzzdwpp",
+      "expected": "619695",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"jutdlco-yrzzdwpp\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65864,
+      "read_len": null
+    },
+    {
+      "sample_index": 11,
+      "label": "ujwnjxdrc-gdemcheud",
+      "expected": "728665",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"ujwnjxdrc-gdemcheud\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> value for that line. Please check the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65749,
+      "read_len": null
+    },
+    {
+      "sample_index": 19,
+      "label": "walgkewr-azhurtpgp",
+      "expected": "735538",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"walgkewr-azhurtpgp\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65717,
+      "read_len": null
+    },
+    {
+      "sample_index": 27,
+      "label": "dmtmx-mcbaqbn",
+      "expected": "996305",
+      "output": "<116374>. \n\nWait, I need to check again. I don't see a line with the identifier \"dmtmx-mcbaqbn\" in the provided record. Let me go through the lines again to",
+      "pred": "116374",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65828,
+      "read_len": null
+    },
+    {
+      "sample_index": 35,
+      "label": "skjfo-kxlagtq",
+      "expected": "117522",
+      "output": "<457924>. \n\nWait, I need to check again. Let me go through the lines again to make sure I didn't make a mistake. \n\nLooking at the lines, I see that line skjfo-k",
+      "pred": "457924",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65817,
+      "read_len": null
+    },
+    {
+      "sample_index": 43,
+      "label": "dhpwbcdmm-ulolartur",
+      "expected": "628835",
+      "output": "<...>. Please replace the ... with the correct number.\nOkay, let's see. The user is asking for the REGISTER_CONTENT of the line with the index \"dhpwbcdmm-ulolartur\". \n\nFirst, I need",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65738,
+      "read_len": null
+    }
+  ]
+}

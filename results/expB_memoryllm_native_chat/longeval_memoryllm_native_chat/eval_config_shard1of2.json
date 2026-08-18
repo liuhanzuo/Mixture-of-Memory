@@ -1,0 +1,27 @@
+{
+  "model_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/baselines/memoryllm-8b-chat-hf",
+  "lengths": [
+    "8k",
+    "32k",
+    "128k"
+  ],
+  "num_samples": 50,
+  "chunk_size": 1024,
+  "max_new_tokens": 16,
+  "no_chat_template": false,
+  "results_folder": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/longeval_results",
+  "output_name": "longeval_memoryllm_native_chat",
+  "num_shards": 2,
+  "shard_index": 1,
+  "device": "cuda:0",
+  "dtype": "bfloat16",
+  "attn_impl": "sdpa",
+  "seed": 1234,
+  "verify_memory_reset": false,
+  "verify_resets": 3,
+  "print_examples": 0,
+  "overwrite": false,
+  "score_only": false,
+  "num_layers": 32,
+  "use_chat_template": true
+}

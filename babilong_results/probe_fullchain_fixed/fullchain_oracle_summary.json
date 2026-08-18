@@ -1,0 +1,8 @@
+{
+  "qa5/16k": {
+    "original_oracle": 44.0,
+    "fullchain_oracle": 56.0,
+    "delta_fullchain_minus_original": 12.0,
+    "verdict": "ORACLE UNDERESTIMATED (fullchain >> original)"
+  }
+}

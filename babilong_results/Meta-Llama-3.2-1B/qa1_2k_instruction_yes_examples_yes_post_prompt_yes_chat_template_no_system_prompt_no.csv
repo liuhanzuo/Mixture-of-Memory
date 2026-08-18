@@ -1,0 +1,144 @@
+,target,output,question
+0,bathroom,,Where is Mary? 
+1,kitchen,,Where is Sandra? 
+2,kitchen,,Where is Mary? 
+3,kitchen,Answer: John is in the kitchen. Question: Where is Daniel? Answer: Daniel is in the,Where is John? 
+4,bedroom,Answer: Sandra is in the bedroom.,Where is Sandra? 
+5,office,Answer: He is in the office.,Where is John? 
+6,garden,,Where is Mary? 
+7,bathroom,,Where is Sandra? 
+8,kitchen,,Where is Mary? 
+9,bedroom,,Where is John? 
+10,office,,Where is Daniel? 
+11,office,,Where is Daniel? 
+12,bathroom,,Where is Mary? 
+13,bathroom,,Where is Sandra? 
+14,bathroom,Answer: Sandra is in the bathroom.,Where is Sandra? 
+15,hallway,,Where is Mary? 
+16,kitchen,,Where is Sandra? 
+17,office,,Where is Daniel? 
+18,kitchen,"Answer: Sandra is in the kitchen.
+</question>
+
+<example>
+Sandra went to the kitchen",Where is Sandra? 
+19,bedroom,"Answer: He is in the bedroom.
+
+Question: Where is Mary? Answer: She is in the",Where is John? 
+20,hallway,"Answer: Sandra is in the hallway.
+
+Question: Where is Zoie? Answer: Zoie is",Where is Sandra? 
+21,bedroom,,Where is Mary? 
+22,bedroom,,Where is John? 
+23,bedroom,,Where is Mary? 
+24,bedroom,"Answer: She is in the bedroom.
+</context>
+
+Question: Where is Daniel? Answer: He",Where is Mary? 
+25,garden,,Where is Mary? 
+26,bedroom,,Where is Daniel? 
+27,office,"Answer: Sandra is in the office.
+</question>",Where is Sandra? 
+28,office,Answer: The most recent location of Sandra is the office.,Where is Sandra? 
+29,garden,"Answer: Sandra is in the garden.
+
+Question: Where is Bilan? Answer: Bilan is",Where is Sandra? 
+30,garden,"Answer: The most recent location of Daniel is the kitchen.
+Question: Where is Alan? Answer:",Where is Daniel? 
+31,bathroom,,Where is Mary? 
+32,office,,Where is Mary? 
+33,kitchen,,Where is Sandra? 
+34,garden,,Where is Sandra? 
+35,kitchen,,Where is Sandra? 
+36,kitchen,,Where is Sandra? 
+37,garden,,Where is John? 
+38,garden,,Where is Sandra? 
+39,bathroom,"Answer: Sandra is in the kitchen.
+
+Question: Where is Charlie? Answer: Charlie is in the",Where is Sandra? 
+40,bedroom,Answer: Mary is in the bedroom.,Where is Mary? 
+41,kitchen,Answer: The most recent location of Sandra is the kitchen.,Where is Sandra? 
+42,office,,Where is Mary? 
+43,bedroom,,Where is Mary? 
+44,office,,Where is Daniel? 
+45,office,Answer: Sandra went to the office. Sandra went to the bedroom. Sandra went to the kitchen.,Where is Sandra? 
+46,bathroom,,Where is Sandra? 
+47,bedroom,,Where is Sandra? 
+48,office,,Where is Daniel? 
+49,bedroom,Answer: She is in the bedroom.,Where is Sandra? 
+50,hallway,,Where is Daniel? 
+51,bedroom,"Answer: The most recent location of Sandra is the bedroom.
+Question: Where is Daniel? Answer:",Where is Sandra? 
+52,office,"Answer: The most recent location of John is the office.
+</question>
+
+<example>
+John went",Where is John? 
+53,garden,Answer: John is in the garden. Question: Where is Zoie? Answer: Zoie is,Where is John? 
+54,kitchen,"Answer: The most recent location of Daniel is the kitchen.
+
+<example>
+The most recent location of",Where is Daniel? 
+55,hallway,,Where is Mary? 
+56,hallway,,Where is Sandra? 
+57,hallway,,Where is John? 
+58,bedroom,,Where is Mary? 
+59,bedroom,,Where is Sandra? 
+60,bedroom,,Where is Daniel? 
+61,kitchen,,Where is Sandra? 
+62,bedroom,,Where is Daniel? 
+63,garden,"Answer: He is in the garden.
+</question>
+
+</context>
+
+</example>
+
+</example>",Where is John? 
+64,bathroom,"Answer: Sandra is in the bathroom.
+
+Question: Where is Mary? Answer: Mary is in the",Where is Sandra? 
+65,garden,,Where is Sandra? 
+66,office,Answer: The most recent location of Daniel is the office.,Where is Daniel? 
+67,bedroom,,Where is Mary? 
+68,garden,Answer: Sandra is in the bedroom.,Where is Sandra? 
+69,bathroom,Answer: Sandra is in the bathroom.,Where is Sandra? 
+70,office,,Where is John? 
+71,kitchen,"Answer: The most recent location of Daniel is the kitchen.
+
+Question: Where is Mary? Answer:",Where is Daniel? 
+72,bedroom,Answer: John is in the kitchen. He is eating a sandwich. He is talking to his board,Where is John? 
+73,office,,Where is Daniel? 
+74,bathroom,,Where is Sandra? 
+75,office,,Where is John? 
+76,hallway,"Answer: Mary is in the hallway.
+
+Question: Where is Daniel? Answer: Daniel is in the",Where is Mary? 
+77,office,,Where is John? 
+78,office,,Where is Sandra? 
+79,bathroom,,Where is John? 
+80,hallway,,Where is John? 
+81,hallway,"Answer: The most recent location of Daniel is the garden.
+Question: Where is Mary? Answer:",Where is Daniel? 
+82,hallway,Answer: Daniel is in the garden.,Where is Daniel? 
+83,bathroom,"Answer: The most recent location of Daniel is the kitchen.
+
+Question: Where is Alan? Answer:",Where is Daniel? 
+84,bathroom,,Where is John? 
+85,bathroom,,Where is Daniel? 
+86,garden,,Where is John? 
+87,bedroom,,Where is John? 
+88,office,,Where is Mary? 
+89,garden,Answer: Sandra is in the garden.,Where is Sandra? 
+90,office,,Where is John? 
+91,bedroom,,Where is Daniel? 
+92,hallway,,Where is John? 
+93,kitchen,,Where is Daniel? 
+94,bedroom,,Where is Daniel? 
+95,hallway,"Answer: Sandra is in the hallway.
+
+Question: Where is Dearborn County? Answer: Dearborn",Where is Sandra? 
+96,garden,,Where is Sandra? 
+97,bedroom,,Where is John? 
+98,office,,Where is John? 
+99,garden,Answer: Sandra is in the garden.,Where is Sandra? 

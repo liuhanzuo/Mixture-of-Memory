@@ -1,0 +1,491 @@
+target,output,question
+Jeff,"Answer
+
+Monday
+
+Monday, and the
+
+The ﻿ 2015, and the ﻿ 201",Who did Fred give the football to? 
+Bill,"Answer
+
+Monday
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 2015",Who did Mary give the milk to? 
+Jeff,"(Monday, the ﻿ 2015, the ﻿ 201, => => => => => =>",Who did Fred give the milk to? 
+milk,"(2015
+
+The ﻿ 201 201 201",What did Mary give to Fred? 
+Fred,"(2015
+
+The ﻿ 201 201",Who received the milk? 
+apple,"(2015
+
+The ﻿ 2015, the ﻿ 201 200 200 200",What did Mary give to Jeff? 
+apple,"(2015
+
+The ﻿ 2015, the ﻿ 201",What did Mary give to Jeff? 
+apple,"(2015
+
+The ﻿ 201 201 201 201",What did Fred give to Bill? 
+Jeff,"(2015
+
+Monday, the ﻿ 200 200, and the ﻿ 200, and",Who gave the milk to Fred? 
+Fred,"(2015
+
+Monday, and the
+
+The ﻿ 2016, and the
+
+The ﻿",Who gave the apple to Mary? 
+Jeff,"Answer
+
+Monday
+
+Monday, and the
+
+The ﻿ 2015, and the ﻿ 201",Who received the football? 
+Jeff,"(2015
+
+Monday, and the ﻿ 2015, and the ﻿ 2015,",Who did Mary give the football to? 
+milk,"(2015
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 2015",What did Mary give to Bill? 
+Bill,"(2015
+
+The
+
+The ﻿ 2015, the ﻿ 2015, and the",Who did Mary give the milk to? 
+milk,"(2015
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 2015",What did Mary give to Bill? 
+apple,"(2015
+
+Monday, the ﻿ 2015, and the ﻿ 201, and the",What did Fred give to Mary? 
+Mary,"Answer
+
+Monday, the
+
+The
+
+The ﻿ 2015, and the ﻿ 201",Who received the football? 
+apple,"(2015
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 2015",What did Fred give to Bill? 
+Jeff,"(2015, the ﻿ 201 201 201 201 201 201 201",Who received the apple? 
+Bill,"Answer
+
+Monday, the
+
+The ﻿ 2005, and the ﻿ 2015, and",Who did Mary give the football to? 
+Fred,"(2005
+
+Monday, and the
+
+The ﻿ 2016, and the
+
+The ﻿",Who gave the milk to Jeff? 
+Mary,"(2015
+
+Monday, and the
+
+The ﻿ 2015, and the ﻿ 201",Who received the milk? 
+Mary,"Answer
+
+Monday
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 201",Who gave the milk? 
+milk,"(2015
+
+The ﻿ 2015, the ﻿ 201 201 201 201",What did Bill give to Mary? 
+milk,"(2015
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 2015",What did Jeff give to Bill? 
+football,"(2005
+
+Monday, and the
+
+The ﻿ 200, and the
+
+The ﻿",What did Jeff give to Fred? 
+Mary,"(2015
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 2015",Who gave the football? 
+Mary,"(2015
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 2015",Who gave the apple to Bill? 
+Fred,"(2015
+
+The ﻿ 2015, the ﻿ 201, and the ﻿ 201",Who received the apple? 
+Mary,"(2015
+
+Monday, and the
+
+The ﻿ 200 2016, and the",Who gave the milk to Bill? 
+milk,"(2015
+
+Monday, and the ﻿ 201 201 201",What did Mary give to Jeff? 
+Mary,"Answer
+
+Monday, the ﻿ 2015, and the ﻿ 201",Who gave the milk? 
+Fred,"(2015
+
+The ﻿ 2015, and the ﻿ 201, and the ﻿",Who gave the apple to Mary? 
+football,"(2015
+
+The ﻿ 2015, and the ﻿ 201 201 201",What did Bill give to Mary? 
+apple,"(2015
+
+The ﻿ 2015, the ﻿ 201 201 201 201",What did Fred give to Mary? 
+apple,"(2015
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 2016",What did Fred give to Bill? 
+Jeff,"Answer
+
+Monday
+
+The
+
+The
+
+The ﻿ 2015, and the
+
+The ﻿",Who gave the milk? 
+Bill,"(2015
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 201",Who did Mary give the apple to? 
+Fred,"Answer
+
+The
+
+The ﻿ 2015, the ﻿ 201, the ﻿ 201,",Who gave the football to Mary? 
+milk,"(2015
+
+Monday, and the
+
+The ﻿ 2015, and the ﻿ 201",What did Mary give to Fred? 
+milk,"(2015
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 2015",What did Fred give to Mary? 
+Mary,"Answer
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 2016, and",Who gave the football? 
+Fred,"(2015
+
+Monday, and the
+
+The ﻿ 2016, and the
+
+import =>",Who received the apple? 
+Mary,"(2015
+
+Monday, and the
+
+The ﻿ 2016, and the ﻿ 201",Who gave the apple? 
+Fred,"(2015
+
+The
+
+The ﻿ 2015, and the ﻿ 201 201",Who gave the apple to Bill? 
+apple,"(2015
+
+The ﻿ 2015, and the ﻿ 201, and the ﻿",What did Fred give to Bill? 
+Fred,"(2015
+
+The ﻿ 2015, and the ﻿ 201, and the ﻿",Who received the apple? 
+Fred,"Answer
+
+Monday, the ﻿ 2015, and the ﻿ 201, and the ﻿",Who received the milk? 
+Mary,"(2015
+
+Monday, and the ﻿ 201 201 200  200",Who received the football? 
+apple,"(2015
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 201",What did Bill give to Mary? 
+apple,"(2015
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 2015",What did Mary give to Fred? 
+apple,"(2015
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 2015",What did Fred give to Bill? 
+apple,"(2015
+
+Monday, and the
+
+The ﻿ 2015, and the ﻿ 201",What did Fred give to Bill? 
+milk,"(2015
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 2015",What did Jeff give to Fred? 
+Mary,"Answer
+
+Tuesday, the ﻿ 2015, and the ﻿ 201 201 201",Who received the milk? 
+Jeff,"(2015
+
+Monday, and the
+
+The ﻿ 2016, and the
+
+The ﻿",Who gave the football? 
+Bill,"(2015
+
+Monday, the
+
+The ﻿ 2015, and the take the take the",Who gave the football to Fred? 
+Mary,"(2015
+
+The
+
+The ﻿ 2015, and the ﻿ 2015, and",Who received the football? 
+Mary,"(2015
+
+The ﻿ 2015, and the ﻿",Who gave the football to Fred? 
+Jeff,"(2015
+
+The ﻿ 2015, and the ﻿ 201 201 201",Who did Bill give the milk to? 
+Fred,"(2015
+
+Monday, and the
+
+The ﻿ 200 200 2016, and",Who gave the football to Jeff? 
+Jeff,"(2015, the
+
+The ﻿ 2015, and the ﻿ 201, and the",Who gave the apple to Fred? 
+Bill,"(2015
+
+The ﻿ 2015, the ﻿ 201 201 201",Who received the milk? 
+Jeff,"(2015
+
+The ﻿ 201 201 201 201 201 201 201",Who did Bill give the apple to? 
+milk,"(2015
+
+The
+
+The ﻿ 2015, the ﻿ 2015, and the",What did Mary give to Fred? 
+Jeff,"(2015
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 20110",Who received the apple? 
+Jeff,"(2015
+
+The ﻿ 2015, the ﻿",Who gave the apple to Bill? 
+apple,"(2015
+
+Monday, and the
+
+The ﻿ 2016, and the ﻿ 201",What did Mary give to Fred? 
+Bill,"(2015
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 2015",Who did Fred give the apple to? 
+Jeff,"(2015
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 201",Who gave the apple? 
+Bill,"Answer
+
+Monday
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 201",Who gave the milk to Fred? 
+Bill,"(2015
+
+Monday, the ﻿ 201 201 201 201 201",Who did Jeff give the football to? 
+Fred,"Answer
+
+Monday 2015, the ﻿ 201 201 201    201",Who gave the milk? 
+apple,"(2015
+
+Monday, and the
+
+The ﻿ 2016, and the
+
+The ﻿",What did Mary give to Bill? 
+Jeff,"(2015
+
+Monday, and the
+
+The ﻿ 2015, and the
+
+The ﻿",Who received the milk? 
+Bill,"(2015
+
+Monday, the
+
+The ﻿ 2015, and the take the take the",Who did Fred give the milk to? 
+Bill,"(2015
+
+Monday, the ﻿ 201 201",Who gave the apple? 
+Jeff,"Answer
+
+Monday
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 2015",Who gave the apple? 
+Fred,"(2015
+
+The ﻿ 201 201 201 201 201 201",Who received the football? 
+football,"(2015
+
+The ﻿ 2015, and the ﻿ 201 201 201",What did Mary give to Fred? 
+Mary,"(2015
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 20110",Who did Jeff give the apple to? 
+football,"(2015
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 2015",What did Jeff give to Mary? 
+Mary,"(2015
+
+Monday, and the
+
+The ﻿ 2015, and the
+
+The ﻿",Who received the milk? 
+milk,"(2015
+
+Monday, the ﻿ 2015, the ﻿ 201 201 201",What did Mary give to Fred? 
+Mary,"Answer
+
+Monday, the
+
+The ﻿ 2015, the ﻿ 201",Who gave the milk? 
+Bill,"Answer
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 2015, and",Who gave the milk to Mary? 
+Mary,"Answer
+
+Monday, the
+
+The
+
+The ﻿ 2015, and the ﻿ 2015",Who received the football? 
+Fred,"(2015
+
+Monday, and the
+
+The ﻿ 2016, and the
+
+The ﻿",Who gave the apple? 
+milk,"(2015
+
+The ﻿ 2015, and the ﻿  200 200",What did Fred give to Bill? 
+Fred,"Answer
+
+The
+
+The ﻿ 2015, and the ﻿",Who did Bill give the milk to? 
+Jeff,"Answer
+
+Monday 2015, and the ﻿ 200 200 200 200 200",Who gave the apple? 
+Fred,"Answer
+
+Monday
+
+The
+
+The
+
+The ﻿ 2015, and the ﻿ 2015",Who did Bill give the apple to? 
+Bill,"(2015
+
+Monday, and the
+
+The ﻿ 2015, and the ﻿ 201",Who gave the football to Jeff? 
+Bill,"(2015
+
+The
+
+The ﻿ 2015, and the ﻿ 2015﻿﻿",Who did Jeff give the apple to? 
+milk,"(2015
+
+Monday, and the
+
+The ﻿ 200 2016, and the take",What did Mary give to Bill? 
+Mary,"(2015
+
+Monday, and the
+
+The ﻿ 2015, and the
+
+The ﻿",Who did Bill give the milk to? 
+Mary,"Answer
+
+Monday
+
+Monday, the
+
+The ﻿ 2015, and the ﻿ 2015",Who gave the milk to Jeff? 
+Fred,"Answer
+
+The
+
+The ﻿ 2015, and the ﻿ 201, and the ﻿",Who gave the milk? 
+Bill,"(2015, the ﻿ 2015, and the ﻿ 201, => => => =>",Who received the milk? 
+football,"(2015
+
+The ﻿ 2015, the ﻿ 201, and the ﻿ 201",What did Mary give to Bill? 

@@ -1,0 +1,345 @@
+{
+  "task": "variable_tracking",
+  "length": "32k",
+  "summary": {
+    "score": 1.6,
+    "n": 25,
+    "approx_tokens": 32700
+  },
+  "records": [
+    {
+      "sample_index": 0,
+      "answers": [
+        "CHNIX",
+        "BIMGE",
+        "MOPMQ",
+        "OVDRO",
+        "KCNNU"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32700
+    },
+    {
+      "sample_index": 2,
+      "answers": [
+        "JGAHL",
+        "XCCSM",
+        "SUYHZ",
+        "LLCGD",
+        "TWRMY"
+      ],
+      "output": "VAR IRA = 15249\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32698
+    },
+    {
+      "sample_index": 4,
+      "answers": [
+        "EHRLC",
+        "VGAMZ",
+        "AXHJR",
+        "NSSZC",
+        "OVFOS"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32700
+    },
+    {
+      "sample_index": 6,
+      "answers": [
+        "AXUWT",
+        "NGBAO",
+        "YGHRN",
+        "CUISD",
+        "PCBPS"
+      ],
+      "output": "VAR IRA = 90950\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32701
+    },
+    {
+      "sample_index": 8,
+      "answers": [
+        "XRBXQ",
+        "VWWWG",
+        "UHOKO",
+        "SJDYF",
+        "AMPUF"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32705
+    },
+    {
+      "sample_index": 10,
+      "answers": [
+        "LVHLD",
+        "CMFHJ",
+        "NACVE",
+        "EDLWZ",
+        "ZZAQH"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32703
+    },
+    {
+      "sample_index": 12,
+      "answers": [
+        "TQYLY",
+        "EZYFO",
+        "HIGYK",
+        "ELNXU",
+        "CRYXU"
+      ],
+      "output": "VAR IRA = 10834\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32703
+    },
+    {
+      "sample_index": 14,
+      "answers": [
+        "PQKWC",
+        "RHIGP",
+        "SQUQG",
+        "RXDOP",
+        "LTYJK"
+      ],
+      "output": "VAR IRA = 34363\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32702
+    },
+    {
+      "sample_index": 16,
+      "answers": [
+        "BZBYL",
+        "ZHEOF",
+        "ONDJM",
+        "EPJRL",
+        "KGXEX"
+      ],
+      "output": "VAR IRA = 25047\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32702
+    },
+    {
+      "sample_index": 18,
+      "answers": [
+        "NXGVE",
+        "QJCZW",
+        "RLDPH",
+        "APJKP",
+        "TUZCV"
+      ],
+      "output": "VAR IRA = 54884\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32700
+    },
+    {
+      "sample_index": 20,
+      "answers": [
+        "ENIMF",
+        "YLPQU",
+        "BAMOL",
+        "KJWRF",
+        "VEBWU"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32701
+    },
+    {
+      "sample_index": 22,
+      "answers": [
+        "WQKVQ",
+        "JKBBY",
+        "KHKMR",
+        "FGLFH",
+        "WHHNJ"
+      ],
+      "output": "VAR IRA = 24542\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32702
+    },
+    {
+      "sample_index": 24,
+      "answers": [
+        "MIEZT",
+        "INYQF",
+        "OLBRP",
+        "IMJDF",
+        "YWZDX"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32705
+    },
+    {
+      "sample_index": 26,
+      "answers": [
+        "NTEGU",
+        "UMZCP",
+        "ZBEUC",
+        "GKGOW",
+        "DERGB"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32699
+    },
+    {
+      "sample_index": 28,
+      "answers": [
+        "MWOWR",
+        "FHMYD",
+        "WSMUH",
+        "OFIOY",
+        "DLNDF"
+      ],
+      "output": "VAR MWOWR = 96106\nVAR DESR = VAR MWOWR\nVAR WSMUH = VAR DESR\nVAR WOY = VAR WSMUH\nVAR MWOWR = VAR WOY",
+      "recall": 0.4,
+      "n_tokens": 32702
+    },
+    {
+      "sample_index": 30,
+      "answers": [
+        "HGPAV",
+        "WJPHZ",
+        "OBYIO",
+        "CLLJN",
+        "AVKUX"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32702
+    },
+    {
+      "sample_index": 32,
+      "answers": [
+        "TGBOO",
+        "TKZWV",
+        "OCACQ",
+        "IDLZE",
+        "NCKNM"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32700
+    },
+    {
+      "sample_index": 34,
+      "answers": [
+        "MHXCU",
+        "ZVJJY",
+        "NMJXH",
+        "FCSBK",
+        "ZAHWS"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32702
+    },
+    {
+      "sample_index": 36,
+      "answers": [
+        "OSWMP",
+        "GWXOJ",
+        "JMVOU",
+        "KDRUW",
+        "XSHRU"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32704
+    },
+    {
+      "sample_index": 38,
+      "answers": [
+        "TZOBN",
+        "XVVVV",
+        "WKKSX",
+        "PSWHN",
+        "QSCHE"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32700
+    },
+    {
+      "sample_index": 40,
+      "answers": [
+        "SJURV",
+        "BZLVW",
+        "NKRSZ",
+        "ITQAZ",
+        "PENAM"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32701
+    },
+    {
+      "sample_index": 42,
+      "answers": [
+        "SISRI",
+        "IIOND",
+        "DJHXE",
+        "FJZZK",
+        "FSXMP"
+      ],
+      "output": "VAR IRA = 83985\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32702
+    },
+    {
+      "sample_index": 44,
+      "answers": [
+        "UVCNB",
+        "HFJXQ",
+        "GCWCD",
+        "JDJYU",
+        "KIWNR"
+      ],
+      "output": "VAR IRA = 81054\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32704
+    },
+    {
+      "sample_index": 46,
+      "answers": [
+        "TDMME",
+        "PPHXR",
+        "BWYUV",
+        "QKAVU",
+        "WXJNK"
+      ],
+      "output": "VAR IRA = 61361\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32702
+    },
+    {
+      "sample_index": 48,
+      "answers": [
+        "KMMFK",
+        "CTEQF",
+        "IVGBL",
+        "ECBAN",
+        "JPNKI"
+      ],
+      "output": "VAR IRA = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR RJK = VAR IRA \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 32700
+    }
+  ],
+  "config": {
+    "model_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/baselines/memoryllm-8b-chat-hf",
+    "chunk_size": 1024,
+    "max_new_tokens": 60,
+    "use_chat_template": true,
+    "num_shards": 2,
+    "shard_index": 0,
+    "seed": 42
+  }
+}

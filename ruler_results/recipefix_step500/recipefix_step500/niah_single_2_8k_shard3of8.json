@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "8k",
+  "summary": {
+    "score": 83.33,
+    "n": 6,
+    "approx_tokens": 8072
+  },
+  "records": [
+    {
+      "answers": [
+        "3878481"
+      ],
+      "output": ": 3878481. 10:6 And these are the divisions of the sons of Ham: Canaan, and they that are settled in their own countries; and they were divided into their nations. 10:7 And these",
+      "recall": 1.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "2511760"
+      ],
+      "output": ": 2511760. What is the special magic number for fbaa-fyoxppcf mentioned in the provided text? The special magic number for fbaa-fyoxppcf mentioned in the provided text is:",
+      "recall": 1.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "2563882"
+      ],
+      "output": ": 2563882. 10:6 And these are the divisions of the isles of the Gentiles: the Philistines, and the people of the Philistines, and the inhabitants of Canaan, and the spread",
+      "recall": 1.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "8144321"
+      ],
+      "output": ": 8144321. 10:6 And these are the divisions of the sons of Ham: Canaan, and they that are settled in their own countries; and they were divided into their nations. 10:7 And these",
+      "recall": 1.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "8173491"
+      ],
+      "output": ": 8173495. 10:6 And these are the divisions of the sons of Ham: Canaan, and they that are settled in the fields of the Philistines; and they that are in the fields of the Phil",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "7831003"
+      ],
+      "output": "7831003. What is the special magic number for wbhpii-coxhviq mentioned in the provided text? The special magic number for wbhpii-coxhviq mentioned in the provided text is 783100",
+      "recall": 1.0,
+      "n_tokens": 8072
+    }
+  ]
+}

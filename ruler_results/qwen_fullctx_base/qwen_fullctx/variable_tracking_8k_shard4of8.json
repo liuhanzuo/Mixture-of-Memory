@@ -1,0 +1,83 @@
+{
+  "task": "variable_tracking",
+  "length": "8k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 8100
+  },
+  "records": [
+    {
+      "answers": [
+        "DCPSQ",
+        "YKAJY",
+        "UTOJI",
+        "EKMES",
+        "HLZFS"
+      ],
+      "output": "DCPSQ YKAJY UTOJI EKMES HLZFS\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 31082 in the given text. \n\nFirst, I need to parse through the",
+      "recall": 1.0,
+      "n_tokens": 8098
+    },
+    {
+      "answers": [
+        "DMYLC",
+        "IKQBI",
+        "OUKDM",
+        "PGIYJ",
+        "TXPQU"
+      ],
+      "output": "DMYLC IKQBI OUKDM PGIYJ TXPQU\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 65751 in the given text. \n\nFirst, I need to parse through the",
+      "recall": 1.0,
+      "n_tokens": 8098
+    },
+    {
+      "answers": [
+        "DVUOT",
+        "IVDWJ",
+        "LRJIZ",
+        "KKDPF",
+        "RLAVS"
+      ],
+      "output": "DVUOT IVDWJ LRJIZ KKDPF RLAVS\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 69706 in the given text. Let me start by carefully reading through the text again",
+      "recall": 1.0,
+      "n_tokens": 8098
+    },
+    {
+      "answers": [
+        "LNRNB",
+        "RKIHI",
+        "XFBAY",
+        "KUHPD",
+        "RCQLK"
+      ],
+      "output": "LNRNB RKIHI XFBAY KUHPD RCQLK\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 40222 in the given text. \n\nFirst, I need to parse through the",
+      "recall": 1.0,
+      "n_tokens": 8098
+    },
+    {
+      "answers": [
+        "JTSHV",
+        "AWHHL",
+        "SPWBF",
+        "NRAZW",
+        "AFZML"
+      ],
+      "output": "JTSHV AWHHL SPWBF NRAZW AFZML\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 33858 in the given text. The user provided a long block of text with several variables being",
+      "recall": 1.0,
+      "n_tokens": 8094
+    },
+    {
+      "answers": [
+        "BZKVH",
+        "IUXQL",
+        "AOAGK",
+        "HNQOS",
+        "ECXSI"
+      ],
+      "output": "BZKVH IUXQL AOAGK HNQOS ECXSI\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 52301 in the given text. \n\nFirst, I need to parse through",
+      "recall": 1.0,
+      "n_tokens": 8100
+    }
+  ]
+}

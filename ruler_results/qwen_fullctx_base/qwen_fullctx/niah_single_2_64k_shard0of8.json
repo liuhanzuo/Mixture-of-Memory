@@ -1,0 +1,67 @@
+{
+  "task": "niah_single_2",
+  "length": "64k",
+  "summary": {
+    "score": 100.0,
+    "n": 7,
+    "approx_tokens": 65503
+  },
+  "records": [
+    {
+      "answers": [
+        "5330283"
+      ],
+      "output": "5330283. The number is hidden within the text and is revealed in the context of the narrative, where it is stated that the number is 5330283. This number is significant as",
+      "recall": 1.0,
+      "n_tokens": 65503
+    },
+    {
+      "answers": [
+        "1341992"
+      ],
+      "output": "1341992. The number is hidden within the text and is revealed in the context of the story of Joseph, where the number is given as the answer to the riddle of the seven years of plenty and famine",
+      "recall": 1.0,
+      "n_tokens": 65500
+    },
+    {
+      "answers": [
+        "3942988"
+      ],
+      "output": "3942988. This number is highlighted in the text as the key to the hidden magic number. The number is found in the context of the story of Moses and the Israelites, where it is mentioned as a",
+      "recall": 1.0,
+      "n_tokens": 65503
+    },
+    {
+      "answers": [
+        "5772555"
+      ],
+      "output": "5772555. The number is found in the text as follows: \"And the children of Israel were fruitful, and increased abundantly, and multiplied, and waxed exceeding mighty; and the land was filled with",
+      "recall": 1.0,
+      "n_tokens": 65506
+    },
+    {
+      "answers": [
+        "1215373"
+      ],
+      "output": "1215373. This number is highlighted in the text as the key to unlocking the hidden magic number. The number is embedded within the text, and it's crucial for the quiz that follows. The number is",
+      "recall": 1.0,
+      "n_tokens": 65503
+    },
+    {
+      "answers": [
+        "3007234"
+      ],
+      "output": "3007234. This number is highlighted in the text as the special magic number. The number is found in the text where it says, \"One of the special magic numbers for daum-jsvt is:",
+      "recall": 1.0,
+      "n_tokens": 65494
+    },
+    {
+      "answers": [
+        "9069161"
+      ],
+      "output": "9069161. This number is highlighted in the text as the special magic number. The number is mentioned in the context of a specific reference within the biblical text, and it is presented as a unique identifier or a",
+      "recall": 1.0,
+      "n_tokens": 65503
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 131343,
+    "avg_read_len": 6495.8,
+    "last_read_len": 6416
+  },
+  "records": [
+    {
+      "sample_index": 7,
+      "label": "ypzryexe-aitdzjahm",
+      "expected": "131531",
+      "output": "<617350>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me look for the line that starts with \"line ypzryexe-aitdzjahm",
+      "pred": "617350",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131270,
+      "read_len": 6343,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 15,
+      "label": "ujtjk-rdrlbl",
+      "expected": "480138",
+      "output": "<613543>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line ujtjk-rdrlbl\". Let me go through the list again to make",
+      "pred": "613543",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131538,
+      "read_len": 6611,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 23,
+      "label": "dnwdqgy-wrequsnbh",
+      "expected": "621814",
+      "output": "<753129>. \n\nWait, but I need to check if that line is present in the provided data. Let me check again.\n\nLooking through the list:\n\nLooking for the line that starts with \"line dnwdq",
+      "pred": "753129",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131367,
+      "read_len": 6440,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 31,
+      "label": "zqcecx-tslopwuy",
+      "expected": "269515",
+      "output": "<149334>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss it.\n\nLooking through the lines:\n\n- The line with \"zqcecx-tslop",
+      "pred": "149334",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131559,
+      "read_len": 6632,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 39,
+      "label": "emgkeypqn-vcppmb",
+      "expected": "291118",
+      "output": "<...> in the given data. Let me find it.\n\nOkay, let's see. I need to find the line that starts with \"line emgkeypqn-vcppmb\" and then extract the number inside the <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131460,
+      "read_len": 6533,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 47,
+      "label": "mxjoclq-wdtzrzu",
+      "expected": "223134",
+      "output": "<558599>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. Let me check each line one by one.\n\nLooking through the list:\n\n-",
+      "pred": "558599",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131343,
+      "read_len": 6416,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    }
+  ]
+}

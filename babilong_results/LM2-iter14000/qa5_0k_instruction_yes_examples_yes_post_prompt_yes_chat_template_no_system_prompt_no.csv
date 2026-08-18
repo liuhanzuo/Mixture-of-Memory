@@ -1,0 +1,405 @@
+target,output,question
+Jeff,"(the
+The is a
+The is a
+The is a
+The is a
+The",Who did Fred give the football to? 
+Bill,"(1. The
+The is a. The
+The is a. The
+The is a",Who did Mary give the milk to? 
+Jeff,(1. The milk is a. The milk is a. The milk is a. The milk,Who did Fred give the milk to? 
+milk,(1. The milk. The milk is a. The milk is a. The milk is a,What did Mary give to Fred? 
+Fred,<br> <br> <br> <br> <br> <br> <br,Who received the milk? 
+apple,"(1) The
+The is the
+The is the
+The is the
+The is the",What did Mary give to Jeff? 
+apple,"(1)
+The is the
+The is the
+The is the
+The is the
+The",What did Mary give to Jeff? 
+apple,<br> <br> <br> <br> <br> <br> <br,What did Fred give to Bill? 
+Jeff,"(the milk) and the
+The is the
+The is the
+The is the
+The",Who gave the milk to Fred? 
+Fred,"(the
+The so, the
+The so, the
+The so, the
+The so",Who gave the apple to Mary? 
+Jeff,"(the
+The is a. The
+The is a. The
+The is a. The",Who received the football? 
+Jeff,"(the answer)
+The is a. The
+The is the
+The is the
+The is",Who did Mary give the football to? 
+milk,"(1. The
+The is a. The
+The is a. The
+The is the",What did Mary give to Bill? 
+Bill,"(the
+The is the
+The is the
+The is the
+The is the
+The",Who did Mary give the milk to? 
+milk,"(1. The
+The is a. The
+The is a. The
+The is a",What did Mary give to Bill? 
+apple,"(the answer)
+The the
+The the
+The the
+The the
+The the
+The",What did Fred give to Mary? 
+Mary,"(the
+The is a
+The is a
+The is a
+The is a
+The",Who received the football? 
+apple,"(the
+The is a. The
+The is a. The
+The is the
+The",What did Fred give to Bill? 
+Jeff,"(1. The
+The is the
+The is the
+The is the
+The is the",Who received the apple? 
+Bill,"(the
+The is a
+The is a
+The is a
+The is a
+The",Who did Mary give the football to? 
+Fred,"(the
+The is a
+The is a
+The is a
+The is a
+The",Who gave the milk to Jeff? 
+Mary,"(1. The
+The is a
+The is a
+The is a
+The is a",Who received the milk? 
+Mary,"(1. The
+The is a. The
+The is a. The
+The is a",Who gave the milk? 
+milk,"(1)The is the
+The is the
+The is the
+The is the
+The",What did Bill give to Mary? 
+milk,"(1. The
+The is a. The
+The is a. The
+The is a",What did Jeff give to Bill? 
+football,"(the
+The is a
+The is a
+The is a
+The is a
+The",What did Jeff give to Fred? 
+Mary,"(the
+The is a. The
+The is a. The
+The is a. The",Who gave the football? 
+Mary,"(the
+The is a. The
+The is the
+The is a. The
+The",Who gave the apple to Bill? 
+Fred,"(1)
+
+The is the
+
+The is the
+
+The is the
+
+The is the
+
+The",Who received the apple? 
+Mary,"(1. The
+The is a
+The is a
+The is a
+The is a",Who gave the milk to Bill? 
+milk,"(1. The
+The is the
+The is the
+The is the
+The is the",What did Mary give to Jeff? 
+Mary,<br> <br> <br> <br> <br> <br> <br,Who gave the milk? 
+Fred,<br> <br> <br> <br> <br> <br> <br,Who gave the apple to Mary? 
+football,"(1) The
+The is the
+The is the
+The is the
+The is the",What did Bill give to Mary? 
+apple,"(the answer)
+The is the
+The is the
+The is the
+The is the",What did Fred give to Mary? 
+apple,"(1. The
+The is the
+The is the
+The is the
+The is the",What did Fred give to Bill? 
+Jeff,<br> <br> <br> <br> <br> <br> <br,Who gave the milk? 
+Bill,"(the
+The is a. The
+The is a. The
+The is a. The",Who did Mary give the apple to? 
+Fred,<br> <br> <br> <br> <br> <br> <br,Who gave the football to Mary? 
+milk,"(the
+The so, the
+The so, the
+The so, the
+The so",What did Mary give to Fred? 
+milk,"(1. The
+The so, the
+The so, the
+The so, the",What did Fred give to Mary? 
+Mary,"(the
+The is the
+The is the
+The is the
+The is the
+The",Who gave the football? 
+Fred,"(the
+The is a. The
+The is a. The
+The is a. The",Who received the apple? 
+Mary,"(the
+The is a
+The is a
+The is a
+The is a
+The",Who gave the apple? 
+Fred,"(the
+The is a. The
+The is a. The
+The is the
+The",Who gave the apple to Bill? 
+apple,<br> <br> <br> <br> <br> <br> <br,What did Fred give to Bill? 
+Fred,<br> <br> <br> <br> <br> <br> <br,Who received the apple? 
+Fred,<br> <br> <br> <br> <br> <br> <br,Who received the milk? 
+Mary,"(1. The
+The is the
+The is the
+The is the
+The is the",Who received the football? 
+apple,"(1. The
+The is the
+The is the
+The is the
+The is the",What did Bill give to Mary? 
+apple,<br> <br> <br> <br> <br> <br> <br,What did Mary give to Fred? 
+apple,"(1. The
+The is the
+The is the
+The is the
+The is the",What did Fred give to Bill? 
+apple,"(the
+The so, the
+The so, the
+The so, the
+The so",What did Fred give to Bill? 
+milk,<br> <br> <br> <br> <br> <br> <br,What did Jeff give to Fred? 
+Mary,<br> <br> <br> <br> <br> <br> <br,Who received the milk? 
+Jeff,"(the
+The is a
+The is a
+The is a
+The is a
+The",Who gave the football? 
+Bill,"(the
+The is the
+The is the
+The is a
+The is a
+The",Who gave the football to Fred? 
+Mary,"(1. The
+The is the
+The is the
+The is the
+The is the",Who received the football? 
+Mary,"(the answer)
+The is the
+The is the
+The is the
+The is the",Who gave the football to Fred? 
+Jeff,"(1. The
+The is the
+The is the
+The is the
+The is the",Who did Bill give the milk to? 
+Fred,"(the
+The is a
+The is a
+The is a
+The is a
+The",Who gave the football to Jeff? 
+Jeff,"(1)
+The is the apple. The apple is a very good. The apple is a very",Who gave the apple to Fred? 
+Bill,"(1. The
+The is the
+The is the
+The is the
+The is the",Who received the milk? 
+Jeff,"(1)
+The is the
+The is the
+The is the
+The is the
+The",Who did Bill give the apple to? 
+milk,"(the
+The so, the
+The so, the
+The so, the
+The so",What did Mary give to Fred? 
+Jeff,"(1. The
+The is the
+The is the
+The is the
+The is the",Who received the apple? 
+Jeff,"(the apple) The
+The is the
+The is the
+The is the
+The is",Who gave the apple to Bill? 
+apple,"(the
+The is a. The
+The is a. The
+The is a. The",What did Mary give to Fred? 
+Bill,"(the first, the
+The is the
+The is the
+The is the
+The is",Who did Fred give the apple to? 
+Jeff,"(the
+The is a. The
+The is the
+The is a. The
+The",Who gave the apple? 
+Bill,"(the
+The is the
+The is the
+The is a
+The is a
+The",Who gave the milk to Fred? 
+Bill,"(the answer)
+The is the
+The is the
+The is the
+The is the",Who did Jeff give the football to? 
+Fred,<br> <br> <br> <br> <br> <br> <br,Who gave the milk? 
+apple,"(the
+The so, the
+The so, the
+The so, the
+The so",What did Mary give to Bill? 
+Jeff,"(1. The
+The is a
+The is a
+The is a
+The is a",Who received the milk? 
+Bill,"(the milk) The
+The is the
+The is the
+The is the
+The is",Who did Fred give the milk to? 
+Bill,<br> <br> <br> <br> <br> <br> <br,Who gave the apple? 
+Jeff,<br> <br> <br> <br> <br> <br> <br,Who gave the apple? 
+Fred,(1) The first. The first. The first. The first. The first. The first,Who received the football? 
+football,<br> <br> <br> <br> <br> <br> <br,What did Mary give to Fred? 
+Mary,"(the
+The is a. The
+The is a. The
+The is a. The",Who did Jeff give the apple to? 
+football,"(the
+The is a. The
+The is a. The
+The is a. The",What did Jeff give to Mary? 
+Mary,"(1. The
+The is a. The
+The is a. The
+The is a",Who received the milk? 
+milk,<br> <br> <br> <br> <br> <br> <br,What did Mary give to Fred? 
+Mary,<br> <br> <br> <br> <br> <br> <br,Who gave the milk? 
+Bill,"(1. The
+The is a. The
+The is a. The
+The is a",Who gave the milk to Mary? 
+Mary,"(1. The
+The is a. The
+The is a. The
+The is a",Who received the football? 
+Fred,"(the
+The is a. The
+The is a. The
+The is a. The",Who gave the apple? 
+milk,"(1. The
+The is the
+The is the
+The is the
+The is the",What did Fred give to Bill? 
+Fred,"(1. The
+The is the
+The is the
+The is the
+The is the",Who did Bill give the milk to? 
+Jeff,<br> <br> <br> <br> <br> <br> <br,Who gave the apple? 
+Fred,"(the
+The is a. The
+The is a. The
+The is a. The",Who did Bill give the apple to? 
+Bill,"(the
+The is the
+The is the
+The is the
+The is the
+The",Who gave the football to Jeff? 
+Bill,"(the
+The is the
+The is the
+The is the
+The is the
+The",Who did Jeff give the apple to? 
+milk,"(1. The
+The is a
+The is a
+The is a
+The is a",What did Mary give to Bill? 
+Mary,"(the
+The is a
+The is a
+The is a
+The is a
+The",Who did Bill give the milk to? 
+Mary,"(1. The
+The is the
+The is the
+The is the
+The is the",Who gave the milk to Jeff? 
+Fred,(1. The milk is a. The milk is a. The milk is a. The milk,Who gave the milk? 
+Bill,<br> <br> <br> <br> <br> <br> <br,Who received the milk? 
+football,<br> <br> <br> <br> <br> <br> <br,What did Mary give to Bill? 

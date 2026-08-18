@@ -1,0 +1,280 @@
+target,output,question
+kitchen,"Answer: The football is in the kitchen.
+<example>
+Mary went to the garden. Mary journey",Where is the football? 
+garden,"Answer: The milk is in the garden.
+<example>
+John went to the kitchen. John got",Where is the milk? 
+bedroom,"Answer: The apple is in the bedroom.
+<example>
+John moved to the hallway. John got",Where is the apple? 
+bedroom,"Answer: The apple is in the office.
+<example>
+John moved to the hallway. Mary moved",Where is the apple? 
+kitchen,"Answer: The apple is in the garden.
+Question: Where is the football? Answer: The football",Where is the apple? 
+hallway,"Answer: The apple is in the hallway.
+<example>
+John went to the kitchen. John got",Where is the apple? 
+kitchen,"Answer: The milk is in the kitchen.
+Question: Where is the bottle? Answer: The bottle",Where is the milk? 
+garden,"Answer: The milk is in the garden.
+Question: Where is the bottle? Answer: The bottle",Where is the milk? 
+bedroom,"Answer: The milk is in the bedroom.
+<example>
+John went to the hallway. John got",Where is the milk? 
+bathroom,"Answer: The milk is in the kitchen.
+<example>
+John went to the hallway. John went",Where is the milk? 
+bathroom,"Answer: The football is in the bedroom.
+<example>
+John went to the office. John got",Where is the football? 
+bedroom,"Answer: The milk is in the bedroom.
+<example>
+John went to the kitchen. John got",Where is the milk? 
+bathroom,"Answer: The apple is in the bathroom.
+<example>
+Mary went to the bedroom. Sandra travelled",Where is the apple? 
+kitchen,"Answer: The football is in the kitchen.
+<example>
+John got a football. John moved to",Where is the football? 
+bedroom,"Answer: The apple is in the bedroom.
+<example>
+John got a bottle. John moved to",Where is the apple? 
+garden,"Answer: The apple is in the garden.
+<example>
+John moved to the bedroom. Sandra journey",Where is the apple? 
+bedroom,"Answer: The football is in the hallway.
+<example>
+John went to the bedroom. Sandra journey",Where is the football? 
+bedroom,"Answer: The apple is in the hallway.
+<example>
+John went to the bedroom. John got",Where is the apple? 
+garden,"Answer: The milk is in the garden.
+Sandra took the milk there. Sandra journeyed to",Where is the milk? 
+garden,"Answer: The milk is in the bathroom.
+<example>
+Charlie went to the kitchen. Charlie got",Where is the milk? 
+office,"Answer: The apple is in the office.
+<example>
+Charlie went to the kitchen. Charlie got",Where is the apple? 
+bedroom,"Answer: The milk is in the bedroom.
+Question: Where is the football? Answer: The football",Where is the milk? 
+garden,"Answer: The milk is in the garden.
+Question: Where is the bottle? Answer: The bottle",Where is the milk? 
+bathroom,"Answer: The milk is in the office.
+Question: Where is the football? Answer: The football",Where is the milk? 
+office,"Answer: The apple is in the garden.
+<example>
+John went to the kitchen. John got",Where is the apple? 
+garden,"Answer: The football is in the garden.
+Question: Where is the apple? Answer: The apple",Where is the football? 
+garden,"Answer: The football is in the garden.
+<example>
+Mary went to the kitchen. Mary got",Where is the football? 
+bedroom,"Answer: The apple is in the bedroom.
+<example>
+John moved to the kitchen. John got",Where is the apple? 
+hallway,"Answer: The apple is in the hallway.
+<example>
+John went to the bedroom. John moved",Where is the apple? 
+hallway,"Answer: The apple is in the hallway.
+<example>
+John got a football. John moved to",Where is the apple? 
+hallway,"Answer: The apple is in the hallway.
+<example>
+John got a football. John moved to",Where is the apple? 
+garden,"Answer: The football is in the garden.
+<example>
+John went to the kitchen. John got",Where is the football? 
+hallway,"Answer: The apple is in the bathroom.
+<example>
+John went to the office. John got",Where is the apple? 
+kitchen,"Answer: The football is in the kitchen.
+<example>
+John went to the office. John got",Where is the football? 
+hallway,"Answer: The milk is in the hallway.
+<example>
+John got a pen. John moved to",Where is the milk? 
+kitchen,"Answer: The apple is in the kitchen.
+<example>
+Charlie went to the kitchen. Charlie got",Where is the apple? 
+office,"Answer: The milk is in the hallway.
+<example>
+Mary went to the kitchen. Mary got",Where is the milk? 
+hallway,"Answer: The milk is in the hallway.
+<example>
+John went to the kitchen. John got",Where is the milk? 
+bathroom,"Answer: The milk is in the bathroom.
+Question: Where is the apple? Answer: The apple",Where is the milk? 
+bathroom,"Answer: The milk is in the bedroom.
+Question: Where is the apple? Answer: The apple",Where is the milk? 
+bathroom,"Answer: The football is in the bathroom.
+<example>
+Mary went to the garden. John moved",Where is the football? 
+hallway,"Answer: The football is in the hallway.
+<example>
+Mary went back to the kitchen. Mary",Where is the football? 
+garden,"Answer: The apple is in the garden.
+Question: Where is the football? Answer: The football",Where is the apple? 
+bedroom,"Answer: The apple is in the bedroom.
+<example>
+John went to the kitchen. John got",Where is the apple? 
+kitchen,"Answer: The milk is in the kitchen.
+<example>
+John went to the office. John got",Where is the milk? 
+bedroom,"Answer: The milk is in the bedroom.
+Question: Where is the football? Answer: The football",Where is the milk? 
+hallway,"Answer: The apple is in the hallway.
+<example>
+John moved to the bedroom. Mary travelled",Where is the apple? 
+garden,"Answer: The milk is in the garden.
+<example>
+John went to the garden. Sandra went",Where is the milk? 
+kitchen,"Answer: The football is in the kitchen.
+<example>
+John moved to the garden. Sandra moved",Where is the football? 
+bathroom,"Answer: The football is in the bathroom.
+<example>
+John moved to the kitchen. John got",Where is the football? 
+garden,"Answer: The milk is in the garden.
+<example>
+John went to the hallway. John got",Where is the milk? 
+bedroom,"Answer: The apple is in the office.
+<example>
+John went to the bedroom. John got",Where is the apple? 
+hallway,"Answer: The milk is in the hallway.
+<example>
+John went to the kitchen. John got",Where is the milk? 
+hallway,"Answer: The milk is in the hallway.
+<example>
+John moved to the kitchen. John got",Where is the milk? 
+office,"Answer: The milk is in the office.
+<example>
+John got the milk there. John moved",Where is the milk? 
+kitchen,"Answer: The apple is in the hallway.
+<example>
+John went to the kitchen. John got",Where is the apple? 
+bathroom,"Answer: The milk is in the kitchen.
+Question: Where is the football? Answer: The football",Where is the milk? 
+bathroom,"Answer: The milk is in the kitchen.
+Question: Where is the football? Answer: The football",Where is the milk? 
+office,"Answer: The football is in the office.
+<example>
+John went to the kitchen. Mary journey",Where is the football? 
+garden,"Answer: The football is in the garden.
+<example>
+John went to the hallway. John got",Where is the football? 
+kitchen,"Answer: The apple is in the kitchen.
+<example>
+John went to the bedroom. John got",Where is the apple? 
+bathroom,"Answer: The apple is in the bedroom.
+<example>
+John got a bottle. John moved to",Where is the apple? 
+garden,"Answer: The football is in the office.
+<example>
+John went to the kitchen. John got",Where is the football? 
+bathroom,"Answer: The milk is in the bedroom.
+<example>
+John went to the office. Mary went",Where is the milk? 
+bathroom,"Answer: The milk is in the hallway.
+<example>
+John went to the garden. Mary went",Where is the milk? 
+hallway,"Answer: The milk is in the hallway.
+<example>
+John moved to the kitchen. Mary went",Where is the milk? 
+bedroom,"Answer: The football is in the bedroom.
+<example>
+John went to the hallway. Mary travelled",Where is the football? 
+garden,"Answer: The football is in the garden.
+<example>
+Mary went to the kitchen. Mary journey",Where is the football? 
+bedroom,"Answer: The football is in the bedroom.
+<example>
+John went to the garden. John travelled",Where is the football? 
+bathroom,"Answer: The apple is in the bathroom.
+Question: Where is the football? Answer: The football",Where is the apple? 
+garden,"Answer: The milk is in the garden.
+Question: Where is the apple? Answer: The apple",Where is the milk? 
+office,"Answer: The milk is in the office.
+<example>
+John moved to the garden. John got",Where is the milk? 
+office,"Answer: The football is in the kitchen.
+<example>
+Mary went to the kitchen. Mary got",Where is the football? 
+hallway,"Answer: The football is in the hallway.
+<example>
+Charlie went to the kitchen. Charlie got",Where is the football? 
+garden,"Answer: The football is in the garden.
+<example>
+Mary went to the kitchen. Mary got",Where is the football? 
+office,"Answer: The milk is in the office.
+<example>
+Alan moved to the kitchen. Where is",Where is the milk? 
+kitchen,"Answer: The football is in the garden.
+<example>
+John went to the hallway. Mary went",Where is the football? 
+office,"Answer: The milk is in the kitchen.
+<example>
+John went back to the bedroom. John",Where is the milk? 
+kitchen,"Answer: The apple is in the kitchen.
+<example>
+John got the football there. John moved",Where is the apple? 
+kitchen,"Answer: The football is in the hallway.
+<example>
+John moved to the bedroom. John got",Where is the football? 
+office,"Answer: The football is in the office.
+<example>
+John got a football. John moved to",Where is the football? 
+kitchen,"Answer: The apple is in the kitchen.
+<example>
+John got a shovel. John moved to",Where is the apple? 
+office,"Answer: The apple is in the kitchen.
+<example>
+John got a football. John moved to",Where is the apple? 
+bathroom,"Answer: The football is in the hallway.
+<example>
+John got a milk. John moved to",Where is the football? 
+bathroom,"Answer: The football is in the bathroom.
+<example>
+John journeyed to the hallway. John",Where is the football? 
+office,"Answer: The milk is in the office.
+<example>
+Charlie went to the kitchen. Charlie got",Where is the milk? 
+bathroom,"Answer: The apple is in the bathroom.
+Question: Where is the milk? Answer: The milk",Where is the apple? 
+bedroom,"Answer: The milk is in the bedroom.
+<example>
+John went to the hallway. John got",Where is the milk? 
+hallway,"Answer: The apple is in the hallway.
+<example>
+John went to the kitchen. Sandra went",Where is the apple? 
+bedroom,"Answer: The milk is in the bedroom.
+<example>
+Mary went to the office. John went",Where is the milk? 
+bedroom,"Answer: The apple is in the bedroom.
+Question: Where is the football? Answer: The football",Where is the apple? 
+bathroom,"Answer: The football is in the bedroom.
+Question: Where is the apple? Answer: The apple",Where is the football? 
+bedroom,"Answer: The football is in the bedroom.
+<example>
+John went to the kitchen. John got",Where is the football? 
+bedroom,"Answer: The football is in the bedroom.
+<example>
+John moved to the bedroom. John took",Where is the football? 
+bedroom,"Answer: The apple is in the kitchen.
+<example>
+Charlie went to the kitchen. Charlie got",Where is the apple? 
+kitchen,"Answer: The football is in the kitchen.
+<example>
+John moved to the bathroom. John got",Where is the football? 
+garden,"Answer: The milk is in the garden.
+<example>
+John went to the office. Mary moved",Where is the milk? 
+office,"Answer: The milk is in the garden.
+Question: Where is the football? Answer: The football",Where is the milk? 
+bedroom,"Answer: The milk is in the bedroom.
+Question: Where is the football? Answer: The football",Where is the milk? 
+kitchen,"Answer: The apple is in the kitchen.
+<example>
+John went to the kitchen. John got",Where is the apple? 

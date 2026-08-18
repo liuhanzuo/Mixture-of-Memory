@@ -1,0 +1,77 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.1667,
+    "correct": 1,
+    "total": 6,
+    "approx_tokens": 65690
+  },
+  "records": [
+    {
+      "sample_index": 6,
+      "label": "mdxqdx-wlict",
+      "expected": "730214",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"mdxqdx-wlict\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated with",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65820,
+      "read_len": null
+    },
+    {
+      "sample_index": 14,
+      "label": "pjaoklp-jhknh",
+      "expected": "478248",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"pjaoklp-jhknh\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65790,
+      "read_len": null
+    },
+    {
+      "sample_index": 22,
+      "label": "fbsfco-cwaynh",
+      "expected": "286981",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"fbsfco-cwaynh\". Therefore, I cannot retrieve the corresponding <REGISTER_CONTENT> for that line index. Please check the line index and",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65664,
+      "read_len": null
+    },
+    {
+      "sample_index": 30,
+      "label": "oqkze-dbnmklxgm",
+      "expected": "817735",
+      "output": "<478268>. \n\nWait, let me check again. I need to make sure I didn't make a mistake. Let me go through the list again to confirm.\n\nLooking at the lines provided, I see that the",
+      "pred": "478268",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65757,
+      "read_len": null
+    },
+    {
+      "sample_index": 38,
+      "label": "mcnajl-zhkzwg",
+      "expected": "688118",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"mcnajl-zhkzwg\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65799,
+      "read_len": null
+    },
+    {
+      "sample_index": 46,
+      "label": "oznaeoji-lhskfxphq",
+      "expected": "570110",
+      "output": "<570110>. I remember that line because it's one of the later entries in the list, and the number 570110 stands out as a unique value. I can recall it by associating",
+      "pred": "570110",
+      "correct": true,
+      "n_lines": 3072,
+      "n_tokens": 65690,
+      "read_len": null
+    }
+  ]
+}

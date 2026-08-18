@@ -1,0 +1,77 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.3333,
+    "correct": 2,
+    "total": 6,
+    "approx_tokens": 16586
+  },
+  "records": [
+    {
+      "sample_index": 3,
+      "label": "chytealna-fkohqhrr",
+      "expected": "877606",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"chytealna-fkohqhrr\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated with",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16562,
+      "read_len": null
+    },
+    {
+      "sample_index": 11,
+      "label": "bfuwtk-myiwxydof",
+      "expected": "447437",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"bfuwtk-myiwxydof\" is not among them. Therefore, there is no corresponding <REGISTER_CONTENT> value for that line index",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16513,
+      "read_len": null
+    },
+    {
+      "sample_index": 19,
+      "label": "rhlokxtpk-wflovp",
+      "expected": "511621",
+      "output": "<...>. Please provide the number.\nOkay, let's see. The user is asking for the REGISTER_CONTENT of the line with the index \"rhlokxtpk-wflovp\". First, I need to check if this line index",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16541,
+      "read_len": null
+    },
+    {
+      "sample_index": 27,
+      "label": "xrteuueel-ahniqiuix",
+      "expected": "292437",
+      "output": "<292437>. I remember that line because it's one of the later entries in the list, and the number 292437 stands out as a unique value. I associated it with the line identifier",
+      "pred": "292437",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16535,
+      "read_len": null
+    },
+    {
+      "sample_index": 35,
+      "label": "rvbeic-oijire",
+      "expected": "647952",
+      "output": "<647952>. I remember that line because it's one of the later entries in the list, and the number 647952 stands out as a unique value. I associated it with the line identifier",
+      "pred": "647952",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16496,
+      "read_len": null
+    },
+    {
+      "sample_index": 43,
+      "label": "fmhxfwpo-vhujccauf",
+      "expected": "741468",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"fmhxfwpo-vhujccauf\" does not match any of the line identifiers provided. Therefore, there is no corresponding <REGISTER_CONTENT> value",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16586,
+      "read_len": null
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "32k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 31696
+  },
+  "records": [
+    {
+      "answers": [
+        "5816849"
+      ],
+      "output": "5816849. This number is explicitly stated in the text at the end of verse 3:10, which reads: \"One of the special magic numbers for sqdnxdi-mxdwqc is",
+      "recall": 1.0,
+      "n_tokens": 31702
+    },
+    {
+      "answers": [
+        "3900932"
+      ],
+      "output": "3900932. This number is explicitly stated in the text as one of the special magic numbers. The text is a passage from the King James Version of the Bible, specifically from Genesis 24:46",
+      "recall": 1.0,
+      "n_tokens": 31699
+    },
+    {
+      "answers": [
+        "2991919"
+      ],
+      "output": "2991919. This number is highlighted in the text as a specific reference, and it's important to remember it as requested.\nThe special magic number for vbfx-ifkulmse mentioned in the provided text is",
+      "recall": 1.0,
+      "n_tokens": 31693
+    },
+    {
+      "answers": [
+        "7531548"
+      ],
+      "output": "7531548. This number is explicitly stated in the text as: \"One of the special magic numbers for fgffzhcb-ajslxc is: 7531548.\" Therefore,",
+      "recall": 1.0,
+      "n_tokens": 31702
+    },
+    {
+      "answers": [
+        "1977902"
+      ],
+      "output": "1977902. This number is highlighted in the text as a specific reference point. The number is embedded within the narrative, and it's crucial to remember it as it's the key to the quiz that follows.",
+      "recall": 1.0,
+      "n_tokens": 31702
+    },
+    {
+      "answers": [
+        "4782757"
+      ],
+      "output": "4782757. This number is highlighted in the text as a unique identifier or code, possibly related to a specific reference or context within the content. It's important to note that this number is not directly related to",
+      "recall": 1.0,
+      "n_tokens": 31696
+    }
+  ]
+}

@@ -1,0 +1,217 @@
+target,output,question
+bathroom,garden,Where is Mary? 
+kitchen,"kitchen. Oh, no, partners
+mustn’t discuss each other. That would be letting all",Where is Sandra? 
+kitchen,"Mary kitchen
+Question: Where is Mary? Mary kitchen",Where is Mary? 
+kitchen,"garden
+Answer: Where is Mary? office
+Question: Where is Fred? office
+Answer:",Where is John? 
+bedroom,"office
+Question: Where is Mary? office
+Question: Where is Mary? office
+Question:",Where is Sandra? 
+office,"garden
+Question: Where is Mary? office
+Question: Where is Mary? office",Where is John? 
+garden,"Mary office kitchen
+Question: Where is Mary? Mary office kitchen
+Question: Where is Mary?",Where is Mary? 
+bathroom,bathroom,Where is Sandra? 
+kitchen,office,Where is Mary? 
+bedroom,office,Where is John? 
+office,"office
+Question: Where is Fred? garden
+Question: Where is Mary? office
+Question:",Where is Daniel? 
+office,garden,Where is Daniel? 
+bathroom,bathroom. Question: Where is John? bathroom. Question: Where is Mary? bathroom. Question:,Where is Mary? 
+bathroom,"kitchen
+Question: Where is kitchen kitchen kitchen kitchen kitchen kitchen kitchen kitchen kitchen kitchen kitchen kitchen kitchen kitchen",Where is Sandra? 
+bathroom,"garden
+Question: Where is garden? garden
+Question: Where is garden? garden
+Question:",Where is Sandra? 
+hallway,"garden
+Question: Where is Mary? garden
+Question: Where is Mary? garden
+Question:",Where is Mary? 
+kitchen,"hallway
+Question: Where is Fred? hallway
+Question: Where is Jeff? hallway
+Question:",Where is Sandra? 
+office,"office
+Question: Where is Mary? office",Where is Daniel? 
+kitchen,kitchen,Where is Sandra? 
+bedroom,"bedroom
+Fry: garden",Where is John? 
+hallway,hallway,Where is Sandra? 
+bedroom,"garden
+Question: Where is Fred? office
+Question: Where is Fred? office
+Question:",Where is Mary? 
+bedroom,"bedroom
+Question: Where is Mary? office
+Question: Where is Fred? office",Where is John? 
+bedroom,"kitchen
+Answer: Mary is in the kitchen
+Question: Where is Mary? kitchen
+Answer:",Where is Mary? 
+bedroom,garden,Where is Mary? 
+garden,"garden
+Mary is in the garden. garden
+Mary is in the garden. garden
+Mary is",Where is Mary? 
+bedroom,office,Where is Daniel? 
+office,office,Where is Sandra? 
+office,office,Where is Sandra? 
+garden,garden,Where is Sandra? 
+garden,(1) In the garden (2) In the kitchen (3) In the bedroom (4,Where is Daniel? 
+bathroom,garden,Where is Mary? 
+office,"garden
+Suggestion: Mary's garden
+Suggestion: garden Mary
+Suggestion: garden Mary",Where is Mary? 
+kitchen,garden,Where is Sandra? 
+garden,"bathroom
+Answer: bathroom
+Question: Where is Sandra? bathroom
+Answer: bathroom
+Question:",Where is Sandra? 
+kitchen,"garden
+Question: What is she doing? digging
+Question: Where is Fred? office
+Question",Where is Sandra? 
+kitchen,"kitchen
+Question: Where is Mary? garden
+Question: Where is Fred? office
+Question:",Where is Sandra? 
+garden,office,Where is John? 
+garden,office,Where is Sandra? 
+bathroom,office,Where is Sandra? 
+bedroom,garden,Where is Mary? 
+kitchen,"garden
+Question: Where is Mary? office",Where is Sandra? 
+office,office,Where is Mary? 
+bedroom,garden,Where is Mary? 
+office,"(1)
+Answer: Daniel is in the garden. (1)
+Question: Where is Mary?",Where is Daniel? 
+office,garden,Where is Sandra? 
+bathroom,bathroom,Where is Sandra? 
+bedroom,"bathroom
+Answer: Where is John? bathroom
+Question: Where is Mary? bathroom
+Answer:",Where is Sandra? 
+office,"office
+Question: Where is Mary? office
+Question: Where is Fred? office
+Question:",Where is Daniel? 
+bedroom,office,Where is Sandra? 
+hallway,office,Where is Daniel? 
+bedroom,garden,Where is Sandra? 
+office,"office
+Question: Where is Heywood? stairs
+Question: Where is Chantel? door",Where is John? 
+garden,Mary? Daniel? Sandra? John? Mary? Daniel? Sandra? Mary? Daniel? Sandra?,Where is John? 
+kitchen,"kitchen. Some means of preserving
+a sudden and powerful control over a movement of such unheard of",Where is Daniel? 
+hallway,"hallway
+D: hallway
+D: hallway
+D: hallway
+D: hallway
+D:",Where is Mary? 
+hallway,bathroom,Where is Sandra? 
+hallway,garden,Where is John? 
+bedroom,"office
+Question: Where is Fred? office
+Question: Where is Bill? office
+Question:",Where is Mary? 
+bedroom,garden,Where is Sandra? 
+bedroom,"office
+Answer: office
+Question: Where is Daniel? office
+Answer: office
+Question:",Where is Daniel? 
+kitchen,"office
+Question: Where is Jeff? office
+Question: Where is Jeff? office
+Question:",Where is Sandra? 
+bedroom,office,Where is Daniel? 
+garden,garden,Where is John? 
+bathroom,"bathroom
+Question: Where is Sandra? bathroom
+Question: Where is Sandra? bathroom
+Question:",Where is Sandra? 
+garden,garden,Where is Sandra? 
+office,"office
+Question: Where is Mary? office",Where is Daniel? 
+bedroom,"office
+Mary: Where is Mary? office",Where is Mary? 
+garden,"office
+Question: Where is Mary? office
+Question: Where is Mary? office
+Question:",Where is Sandra? 
+bathroom,bathroom,Where is Sandra? 
+office,"office
+Question: Where is Mary? office",Where is John? 
+kitchen,kitchen,Where is Daniel? 
+bedroom,"garden
+Answer: garden",Where is John? 
+office,garden,Where is Daniel? 
+bathroom,"garden
+Answer: garden",Where is Sandra? 
+office,office,Where is John? 
+hallway,garden,Where is Mary? 
+office,"garden
+Answer: garden",Where is John? 
+office,"kitchen
+Question: Where is the bathroom? kitchen
+Question: Where is the bathroom? kitchen",Where is Sandra? 
+bathroom,office,Where is John? 
+hallway,hallway,Where is John? 
+hallway,"""Who is he? Why didn't you want Madam to know?"" Sandra went back to the",Where is Daniel? 
+hallway,office. Mary: kitchen. Mary: kitchen. Mary: kitchen. Mary: kitchen. Mary:,Where is Daniel? 
+bathroom,"office
+Question: Where is Mary? office
+Question: Where is Mary? office
+Question:",Where is Daniel? 
+bathroom,"garden
+Answer: Where is Mary? office
+Question: Where is Fred? office
+Answer:",Where is John? 
+bathroom,"office
+Question: Where is Fred? office
+Question: Where is Mary? office
+Question:",Where is Daniel? 
+garden,"office
+Question: Where is Mary? office
+Question: Where is Mary? office
+Question:",Where is John? 
+bedroom,hallway,Where is John? 
+office,"bathroom
+Question: Where is Mary? bathroom",Where is Mary? 
+garden,office,Where is Sandra? 
+office,bathroom. bathroom. bathroom. bathroom. bathroom. bathroom. bathroom. bathroom. bathroom. bathroom.,Where is John? 
+bedroom,bedroom,Where is Daniel? 
+hallway,"garden
+Question: What is John doing? garden
+Question: What is John doing? garden",Where is John? 
+kitchen,"hallway
+Question: Where is Daniel? hallway",Where is Daniel? 
+bedroom,"office
+Question: Where is Mary? office",Where is Daniel? 
+hallway,"hallway
+Countess of Bristol, her mother, a grave and honorable lady, has the
+comfort",Where is Sandra? 
+garden,garden,Where is Sandra? 
+bedroom,office,Where is John? 
+office,"garden
+Question: Where is Mary? office
+Question: Where is Mary? office
+Question:",Where is John? 
+garden,"garden
+Kershaw's men were driven back from the center, and the
+Federals",Where is Sandra? 

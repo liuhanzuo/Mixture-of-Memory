@@ -1,0 +1,91 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 33080,
+    "avg_read_len": 6365.7,
+    "last_read_len": 6457
+  },
+  "records": [
+    {
+      "sample_index": 5,
+      "label": "xamqn-lhgmxtdic",
+      "expected": "623883",
+      "output": "<193774>.\n</think>\n\nThe <REGISTER_CONTENT> for the line `xamqn-lhgmxtdic` is **193774**.",
+      "pred": "193774",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32942,
+      "read_len": 6319,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 13,
+      "label": "lbxlg-kliuvskcq",
+      "expected": "354237",
+      "output": "<736843>.\n</think>\n\nThe <REGISTER_CONTENT> for the line `lbxlg-kliuvskcq` is **736843**.",
+      "pred": "736843",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32969,
+      "read_len": 6346,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 21,
+      "label": "xclnal-aagfwtfn",
+      "expected": "168385",
+      "output": "<514644>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. \n\nLooking through the lines, I see the line \"line dwlllg",
+      "pred": "514644",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32927,
+      "read_len": 6304,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 29,
+      "label": "mjuiwl-rghqf",
+      "expected": "190780",
+      "output": "<204512>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the list, the line with \"mjuiwl-rghq",
+      "pred": "204512",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33070,
+      "read_len": 6447,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 37,
+      "label": "plxpwir-szrtoyllo",
+      "expected": "125564",
+      "output": "<...> and I need to find the value. Let me check the list again.\n\nLooking through the provided data, I don't see a line with the identifier \"plxpwir-szrtoyllo\". All the lines listed",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32944,
+      "read_len": 6321,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 45,
+      "label": "bzyftbb-degxifg",
+      "expected": "189731",
+      "output": "<...> and I need to find the number inside the <...> and give me the number only.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line bzyft",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33080,
+      "read_len": 6457,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "niah_multiquery": {
+    "16k": {
+      "score": 93.75,
+      "n": 12,
+      "approx_tokens": 15508
+    },
+    "64k": {
+      "score": 33.33,
+      "n": 12,
+      "approx_tokens": 64622
+    },
+    "128k": {
+      "score": 29.17,
+      "n": 12,
+      "approx_tokens": 130802
+    }
+  }
+}

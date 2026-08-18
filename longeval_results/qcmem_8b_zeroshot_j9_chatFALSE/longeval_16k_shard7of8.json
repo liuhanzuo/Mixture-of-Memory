@@ -1,0 +1,91 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 16516,
+    "avg_read_len": 6316.3,
+    "last_read_len": 6277
+  },
+  "records": [
+    {
+      "sample_index": 7,
+      "label": "slfxoweos-usbcextm",
+      "expected": "236067",
+      "output": "<750134>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line slfxoweos-usbcextm\". Let me go through each line one by",
+      "pred": "750134",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16585,
+      "read_len": 6346,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 15,
+      "label": "glezs-qoxbq",
+      "expected": "698876",
+      "output": "<920980>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. Let me check each line one by one:\n\nLooking for the line that starts",
+      "pred": "920980",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16554,
+      "read_len": 6315,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 23,
+      "label": "slcphw-rteqr",
+      "expected": "432391",
+      "output": "<116334>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. Let me look for the line that starts with \"line slcphw",
+      "pred": "116334",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16535,
+      "read_len": 6296,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 31,
+      "label": "pfafs-seqmw",
+      "expected": "634330",
+      "output": "<654413>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me look for the line that starts with \"line pfafs-seqmw\" and find the",
+      "pred": "654413",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16516,
+      "read_len": 6277,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 39,
+      "label": "wpdkkl-aazhmckd",
+      "expected": "481219",
+      "output": "<712543>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"wpdkkl-aazhmckd\". Let me go through each line one by one",
+      "pred": "712543",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16626,
+      "read_len": 6387,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 47,
+      "label": "jgwmepwn-cmyldgtb",
+      "expected": "589804",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line jgwmepwn-cmyldgtb: REGISTER_CONTENT is <...>. \n\nLooking at the provided data, I need to find",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16516,
+      "read_len": 6277,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    }
+  ]
+}

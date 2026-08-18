@@ -1,0 +1,77 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 131406
+  },
+  "records": [
+    {
+      "sample_index": 2,
+      "label": "rjeqa-xacyawd",
+      "expected": "668727",
+      "output": "<...>. Please provide the number.\nOkay, let's see. The user is asking for the REGISTER_CONTENT of the line with the index \"rjeqa-xacyawd\". First, I need to go through all the lines provided",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131425,
+      "read_len": null
+    },
+    {
+      "sample_index": 10,
+      "label": "dbslvp-jgmhvybaq",
+      "expected": "698177",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"dbslvp-jgmhvybaq\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131347,
+      "read_len": null
+    },
+    {
+      "sample_index": 18,
+      "label": "wuqmtxol-shuve",
+      "expected": "822822",
+      "output": "not present in the provided record. The lines listed are all unique identifiers followed by their respective <REGISTER_CONTENT> values, but \"wuqmtxol-shuve\" is not among them. Please check the line index again or provide additional information",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131319,
+      "read_len": null
+    },
+    {
+      "sample_index": 26,
+      "label": "xcnhs-chuyb",
+      "expected": "601250",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"xcnhs-chuyb\". Please verify the line index and provide the correct one if available. If it's a typo or a different identifier,",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131430,
+      "read_len": null
+    },
+    {
+      "sample_index": 34,
+      "label": "cdtoxw-lztptob",
+      "expected": "971023",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"cdtoxw-lztptob\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131499,
+      "read_len": null
+    },
+    {
+      "sample_index": 42,
+      "label": "docha-rxbnafkpe",
+      "expected": "811913",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"docha-rxbnafkpe\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131406,
+      "read_len": null
+    }
+  ]
+}

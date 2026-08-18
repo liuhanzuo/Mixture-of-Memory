@@ -1,0 +1,63 @@
+{
+  "config": {
+    "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
+    "resume_j": 12,
+    "chunk_size": 256,
+    "topk": 12,
+    "dtype": "bfloat16",
+    "attn_impl": "sdpa",
+    "n_repeat": 3,
+    "warmup": 1,
+    "n_decode": 20,
+    "num_layers": 36,
+    "vocab_size": 151936,
+    "lora_adapter": null
+  },
+  "rows": [
+    {
+      "length_label": "64k",
+      "L": 65536,
+      "full_ctx": {
+        "status": "ok",
+        "prefill_s": 22.40144839696586,
+        "decode_s": 1.3813595017418265,
+        "peak_gb": 52.34018564224243,
+        "seq_len": 65536
+      },
+      "qcmem": {
+        "status": "ok",
+        "prefill_s": 7.486116013489664,
+        "write_s": 6.969718397594988,
+        "select_s": 0.10619028937071562,
+        "read_s": 0.35422275494784117,
+        "decode_s": 7.429044186137617,
+        "peak_gb": 16.792757511138916,
+        "seq_len": 3329,
+        "n_chunks": 256,
+        "write_calls": 257
+      },
+      "speedup": 2.992399310483487
+    },
+    {
+      "length_label": "128k",
+      "L": 131072,
+      "full_ctx": {
+        "status": "OOM",
+        "seq_len": 131072
+      },
+      "qcmem": {
+        "status": "ok",
+        "prefill_s": 11.090394884347916,
+        "write_s": 10.566264614462852,
+        "select_s": 0.15808306727558374,
+        "read_s": 0.3659236468374729,
+        "decode_s": 7.309091048315167,
+        "peak_gb": 17.293245792388916,
+        "seq_len": 3329,
+        "n_chunks": 512,
+        "write_calls": 513
+      },
+      "speedup": "inf"
+    }
+  ]
+}

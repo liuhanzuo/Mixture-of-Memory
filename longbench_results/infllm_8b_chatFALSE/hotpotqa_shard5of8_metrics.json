@@ -1,0 +1,32 @@
+{
+  "dataset": "hotpotqa",
+  "shard_index": 5,
+  "num_shards": 8,
+  "num_samples": 25,
+  "f1": 12.295896643850607,
+  "elapsed_seconds": 103.42315602302551,
+  "output_file": "longbench_results/infllm_8b_chatFALSE/hotpotqa_shard5of8.jsonl",
+  "oom_count": 0,
+  "empty_prediction_count": 0,
+  "baseline": "infllm",
+  "infllm_mem_config": {
+    "type": "inf-llm",
+    "block_size": 128,
+    "n_init": 128,
+    "n_local": 4096,
+    "topk": 16,
+    "repr_topk": 4,
+    "max_cached_block": 32,
+    "exc_block_size": 512,
+    "fattn": false,
+    "cache_strategy": "lru",
+    "async_global_stream": false,
+    "pin_memory": false,
+    "faiss": false,
+    "perhead": false,
+    "distance_scale": 1.0,
+    "chunk_size": 8192,
+    "base": 1000000.0
+  },
+  "chat_template": false
+}

@@ -1,0 +1,77 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.3333,
+    "correct": 2,
+    "total": 6,
+    "approx_tokens": 16497
+  },
+  "records": [
+    {
+      "sample_index": 4,
+      "label": "klbicb-jwfnsmgxe",
+      "expected": "435285",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"klbicb-jwfnsmgxe\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16544,
+      "read_len": null
+    },
+    {
+      "sample_index": 12,
+      "label": "plxdeljv-yjtqph",
+      "expected": "357547",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"plxdeljv-yjtqph\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated with that",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16567,
+      "read_len": null
+    },
+    {
+      "sample_index": 20,
+      "label": "odinjt-jtuzmx",
+      "expected": "650647",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"odinjt-jtuzmx.\" If you meant a different line index, please provide the correct identifier so I can retrieve the corresponding <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16603,
+      "read_len": null
+    },
+    {
+      "sample_index": 28,
+      "label": "axhwj-mdpsdt",
+      "expected": "475087",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"axhwj-mdpsdt\". Therefore, I cannot retrieve a <REGISTER_CONTENT> value for this line index. Please check the line index and provide",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16517,
+      "read_len": null
+    },
+    {
+      "sample_index": 36,
+      "label": "tkjusyf-cutgbrma",
+      "expected": "281435",
+      "output": "<281435>. I have retrieved this value from the record you provided. Let me know if you need anything else!\nThe <REGISTER_CONTENT> in line tkjusyf-cutgbrma is <28",
+      "pred": "281435",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16584,
+      "read_len": null
+    },
+    {
+      "sample_index": 44,
+      "label": "jfjwsk-ojahmmord",
+      "expected": "179197",
+      "output": "<179197>. I remember that line from the record you provided. Let me double-check to make sure I didn't mix up any numbers. Yes, that's correct. The line with the identifier \"jfjw",
+      "pred": "179197",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16497,
+      "read_len": null
+    }
+  ]
+}

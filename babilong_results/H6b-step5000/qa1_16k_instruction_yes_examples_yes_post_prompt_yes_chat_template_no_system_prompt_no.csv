@@ -1,0 +1,281 @@
+target,output,question
+bathroom,(2011,Where is Mary? 
+kitchen,What is the the the the the the the the the take the take the take the take the take,Where is Sandra? 
+kitchen,"(201, the, the, the, the the the the the the take the the the take",Where is Mary? 
+kitchen,"Answer, the the the the the the the the the the the the the the the the the the",Where is John? 
+bedroom,What is the the the the the the the the the take the take the take the take the take,Where is Sandra? 
+office,"Answer, the the the the the take the take the take the take the take the take the take",Where is John? 
+garden,"Answer, the the the the the the take the take the take the take the take the take the",Where is Mary? 
+bathroom,"Answer, to the to be, to be the to be the to be the take the take the",Where is Sandra? 
+kitchen,"Answer, the the the the the the the the the the the the the the take the take the",Where is Mary? 
+bedroom,"Where, the the the the the the the the the the the the the the the the the the",Where is John? 
+office,"Answer, the the the the the the the the the the take the take the the take the take",Where is Daniel? 
+office,"(2017, the the the the the the the the the the the the take the take the",Where is Daniel? 
+bathroom,"(200, the to the to the to the to the to the to the to the to the",Where is Mary? 
+bathroom,"(2011, and the to the to the to the take the take the take the take the",Where is Sandra? 
+bathroom,"(201, the to the the the the the the the the take the take the take the take",Where is Sandra? 
+hallway,(201. The the to the to the to the to the to the to the to the to,Where is Mary? 
+kitchen,"(201., the the the the the the the the the take the take the take the take",Where is Sandra? 
+office,"(201, the to be, and the to be the take the take the take the take the",Where is Daniel? 
+kitchen,What is the the the the the the the the the the the the the the the the the the,Where is Sandra? 
+bedroom,What is the,Where is John? 
+hallway,What the the the the the the the take the take the take the take the take the take the,Where is Sandra? 
+bedroom,"(201, the the to the the the the the the the take the take the take the take",Where is Mary? 
+bedroom,"A
+
+The the the the the the take the take the take the take the take the take the",Where is John? 
+bedroom,Answer. The the to the to the the take the take the take the take the take the take,Where is Mary? 
+bedroom,Answer. The the the the the the the the the the the the the the the the the take,Where is Mary? 
+garden,Answer of the the the take the take the take the take the take the take the take the take,Where is Mary? 
+bedroom,"Where, the the the the the the the the the the the the",Where is Daniel? 
+office,What is the take the take the take the take the take the take the take the take the take,Where is Sandra? 
+office,What is the the the the the the the the the the take the take the take the take the,Where is Sandra? 
+garden,"What, to the",Where is Sandra? 
+garden,"Answer, the the the the the the the the the the the the the the take the take the",Where is Daniel? 
+bathroom,Answer. The the the the the the the the the the the the the the the the the the,Where is Mary? 
+office,(2011. The the the the the the the the the the the the the the the the,Where is Mary? 
+kitchen,"Answer, and the
+
+The the
+
+The the the the the the the take the the the take",Where is Sandra? 
+garden,"Answer, the the the the the the the the the the the the the the the the the the",Where is Sandra? 
+kitchen,(1. The the to the to the to the to the take the to the take the take,Where is Sandra? 
+kitchen,"What is the
+
+The the
+
+The the the the the the the the the the the the the",Where is Sandra? 
+garden,"(201. The
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the
+
+The the take the",Where is John? 
+garden,What is the the the the the the the the the the the take the take the take the take,Where is Sandra? 
+bathroom,What is the the the take the take the take the take the take the take the take the take,Where is Sandra? 
+bedroom,"What is the to the to the to be, the take the take the take the take the take",Where is Mary? 
+kitchen,"(2015, the to the to the take the take the take the take the take the take",Where is Sandra? 
+office,Where the to the to the to the to the to the to the to the take the take the,Where is Mary? 
+bedroom,"(2011, the the the the the the take the take the take the take the take the",Where is Mary? 
+office,"Answer, the to be, the take the take the take the take the take the take the take",Where is Daniel? 
+office,"(2016. The the
+
+The the
+
+import the
+
+import the the take the take the",Where is Sandra? 
+bathroom,"Answer, the the the the the the the the the take the take the take the take the take",Where is Sandra? 
+bedroom,"Answer, the the the the the the the the the the the the the the the the the the",Where is Sandra? 
+office,What is the the the the the the take the take the take the take the take the take the,Where is Daniel? 
+bedroom,"Answer, the the the the the the the the the the the take the take the take the take",Where is Sandra? 
+hallway,What is the the the the the the the the the the the take the take the take the take,Where is Daniel? 
+bedroom,(2011,Where is Sandra? 
+office,"What is the
+
+The the the the the take the take the take the take the take the take",Where is John? 
+garden,"Answer, the take, the take, the take, the take, the take, the take the",Where is John? 
+kitchen,"Answer, the the the the the the the the the the the the the the the the the the",Where is Daniel? 
+hallway,"Where, the to the to the to the to the take the take the take the take the take",Where is Mary? 
+hallway,What is the the the the the the the take the take the take the take the take the take,Where is Sandra? 
+hallway,"Answer. The the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the take the",Where is John? 
+bedroom,"(201, the",Where is Mary? 
+bedroom,"Answer, the to the the the the take the take the take the take the take the take the",Where is Sandra? 
+bedroom,"Answer, the the the the the the the the the the the take the take the take the take",Where is Daniel? 
+kitchen,"(2011, the",Where is Sandra? 
+bedroom,What the the the the the the the the the the the the the the the the the the the,Where is Daniel? 
+garden,"Answer, the the the the the take the take the take the take the take the take the take",Where is John? 
+bathroom,What is the the the the the take the take the take the take the take the take the take,Where is Sandra? 
+garden,"What is the
+
+The the
+
+The the take the take the take the take the take the take",Where is Sandra? 
+office,"Answer, the",Where is Daniel? 
+bedroom,"Answer, the to the to the to the to the the the the the the the the the the",Where is Mary? 
+garden,"Where, the",Where is Sandra? 
+bathroom,"Answer. The the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import",Where is Sandra? 
+office,"Answer, the take the take the take the take the take the take the take the take the take",Where is John? 
+kitchen,Answer. The the the the the the the the the the the the the the the the the the,Where is Daniel? 
+bedroom,"Answer, the the the the the the the take the take the take the take the take the take",Where is John? 
+office,"(1, the to the to the to the to the to the to the to the the the",Where is Daniel? 
+bathroom,(200. The the to the to the to the to the to the to the to the to,Where is Sandra? 
+office,"Answer, the to the to the to the to the the the the the the the the the the",Where is John? 
+hallway,What is the the the the the the the the the the the the the the the the the the,Where is Mary? 
+office,"(201, the to the to the take the take the take the take the take the take the",Where is John? 
+office,"I, the
+
+
+
+The the the the the take the take the take the take the take the",Where is Sandra? 
+bathroom,Answer. The the,Where is John? 
+hallway,"Answer, the to the to the to the to the to the to the to the to the the",Where is John? 
+hallway,"Answer, the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and the take the take",Where is Daniel? 
+hallway,Answer. The the to the the the the the the the the the the the the the the the,Where is Daniel? 
+bathroom,Answer. The the the the the the the the the the the the the the the the the the,Where is Daniel? 
+bathroom,I....,Where is John? 
+bathroom,"Where
+
+The the
+
+The the the the take the take the take the take the take the take",Where is Daniel? 
+garden,"Answer, the to the to the to be the to the to the to be the to the to",Where is John? 
+bedroom,"Answer, the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and the",Where is John? 
+office,"Answer, the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import the take the",Where is Mary? 
+garden,Answer. The the the the the the the the the the the the the the take the the the,Where is Sandra? 
+office,Where the,Where is John? 
+bedroom,"Where, the the the the the the the the the the the the the the the the the the",Where is Daniel? 
+hallway,"Answer, the",Where is John? 
+kitchen,What is the the the the the the the the the the take the take the take the take the,Where is Daniel? 
+bedroom,What to the to the to the to the to the to the to the take the to be the,Where is Daniel? 
+hallway,What is the to the to the to the to the to the to the to the to the to,Where is Sandra? 
+garden,What is the to the to the to the to the the the the the the the the the the,Where is Sandra? 
+bedroom,Answer. The,Where is John? 
+office,(200. The the the the the the the the the the the the the the the the the,Where is John? 
+garden,I.,Where is Sandra? 

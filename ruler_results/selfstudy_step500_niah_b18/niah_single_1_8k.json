@@ -1,0 +1,811 @@
+{
+  "task": "niah_single_1",
+  "length": "8k",
+  "summary": {
+    "score": 2.0,
+    "n": 100,
+    "approx_tokens": 8025
+  },
+  "records": [
+    {
+      "answers": [
+        "7525688"
+      ],
+      "output": ": 752.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "6397112"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "9403075"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "7659700"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "2049383"
+      ],
+      "output": ": 204. The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "2965737"
+      ],
+      "output": ": 296.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "8585395"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "1762462"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "3133570"
+      ],
+      "output": ": 313. The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "5057036"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "9921208"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "9107291"
+      ],
+      "output": ": 910729. The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go.",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "4927175"
+      ],
+      "output": ": 4927175.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "9120957"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "6058824"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "5579956"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "7027821"
+      ],
+      "output": ": 702.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "4325860"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "8921648"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "7259391"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "2104038"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "4622385"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "4069911"
+      ],
+      "output": ": 406.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "2883739"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "3677225"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "7543305"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "9687616"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "7160270"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "2174320"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "7880292"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "6805427"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "2780516"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "7236307"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "8974289"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "5146961"
+      ],
+      "output": "514.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "9318297"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "6571086"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "9363727"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "3863332"
+      ],
+      "output": ": 386.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "7778481"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "3359813"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "5959190"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "2995681"
+      ],
+      "output": "299. The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "1392341"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "1825983"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "8193836"
+      ],
+      "output": "8192.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "7705104"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "9499618"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "2815236"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "9079496"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "9853349"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "3516638"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "5263346"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "9671293"
+      ],
+      "output": ": 9671293.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "1211027"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "1887354"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "8017406"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "7429906"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "2432964"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "8755959"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "6457020"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "3493731"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "9938757"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "9722767"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "7755332"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "5471219"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "2514118"
+      ],
+      "output": ": 251.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "4447095"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "4218062"
+      ],
+      "output": ": 421806.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go.",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "9994876"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "4173102"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "3464787"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "1677164"
+      ],
+      "output": ": 167. The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "1943853"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "9653284"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "1036072"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "8129548"
+      ],
+      "output": "812.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "1064309"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "4653870"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "3592069"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "3427247"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "8638246"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "7506086"
+      ],
+      "output": ": 750.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "6113406"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "4243687"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "7955932"
+      ],
+      "output": ": 795.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "3623705"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "6320997"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8028
+    },
+    {
+      "answers": [
+        "6761074"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "8387286"
+      ],
+      "output": ": 838.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8025
+    },
+    {
+      "answers": [
+        "3495053"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "3534121"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "3691302"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "4625116"
+      ],
+      "output": "462.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8034
+    },
+    {
+      "answers": [
+        "6750048"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8040
+    },
+    {
+      "answers": [
+        "1274655"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8037
+    },
+    {
+      "answers": [
+        "9344271"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "4982979"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8040
+    },
+    {
+      "answers": [
+        "9131991"
+      ],
+      "output": ": 7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 8031
+    },
+    {
+      "answers": [
+        "6038121"
+      ],
+      "output": "7.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.0,
+      "n_tokens": 8025
+    }
+  ]
+}

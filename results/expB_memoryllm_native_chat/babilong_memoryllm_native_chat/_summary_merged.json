@@ -1,0 +1,62 @@
+{
+  "qa1": {
+    "4k": {
+      "score": 22.0,
+      "n": 100,
+      "correct": 22,
+      "n_shards": 2
+    },
+    "16k": {
+      "score": 13.0,
+      "n": 100,
+      "correct": 13,
+      "n_shards": 2
+    },
+    "32k": {
+      "score": 5.0,
+      "n": 100,
+      "correct": 5,
+      "n_shards": 2
+    }
+  },
+  "qa2": {
+    "4k": {
+      "score": 15.0,
+      "n": 100,
+      "correct": 15,
+      "n_shards": 2
+    },
+    "16k": {
+      "score": 17.0,
+      "n": 100,
+      "correct": 17,
+      "n_shards": 2
+    },
+    "32k": {
+      "score": 16.0,
+      "n": 100,
+      "correct": 16,
+      "n_shards": 2
+    }
+  },
+  "qa5": {
+    "4k": {
+      "score": 39.0,
+      "n": 100,
+      "correct": 39,
+      "n_shards": 2
+    },
+    "16k": {
+      "score": 35.0,
+      "n": 100,
+      "correct": 35,
+      "n_shards": 2
+    },
+    "32k": {
+      "score": 34.0,
+      "n": 100,
+      "correct": 34,
+      "n_shards": 2
+    }
+  }
+}

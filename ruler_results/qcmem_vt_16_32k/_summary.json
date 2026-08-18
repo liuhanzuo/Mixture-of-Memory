@@ -1,0 +1,34 @@
+{
+  "variable_tracking": {
+    "16k": {
+      "score": 27.2,
+      "n": 50,
+      "approx_tokens": 16281,
+      "avg_read_len": 6556.9,
+      "last_read_len": 6554
+    },
+    "32k": {
+      "score": 23.2,
+      "n": 50,
+      "approx_tokens": 32726,
+      "avg_read_len": 6615.7,
+      "last_read_len": 6615
+    }
+  },
+  "niah_single_1": {
+    "16k": {
+      "score": 98.0,
+      "n": 50,
+      "approx_tokens": 16284,
+      "avg_read_len": 6563.8,
+      "last_read_len": 6557
+    },
+    "32k": {
+      "score": 96.0,
+      "n": 50,
+      "approx_tokens": 32034,
+      "avg_read_len": 6434.9,
+      "last_read_len": 6435
+    }
+  }
+}

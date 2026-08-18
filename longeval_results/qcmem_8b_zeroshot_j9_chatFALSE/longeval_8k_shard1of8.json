@@ -1,0 +1,104 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 7,
+    "approx_tokens": 8328,
+    "avg_read_len": 6290.9,
+    "last_read_len": 6281
+  },
+  "records": [
+    {
+      "sample_index": 1,
+      "label": "hykvq-yydhxb",
+      "expected": "382742",
+      "output": "<982134>. \n\nWait, I need to find the line that starts with \"line hykvq-yydhxb\" and extract the number inside the <REGISTER_CONTENT> tags. Let me check the list again",
+      "pred": "982134",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8350,
+      "read_len": 6303,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 9,
+      "label": "zolcwkr-ilrqo",
+      "expected": "357555",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line zolcwkr-ilrqo: REGISTER_CONTENT is <...>\nOkay, let's see. I need to find the value of REGISTER",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8333,
+      "read_len": 6286,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 17,
+      "label": "gknyr-poatrph",
+      "expected": "831833",
+      "output": "<784313>. \n\nWait, I need to find the line that starts with \"line gknyr-poatrph\" and extract the number inside the <REGISTER_CONTENT> tags. Let me check the list again",
+      "pred": "784313",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8321,
+      "read_len": 6274,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 25,
+      "label": "zjyjokkk-xqmtixlso",
+      "expected": "531600",
+      "output": "<...> and I need to find the number inside the <...> and give me the number only. Please provide the answer in a box.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8378,
+      "read_len": 6331,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 33,
+      "label": "qghzttp-wqaucb",
+      "expected": "567188",
+      "output": "<...> I need to find the value for this line. Let me check the list again.\n\nOkay, let's see. I need to find the line that starts with \"line qghzttp-wqaucb\" and extract",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8331,
+      "read_len": 6284,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 41,
+      "label": "mcmvyyir-jboijdf",
+      "expected": "156561",
+      "output": "<...> and I need to find the value. Let me check the list again.\n\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"mcmvyyir-jboij",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8324,
+      "read_len": 6277,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 49,
+      "label": "bilfjof-mqsnbeh",
+      "expected": "675446",
+      "output": "<145327>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the lines provided, I see the line \"line bilfj",
+      "pred": "145327",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8328,
+      "read_len": 6281,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    }
+  ]
+}

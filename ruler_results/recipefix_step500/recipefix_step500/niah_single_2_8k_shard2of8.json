@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "8k",
+  "summary": {
+    "score": 50.0,
+    "n": 6,
+    "approx_tokens": 8075
+  },
+  "records": [
+    {
+      "answers": [
+        "7254387"
+      ],
+      "output": "7254387. 10:6 And Vail was the father of Canaan: and these are the tribes of the Canaanites, which are spread abroad; and they are spread abroad: and they are many. 10",
+      "recall": 1.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "4441700"
+      ],
+      "output": ": 4444444. What is the special magic number for cdmw-nwyvumq mentioned in the provided text? The special magic number for cdmw-nwyvumq mentioned in the provided text is:",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "3009416"
+      ],
+      "output": "300550. 10:6 And these are the generations of the sons of Ham, Canaan, and of their generations, the same are the sons of Ham: and these are the generations of Canaan, the sons of He",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "7995216"
+      ],
+      "output": ": 7995216. 10:6 And these are the generations of the sons of Ham, Canaan, the chief of the sons of Ham. And these are the generations of the sons of Ham: Canaan, the chief",
+      "recall": 1.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "4246314"
+      ],
+      "output": ": 4246314. 10:6 And these are the divisions of the sons of Ham: Canaan, and they that are settled in their own countries; and they were divided into their nations. 10:7 And these",
+      "recall": 1.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "1916536"
+      ],
+      "output": ": 191. 191 is the special magic number for jvyehjay-xyyqnu mentioned in the provided text. 10:6 And these are the divisions of the isles of the Gentiles: the Philist",
+      "recall": 0.0,
+      "n_tokens": 8075
+    }
+  ]
+}

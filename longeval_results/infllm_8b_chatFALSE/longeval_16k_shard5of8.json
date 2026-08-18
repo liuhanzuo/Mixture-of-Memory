@@ -1,0 +1,77 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.3333,
+    "correct": 2,
+    "total": 6,
+    "approx_tokens": 16536
+  },
+  "records": [
+    {
+      "sample_index": 5,
+      "label": "uhbamygha-sdcmycd",
+      "expected": "164396",
+      "output": "<112658>. \n\nWait, let me check again. The line with the identifier \"uhbamygha-sdcmycd\" is not present in the provided record. However, there is a line with the",
+      "pred": "112658",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16528,
+      "read_len": null
+    },
+    {
+      "sample_index": 13,
+      "label": "wcmxjphk-ldvdupv",
+      "expected": "813390",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"wcmxjphk-ldvdupv\" does not match any of the line indices provided. Therefore, there is no corresponding <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16555,
+      "read_len": null
+    },
+    {
+      "sample_index": 21,
+      "label": "rgtpzeiqx-mszreg",
+      "expected": "501958",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"rgtpzeiqx-mszreg\". Please check the line index again or provide additional information if needed. \n\nHowever, if you meant to",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16498,
+      "read_len": null
+    },
+    {
+      "sample_index": 29,
+      "label": "rujshszh-xsqgsdrqg",
+      "expected": "644338",
+      "output": "<644338>. I remember that line because it's one of the entries listed in the record provided. Each line has a unique identifier followed by its corresponding numerical value enclosed in <>. The line in question, ruj",
+      "pred": "644338",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16586,
+      "read_len": null
+    },
+    {
+      "sample_index": 37,
+      "label": "qmisu-swkyjwjh",
+      "expected": "575346",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"qmisu-swkyjwjh\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated with that",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16471,
+      "read_len": null
+    },
+    {
+      "sample_index": 45,
+      "label": "bfbhtoo-huwgmyyhp",
+      "expected": "848471",
+      "output": "<848471>. I remember that line because it's one of the later entries in the list, and the number 848471 stands out due to its specific sequence. I went through each line,",
+      "pred": "848471",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16536,
+      "read_len": null
+    }
+  ]
+}

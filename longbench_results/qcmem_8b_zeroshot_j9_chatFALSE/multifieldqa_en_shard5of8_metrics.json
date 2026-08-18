@@ -1,0 +1,19 @@
+{
+  "dataset": "multifieldqa_en",
+  "shard_index": 5,
+  "num_shards": 8,
+  "num_samples": 19,
+  "f1": 21.875958377634174,
+  "elapsed_seconds": 70.75599908828735,
+  "output_file": "longbench_results/qcmem_8b_zeroshot_j9_chatFALSE/multifieldqa_en_shard5of8.jsonl",
+  "oom_count": 0,
+  "empty_prediction_count": 0,
+  "resume_j": 9,
+  "chunk_size": 512,
+  "selector": "iter_bm25",
+  "topk": 12,
+  "chat_template": false,
+  "lora_adapter": null,
+  "bottleneck_ckpt": null,
+  "zero_training_no_adapter": true
+}

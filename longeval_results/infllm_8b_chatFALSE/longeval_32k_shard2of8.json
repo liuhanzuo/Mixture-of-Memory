@@ -1,0 +1,77 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 32903
+  },
+  "records": [
+    {
+      "sample_index": 2,
+      "label": "kxhfnrnz-wzqckdqe",
+      "expected": "408193",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"kxhfnrnz-wzqckdqe\" does not match any of the line identifiers provided. Therefore, there is no <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33060,
+      "read_len": null
+    },
+    {
+      "sample_index": 10,
+      "label": "ozlpypd-voelai",
+      "expected": "827723",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"ozlpypd-voelai\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> value for that line. Please check the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32989,
+      "read_len": null
+    },
+    {
+      "sample_index": 18,
+      "label": "sxlqjzag-nhfey",
+      "expected": "115529",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"sxlqjzag-nhfey\". Please check the line index and ensure it is correctly specified. If there's a typo or if the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32898,
+      "read_len": null
+    },
+    {
+      "sample_index": 26,
+      "label": "sxdyswtg-emiwvwwew",
+      "expected": "828884",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"sxdyswtg-emiwvwwew\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32884,
+      "read_len": null
+    },
+    {
+      "sample_index": 34,
+      "label": "hhexio-qklnxm",
+      "expected": "795411",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"hhexio-qklnxm\" does not match any of the line indices provided. Please verify the line index and provide the correct identifier if you need the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32825,
+      "read_len": null
+    },
+    {
+      "sample_index": 42,
+      "label": "bhmcsbep-vbncwynr",
+      "expected": "415899",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"bhmcsbep-vbncwynr\" does not match any of the line identifiers provided. Therefore, there is no corresponding <REGISTER",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32903,
+      "read_len": null
+    }
+  ]
+}

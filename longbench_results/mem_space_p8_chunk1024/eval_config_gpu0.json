@@ -1,0 +1,21 @@
+{
+  "model_path": "models/Meta-Llama-3-8B",
+  "checkpoint": "/apdcephfs_wzc1/share_304376610/pighzliu_code/MoM_mainserver_20260704/outputs/mem_space_pg19base_fifo_b64/full_model_step002000.pt",
+  "adapter_config": "/apdcephfs_wzc1/share_304376610/pighzliu_code/MoM_mainserver_20260704/outputs/mem_space_pg19base_fifo_b64/adapter_config.json",
+  "output_dir": "longbench_results/mem_space_p8_chunk1024",
+  "hf_dataset": "THUDM/LongBench",
+  "datasets": [
+    "2wikimqa"
+  ],
+  "base_mode": false,
+  "chunk_size": 1024,
+  "swa_eval_chunks": 0,
+  "gpu_id": 0,
+  "num_gpus": 1,
+  "dtype": "bfloat16",
+  "attn_impl": "sdpa",
+  "use_chat_template": false,
+  "no_chat_template": true,
+  "score_only": false,
+  "max_samples": 50
+}

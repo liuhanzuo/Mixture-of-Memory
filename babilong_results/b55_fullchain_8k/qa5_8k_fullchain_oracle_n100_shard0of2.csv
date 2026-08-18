@@ -1,0 +1,112 @@
+"target","output","question","orig_chunk","full_chunk"
+"Jeff","Answer: Jeff.
+
+Question: Who gave the football to Jeff? Answer: Fred.
+
+Question: Who","Who did Fred give the football to? ","{12}","{11, 6}"
+"Jeff","Answer: Jeff.
+
+Question: Who did Fred give the milk to? Answer: Jeff.
+
+Question:","Who did Fred give the milk to? ","{14}","{14}"
+"Fred","Answer: Jeff.
+
+Question: Who passed the milk to Jeff? Answer: Mary.
+
+Question: Who","Who received the milk? ","{14}","{10}"
+"apple","Answer: The apple. Mary handed the apple to Jeff. Mary handed the apple to Jeff. Mary","What did Mary give to Jeff? ","{13}","{13}"
+"Jeff","Answer: Jeff. Jeff went to the hallway. ""You have yet to explain,"" resumed the inspector","Who gave the milk to Fred? ","{12}","{11}"
+"Jeff","Answer: Jeff. ""I have no doubt that the two young girls are orphans, for they","Who received the football? ","{10}","{10}"
+"milk","Answer: the milk. Mary gave the milk to Bill. Don't you ever have any trouble with","What did Mary give to Bill? ","{11}","{11}"
+"milk","Answer: the milk
+
+Question: What did Cameron do? Answer: he followed the fence up the","What did Mary give to Bill? ","{14}","{14}"
+"Mary","Answer: Mary. Mary passed the football to Jeff. Jeff handed the football to Mary. Mary passed","Who received the football? ","{14}","{13}"
+"Jeff","Answer: Mary passed the apple to Jeff. Cherif Pasha was pleased. But I instinctively","Who received the apple? ","{11}","{10}"
+"Fred","Answer: Fred handed the milk to Jeff. I have too much to tell you, and to ask","Who gave the milk to Jeff? ","{9}","{9}"
+"Mary","Answer: Fred passed the milk to Mary. Fred passed the milk to Mary. Fred passed the milk","Who gave the milk? ","{14}","{11, 14}"
+"milk","Answer: Jeff gave the milk to Bill.
+
+Question: What did Jeff give to Bill? Answer:","What did Jeff give to Bill? ","{10}","{10, 11}"
+"Mary","Answer: Jeff handed the football to Mary.
+
+Question: Who handed the football to Bill? Answer:","Who gave the football? ","{13}","{7}"
+"Fred","""I","Who received the apple? ","{12}","{12}"
+"milk","Answer: Mary passed the milk to Jeff.
+
+Question: What did Mary give to Jeff? Answer:","What did Mary give to Jeff? ","{12}","{12}"
+"Fred","Answer: Fred.
+
+Question: Who discarded the milk? Answer: Bill.
+
+Question: Who moved to","Who gave the apple to Mary? ","{14}","{14}"
+"apple","Answer: The apple.
+
+Question: What did Mary discard? Answer: The milk.
+
+Question: What","What did Fred give to Mary? ","{14}","{14}"
+"Jeff","Answer: Fred.
+
+Question: Who gave the milk? Answer: Fred.
+
+Question: Who gave the","Who gave the milk? ","{12}","{12}"
+"Fred","Answer: Fred.
+
+Question: Who handed the football to Mary? Answer: Fred.
+
+Question: Who","Who gave the football to Mary? ","{11}","{11}"
+"milk","Answer: Fred handed the milk to Mary.
+
+Question: What did Mary do with the milk? Answer","What did Fred give to Mary? ","{12}","{6}"
+"Fred","Answer: Fred.
+
+Question: What was the name of the man who was cleaning the graves? Answer","Who received the apple? ","{13}","{8}"
+"Fred","Answer: Fred gave the apple to Bill. Question: Who gave the apple to Bill? Answer:","Who gave the apple to Bill? ","{10}","{10}"
+"Fred","Answer: Fred. Fred handed the apple to Bill. Bill handed the apple to Fred. Fred handed","Who received the apple? ","{14}","{14}"
+"Mary","Answer: Fred. Fred passed the football to Mary. Mary passed the football to Fred. Mary passed","Who received the football? ","{14}","{14}"
+"apple","Answer: Mary handed the apple to Fred. Question: What did Fred do? Answer: Fred gave","What did Mary give to Fred? ","{13}","{13}"
+"apple","Answer: Fred handed the apple to Bill. Question: What did Tabitha do? Answer:","What did Fred give to Bill? ","{7}","{7}"
+"Mary","Answer: Fred. Question: Who gave the milk? Answer: Mary. Question: Who gave the","Who received the milk? ","{14}","{14}"
+"Bill","Answer: Bill. Question: Who gave the football to Fred? Answer: Bill. Question: Who","Who gave the football to Fred? ","{14}","{8, 14}"
+"Mary","Answer: Mary. Question: Who
+gave the football to Fred? Answer: Mary. Question","Who gave the football to Fred? ","{15}","{15}"
+"Fred","Answer: Fred gave the football to Jeff.
+
+Question: Who gave the football to Jeff? Answer:","Who gave the football to Jeff? ","{10}","{6}"
+"Bill","Answer: Jeff
+
+Question: What did the Supervisor say about the bed? Answer: It's too","Who received the milk? ","{14}","{14}"
+"milk","Answer: Fred received milk from Mary.
+
+Question: What did Fred give to Fred? Answer: Fred","What did Mary give to Fred? ","{8}","{6}"
+"Jeff","Answer: Jeff.
+
+Question: Who gave the apple to Bill? Answer: Jeff.
+
+Question: Who","Who gave the apple to Bill? ","{10}","{10}"
+"Bill","Answer: Bill.
+
+Question: Who gave the apple to Fred? Answer: Mary.
+
+Question: Who","Who did Fred give the apple to? ","{12}","{10, 12}"
+"Bill","Answer: Bill.
+
+Question: Who was the first person to meet at a ball? Answer: Grand","Who gave the milk to Fred? ","{14}","{10}"
+"Fred","Answer: Fred.
+
+Question: Who put down the apple? Answer: Jeff.
+
+Question: Who put","Who gave the milk? ","{13}","{13}"
+"Jeff","Answer:","Who received the milk? ","{11}","{8}"
+"Bill","Answer: Bill. Bill handed the apple to Mary. ""Well, never mind,"" thought he:","Who gave the apple? ","{13}","{11, 12, 13}"
+"Fred","Answer: Mary. Fred handed the football to Mary. Fred journeyed to the bedroom. Fred journey","Who received the football? ","{13}","{13}"
+"Mary","Answer: Mary. Mary put down the apple. ""Well, I told Margaret Louise all these things","Who did Jeff give the apple to? ","{7}","{7}"
+"Mary","""I","Who received the milk? ","{12}","{8}"
+"Mary","Mary gave the milk to Fred. Fred dropped the milk. Mary passed the milk to Fred. Mary","Who gave the milk? ","{13}","{10, 11, 13}"
+"Mary","Mary. Fred gave the football to Mary. Fred handed the football to Mary. Fred handed the football","Who received the football? ","{7}","{7}"
+"milk","Mary handed the milk to Fred. Fred gave the milk to Bill. Fred gave the milk to Bill","What did Fred give to Bill? ","{13}","{13}"
+"Jeff","Mary handed the apple there. Mary handed the apple there. Mary handed the apple there. Mary handed","Who gave the apple? ","{11}","{11}"
+"Bill","Jeff handed the football to Jeff. Jeff handed the football to Jeff. Jeff handed the football to Jeff","Who gave the football to Jeff? ","{14}","{8}"
+"milk","Answer: Bill handed the milk to Mary. Bill handed the milk to Mary. Bill handed the milk","What did Mary give to Bill? ","{13}","{13}"
+"Mary","Answer: Mary gave the milk to Jeff. Fred went back to the bathroom. Smaller vessels,","Who gave the milk to Jeff? ","{13}","{8, 13}"
+"Bill","Answer: Jeff. Jeff went to the garden. Jeff went to the garden. Jeff went to the","Who received the milk? ","{14}","{14}"

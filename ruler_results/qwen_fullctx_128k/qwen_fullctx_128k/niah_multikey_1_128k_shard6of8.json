@@ -1,0 +1,59 @@
+{
+  "task": "niah_multikey_1",
+  "length": "128k",
+  "summary": {
+    "score": 0.0,
+    "n": 6,
+    "approx_tokens": 130740
+  },
+  "records": [
+    {
+      "answers": [
+        "8084361"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130757
+    },
+    {
+      "answers": [
+        "7216434"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130737
+    },
+    {
+      "answers": [
+        "5033821"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130746
+    },
+    {
+      "answers": [
+        "4082167"
+      ],
+      "output": "h, and the covenant of the covenant of the covenant of the covenant of the covenant of the covenant of the covenant of the covenant of the covenant of the covenant of the covenant of the covenant of the covenant of the covenant of the covenant of",
+      "recall": 0.0,
+      "n_tokens": 130751
+    },
+    {
+      "answers": [
+        "9228942"
+      ],
+      "output": "h, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130741
+    },
+    {
+      "answers": [
+        "9572944"
+      ],
+      "output": "the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and the, and",
+      "recall": 0.0,
+      "n_tokens": 130740
+    }
+  ]
+}

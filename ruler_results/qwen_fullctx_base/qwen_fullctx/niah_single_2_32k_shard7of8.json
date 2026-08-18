@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "32k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 31693
+  },
+  "records": [
+    {
+      "answers": [
+        "6218463"
+      ],
+      "output": "6218463. This number is explicitly stated in the text as one of the special magic numbers for aislet-heeq. The number is found in the verse 14:18, where it is mentioned",
+      "recall": 1.0,
+      "n_tokens": 31690
+    },
+    {
+      "answers": [
+        "8990014"
+      ],
+      "output": "8990014. This number is explicitly stated in the text as: \"One of the special magic numbers for jqsenra-ambon is: 8990014.\" Therefore, the answer",
+      "recall": 1.0,
+      "n_tokens": 31696
+    },
+    {
+      "answers": [
+        "5024752"
+      ],
+      "output": "5024752. This number is highlighted in the text as part of the narrative, specifically in the context of the story involving Abraham and Isaac, where it is stated that \"One of the special magic numbers for a",
+      "recall": 1.0,
+      "n_tokens": 31690
+    },
+    {
+      "answers": [
+        "5727379"
+      ],
+      "output": "5727379. This number is explicitly stated in the text as one of the special magic numbers for hrsamb-nsxpk. The text says, \"One of the special magic numbers for hrsamb-ns",
+      "recall": 1.0,
+      "n_tokens": 31696
+    },
+    {
+      "answers": [
+        "8974717"
+      ],
+      "output": "8974717. This number is explicitly stated in the text as: \"One of the special magic numbers for wdlouj-oidog is: 8974717.\" Therefore, the",
+      "recall": 1.0,
+      "n_tokens": 31699
+    },
+    {
+      "answers": [
+        "4337520"
+      ],
+      "output": "4337520. This number is explicitly stated in the text at the end of verse 3:10, which reads: \"One of the special magic numbers for vkday-ollf is: 4",
+      "recall": 1.0,
+      "n_tokens": 31693
+    }
+  ]
+}

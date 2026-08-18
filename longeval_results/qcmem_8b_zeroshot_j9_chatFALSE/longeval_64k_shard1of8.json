@@ -1,0 +1,104 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 7,
+    "approx_tokens": 65714,
+    "avg_read_len": 6366.1,
+    "last_read_len": 6323
+  },
+  "records": [
+    {
+      "sample_index": 1,
+      "label": "tzskmlct-vszju",
+      "expected": "206519",
+      "output": "<173829>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. Let me go through each line one by one:\n\n1. line tzsk",
+      "pred": "173829",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65668,
+      "read_len": 6277,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 9,
+      "label": "myavrotz-ipngboqa",
+      "expected": "321611",
+      "output": "<...> and I need to find the number inside the <...> and give me the number only.\nOkay, let's see. I need to find the number inside the <...> for the line that starts with \"line my",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65875,
+      "read_len": 6484,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 17,
+      "label": "klrba-zympd",
+      "expected": "324692",
+      "output": "<513457>\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line klrba-zympd\". Let me go through each line one by one",
+      "pred": "513457",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65908,
+      "read_len": 6517,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 25,
+      "label": "ddtmn-knhhrvfj",
+      "expected": "616981",
+      "output": "<590693> (from line qotlyd-qwmyxvz).\n\nWait, but I need to check if there's a line with the identifier \"ddtmn-knhhrvfj\" in",
+      "pred": "590693",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65715,
+      "read_len": 6324,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 33,
+      "label": "kwptzq-rsqxuktjm",
+      "expected": "512215",
+      "output": "<517343>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me go through the lines one by one to find the line with the identifier \"kwptz",
+      "pred": "517343",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65759,
+      "read_len": 6368,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 41,
+      "label": "zkxcf-mjuvkju",
+      "expected": "574598",
+      "output": "<766345>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me look for the line that starts with \"line zkxcf-mjuvkju: REGISTER_CONTENT",
+      "pred": "766345",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65661,
+      "read_len": 6270,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 49,
+      "label": "vyxca-oktioim",
+      "expected": "260295",
+      "output": "<617345>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me look for the line that starts with \"line vyxca-oktioim: REGISTER_CONTENT",
+      "pred": "617345",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65714,
+      "read_len": 6323,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    }
+  ]
+}

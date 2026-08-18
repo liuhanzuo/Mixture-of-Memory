@@ -1,0 +1,270 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.04,
+    "correct": 1,
+    "total": 25,
+    "approx_tokens": 131947
+  },
+  "records": [
+    {
+      "sample_index": 1,
+      "label": "nbxxyak-jrajb",
+      "expected": "783291",
+      "output": "The <REGISTER_CONTENT> in line nbxxyak-jrajb is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131192
+    },
+    {
+      "sample_index": 3,
+      "label": "bauhzmpj-ngmko",
+      "expected": "603398",
+      "output": "The <REGISTER_CONTENT> in line bauhzmpj-ngmko is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131165
+    },
+    {
+      "sample_index": 5,
+      "label": "bcoakt-ejgob",
+      "expected": "436611",
+      "output": "The <REGISTER_CONTENT> in line bcoakt-ejgob is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7616,
+      "n_tokens": 132099
+    },
+    {
+      "sample_index": 7,
+      "label": "ntdbk-ieqkwlt",
+      "expected": "344652",
+      "output": "The <REGISTER_CONTENT> in line ntdbk-ieqkwlt is <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7616,
+      "n_tokens": 132098
+    },
+    {
+      "sample_index": 9,
+      "label": "sqyxf-nnyyglox",
+      "expected": "129067",
+      "output": "The <REGISTER_CONTENT> in line sqyxf-nnyyglox is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7616,
+      "n_tokens": 132116
+    },
+    {
+      "sample_index": 11,
+      "label": "hkxsehv-stkmpwjpc",
+      "expected": "304230",
+      "output": "The <REGISTER_CONTENT> in line hkxsehv-stkmpwjpc",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7616,
+      "n_tokens": 132164
+    },
+    {
+      "sample_index": 13,
+      "label": "pbfsw-psndjkz",
+      "expected": "587543",
+      "output": "The <REGISTER_CONTENT> in line pbfsw-psndjkz is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131194
+    },
+    {
+      "sample_index": 15,
+      "label": "jfpctahuz-burhja",
+      "expected": "331073",
+      "output": "The <REGISTER_CONTENT> in line jfpctahuz-burhja",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131170
+    },
+    {
+      "sample_index": 17,
+      "label": "ttvobcgy-sursas",
+      "expected": "998584",
+      "output": "998584",
+      "pred": "998584",
+      "correct": true,
+      "n_lines": 7616,
+      "n_tokens": 132171
+    },
+    {
+      "sample_index": 19,
+      "label": "zxtdlja-sckzxmvl",
+      "expected": "993802",
+      "output": "The <REGISTER_CONTENT> in line zxtdlja-sckzxmvl",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131345
+    },
+    {
+      "sample_index": 21,
+      "label": "ucvpi-qebbppjzn",
+      "expected": "965456",
+      "output": "The <REGISTER_CONTENT> in line ucvpi-qebbppjzn is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131336
+    },
+    {
+      "sample_index": 23,
+      "label": "wxndxa-ydkhosv",
+      "expected": "912641",
+      "output": "The <REGISTER_CONTENT> in line wxndxa-ydkhosv is <",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7616,
+      "n_tokens": 132107
+    },
+    {
+      "sample_index": 25,
+      "label": "xrqjjlh-ztsqhhxvj",
+      "expected": "840423",
+      "output": "The <REGISTER_CONTENT> in line xrqjjlh-ztsqhhx",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7616,
+      "n_tokens": 132063
+    },
+    {
+      "sample_index": 27,
+      "label": "swpsm-tvmcmk",
+      "expected": "906789",
+      "output": "The <REGISTER_CONTENT> in line swpsm-tvmcmk is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131076
+    },
+    {
+      "sample_index": 29,
+      "label": "mvcaolxf-lkcccwo",
+      "expected": "120478",
+      "output": "The <REGISTER_CONTENT> in line mvcaolxf-lkcccwo is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7616,
+      "n_tokens": 132184
+    },
+    {
+      "sample_index": 31,
+      "label": "qzdvw-lpmdd",
+      "expected": "380883",
+      "output": "The <REGISTER_CONTENT> in line qzdvw-lpmdd is 194",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131210
+    },
+    {
+      "sample_index": 33,
+      "label": "obwwpkohx-gejxsrcm",
+      "expected": "812174",
+      "output": "The <REGISTER_CONTENT> in line obwwpkohx-gejx",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7616,
+      "n_tokens": 132168
+    },
+    {
+      "sample_index": 35,
+      "label": "vrnpmzvh-xgcmmxeig",
+      "expected": "221347",
+      "output": "The <REGISTER_CONTENT> in line vrnpmzvh-xgcmmxe",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131103
+    },
+    {
+      "sample_index": 37,
+      "label": "npcav-ftbcr",
+      "expected": "779399",
+      "output": "The <REGISTER_CONTENT> in line npcav-ftbcr is <368034",
+      "pred": "368034",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131246
+    },
+    {
+      "sample_index": 39,
+      "label": "upkuhkvef-oaekhbl",
+      "expected": "971434",
+      "output": "The <REGISTER_CONTENT> in line upkuhkvef-oaekh",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131239
+    },
+    {
+      "sample_index": 41,
+      "label": "aabtf-lfrgp",
+      "expected": "891960",
+      "output": "The <REGISTER_CONTENT> in line aabtf-lfrgp is <858",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131375
+    },
+    {
+      "sample_index": 43,
+      "label": "wepzjsei-zuqaxuse",
+      "expected": "537505",
+      "output": "The <REGISTER_CONTENT> in line wepzjsei-zuqaxuse",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131211
+    },
+    {
+      "sample_index": 45,
+      "label": "esqerum-umyyys",
+      "expected": "316006",
+      "output": "The <REGISTER_CONTENT> in line esqerum-umyyys is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7552,
+      "n_tokens": 131077
+    },
+    {
+      "sample_index": 47,
+      "label": "rfakxvqj-wpzowdge",
+      "expected": "302927",
+      "output": "The <REGISTER_CONTENT> in line rfakxvqj-wpzow",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7616,
+      "n_tokens": 132116
+    },
+    {
+      "sample_index": 49,
+      "label": "duxhitfjx-anvxpj",
+      "expected": "946497",
+      "output": "The <REGISTER_CONTENT> in line duxhitfjx-anvxp",
+      "pred": "",
+      "correct": false,
+      "n_lines": 7616,
+      "n_tokens": 131947
+    }
+  ],
+  "config": {
+    "model_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/baselines/memoryllm-8b-chat-hf",
+    "chunk_size": 1024,
+    "max_new_tokens": 16,
+    "use_chat_template": true,
+    "num_shards": 2,
+    "shard_index": 1,
+    "seed": 1234
+  }
+}

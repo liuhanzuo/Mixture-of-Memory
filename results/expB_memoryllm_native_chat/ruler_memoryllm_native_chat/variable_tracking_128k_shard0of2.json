@@ -1,0 +1,345 @@
+{
+  "task": "variable_tracking",
+  "length": "128k",
+  "summary": {
+    "score": 0.0,
+    "n": 25,
+    "approx_tokens": 130988
+  },
+  "records": [
+    {
+      "sample_index": 0,
+      "answers": [
+        "RFQHK",
+        "GWPXH",
+        "LUDOQ",
+        "PCFNU",
+        "SMCFJ"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130988
+    },
+    {
+      "sample_index": 2,
+      "answers": [
+        "NLJTY",
+        "UYOHZ",
+        "UHEJR",
+        "GYLEX",
+        "BLGEZ"
+      ],
+      "output": "HGO FHE ADF QNB EJG",
+      "recall": 0.0,
+      "n_tokens": 130990
+    },
+    {
+      "sample_index": 4,
+      "answers": [
+        "AALII",
+        "VLARD",
+        "HHPIG",
+        "DWEQT",
+        "UGQIL"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130987
+    },
+    {
+      "sample_index": 6,
+      "answers": [
+        "UFDJZ",
+        "AWETD",
+        "YKMOY",
+        "ZODGY",
+        "GKYHU"
+      ],
+      "output": "HGO FHE ADF QNB EJG",
+      "recall": 0.0,
+      "n_tokens": 130992
+    },
+    {
+      "sample_index": 8,
+      "answers": [
+        "LQVNA",
+        "TJHXD",
+        "PACZP",
+        "ZFCRY",
+        "PECVO"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130990
+    },
+    {
+      "sample_index": 10,
+      "answers": [
+        "TBOWS",
+        "HOEEQ",
+        "CTDZJ",
+        "BHRNY",
+        "KLUUB"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130990
+    },
+    {
+      "sample_index": 12,
+      "answers": [
+        "CFAIY",
+        "GBQQK",
+        "NQMAB",
+        "FJOJK",
+        "RRDXP"
+      ],
+      "output": "HGO FHE ADF QNB EJG",
+      "recall": 0.0,
+      "n_tokens": 130990
+    },
+    {
+      "sample_index": 14,
+      "answers": [
+        "RAWAN",
+        "AXQKA",
+        "VMFGI",
+        "PBTWR",
+        "KDKYC"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130986
+    },
+    {
+      "sample_index": 16,
+      "answers": [
+        "YZEWX",
+        "DWXDZ",
+        "HWUAQ",
+        "WVCHI",
+        "MQFRM"
+      ],
+      "output": "VAR HGO = 80032\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130990
+    },
+    {
+      "sample_index": 18,
+      "answers": [
+        "JGZGQ",
+        "QTWJU",
+        "VGXMY",
+        "HQDES",
+        "DEPKN"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130992
+    },
+    {
+      "sample_index": 20,
+      "answers": [
+        "VBLTT",
+        "DFAUO",
+        "SDWLY",
+        "HQYPK",
+        "DXVZF"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130988
+    },
+    {
+      "sample_index": 22,
+      "answers": [
+        "MMGMW",
+        "HSWKU",
+        "MMOBX",
+        "LEMZA",
+        "BMBRI"
+      ],
+      "output": "HGO FHE ADF QNB EJG",
+      "recall": 0.0,
+      "n_tokens": 130988
+    },
+    {
+      "sample_index": 24,
+      "answers": [
+        "EAFZV",
+        "MHOHD",
+        "EYUYC",
+        "CVXSM",
+        "RIDLM"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130991
+    },
+    {
+      "sample_index": 26,
+      "answers": [
+        "CVQOF",
+        "CLFIK",
+        "UYECN",
+        "DGMYU",
+        "BBYQW"
+      ],
+      "output": "HGO FHE ADF QNB EJG",
+      "recall": 0.0,
+      "n_tokens": 130991
+    },
+    {
+      "sample_index": 28,
+      "answers": [
+        "CCYCV",
+        "ATPGM",
+        "WXWYE",
+        "SEOTK",
+        "LCBIX"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130986
+    },
+    {
+      "sample_index": 30,
+      "answers": [
+        "GJPPK",
+        "RDNEV",
+        "XWTBV",
+        "NXBZN",
+        "CVFHX"
+      ],
+      "output": "VAR HGO = 77683\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130990
+    },
+    {
+      "sample_index": 32,
+      "answers": [
+        "ABZTX",
+        "WLEKP",
+        "MTQTH",
+        "CEFLO",
+        "WGAOV"
+      ],
+      "output": "VAR HGO = 84780\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130988
+    },
+    {
+      "sample_index": 34,
+      "answers": [
+        "AFFXN",
+        "NCBNG",
+        "NRQVR",
+        "DKUFC",
+        "LCNJG"
+      ],
+      "output": "VAR HGO = 50523\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130989
+    },
+    {
+      "sample_index": 36,
+      "answers": [
+        "OITQA",
+        "IFRHS",
+        "QETMQ",
+        "SYKWZ",
+        "BFACV"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130988
+    },
+    {
+      "sample_index": 38,
+      "answers": [
+        "JPXYC",
+        "KWJXA",
+        "PGKVB",
+        "PZBDO",
+        "HSFYD"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130990
+    },
+    {
+      "sample_index": 40,
+      "answers": [
+        "QMVLS",
+        "AYVWD",
+        "TGBWQ",
+        "BODNK",
+        "TMLJM"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130992
+    },
+    {
+      "sample_index": 42,
+      "answers": [
+        "WJVPP",
+        "MLXXG",
+        "VQIML",
+        "HAHJS",
+        "BCEUT"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130989
+    },
+    {
+      "sample_index": 44,
+      "answers": [
+        "AFTBP",
+        "JYOSW",
+        "BFPMN",
+        "FEDHY",
+        "WFFKC"
+      ],
+      "output": "VAR HGO = 12345\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nVAR FHE = VAR HGO \nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.0,
+      "n_tokens": 130990
+    },
+    {
+      "sample_index": 46,
+      "answers": [
+        "PVVFN",
+        "ZFRCV",
+        "BOSZF",
+        "ZWVZU",
+        "BKRPJ"
+      ],
+      "output": "HGO FHE ADF QNB EJG",
+      "recall": 0.0,
+      "n_tokens": 130994
+    },
+    {
+      "sample_index": 48,
+      "answers": [
+        "PMECB",
+        "NTRHF",
+        "SUUQL",
+        "PNEJM",
+        "AEREJ"
+      ],
+      "output": "HGO FHE ADF QNB EJG",
+      "recall": 0.0,
+      "n_tokens": 130988
+    }
+  ],
+  "config": {
+    "model_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/baselines/memoryllm-8b-chat-hf",
+    "chunk_size": 1024,
+    "max_new_tokens": 60,
+    "use_chat_template": true,
+    "num_shards": 2,
+    "shard_index": 0,
+    "seed": 42
+  }
+}

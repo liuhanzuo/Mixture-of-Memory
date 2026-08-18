@@ -1,0 +1,91 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 65738,
+    "avg_read_len": 6394.5,
+    "last_read_len": 6347
+  },
+  "records": [
+    {
+      "sample_index": 3,
+      "label": "jutdlco-yrzzdwpp",
+      "expected": "619695",
+      "output": "<...> in the data you provided. Let me check the list again to find the line that matches the line \"line jutdlco-yrzzdwpp: REGISTER_CONTENT is <...>\". \n\nLooking through the lines, I",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65864,
+      "read_len": 6473,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 11,
+      "label": "ujwnjxdrc-gdemcheud",
+      "expected": "728665",
+      "output": "<...> in the data you provided. Let me check the list again to find the line that matches the line \"ujwnjxdrc-gdemcheud\".\n\nLooking through the lines:\n\n- The line with \"ujwnjxd",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65749,
+      "read_len": 6358,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 19,
+      "label": "walgkewr-azhurtpgp",
+      "expected": "735538",
+      "output": "<381754>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line \"walgkewr-azhurtpgp\". Let me go through the list again to make",
+      "pred": "381754",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65717,
+      "read_len": 6326,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 27,
+      "label": "dmtmx-mcbaqbn",
+      "expected": "996305",
+      "output": "<194130>.\n</think>\n\nThe <REGISTER_CONTENT> for the line `dmtmx-mcbaqbn` is **194130**.",
+      "pred": "194130",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65828,
+      "read_len": 6437,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 35,
+      "label": "skjfo-kxlagtq",
+      "expected": "117522",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line skjfo-kxlagtq: REGISTER_CONTENT is <...>. \n\nLooking through the provided data, I see that the line with",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65817,
+      "read_len": 6426,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 43,
+      "label": "dhpwbcdmm-ulolartur",
+      "expected": "628835",
+      "output": "<583123>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line dhpwbcdmm-ulolartur\". Let me go through each line one",
+      "pred": "583123",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65738,
+      "read_len": 6347,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    }
+  ]
+}

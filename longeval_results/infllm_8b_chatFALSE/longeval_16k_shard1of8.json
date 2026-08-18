@@ -1,0 +1,88 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.2857,
+    "correct": 2,
+    "total": 7,
+    "approx_tokens": 16561
+  },
+  "records": [
+    {
+      "sample_index": 1,
+      "label": "fnkmhkoeh-clnsmle",
+      "expected": "633773",
+      "output": "<633773>. I remember that line because it's one of the later entries in the list, and the number 633773 stands out as a unique value. I went through each line and associated",
+      "pred": "633773",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16557,
+      "read_len": null
+    },
+    {
+      "sample_index": 9,
+      "label": "ktjvznvxi-mxkgwwx",
+      "expected": "373451",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"ktjvznvxi-mxkgwwx\" does not match any of the line indices provided. Therefore, there is no corresponding <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16525,
+      "read_len": null
+    },
+    {
+      "sample_index": 17,
+      "label": "ptbvcnet-rahej",
+      "expected": "999549",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"ptbvcnet-rahej\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated with that line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16511,
+      "read_len": null
+    },
+    {
+      "sample_index": 25,
+      "label": "nakhza-lczxx",
+      "expected": "898779",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"nakhza-lczxx\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated with line \"n",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16564,
+      "read_len": null
+    },
+    {
+      "sample_index": 33,
+      "label": "svubwnklq-aktxfvnzz",
+      "expected": "560980",
+      "output": "<820076>. I remember that line because it's one of the later entries in the list, and the number 820076 stands out as a unique value. I can confirm this by recalling the",
+      "pred": "820076",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16534,
+      "read_len": null
+    },
+    {
+      "sample_index": 41,
+      "label": "itajiyo-bhkbiy",
+      "expected": "273971",
+      "output": "<273971>. I remember that line because it's one of the entries listed in the record provided. Each line has a unique identifier followed by its corresponding numerical value enclosed in <>. The line \"line itajiyo",
+      "pred": "273971",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16525,
+      "read_len": null
+    },
+    {
+      "sample_index": 49,
+      "label": "cysfcesz-srcmzo",
+      "expected": "165235",
+      "output": "<169647>. Let me know if you need anything else!\nOkay, let's see. The user is asking for the REGISTER_CONTENT of the line with the identifier \"cysfcesz-srcmzo\".",
+      "pred": "169647",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16561,
+      "read_len": null
+    }
+  ]
+}

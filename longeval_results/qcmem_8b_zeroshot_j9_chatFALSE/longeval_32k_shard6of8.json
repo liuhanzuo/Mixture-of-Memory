@@ -1,0 +1,91 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.1667,
+    "correct": 1,
+    "total": 6,
+    "approx_tokens": 32970,
+    "avg_read_len": 6332.7,
+    "last_read_len": 6347
+  },
+  "records": [
+    {
+      "sample_index": 6,
+      "label": "qonjjws-mtrhcxkq",
+      "expected": "680465",
+      "output": "<...> but I can't see the value. Let me check the provided data again.\n\nLooking through the list, I don't see a line with the identifier \"qonjjws-mtrhcxkq\". However, I",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32958,
+      "read_len": 6335,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 14,
+      "label": "iyhar-isqqw",
+      "expected": "581090",
+      "output": "<512464>. \n\nWait, let me check again. Let me go through the lines one by one to make sure I didn't miss any. \n\nLooking at the list, the line with \"iyhar-isqq",
+      "pred": "512464",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32974,
+      "read_len": 6351,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 22,
+      "label": "pencftcd-yuwksyafd",
+      "expected": "984583",
+      "output": "<751215>. \n\nWait, I need to find the line that contains the line \"pencftcd-yuwksyafd\" and extract the value of the REGISTER_CONTENT. Let me check the list again.",
+      "pred": "751215",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32933,
+      "read_len": 6310,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 30,
+      "label": "lrmfxel-irlfrgfz",
+      "expected": "903535",
+      "output": "<903535>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the lines, the line with \"lrmfxel-irl",
+      "pred": "903535",
+      "correct": true,
+      "n_lines": 1536,
+      "n_tokens": 33020,
+      "read_len": 6397,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 38,
+      "label": "ehgrex-gqwdyoa",
+      "expected": "198690",
+      "output": "<613254>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me go through the lines again to find the line that starts with \"ehgrex-gq",
+      "pred": "613254",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32879,
+      "read_len": 6256,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    },
+    {
+      "sample_index": 46,
+      "label": "mdyqm-uljhblzx",
+      "expected": "894888",
+      "output": "<419451>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss it.\n\nLooking through the lines, I see the line \"line qkixeuw",
+      "pred": "419451",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32970,
+      "read_len": 6347,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 64
+    }
+  ]
+}

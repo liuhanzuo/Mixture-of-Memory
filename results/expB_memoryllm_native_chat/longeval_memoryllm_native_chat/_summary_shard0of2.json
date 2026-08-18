@@ -1,0 +1,20 @@
+{
+  "8k": {
+    "accuracy": 0.2,
+    "correct": 5,
+    "total": 25,
+    "approx_tokens": 9056
+  },
+  "32k": {
+    "accuracy": 0.12,
+    "correct": 3,
+    "total": 25,
+    "approx_tokens": 33299
+  },
+  "128k": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 25,
+    "approx_tokens": 132155
+  }
+}

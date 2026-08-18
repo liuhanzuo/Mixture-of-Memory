@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "64k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 65500
+  },
+  "records": [
+    {
+      "answers": [
+        "3062095"
+      ],
+      "output": "3062095. This number is highlighted in the text as the key to unlocking the hidden magic number. The number is embedded within the text, and it's crucial for the quiz that follows. The number is",
+      "recall": 1.0,
+      "n_tokens": 65503
+    },
+    {
+      "answers": [
+        "9484180"
+      ],
+      "output": "9484180. This number is highlighted in the text as part of the narrative, and it's the key to unlocking the hidden message or the special magic number associated with the text. The number is embedded within the",
+      "recall": 1.0,
+      "n_tokens": 65500
+    },
+    {
+      "answers": [
+        "9218383"
+      ],
+      "output": "9218383. The number is hidden within the text and is the answer to the quiz. The number is found in the text as follows: \"And the LORD said unto Joseph, I will go up, and",
+      "recall": 1.0,
+      "n_tokens": 65506
+    },
+    {
+      "answers": [
+        "5880906"
+      ],
+      "output": "5880906. The number is found in the text as follows: \"And the LORD said unto Moses, And I will bring you in unto the land, concerning the which I did swear to give it to Abraham",
+      "recall": 1.0,
+      "n_tokens": 65497
+    },
+    {
+      "answers": [
+        "1864689"
+      ],
+      "output": "1864689. This number is highlighted in the text as the key to the special magic number. The number is found in the text as part of a larger context, where it is mentioned in the context of a",
+      "recall": 1.0,
+      "n_tokens": 65497
+    },
+    {
+      "answers": [
+        "6718591"
+      ],
+      "output": "6718591. This number is highlighted in the text as the key to the special magic number. The number is found in the context of Moses' interaction with the LORD, where the LORD instructs Moses to take",
+      "recall": 1.0,
+      "n_tokens": 65500
+    }
+  ]
+}

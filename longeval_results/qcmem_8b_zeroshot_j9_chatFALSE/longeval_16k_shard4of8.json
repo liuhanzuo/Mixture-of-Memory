@@ -1,0 +1,91 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 16497,
+    "avg_read_len": 6313.0,
+    "last_read_len": 6258
+  },
+  "records": [
+    {
+      "sample_index": 4,
+      "label": "klbicb-jwfnsmgxe",
+      "expected": "435285",
+      "output": "<557933>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss it.\n\nLooking through the lines:\n\n- The line with \"klbicb-jwfn",
+      "pred": "557933",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16544,
+      "read_len": 6305,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 12,
+      "label": "plxdeljv-yjtqph",
+      "expected": "357547",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line plxdeljv-yjtqph: REGISTER_CONTENT is <...>. \n\nLooking through the provided data, I see that the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16567,
+      "read_len": 6328,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 20,
+      "label": "odinjt-jtuzmx",
+      "expected": "650647",
+      "output": "<...> and I need to find the number. Let me check the list again.\n\nOkay, let's see. I need to find the line that starts with \"line odinjt-jtuzmx\" and extract the number inside",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16603,
+      "read_len": 6364,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 28,
+      "label": "axhwj-mdpsdt",
+      "expected": "475087",
+      "output": "<508034>. \n\nWait, I need to find the line that starts with \"line axhwj-mdpsdt\" and extract the number inside the <REGISTER_CONTENT> tags. Let me check the list again.",
+      "pred": "508034",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16517,
+      "read_len": 6278,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 36,
+      "label": "tkjusyf-cutgbrma",
+      "expected": "281435",
+      "output": "<...> and I need to find the value. Let me check the list again.\n\nOkay, let's see. I need to find the line that starts with \"line tkjusyf-cutgbrma\" and extract the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16584,
+      "read_len": 6345,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 44,
+      "label": "jfjwsk-ojahmmord",
+      "expected": "179197",
+      "output": "<513473>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me look for the line that starts with \"line jfjwsk-ojahmmord",
+      "pred": "513473",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16497,
+      "read_len": 6258,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    }
+  ]
+}

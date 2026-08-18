@@ -1,0 +1,24 @@
+{
+  "niah_single_2": {
+    "8k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 8072
+    },
+    "16k": {
+      "score": 0.0,
+      "n": 6,
+      "approx_tokens": 16051
+    },
+    "32k": {
+      "score": 0.0,
+      "n": 6,
+      "approx_tokens": 32659
+    },
+    "64k": {
+      "score": 0.0,
+      "n": 6,
+      "approx_tokens": 65489
+    }
+  }
+}

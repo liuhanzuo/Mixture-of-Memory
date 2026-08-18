@@ -1,0 +1,1211 @@
+{
+  "task": "variable_tracking",
+  "length": "16k",
+  "summary": {
+    "score": 32.4,
+    "n": 100,
+    "approx_tokens": 16262
+  },
+  "records": [
+    {
+      "answers": [
+        "YCQCD",
+        "MSFDJ",
+        "VLVFF",
+        "KTBCH",
+        "RJVRS"
+      ],
+      "output": "71070, 71070, 71070, 71070, 71070.",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "GTKVK",
+        "HOZKL",
+        "MBKNR",
+        "QRVFR",
+        "LDXOS"
+      ],
+      "output": "1. VAR MBKNR 2. VAR QRVFR 3. VAR LDXOS 4. VAR LDXOS 5. VAR LDXOS\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.6,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "IZCMO",
+        "VOWKW",
+        "JVPRG",
+        "ZCSRY",
+        "YJHVG"
+      ],
+      "output": "96445, 96445, 96445, 96445, 96445, 96445.",
+      "recall": 0.0,
+      "n_tokens": 16269
+    },
+    {
+      "answers": [
+        "HGDIO",
+        "VGECT",
+        "IDSXH",
+        "LHRPP",
+        "XFCEG"
+      ],
+      "output": "1. VAR LHRPP 2. VAR XFCEG 3. VAR LHRPP 4. VAR XFCEG 5. VAR LHRPP\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.4,
+      "n_tokens": 16262
+    },
+    {
+      "answers": [
+        "VLSAR",
+        "TUBOM",
+        "BQRBT",
+        "SIMOM",
+        "SGBHU"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 16264
+    },
+    {
+      "answers": [
+        "NAJDJ",
+        "PTRQV",
+        "PGURB",
+        "NQBDK",
+        "WDGMQ"
+      ],
+      "output": "1. VAR PGURB 2. VAR NQBDK 3. VAR WDGMQ 4. VAR NQBDK 5. VAR WDGMQ\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again",
+      "recall": 0.6,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "NHSHN",
+        "VPAGW",
+        "MKTDY",
+        "EHNWD",
+        "DOOTJ"
+      ],
+      "output": "31583, 31583, 31583, 31583, 31583.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "BBFQO",
+        "QTMCL",
+        "KSTXR",
+        "IELBH",
+        "YDLXM"
+      ],
+      "output": "1. VAR KSTXR 2. VAR YDLXM 3. VAR YDLXM 4. VAR YDLXM 5. VAR YDLXM\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.4,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "MJQYN",
+        "VALUZ",
+        "KCFEB",
+        "FUVRN",
+        "HSNBR"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "JXYNR",
+        "KVRDL",
+        "TQXFA",
+        "TWFBY",
+        "SVQDS"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 48525 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "TJFDH",
+        "PSEVU",
+        "QBQCU",
+        "HWRAK",
+        "QHBME"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "MRERG",
+        "SNKSA",
+        "OWMPJ",
+        "CRSVV",
+        "YHJMK"
+      ],
+      "output": "1. VAR CRSVV 2. VAR YHJMK 3. VAR YHJMK 4. VAR CRSVV 5. VAR CRSVV\nQuestion: Find all variables that are assigned the value 34118 in the text above. Answer: According to the chain(s)",
+      "recall": 0.4,
+      "n_tokens": 16383
+    },
+    {
+      "answers": [
+        "CMSRV",
+        "GFEGN",
+        "KHWEI",
+        "YKGJE",
+        "DVXGO"
+      ],
+      "output": "1. VAR YKGJE 2. VAR DVXGO 3. VAR YKGJE 4. VAR DVXGO 5. VAR YKGJE\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.4,
+      "n_tokens": 16264
+    },
+    {
+      "answers": [
+        "ECOVQ",
+        "BQGTS",
+        "TLYDF",
+        "RODPA",
+        "DWVTT"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 68516 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "CANSW",
+        "DSFSY",
+        "WEJFT",
+        "RKNBB",
+        "OSDZP"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "IDWLX",
+        "QMLCD",
+        "JSIWP",
+        "TKOLG",
+        "BFZEO"
+      ],
+      "output": "1. BFZEO, 2. BFZEO, 3. BFZEO, 4. BFZEO, 5. BFZEO.",
+      "recall": 0.2,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "PUOPH",
+        "ECNLS",
+        "SNAEQ",
+        "KHUQC",
+        "NKFIW"
+      ],
+      "output": "1, 2, 3, 4, 5.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "OQITY",
+        "QBHRC",
+        "LKTKD",
+        "JZKKO",
+        "UOESM"
+      ],
+      "output": "1. VAR LKTKD 2. VAR JZKKO 3. VAR UOESM 4. VAR JZKKO 5. VAR UOESM\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.6,
+      "n_tokens": 16271
+    },
+    {
+      "answers": [
+        "RNKQT",
+        "ECXAZ",
+        "XGNOR",
+        "NGIDY",
+        "RUUZJ"
+      ],
+      "output": "1. VAR NGIDY 2. VAR RUUZJ 3. VAR NGIDY 4. VAR RUUZJ 5. VAR NGIDY 6. VAR RUUZJ 7. VAR NGIDY 8. VAR RUUZJ 9. VAR NG",
+      "recall": 0.4,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "OCUVD",
+        "LCEDG",
+        "LXWCJ",
+        "GPAFW",
+        "KIGUK"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16264
+    },
+    {
+      "answers": [
+        "AUWFV",
+        "IVLGV",
+        "TMMEQ",
+        "RKSXJ",
+        "UASEN"
+      ],
+      "output": "1. VAR RKSXJ 2. VAR UASEN 3. VAR RKSXJ 4. VAR UASEN 5. VAR RKSXJ\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.4,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "WBWTL",
+        "CHOAU",
+        "GNAKT",
+        "BSNNV",
+        "TENAM"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.",
+      "recall": 0.0,
+      "n_tokens": 16383
+    },
+    {
+      "answers": [
+        "AIQVC",
+        "PXOJB",
+        "KAFVU",
+        "RWHVJ",
+        "KTWKI"
+      ],
+      "output": "1. VAR PXOJB 2. VAR KAFVU 3. VAR RWHVJ 4. VAR KTWKI 5. VAR KTWKI\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again",
+      "recall": 0.8,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "EQVEY",
+        "HGMJT",
+        "ARRVG",
+        "APKFO",
+        "MVEEF"
+      ],
+      "output": "1. VAR ARRVG 2. VAR MVEEF 3. VAR ARRVG 4. VAR MVEEF 5. VAR ARRVG\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.4,
+      "n_tokens": 16264
+    },
+    {
+      "answers": [
+        "GGSAS",
+        "WEDYP",
+        "VFEZE",
+        "RQAGD",
+        "CNYOQ"
+      ],
+      "output": "1. VAR CNYOQ = VAR RQAGD 2. VAR CNYOQ = VAR RQAGD 3. VAR CNYOQ = VAR RQAGD 4. VAR CNYOQ = VAR RQAGD 5. VAR C",
+      "recall": 0.4,
+      "n_tokens": 16269
+    },
+    {
+      "answers": [
+        "DBLQZ",
+        "DJOTU",
+        "QEHLU",
+        "HUCQF",
+        "MMHCI"
+      ],
+      "output": "1. VAR MMHCI 2. VAR HUCQF 3. VAR HUCQF 4. VAR HUCQF 5. VAR HUCQF\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.4,
+      "n_tokens": 16269
+    },
+    {
+      "answers": [
+        "SEPUB",
+        "FLHIR",
+        "NXBHL",
+        "BYZNN",
+        "QYPSG"
+      ],
+      "output": "1. VAR FLHIR 2. VAR NXBHL 3. VAR BYZNN 4. VAR QYPSG 5. VAR QYPSG\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.",
+      "recall": 0.8,
+      "n_tokens": 16263
+    },
+    {
+      "answers": [
+        "NNKSJ",
+        "FCCQE",
+        "XVSMI",
+        "YZHQT",
+        "INYKY"
+      ],
+      "output": "1. VAR INYKY 2. VAR XVSMI 3. VAR YZHQT 4. VAR XVSMI 5. VAR INYKY\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.6,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "IFTPG",
+        "PIAHM",
+        "ZCTVG",
+        "AANCF",
+        "OVJGC"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "UTIPK",
+        "HQGNZ",
+        "UZFID",
+        "HAORI",
+        "JZTEX"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "RIDSW",
+        "LLROL",
+        "VHDRG",
+        "NGODJ",
+        "SSDRS"
+      ],
+      "output": "1. VAR VHDRG 2. VAR NGODJ 3. VAR SSDRS 4. VAR VHDRG 5. VAR NGODJ\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.6,
+      "n_tokens": 16381
+    },
+    {
+      "answers": [
+        "KFTEE",
+        "BLLBM",
+        "TPLTY",
+        "TFRRA",
+        "FRZOT"
+      ],
+      "output": "1. 13276, 2. 13276, 3. 13276, 4. 13276, 5. 13276.",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "GNDCO",
+        "WEVOB",
+        "QLOGT",
+        "MIHQG",
+        "TYQRS"
+      ],
+      "output": "1. VAR TYQRS 2. VAR MIHQG 3. VAR TYQRS 4. VAR MIHQG 5. VAR TYQRS\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green",
+      "recall": 0.4,
+      "n_tokens": 16265
+    },
+    {
+      "answers": [
+        "OOASG",
+        "HTPMZ",
+        "NTILW",
+        "YHIEF",
+        "CWMLG"
+      ],
+      "output": "1. VAR CWMLG 2. VAR YHIEF 3. VAR CWMLG 4. VAR YHIEF 5. VAR CWMLG\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again",
+      "recall": 0.4,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "COKBR",
+        "XXULD",
+        "AKUIZ",
+        "KWWSK",
+        "LLMHO"
+      ],
+      "output": "1. x, 2. y, 3. z, 4. u, 5. v. Question: Find all variables that are assigned the value 70257 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5",
+      "recall": 0.0,
+      "n_tokens": 16264
+    },
+    {
+      "answers": [
+        "HMNYN",
+        "CJLQA",
+        "YTQIX",
+        "LCNGB",
+        "RBYPS"
+      ],
+      "output": "1. VAR LCNGB 2. VAR RBYPS 3. VAR LCNGB 4. VAR LCNGB 5. VAR LCNGB\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.4,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "LKSTM",
+        "FGNVB",
+        "RYVIL",
+        "TWYCX",
+        "SRPZO"
+      ],
+      "output": "1. VAR RYVIL 2. VAR TWYCX 3. VAR SRPZO 4. VAR TWYCX 5. VAR SRPZO\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.",
+      "recall": 0.6,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "YLEKE",
+        "PNJMI",
+        "WINXF",
+        "KWUNB",
+        "FYIJZ"
+      ],
+      "output": "74235, 74235, 74235, 74235, 74235, 74235, 74235, 74235, 74235, 74235, 74235, 74235, 74235, 74235, 74235,",
+      "recall": 0.0,
+      "n_tokens": 16264
+    },
+    {
+      "answers": [
+        "LWEZL",
+        "QCBFF",
+        "VMBPM",
+        "IFVDU",
+        "CCCMM"
+      ],
+      "output": "1. VAR CCCMM 2. VAR IFVDU 3. VAR VMBPM 4. VAR VMBPM 5. VAR VMBPM\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.6,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "AFNYO",
+        "MTQBN",
+        "FFKTM",
+        "CBYSJ",
+        "QCEXT"
+      ],
+      "output": "1. VAR CBYSJ 2. VAR FFKTM 3. VAR QCEXT 4. VAR QCEXT 5. VAR QCEXT\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.6,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "WPIHP",
+        "ZONQA",
+        "DHHIJ",
+        "DVTUZ",
+        "MSFHB"
+      ],
+      "output": "1. VAR MSFHB 2. VAR DVTUZ 3. VAR DHHIJ 4. VAR MSFHB 5. VAR DVTUZ\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.6,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "EXMZR",
+        "CGFOV",
+        "BAHTQ",
+        "CYNOT",
+        "XDWMA"
+      ],
+      "output": "1. VAR CYNOT 2. VAR BAHTQ 3. VAR XDWMA 4. VAR CYNOT 5. VAR BAHTQ\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is",
+      "recall": 0.6,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "KBACX",
+        "WJUQD",
+        "WGOLF",
+        "ALGTI",
+        "DAVLY"
+      ],
+      "output": "1. VAR ALGTI 2. VAR ALGTI 3. VAR ALGTI 4. VAR ALGTI 5. VAR ALGTI\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.2,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "BDMAH",
+        "NNDJT",
+        "IRLVV",
+        "WGRKL",
+        "OBFWK"
+      ],
+      "output": "1. VAR WGRKL 2. VAR WGRKL 3. VAR WGRKL 4. VAR WGRKL 5. VAR WGRKL\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.2,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "KOJYA",
+        "VZOYU",
+        "TELZE",
+        "ASLMW",
+        "PXJZS"
+      ],
+      "output": "1. VAR ASLMW 2. VAR PXJZS 3. VAR ASLMW 4. VAR PXJZS 5. VAR ASLMW\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again",
+      "recall": 0.4,
+      "n_tokens": 16269
+    },
+    {
+      "answers": [
+        "OVLMH",
+        "USYNK",
+        "HZSIN",
+        "STFYA",
+        "SAUJJ"
+      ],
+      "output": "1. VAR HZSIN 2. VAR STFYA 3. VAR SAUJJ 4. VAR HZSIN 5. VAR STFYA\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again",
+      "recall": 0.6,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "GNRNX",
+        "WZZIS",
+        "NVCGL",
+        "OIULX",
+        "NQSNJ"
+      ],
+      "output": "1. VAR NQSNJ 2. VAR OIULX 3. VAR NVCGL 4. VAR NQSNJ 5. VAR OIULX\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.6,
+      "n_tokens": 16269
+    },
+    {
+      "answers": [
+        "TTHWU",
+        "UYUIB",
+        "WSOIS",
+        "HSNNC",
+        "QDOGC"
+      ],
+      "output": "1. VAR WSOIS 2. VAR HSNNC 3. VAR QDOGC 4. VAR WSOIS 5. VAR HSNNC\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.6,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "KRVDN",
+        "TUSYO",
+        "HKPMB",
+        "COJRI",
+        "FJOIX"
+      ],
+      "output": "1. VAR TUSYO 2. VAR FJOIX 3. VAR HKPMB 4. VAR COJRI 5. VAR TUSYO\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.8,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "MEJKQ",
+        "JKTIS",
+        "LQRZP",
+        "FAXQD",
+        "HKMMY"
+      ],
+      "output": "1. x, 2. y, 3. z, 4. w, 5. v. Question: Find all variables that are assigned the value 22023 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "CBCDL",
+        "XZZXA",
+        "MUPXM",
+        "OWFKY",
+        "ISBMQ"
+      ],
+      "output": "1. VAR ISBMQ = VAR OWFKY 2. VAR ISBMQ = VAR OWFKY 3. VAR ISBMQ = VAR OWFKY 4. VAR ISBMQ = VAR OWFKY 5. VAR ISBMQ = VAR OWFKY",
+      "recall": 0.4,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "NUUWZ",
+        "NHXEO",
+        "QNVCV",
+        "VHLDA",
+        "YCXTL"
+      ],
+      "output": "1. VAR QNVCV 2. VAR VHLDA 3. VAR YCXTL 4. VAR YCXTL 5. VAR YCXTL\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and",
+      "recall": 0.6,
+      "n_tokens": 16271
+    },
+    {
+      "answers": [
+        "OHKCH",
+        "PJDBR",
+        "TEERP",
+        "HNTJX",
+        "IBNWE"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "TYNDB",
+        "HQAYJ",
+        "SUUFF",
+        "PJKIL",
+        "MZHQL"
+      ],
+      "output": "1. VAR PJKIL 2. VAR SUUFF 3. VAR MZHQL 4. VAR PJKIL 5. VAR SUUFF\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is",
+      "recall": 0.6,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "OFCYS",
+        "MQLFH",
+        "VKFJL",
+        "DPYXE",
+        "ERIXB"
+      ],
+      "output": "1. x, 2. y, 3. z, 4. u, 5. v.",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "AGFJB",
+        "AUTWU",
+        "LLSJO",
+        "XQAHE",
+        "QTTRB"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "GASSV",
+        "YIXOC",
+        "LLXSA",
+        "SLSWZ",
+        "OLGFH"
+      ],
+      "output": "1. VAR SLSWZ 2. VAR OLGFH 3. VAR SLSWZ 4. VAR OLGFH 5. VAR SLSWZ\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.4,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "FNSOE",
+        "IQCMT",
+        "ENHZR",
+        "PYRXO",
+        "TVGLS"
+      ],
+      "output": "1. VAR ENHZR 2. VAR IQCMT 3. VAR PYRXO 4. VAR TVGLS 5. VAR TVGLS\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.8,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "CHDGR",
+        "OVBXT",
+        "PBPKH",
+        "YMKIY",
+        "WACTW"
+      ],
+      "output": "1. VAR YMKIY 2. VAR WACTW 3. VAR YMKIY 4. VAR WACTW 5. VAR YMKIY\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.4,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "BSKHG",
+        "YIPEY",
+        "ZTAFM",
+        "XAMUY",
+        "GTOYO"
+      ],
+      "output": "32722, 32722, 32722, 32722, 32722.",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "IQVDC",
+        "ZKWBJ",
+        "TUDUN",
+        "ZYROW",
+        "KABHA"
+      ],
+      "output": "53494, 53494, 53494, 53494, 53494, 53494, 53494, 53494, 53494, 53494, 53494, 53494, 53494, 53494, 53494,",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "QYDEO",
+        "QHUSM",
+        "JBFAL",
+        "ZWYDJ",
+        "CPTET"
+      ],
+      "output": "1. VAR CPTET 2. VAR ZWYDJ 3. VAR JBFAL 4. VAR JBFAL 5. VAR JBFAL\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.",
+      "recall": 0.6,
+      "n_tokens": 16272
+    },
+    {
+      "answers": [
+        "WWIDJ",
+        "SFXHO",
+        "DNHGS",
+        "OJCLI",
+        "RYOCE"
+      ],
+      "output": "1. VAR SFXHO 2. VAR DNHGS 3. VAR OJCLI 4. VAR RYOCE 5. VAR SFXHO\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.8,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "YBTOH",
+        "QPTLG",
+        "SVFKO",
+        "SYFXZ",
+        "UPCIY"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.\nQuestion: Find all variables that are assigned the value 13460 in the text above. Answer: According to",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "BREXQ",
+        "NWACR",
+        "JULAE",
+        "HOUKV",
+        "YRISC"
+      ],
+      "output": "1. VAR YRISC 2. VAR HOUKV 3. VAR NWACR 4. VAR JULAE 5. VAR VAR\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green",
+      "recall": 0.8,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "ZMZTX",
+        "TZMQD",
+        "QRBDO",
+        "AWGDZ",
+        "FUOCU"
+      ],
+      "output": "1. VAR AWGDZ 2. VAR FUOCU 3. VAR AWGDZ 4. VAR FUOCU 5. VAR AWGDZ\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.4,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "JIWLU",
+        "WEEMO",
+        "HMGIM",
+        "VQCKJ",
+        "TCDOQ"
+      ],
+      "output": "1. VAR HMGIM = VAR WEEMO 2. VAR VQCKJ = VAR HMGIM 3. VAR TCDOQ = VAR VQCKJ 4. VAR HMGIM = VAR HMGIM 5. VAR HMGIM = VAR HMG",
+      "recall": 0.8,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "UOVHN",
+        "KKWVH",
+        "RBTKB",
+        "VHFFO",
+        "LNXEO"
+      ],
+      "output": "31857, 31857, 31857, 31857, 31857.",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "CUQPV",
+        "JKEHR",
+        "CCGWR",
+        "JKDOC",
+        "YPRCM"
+      ],
+      "output": "1. VAR JKDOC 2. VAR JKDOC 3. VAR JKDOC 4. VAR JKDOC 5. VAR JKDOC\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The",
+      "recall": 0.2,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "TFXSR",
+        "LTNJS",
+        "JGPNX",
+        "ADWVU",
+        "XEYZC"
+      ],
+      "output": "1. VAR ADWVU 2. VAR XEYZC 3. VAR XEYZC 4. VAR XEYZC 5. VAR XEYZC\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.4,
+      "n_tokens": 16271
+    },
+    {
+      "answers": [
+        "NZOFU",
+        "NGTCR",
+        "BIOFC",
+        "NUXTY",
+        "PPWQE"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.",
+      "recall": 0.0,
+      "n_tokens": 16264
+    },
+    {
+      "answers": [
+        "TTNBH",
+        "YIBUH",
+        "CRSTU",
+        "SWAKU",
+        "ECLBJ"
+      ],
+      "output": "65117, 65117, 65117, 65117, 65117.",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "MLPNU",
+        "NZIDS",
+        "JNKAO",
+        "AHJCJ",
+        "FJUEY"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.",
+      "recall": 0.0,
+      "n_tokens": 16383
+    },
+    {
+      "answers": [
+        "WQOII",
+        "WAGVP",
+        "FPJOT",
+        "ITNWJ",
+        "MASHI"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "SBDOY",
+        "KRZWF",
+        "CBOZX",
+        "IVKWT",
+        "VYKJD"
+      ],
+      "output": "1. VAR CBOZX 2. VAR IVKWT 3. VAR VYKJD 4. VAR VYKJD 5. VAR VYKJD\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.6,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "SMEIF",
+        "ULKED",
+        "GTMNT",
+        "IQHTU",
+        "BMCAA"
+      ],
+      "output": "1. VAR IQHTU 2. VAR BMCAA 3. VAR GTMNT 4. VAR GTMNT 5. VAR IQHTU\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.6,
+      "n_tokens": 16383
+    },
+    {
+      "answers": [
+        "VUGZK",
+        "ZXQYI",
+        "REYNT",
+        "PQORF",
+        "VRBJW"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "WRXGK",
+        "AEUSO",
+        "BVBZB",
+        "AMCVP",
+        "UTUKQ"
+      ],
+      "output": "1. VAR BVBZB 2. VAR AMCVP 3. VAR UTUKQ 4. VAR BVBZB 5. VAR AMCVP\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.6,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "CERGM",
+        "JVTTS",
+        "SXGAG",
+        "PZWZQ",
+        "SPMTZ"
+      ],
+      "output": "1. VAR PZWZQ 2. VAR SXGAG 3. VAR SPMTZ 4. VAR PZWZQ 5. VAR SPMTZ\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again",
+      "recall": 0.6,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "YHMOU",
+        "EXQRH",
+        "RYIYL",
+        "HQJOE",
+        "CPHPD"
+      ],
+      "output": "31828, 31828, 31828, 31828, 31828.",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "TBRKW",
+        "OQTKW",
+        "RAOHA",
+        "NPMQB",
+        "PSTPP"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here",
+      "recall": 0.0,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "RQDJL",
+        "AJTBU",
+        "PEPXK",
+        "MKFAB",
+        "GBICU"
+      ],
+      "output": "1. VAR GBICU 2. VAR MKFAB 3. VAR GBICU 4. VAR MKFAB 5. VAR GBICU\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.4,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "RXSMK",
+        "DLFFY",
+        "NUAVD",
+        "LOALW",
+        "KUFIO"
+      ],
+      "output": "1. VAR RXSMK 2. VAR DLFFY 3. VAR NUAVD 4. VAR LOALW 5. VAR KUFIO\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 1.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "JXLGD",
+        "VUXXK",
+        "CIPRX",
+        "MVYDC",
+        "WLAIS"
+      ],
+      "output": "1. VAR VUXXK 2. VAR WLAIS 3. VAR MVYDC 4. VAR CIPRX 5. VAR WLAIS\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.",
+      "recall": 0.8,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "TWSMW",
+        "XOIUP",
+        "IQIQF",
+        "XNKQD",
+        "WEMDI"
+      ],
+      "output": "1. VAR XNKQD 2. VAR XNKQD 3. VAR XNKQD 4. VAR XNKQD 5. VAR XNKQD\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There",
+      "recall": 0.2,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "RDJIX",
+        "KMGQY",
+        "SEAXB",
+        "EADNY",
+        "MCVQS"
+      ],
+      "output": "1. VAR KMGQY 2. VAR SEAXB 3. VAR EADNY 4. VAR MCVQS 5. VAR KMGQY\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.",
+      "recall": 0.8,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "AKAOU",
+        "XOIAH",
+        "ULFMV",
+        "XNCML",
+        "HMHEY"
+      ],
+      "output": "1. XNCML = 27163 2. HMHEY = 27163 3. XNCML = 27163 4. HMHEY = 27163 5. XNCML = 27163 6. HMHEY = 27163 7. X",
+      "recall": 0.4,
+      "n_tokens": 16265
+    },
+    {
+      "answers": [
+        "JGJTH",
+        "OGZQN",
+        "MRFGX",
+        "EFDJY",
+        "BIJGI"
+      ],
+      "output": "62192, 62192, 62192, 62192, 62192.",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "WOFFA",
+        "TCIRB",
+        "NVNZY",
+        "PYDDZ",
+        "TXNDI"
+      ],
+      "output": "42567, 42567, 42567, 42567, 42567. Question: Find all variables that are assigned the value 42567 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "WHIXU",
+        "BCIYT",
+        "OEBPV",
+        "NIVFY",
+        "VKBBD"
+      ],
+      "output": "1. VAR NIVFY 2. VAR VKBBD 3. VAR NIVFY 4. VAR VKBBD 5. VAR VKBBD\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.4,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "PYEMF",
+        "QRJSR",
+        "UBQPG",
+        "YDLFL",
+        "ZHCMW"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.",
+      "recall": 0.0,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "LEVJH",
+        "PXFRR",
+        "VHOQX",
+        "GBBUY",
+        "RUBJH"
+      ],
+      "output": "1. var rubjh 2. var gbbuy 3. var gbbuy 4. var gbbuy 5. var gbbuy\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass",
+      "recall": 0.4,
+      "n_tokens": 16271
+    },
+    {
+      "answers": [
+        "LNRLR",
+        "YFMBZ",
+        "MPCNT",
+        "PCFHP",
+        "XSYVR"
+      ],
+      "output": "1. VAR XSYVR 2. VAR XSYVR 3. VAR XSYVR 4. VAR XSYVR 5. VAR XSYVR\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.2,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "IOHVD",
+        "DSHKZ",
+        "RIQYD",
+        "OXRXF",
+        "JPRCK"
+      ],
+      "output": "14171, 14171, 14171, 14171, 14171.",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "LLPDJ",
+        "XHIYM",
+        "FLGHG",
+        "LVLMR",
+        "PSISG"
+      ],
+      "output": "1. PSISG 2. LVLMR 3. FLGHG 4. VAR 5. VAR\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue.",
+      "recall": 0.6,
+      "n_tokens": 16264
+    },
+    {
+      "answers": [
+        "HPLKI",
+        "XYGOP",
+        "ZNNCV",
+        "AEBVO",
+        "KVRAV"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "NTINA",
+        "TZXLR",
+        "TRGET",
+        "VRGQC",
+        "ZYVWI"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 16263
+    },
+    {
+      "answers": [
+        "LZNWB",
+        "ULSLE",
+        "EFHAW",
+        "OOXPJ",
+        "PCIQC"
+      ],
+      "output": "1. VAR OOXPJ 2. VAR PCIQC 3. VAR EFHAW 4. VAR EFHAW 5. VAR EFHAW\nQuestion: Find all variables that are assigned the value 92282 in the text above. Answer: According to the chain(s)",
+      "recall": 0.6,
+      "n_tokens": 16265
+    },
+    {
+      "answers": [
+        "IDSDX",
+        "JVPDE",
+        "HDPBN",
+        "DMJDC",
+        "LYWXR"
+      ],
+      "output": "1. VAR HDPBN 2. VAR DMJDC 3. VAR LYWXR 4. VAR HDPBN 5. VAR DMJDC\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe",
+      "recall": 0.6,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "LEIMD",
+        "SEEZO",
+        "MEPIL",
+        "SKAXW",
+        "XDVWC"
+      ],
+      "output": "1. XDVWC = 75665 2. SKAXW = 75665 3. XDVWC = 75665 4. SKAXW = 75665 5. XDVWC = 75665 6. SKAXW = 75665",
+      "recall": 0.4,
+      "n_tokens": 16262
+    }
+  ]
+}

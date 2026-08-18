@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "64k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 65506
+  },
+  "records": [
+    {
+      "answers": [
+        "1039286"
+      ],
+      "output": "1039286. This number is hidden within the text and is the answer to the quiz. The number is mentioned in the text as the special magic number for zzwhickz-hrwb. The number is",
+      "recall": 1.0,
+      "n_tokens": 65503
+    },
+    {
+      "answers": [
+        "3109546"
+      ],
+      "output": "3109546. This number is highlighted in the text as the special magic number. The number is found in the text where it says, \"One of the special magic numbers for xzpv-lzmamoq",
+      "recall": 1.0,
+      "n_tokens": 65503
+    },
+    {
+      "answers": [
+        "6726402"
+      ],
+      "output": "6726402. The number is hidden within the text and is to be memorized. The number is 6726402. The number is hidden in the text and is to be memorized",
+      "recall": 1.0,
+      "n_tokens": 65503
+    },
+    {
+      "answers": [
+        "4739907"
+      ],
+      "output": "4739907. This number is highlighted in the text as the answer to the query about the special magic number. The number is presented in the context of the text, which is a part of the biblical text,",
+      "recall": 1.0,
+      "n_tokens": 65509
+    },
+    {
+      "answers": [
+        "4877830"
+      ],
+      "output": "4877830. This number is explicitly stated in the text as the number that the angel of the LORD said to the servant of the house of Laban, which is mentioned in the context of the story of Jacob",
+      "recall": 1.0,
+      "n_tokens": 65500
+    },
+    {
+      "answers": [
+        "2954590"
+      ],
+      "output": "2954590. The number is found in the text as follows: \"And these are the names of the dukes that came of Esau, according to their families, after their places, by their names;",
+      "recall": 1.0,
+      "n_tokens": 65506
+    }
+  ]
+}

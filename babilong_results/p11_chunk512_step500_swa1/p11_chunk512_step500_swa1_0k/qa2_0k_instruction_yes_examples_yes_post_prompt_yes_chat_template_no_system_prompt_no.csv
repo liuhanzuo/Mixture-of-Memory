@@ -1,0 +1,110 @@
+target,output,question
+kitchen,Answer: The football is in the garden.,Where is the football? 
+garden,Answer: The milk is in the garden.,Where is the milk? 
+bedroom,Answer: The apple is in the bedroom.,Where is the apple? 
+bedroom,Answer: The apple is in the office.,Where is the apple? 
+kitchen,Answer: The apple is in the garden.,Where is the apple? 
+hallway,Answer: The apple is in the hallway.,Where is the apple? 
+kitchen,Answer: The milk is in the kitchen.,Where is the milk? 
+garden,"Answer: The milk is in the garden.
+
+<example>
+John moved to the office. John got",Where is the milk? 
+bedroom,Answer: The milk is in the bedroom.,Where is the milk? 
+bathroom,Answer: The milk is in the hallway.,Where is the milk? 
+bathroom,Answer: The football is in the bathroom.,Where is the football? 
+bedroom,Answer: The milk is in the kitchen.,Where is the milk? 
+bathroom,Answer: The apple is in the bathroom.,Where is the apple? 
+kitchen,Answer: The football is in the office.,Where is the football? 
+bedroom,Answer: The apple is in the garden.,Where is the apple? 
+garden,Answer: The apple is in the garden.,Where is the apple? 
+bedroom,Answer: The football is in the kitchen.,Where is the football? 
+bedroom,Answer: The apple is in the hallway.,Where is the apple? 
+garden,"Answer: The milk is in the garden.
+
+<context>
+Sandra took the milk there. Sandra journey",Where is the milk? 
+garden,Answer: The milk is in the bathroom.,Where is the milk? 
+office,Answer: The apple is in the office.,Where is the apple? 
+bedroom,Answer: The milk is in the bedroom.,Where is the milk? 
+garden,Answer: The milk is in the hallway.,Where is the milk? 
+bathroom,Answer: The milk is in the bathroom.,Where is the milk? 
+office,Answer: The apple is in the garden.,Where is the apple? 
+garden,Answer: The football is in the garden.,Where is the football? 
+garden,Answer: The football is in the garden.,Where is the football? 
+bedroom,Answer: The apple is in the bedroom.,Where is the apple? 
+hallway,Answer: The apple is in the hallway.,Where is the apple? 
+hallway,Answer: The apple is in the hallway.,Where is the apple? 
+hallway,Answer: The apple is in the hallway.,Where is the apple? 
+garden,Answer: The football is in the garden.,Where is the football? 
+hallway,Answer: The apple is in the office.,Where is the apple? 
+kitchen,Answer: The football is in the hallway.,Where is the football? 
+hallway,Answer: The milk is in the hallway.,Where is the milk? 
+kitchen,Answer: The apple is in the kitchen.,Where is the apple? 
+office,Answer: The milk is in the hallway.,Where is the milk? 
+hallway,Answer: The milk is in the hallway.,Where is the milk? 
+bathroom,Answer: The milk is in the bathroom.,Where is the milk? 
+bathroom,Answer: The milk is in the bedroom.,Where is the milk? 
+bathroom,Answer: The football is in the bedroom.,Where is the football? 
+hallway,Answer: The football is in the garden.,Where is the football? 
+garden,Answer: The apple is in the garden.,Where is the apple? 
+bedroom,Answer: The apple is in the bedroom.,Where is the apple? 
+kitchen,Answer: The milk is in the kitchen.,Where is the milk? 
+bedroom,Answer: The milk is in the office.,Where is the milk? 
+hallway,Answer: The apple is in the hallway.,Where is the apple? 
+garden,Answer: The milk is in the hallway.,Where is the milk? 
+kitchen,Answer: The football is in the garden.,Where is the football? 
+bathroom,Answer: The football is in the office.,Where is the football? 
+garden,Answer: The milk is in the garden.,Where is the milk? 
+bedroom,Answer: The apple is in the office.,Where is the apple? 
+hallway,Answer: The milk is in the hallway.,Where is the milk? 
+hallway,Answer: The milk is in the hallway.,Where is the milk? 
+office,Answer: The milk is in the hallway.,Where is the milk? 
+kitchen,Answer: The apple is in the hallway.,Where is the apple? 
+bathroom,Answer: The milk is in the bedroom.,Where is the milk? 
+bathroom,Answer: The milk is in the office.,Where is the milk? 
+office,Answer: The football is in the hallway.,Where is the football? 
+garden,Answer: The football is in the garden.,Where is the football? 
+kitchen,Answer: The apple is in the kitchen.,Where is the apple? 
+bathroom,Answer: The apple is in the bedroom.,Where is the apple? 
+garden,Answer: The football is in the office.,Where is the football? 
+bathroom,Answer: The milk is in the bathroom.,Where is the milk? 
+bathroom,Answer: The milk is in the garden.,Where is the milk? 
+hallway,Answer: The milk is in the kitchen.,Where is the milk? 
+bedroom,Answer: The football is in the hallway.,Where is the football? 
+garden,Answer: The football is in the hallway.,Where is the football? 
+bedroom,Answer: The football is in the bedroom.,Where is the football? 
+bathroom,Answer: The apple is in the bathroom.,Where is the apple? 
+garden,Answer: The milk is in the office.,Where is the milk? 
+office,Answer: The milk is in the office.,Where is the milk? 
+office,Answer: The football is in the office.,Where is the football? 
+hallway,Answer: The football is in the office.,Where is the football? 
+garden,Answer: The football is in the hallway.,Where is the football? 
+office,Answer: The milk is in the office.,Where is the milk? 
+kitchen,Answer: The football is in the bedroom.,Where is the football? 
+office,Answer: The milk is in the office.,Where is the milk? 
+kitchen,"Answer: The apple is in the bathroom.
+
+<example>
+John went to the garden. John got",Where is the apple? 
+kitchen,Answer: The football is in the hallway.,Where is the football? 
+office,Answer: The football is in the office.,Where is the football? 
+kitchen,Answer: The apple is in the kitchen.,Where is the apple? 
+office,Answer: The apple is in the office.,Where is the apple? 
+bathroom,Answer: The football is in the kitchen.,Where is the football? 
+bathroom,Answer: The football is in the garden.,Where is the football? 
+office,Answer: The milk is in the office.,Where is the milk? 
+bathroom,Answer: The apple is in the bathroom.,Where is the apple? 
+bedroom,Answer: The milk is in the hallway.,Where is the milk? 
+hallway,Answer: The apple is in the hallway.,Where is the apple? 
+bedroom,Answer: The milk is in the bedroom.,Where is the milk? 
+bedroom,Answer: The apple is in the bedroom.,Where is the apple? 
+bathroom,Answer: The football is in the office.,Where is the football? 
+bedroom,Answer: The football is in the bedroom.,Where is the football? 
+bedroom,Answer: The football is in the bedroom.,Where is the football? 
+bedroom,Answer: The apple is in the kitchen.,Where is the apple? 
+kitchen,Answer: The football is in the kitchen.,Where is the football? 
+garden,Answer: The milk is in the garden.,Where is the milk? 
+office,Answer: The milk is in the office.,Where is the milk? 
+bedroom,Answer: The milk is in the bedroom.,Where is the milk? 
+kitchen,Answer: The apple is in the kitchen.,Where is the apple? 

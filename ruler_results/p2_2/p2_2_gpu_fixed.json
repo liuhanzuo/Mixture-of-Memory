@@ -1,0 +1,149 @@
+{
+  "meta": {
+    "device": "NVIDIA H20",
+    "driver": "535.247.01",
+    "torch": "2.13.0",
+    "cuda": "13.2",
+    "chunk_bytes": 4194304,
+    "pack_bytes": 50331648,
+    "topk": 12,
+    "ts": "2026-08-01T02:33:07"
+  },
+  "results": [
+    {
+      "backend": "gpu",
+      "size": "128k",
+      "tokens": 131072,
+      "n_chunks": 256,
+      "store_bytes": 1073741824,
+      "store_gb": 1.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 1195.21,
+      "retrieve_ms": 0.1809,
+      "transfer_ms": 0.0,
+      "qps": {
+        "1": 5442.4,
+        "4": 6396.9,
+        "16": 6444.1
+      },
+      "peak_gpu_gb": 1.984,
+      "peak_host_gb": 0.788,
+      "peak_host_maxrss_gb": 0.851,
+      "status": "ok"
+    },
+    {
+      "backend": "gpu",
+      "size": "1M",
+      "tokens": 1048576,
+      "n_chunks": 2048,
+      "store_bytes": 8589934592,
+      "store_gb": 8.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 1479.11,
+      "retrieve_ms": 0.0629,
+      "transfer_ms": 0.0,
+      "qps": {
+        "1": 13414.2,
+        "4": 15064.3,
+        "16": 15558.9
+      },
+      "peak_gpu_gb": 8.984,
+      "peak_host_gb": 0.897,
+      "peak_host_maxrss_gb": 1.042,
+      "status": "ok"
+    },
+    {
+      "backend": "gpu",
+      "size": "4M",
+      "tokens": 4194304,
+      "n_chunks": 8192,
+      "store_bytes": 34359738368,
+      "store_gb": 32.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 1495.57,
+      "retrieve_ms": 0.0636,
+      "transfer_ms": 0.0,
+      "qps": {
+        "1": 10129.6,
+        "4": 15708.7,
+        "16": 14821.9
+      },
+      "peak_gpu_gb": 32.984,
+      "peak_host_gb": 0.919,
+      "peak_host_maxrss_gb": 1.042,
+      "status": "ok"
+    },
+    {
+      "backend": "gpu",
+      "size": "8M",
+      "tokens": 8388608,
+      "n_chunks": 16384,
+      "store_bytes": 68719476736,
+      "store_gb": 64.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "write_gb_s": 1498.38,
+      "retrieve_ms": 0.0661,
+      "transfer_ms": 0.0,
+      "qps": {
+        "1": 7612.1,
+        "4": 14953.2,
+        "16": 14694.4
+      },
+      "peak_gpu_gb": 64.984,
+      "peak_host_gb": 0.892,
+      "peak_host_maxrss_gb": 1.042,
+      "status": "ok"
+    },
+    {
+      "backend": "gpu",
+      "size": "16M",
+      "tokens": 16777216,
+      "n_chunks": 32768,
+      "store_bytes": 137438953472,
+      "store_gb": 128.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 7,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4,
+        16
+      ],
+      "qps_duration_s": 4.0,
+      "status": "OOM",
+      "error": "CUDA out of memory. Tried to allocate 128.00 GiB. GPU 0 has a total capacity of 95.00 GiB of which 94.51 GiB is free. Process 3241123 has 502.00 MiB memory in use. Of the allocated memory 128.00 MiB is allocated by PyTorch, and 0 bytes is reserved by PyTorch but unallocated. If reserved but unalloca"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
+  "resume_j": 12,
+  "top_prepay_b": 0,
+  "reuse_kv_blockdiag": false,
+  "lora_adapter": "outputs/qcmem_distill_qwen_j12_r32_4k/final",
+  "bottleneck_ckpt": "",
+  "baseline": "none",
+  "selector": "bm25",
+  "topk": 12,
+  "sink_tokens": "bos",
+  "chunk_size": 512,
+  "lengths": [
+    "8k"
+  ],
+  "num_samples": 50,
+  "max_new_tokens": 16,
+  "seed": 1234,
+  "results_folder": "./longeval_results",
+  "output_name": "longeval_qcmem_8k",
+  "num_shards": 1,
+  "shard_index": 0,
+  "device": "cuda:0",
+  "dtype": "bfloat16",
+  "attn_impl": "sdpa",
+  "score_only": false,
+  "self_test": false,
+  "no_retrieval": false,
+  "num_layers": 36,
+  "resolved_model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b"
+}

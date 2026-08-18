@@ -1,0 +1,77 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 32963
+  },
+  "records": [
+    {
+      "sample_index": 7,
+      "label": "ukyvvcip-mgpbtu",
+      "expected": "119735",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"ukyvvcip-mgpbtu\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32976,
+      "read_len": null
+    },
+    {
+      "sample_index": 15,
+      "label": "oueydsjg-elwxe",
+      "expected": "261132",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"oueydsjg-elwxe\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33012,
+      "read_len": null
+    },
+    {
+      "sample_index": 23,
+      "label": "rbdnuue-heraxzd",
+      "expected": "774855",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"rbdnuue-heraxzd.\" Please verify the line index and provide the correct one if available. If it's a typo or a different",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33016,
+      "read_len": null
+    },
+    {
+      "sample_index": 31,
+      "label": "wxxbngs-cjrwj",
+      "expected": "921180",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"wxxbngs-cjrwj\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32959,
+      "read_len": null
+    },
+    {
+      "sample_index": 39,
+      "label": "mmeisiag-jhxkuhv",
+      "expected": "394643",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"mmeisiag-jhxkuhv\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 33009,
+      "read_len": null
+    },
+    {
+      "sample_index": 47,
+      "label": "cujol-eagsbcjkf",
+      "expected": "617006",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"cujol-eagsbcjkf\". Please check the line index again or provide additional information if needed. \n\nHowever, if you meant to",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32963,
+      "read_len": null
+    }
+  ]
+}

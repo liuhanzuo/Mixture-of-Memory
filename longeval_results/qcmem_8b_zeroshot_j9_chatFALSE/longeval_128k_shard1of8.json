@@ -1,0 +1,104 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 7,
+    "approx_tokens": 131202,
+    "avg_read_len": 6454.3,
+    "last_read_len": 6275
+  },
+  "records": [
+    {
+      "sample_index": 1,
+      "label": "ahkvkfue-ppsfp",
+      "expected": "967521",
+      "output": "<715323>. \n\nWait, but I need to check if that line is present in the provided data. Let me check again.\n\nLooking through the list:\n\nLooking for the line that starts with \"line ahkvkf",
+      "pred": "715323",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131550,
+      "read_len": 6623,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 9,
+      "label": "wsqicvck-tlxzjybf",
+      "expected": "380489",
+      "output": "<...> in the data you provided. Let me check the list again to find the line that matches the line \"wsqicvck-tlxzjybf\".\n\nLooking through the lines:\n\n- The line \"wsqic",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131392,
+      "read_len": 6465,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 17,
+      "label": "xnxucccd-wkzys",
+      "expected": "812516",
+      "output": "<712543>. \n\nWait, I need to find the line that contains the line \"xnxucccd-wkzys\" and extract the value of the REGISTER_CONTENT. Let me check the list again.\n\nLooking",
+      "pred": "712543",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131470,
+      "read_len": 6543,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 25,
+      "label": "ofrmftnl-ehimmdfp",
+      "expected": "828596",
+      "output": "<...> and I need to find the number inside the <...> for that line. Let me check the list again to find the line with the identifier \"ofrmftnl-ehimmdfp\".\n\nLooking through the lines provided",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131352,
+      "read_len": 6425,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 33,
+      "label": "ffxyocn-axbwpwyrx",
+      "expected": "394795",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that matches the line number \"ffxyocn-axbwpwyrx\".\n\nLooking through the lines provided",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131506,
+      "read_len": 6579,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 41,
+      "label": "ajvmeey-octzvngad",
+      "expected": "845988",
+      "output": "<672044>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"ajvmeey-octzvngad\". Let me go through the list again",
+      "pred": "672044",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131709,
+      "read_len": 6270,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 257
+    },
+    {
+      "sample_index": 49,
+      "label": "ylvuhn-qwtiirks",
+      "expected": "920181",
+      "output": "<...> in the given data. Let me find it.\n\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line ylvuhn-qwtiirks\". Let me go",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131202,
+      "read_len": 6275,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    }
+  ]
+}

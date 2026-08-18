@@ -1,0 +1,67 @@
+{
+  "task": "niah_single_2",
+  "length": "64k",
+  "summary": {
+    "score": 100.0,
+    "n": 7,
+    "approx_tokens": 65506
+  },
+  "records": [
+    {
+      "answers": [
+        "3033282"
+      ],
+      "output": "3033282. This number is explicitly stated in the text as \"One of the special magic numbers for swnlxnq-rktn is: 3033282.\" The number is",
+      "recall": 1.0,
+      "n_tokens": 65506
+    },
+    {
+      "answers": [
+        "7581656"
+      ],
+      "output": "7581656. The number is found in the text as follows: \"And the LORD said unto Jacob, Arise, go up to Bethel, and dwell there: and make there an altar unto God,",
+      "recall": 1.0,
+      "n_tokens": 65512
+    },
+    {
+      "answers": [
+        "4312030"
+      ],
+      "output": "4312030. The number is hidden within the text, and it's a sequence of digits that can be found in the text. The number is 4312030. The number is mentioned",
+      "recall": 1.0,
+      "n_tokens": 65506
+    },
+    {
+      "answers": [
+        "2828633"
+      ],
+      "output": "2828633. The number is hidden within the text and is the answer to the quiz. The number is found in the text as follows: \"One of the special magic numbers for itjubxez-",
+      "recall": 1.0,
+      "n_tokens": 65509
+    },
+    {
+      "answers": [
+        "7165121"
+      ],
+      "output": "7165121. The number is found in the text as follows: \"And the LORD said unto Jacob, Arise, go up to Bethel, and dwell there: and make there an altar unto God,",
+      "recall": 1.0,
+      "n_tokens": 65509
+    },
+    {
+      "answers": [
+        "2816119"
+      ],
+      "output": "2816119. This number is found in the text where it says, \"And the LORD God said unto Abraham, I will surely bless thee, and I will multiply thee, and I will multiply thy seed as",
+      "recall": 1.0,
+      "n_tokens": 65503
+    },
+    {
+      "answers": [
+        "2484402"
+      ],
+      "output": "2484402. The number is hidden within the text and is revealed in the context of the text's content. The number is found in the text as part of the narrative, and it is a specific number that",
+      "recall": 1.0,
+      "n_tokens": 65506
+    }
+  ]
+}

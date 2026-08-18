@@ -1,0 +1,32 @@
+{
+  "8k": {
+    "accuracy": 0.5,
+    "correct": 3,
+    "total": 6,
+    "approx_tokens": 8334
+  },
+  "16k": {
+    "accuracy": 0.3333,
+    "correct": 2,
+    "total": 6,
+    "approx_tokens": 16497
+  },
+  "32k": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 32931
+  },
+  "64k": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 65766
+  },
+  "128k": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 131406
+  }
+}

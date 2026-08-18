@@ -1,0 +1,77 @@
+{
+  "length": "32k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 32931
+  },
+  "records": [
+    {
+      "sample_index": 4,
+      "label": "iejjcpbrs-tkdtv",
+      "expected": "576388",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"iejjcpbrs-tkdtv\" is not among them. Therefore, there is no <REGISTER_CONTENT> value associated with that line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32938,
+      "read_len": null
+    },
+    {
+      "sample_index": 12,
+      "label": "untfybf-yojqqhxei",
+      "expected": "541455",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"untfybf-yojqqhxei\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> for that line index. Please check the line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32907,
+      "read_len": null
+    },
+    {
+      "sample_index": 20,
+      "label": "psvdvllss-tgqbqv",
+      "expected": "639520",
+      "output": "<158139>. \n\nWait, let me check again. The line index is psvdvllss-tgqbqv. Let me search through the lines again to make sure I didn't make a mistake.\n\nLooking",
+      "pred": "158139",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32989,
+      "read_len": null
+    },
+    {
+      "sample_index": 28,
+      "label": "vhyhmt-pvxhvq",
+      "expected": "967236",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"vhyhmt-pvxhvq\". Please check the line index and try again. The available line indices are the ones listed in the record above",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32966,
+      "read_len": null
+    },
+    {
+      "sample_index": 36,
+      "label": "picvqk-pcaplknha",
+      "expected": "319025",
+      "output": "<185446>. \n\nWait, let me check again. I need to make sure I didn't make a mistake. Let me go through the lines again to confirm.\n\nLooking at the lines provided, I need to find",
+      "pred": "185446",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32961,
+      "read_len": null
+    },
+    {
+      "sample_index": 44,
+      "label": "wwxxipai-uuyztgnrf",
+      "expected": "328263",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"wwxxipai-uuyztgnrf\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 1536,
+      "n_tokens": 32931,
+      "read_len": null
+    }
+  ]
+}

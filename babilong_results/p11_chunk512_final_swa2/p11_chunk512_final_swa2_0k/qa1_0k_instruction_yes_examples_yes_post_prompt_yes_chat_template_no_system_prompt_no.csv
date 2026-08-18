@@ -1,0 +1,355 @@
+target,output,question
+bathroom,"Answer: bathroom
+Question: Where is Daniel? Answer: bathroom
+Question: Where is John?",Where is Mary? 
+kitchen,"Answer: kitchen.
+</question>
+
+Question: Where is John? Answer: hallway.
+</question>",Where is Sandra? 
+kitchen,"Answer: The most recent location of Mary is kitchen.
+
+<context>
+John went to the office. Mary",Where is Mary? 
+kitchen,"Answer: kitchen.
+</context>
+
+Question: Where is Sandra? Answer: garden.
+</context>",Where is John? 
+bedroom,"Answer: The most recent location of Sandra is bedroom.
+
+Question: Where is Mary? Answer: The",Where is Sandra? 
+office,"Answer: office.
+Question: Where is Daniel? Answer: office.
+Question: Where is Sandra?",Where is John? 
+garden,Answer: garden. Question: Where is Sandra? Answer: hallway. Question: Where is Mary?,Where is Mary? 
+bathroom,"Answer: The most recent location of Sandra is bathroom.
+
+<context>
+Rouse went to the office.",Where is Sandra? 
+kitchen,"Answer: The most recent location of Mary is kitchen.
+
+<context>
+Mary went back to the kitchen.",Where is Mary? 
+bedroom,"Answer: The most recent location of John is bedroom.
+
+<context>
+John journeyed to the hallway.",Where is John? 
+office,"Answer: office.
+</context>
+
+Question: Where is Sandra? Answer: bedroom.
+</context>",Where is Daniel? 
+office,"Answer: office.
+Question: Where is Mary? Answer: hallway.
+Question: Where is Sandra?",Where is Daniel? 
+bathroom,"Answer: bathroom.
+</question>
+
+<question>
+Where is John? Answer: bathroom.
+</question",Where is Mary? 
+bathroom,"Answer: The most recent location of Sandra is bathroom.
+
+<context>
+Rouse went to the shop.",Where is Sandra? 
+bathroom,"Answer: bathroom.
+</question>
+
+Question: Where is John? Answer: office.
+</question>",Where is Sandra? 
+hallway,"Answer: The most recent location of Mary is hallway.
+
+<context>
+Mary went to the office. Mary",Where is Mary? 
+kitchen,"Answer: kitchen.
+Question: Where is Daniel? Answer: kitchen.
+Question: Where is John?",Where is Sandra? 
+office,"Answer: The most recent location of Daniel is office.
+
+<context>
+Daniel journeyed to the office.",Where is Daniel? 
+kitchen,"Answer: The most recent location of Sandra is kitchen.
+
+<example>
+Alan went to the shop.",Where is Sandra? 
+bedroom,"Answer: bathroom.
+Question: Where is Mary? Answer: office.
+Question: Where is Daniel?",Where is John? 
+hallway,"Answer: hallway
+Question: Where is John? Answer: office
+Question: Where is Mary?",Where is Sandra? 
+bedroom,"Answer: The most recent location of Mary is bedroom.
+
+<context>
+Mary went to the kitchen. John",Where is Mary? 
+bedroom,"Answer: The most recent location of John is bedroom.
+
+<example>
+Mary went to the office.",Where is John? 
+bedroom,"Answer: bedroom
+Question: Where is Sandra? Answer: bathroom
+Question: Where is Daniel?",Where is Mary? 
+bedroom,"Answer: bedroom
+Question: Where is Sandra? Answer: bathroom
+Question: Where is Daniel?",Where is Mary? 
+garden,"Answer: garden.
+Question: Where is Daniel? Answer: bedroom.
+Question: Where is John?",Where is Mary? 
+bedroom,"Answer: The most recent location of Daniel is bedroom.
+
+<context>
+Mary went back to the office.",Where is Daniel? 
+office,"Answer: office.
+</question>
+
+<question>
+Where is Daniel? Answer: garden.
+</question",Where is Sandra? 
+office,"Answer: office
+Question: Where is Mary? Answer: kitchen
+Question: Where is Daniel?",Where is Sandra? 
+garden,"Answer: The most recent location of Sandra is garden.
+
+<context>
+Sandra went to the garden.",Where is Sandra? 
+garden,Answer: garden. Question: Where is Sandra? Answer: kitchen. Question: Where is John?,Where is Daniel? 
+bathroom,"Answer: bathroom
+Question: Where is Daniel? Answer: hallway
+Question: Where is Sandra?",Where is Mary? 
+office,"Answer: The most recent location of Mary is office.
+
+<context>
+John went to the garden. Mary",Where is Mary? 
+kitchen,"Answer: kitchen
+</question>
+
+<example>
+John went to the garden. Sandra went to the",Where is Sandra? 
+garden,"Answer: garden.
+Question: Where is John? Answer: bathroom.
+Question: Where is Daniel?",Where is Sandra? 
+kitchen,"Answer: The most recent location of Sandra is kitchen.
+
+<context>
+Daniel went to the hallway. Sandra",Where is Sandra? 
+kitchen,"Answer: The most recent location of Sandra is kitchen.
+
+<example>
+Mary went to the hallway.",Where is Sandra? 
+garden,"Answer: garden.
+</question>
+
+<question>
+Where is Mary? Answer: bedroom.
+</question",Where is John? 
+garden,"Answer: garden.
+Question: Where is John? Answer: garden.
+Question: Where is Mary?",Where is Sandra? 
+bathroom,"Answer: bathroom
+Question: Where is John? Answer: garden
+Question: Where is Mary?",Where is Sandra? 
+bedroom,"Answer: bathroom
+Question: Where is Sandra? Answer: office
+Question: Where is Daniel?",Where is Mary? 
+kitchen,"Answer: The most recent location of Sandra is kitchen.
+
+<context>
+Sandra journeyed to the kitchen",Where is Sandra? 
+office,"Answer: office.
+</question>
+
+<example>
+Mary went to the garden. Mary travelled to the",Where is Mary? 
+bedroom,"Answer: bedroom.
+Question: Where is Sandra? Answer: hallway.
+Question: Where is John?",Where is Mary? 
+office,"Answer: office.
+Question: Where is John? Answer: garden.
+Question: Where is Mary?",Where is Daniel? 
+office,"Answer: office
+Question: Where is John? Answer: bedroom
+Question: Where is Alan?",Where is Sandra? 
+bathroom,"Answer: bathroom
+Question: Where is Mary? Answer: office
+Question: Where is John?",Where is Sandra? 
+bedroom,"Answer: bedroom
+Question: Where is John? Answer: bathroom
+Question: Where is Daniel?",Where is Sandra? 
+office,"Answer: The most recent location of Daniel is office.
+
+<example>
+John went to the office.",Where is Daniel? 
+bedroom,"Answer: The most recent location of Sandra is bedroom.
+
+<context>
+John went to the garden. Sandra",Where is Sandra? 
+hallway,"Answer: hallway
+</question>
+
+<question>
+Where is Sandra? Answer: hallway
+</question",Where is Daniel? 
+bedroom,"Answer: Bedroom
+Question: Where is Daniel? Answer: Bathroom
+Question: Where is Alan?",Where is Sandra? 
+office,"Answer: The most recent location of John is office.
+
+Question: Where is Sandra? Answer: The",Where is John? 
+garden,"Answer: garden.
+Question: Where is Sandra? Answer: hallway.
+Question: Where is Mary?",Where is John? 
+kitchen,"Answer: The most recent location of Daniel is kitchen.
+
+<context>
+John went to the kitchen. Daniel",Where is Daniel? 
+hallway,"Answer: hallway.
+Question: Where is John? Answer: office.
+Question: Where is Daniel?",Where is Mary? 
+hallway,"Answer: hallway
+Question: Where is Daniel? Answer: garden
+Question: Where is John?",Where is Sandra? 
+hallway,"Answer: hallway
+Question: Where is Daniel? Answer: hallway
+Question: Where is Mary?",Where is John? 
+bedroom,"Answer: bedroom.
+Question: Where is Sandra? Answer: office.
+Question: Where is John?",Where is Mary? 
+bedroom,"Answer: bedroom.
+Question: Where is John? Answer: office.
+Question: Where is Daniel?",Where is Sandra? 
+bedroom,"Answer: The most recent location of Daniel is bedroom.
+
+<context>
+Daniel went back to the bedroom.",Where is Daniel? 
+kitchen,"Answer: kitchen.
+Question: Where is John? Answer: hallway.
+Question: Where is Daniel?",Where is Sandra? 
+bedroom,"Answer: bedroom
+Question: Where is Mary? Answer: bathroom
+Question: Where is Sandra?",Where is Daniel? 
+garden,"Answer: garden.
+Question: Where is Mary? Answer: office.
+Question: Where is Sandra?",Where is John? 
+bathroom,"Answer: The most recent location of Sandra is bathroom.
+
+<context>
+Mary went to the bathroom. Sandra",Where is Sandra? 
+garden,"Answer: garden
+Question: Where is John? Answer: kitchen
+Question: Where is Daniel?",Where is Sandra? 
+office,"Answer: The most recent location of Daniel is office.
+
+<context>
+Daniel went back to the office.",Where is Daniel? 
+bedroom,"Answer: bedroom.
+Question: Where is John? Answer: kitchen.
+Question: Where is Mary?",Where is Mary? 
+garden,"Answer: garden.
+</context>
+
+Question: Where is John? Answer: office.
+</context>",Where is Sandra? 
+bathroom,"Answer: bathroom.
+Question: Where is John? Answer: garden.
+Question: Where is Daniel?",Where is Sandra? 
+office,"Answer: office.
+Question: Where is Sandra? Answer: garden.
+Question: Where is Daniel?",Where is John? 
+kitchen,"Answer: The most recent location of Daniel is kitchen.
+
+Question: Where is Mary? Answer: The",Where is Daniel? 
+bedroom,"Answer: The most recent location of John is bedroom.
+
+<context>
+John went to the office. Daniel",Where is John? 
+office,"Answer: office.
+Question: Where is Sandra? Answer: hallway.
+Question: Where is John?",Where is Daniel? 
+bathroom,"Answer: bathroom
+Question: Where is Mary? Answer: bathroom
+Question: Where is John?",Where is Sandra? 
+office,"Answer: office.
+Question: Where is Sandra? Answer: bathroom.
+Question: Where is Daniel?",Where is John? 
+hallway,"Answer: hallway
+Question: Where is Sandra? Answer: office
+Question: Where is John?",Where is Mary? 
+office,Answer: office. Where is Mary? Answer: office. Where is Sandra? Answer: hallway.,Where is John? 
+office,"Answer: office
+Question: Where is Mary? Answer: kitchen
+Question: Where is Daniel?",Where is Sandra? 
+bathroom,"Answer: The most recent location of John is bathroom.
+
+<context>
+John went to the bedroom. Sandra",Where is John? 
+hallway,"Answer: bathroom.
+Question: Where is Mary? Answer: kitchen.
+Question: Where is Daniel?",Where is John? 
+hallway,"Answer: hallway
+Question: Where is Mary? Answer: bedroom
+Question: Where is Sandra?",Where is Daniel? 
+hallway,"Answer: hallway
+Question: Where is Mary? Answer: kitchen
+Question: Where is John?",Where is Daniel? 
+bathroom,"Answer: bathroom.
+</question>
+
+<question>
+Where is John? Answer: hallway.
+</question",Where is Daniel? 
+bathroom,"Answer: bathroom.
+</question>
+
+<question>
+Where is Mary? Answer: garden.
+</question",Where is John? 
+bathroom,Answer: garden. Question: Where is Mary? Answer: bedroom. Question: Where is Sandra?,Where is Daniel? 
+garden,"Answer: The most recent location of John is garden.
+
+<context>
+Mary went to the garden. John",Where is John? 
+bedroom,"Answer: bedroom.
+</context>
+
+Question: Where is Mary? Answer: office.
+</context>",Where is John? 
+office,"Answer: office.
+</question>
+
+<example>
+Daniel went to the bedroom. Daniel journeyed to",Where is Mary? 
+garden,Answer: garden. Question: Where is Mary? Answer: bathroom. Question: Where is Daniel?,Where is Sandra? 
+office,"Answer: The most recent location of John is office.
+Question: Where is Daniel? Answer: The",Where is John? 
+bedroom,"Answer: bedroom.
+</question>
+
+<example>
+Mary went to the garden. Sandra went to the",Where is Daniel? 
+hallway,"Answer: hallway
+</question>
+
+<example>
+John went to the garden. Sandra went to the",Where is John? 
+kitchen,Answer: kitchen. Question: Where is Sandra? Answer: hallway. Question: Where is John?,Where is Daniel? 
+bedroom,"Answer: bedroom.
+Question: Where is John? Answer: garden.
+Question: Where is Daniel?",Where is Daniel? 
+hallway,"Answer: hallway
+Question: Where is John? Answer: garden
+Question: Where is Daniel?",Where is Sandra? 
+garden,"Answer: The most recent location of Sandra is garden.
+
+<context>
+Rouse went to the shop.",Where is Sandra? 
+bedroom,"Answer: The most recent location of John is bedroom.
+
+<context>
+John went back to the kitchen.",Where is John? 
+office,"Answer: office.
+</context>
+
+Question: Where is Sandra? Answer: bedroom.
+</context>",Where is John? 
+garden,Answer: garden. Question: Where is John? Answer: kitchen. Question: Where is Mary?,Where is Sandra? 

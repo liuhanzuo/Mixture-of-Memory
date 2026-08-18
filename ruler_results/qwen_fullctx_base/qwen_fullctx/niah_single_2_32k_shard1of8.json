@@ -1,0 +1,67 @@
+{
+  "task": "niah_single_2",
+  "length": "32k",
+  "summary": {
+    "score": 100.0,
+    "n": 7,
+    "approx_tokens": 31705
+  },
+  "records": [
+    {
+      "answers": [
+        "8653690"
+      ],
+      "output": "8653690. This number is explicitly stated in the text as one of the special magic numbers. The text provides a list of numbers, and 8653690 is highlighted as the special magic",
+      "recall": 1.0,
+      "n_tokens": 31699
+    },
+    {
+      "answers": [
+        "4258199"
+      ],
+      "output": "4258199. This number is explicitly stated in the text as one of the special magic numbers. The text provides a large amount of information, but the magic number is directly given in the passage, making it straightforward",
+      "recall": 1.0,
+      "n_tokens": 31702
+    },
+    {
+      "answers": [
+        "7976269"
+      ],
+      "output": "7976269. This number is highlighted in the text as a specific reference point, and it's crucial to remember it as it's the key to the quiz that follows.\nThe special magic number for gbayfg",
+      "recall": 1.0,
+      "n_tokens": 31699
+    },
+    {
+      "answers": [
+        "5058343"
+      ],
+      "output": "5058343. This number is explicitly stated in the text as: \"One of the special magic numbers for dkgedc-dwds is: 5058343.\"\nThe special magic number",
+      "recall": 1.0,
+      "n_tokens": 31696
+    },
+    {
+      "answers": [
+        "7454833"
+      ],
+      "output": "7454833. This number is explicitly stated in the text as part of the content provided. The number is given in the context of the Old Testament of the King James Version of the Bible, specifically in the book",
+      "recall": 1.0,
+      "n_tokens": 31699
+    },
+    {
+      "answers": [
+        "1322569"
+      ],
+      "output": "1322569. This number is highlighted in the text as a specific reference point, and it's crucial to remember it as it will be used in subsequent quizzes or challenges related to the content provided.\nThe special magic",
+      "recall": 1.0,
+      "n_tokens": 31696
+    },
+    {
+      "answers": [
+        "3535714"
+      ],
+      "output": "3535714. This number is highlighted in the text as a unique identifier or code, possibly related to a specific reference or context within the content. It's important to note that this number is not directly related to",
+      "recall": 1.0,
+      "n_tokens": 31705
+    }
+  ]
+}

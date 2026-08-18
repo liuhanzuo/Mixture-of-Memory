@@ -1,0 +1,91 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 8333,
+    "avg_read_len": 6288.2,
+    "last_read_len": 6286
+  },
+  "records": [
+    {
+      "sample_index": 5,
+      "label": "oqdik-zibww",
+      "expected": "437904",
+      "output": "<567890>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me go through the lines again to find the line that starts with \"line oqdik-z",
+      "pred": "567890",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8300,
+      "read_len": 6253,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 13,
+      "label": "uvpeqhl-ofxto",
+      "expected": "546294",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that starts with \"uvpeqhl-ofxto\" and extract the number inside the angle brackets.\n\nLooking through the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8339,
+      "read_len": 6292,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 21,
+      "label": "hznienl-gcztxqcil",
+      "expected": "183972",
+      "output": "<651483>. \n\nWait, I need to find the line that starts with \"line hznienl-gcztxqcil\" and extract the number inside the <REGISTER_CONTENT> tags. Let me check the",
+      "pred": "651483",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8373,
+      "read_len": 6326,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 29,
+      "label": "rzlbcgn-mqbpmmvi",
+      "expected": "912845",
+      "output": "<...> I need to find the value for this line. Let me check the list again.\n\nOkay, let's see. I need to find the line that starts with \"line rzlbcgn-mqbpmmvi\" and",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8339,
+      "read_len": 6292,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 37,
+      "label": "wxlwio-icpwhg",
+      "expected": "322497",
+      "output": "<655143>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me look for the line that starts with \"line wxlwio-icpwhg\"",
+      "pred": "655143",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8327,
+      "read_len": 6280,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 45,
+      "label": "schdcms-smtdiyhaj",
+      "expected": "543373",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line schdcms-smtdiyhaj: REGISTER_CONTENT is <...>\nOkay, let's see. I need to find the value of",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8333,
+      "read_len": 6286,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    }
+  ]
+}

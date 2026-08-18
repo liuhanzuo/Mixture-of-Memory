@@ -1,0 +1,975 @@
+target,output,question
+bedroom,"What
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday",What is the bathroom east of?
+kitchen,"Answer
+
+Skip
+
+Skip
+
+Monday, the
+
+Monday, the
+
+Monday, the#echo
+
+Monday",What is south of the office?
+garden,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip
+
+Thechemical
+
+Thechemical",What is north of the office?
+garden,What are theSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip,What is the bedroom north of?
+garden,"(Monday
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the bathroom south of?
+office,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is north of the bedroom?
+bathroom,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is north of the garden?
+bedroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is west of the office?
+kitchen,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the garden south of?
+bathroom,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Monday
+
+The
+
+The/
+
+
+
+import>
+
+import>
+
+import>",What is the hallway north of?
+bedroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is south of the hallway?
+office,(SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip,What is east of the bedroom?
+hallway,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is north of the garden?
+bedroom,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the garden west of?
+hallway,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is east of the bathroom?
+bathroom,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the office west of?
+bathroom,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is west of the bedroom?
+kitchen,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is north of the hallway?
+bathroom,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipMonday, the take the take the take",What is south of the kitchen?
+office,"ASkipSkipSkip
+
+Monday
+
+Monday
+
+Monday, theSkip
+
+Monday, the take
+
+Monday",What is south of the bedroom?
+bedroom,"Answer
+
+Skip
+
+Skip
+
+What
+
+What
+
+What
+
+What
+
+What
+
+What
+
+What",What is west of the hallway?
+office,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is east of the bedroom?
+bedroom,"What
+
+Monday, the case of the case of the case of the case of theMonday, the",What is the hallway south of?
+kitchen,"ASkip
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is west of the bedroom?
+bedroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is south of the bathroom?
+hallway,"Answer
+
+What
+
+What
+
+What theSkipSkipSkipSkipSkipSkipSkipMonday, the take the",What is west of the bathroom?
+office,"(2005
+
+Skip
+
+Skip
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+The#echo",What is south of the hallway?
+bedroom,"Answer
+
+SkipSkip
+
+Skip
+
+Skip
+
+Skip
+
+
+
+The use
+
+import the be be be",What is east of the office?
+garden,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkip",What is west of the bathroom?
+kitchen,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the garden north of?
+office,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is east of the garden?
+bathroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is south of the hallway?
+garden,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is east of the office?
+bedroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is south of the hallway?
+garden,"Answer
+
+Monday, theMonday, theMonday, theMonday, theMonday, the be be be",What is the hallway east of?
+kitchen,"Answer
+
+Monday
+
+Monday
+
+Monday
+
+Skip
+
+Monday
+
+Skip
+
+SkipSkipSkipSkipSkipSkip",What is south of the hallway?
+bathroom,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkip",What is the kitchen west of?
+kitchen,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the bathroom west of?
+bathroom,"Answer
+
+Skip
+
+Skip
+
+Monday
+
+Monday
+
+Monday
+
+The
+
+The use
+
+The use the",What is the garden south of?
+bedroom,"(1
+
+Skip
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The",What is the garden south of?
+bedroom,"Answer
+
+Skip
+
+What
+
+What
+
+What
+
+Thechemical
+
+Thechemical
+
+Thechemicalchemicalchemical",What is west of the bathroom?
+garden,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is west of the office?
+bathroom,"(2015
+
+Skip
+
+Skip
+
+What
+
+What
+
+What
+
+What
+
+What
+
+The",What is west of the hallway?
+hallway,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+
+
+
+
+
+
+
+
+
+
+
+
+import>
+
+import>
+
+import>",What is north of the kitchen?
+bathroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the hallway north of?
+office,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the bedroom south of?
+kitchen,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is west of the office?
+bedroom,"What
+
+SkipSkipSkip
+
+Monday, theMonday, theMonday, the/
+
+
+
+import>
+
+import>",What is south of the office?
+office,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the kitchen east of?
+hallway,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+What
+
+Skip
+
+Skip",What is south of the bathroom?
+hallway,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is east of the bathroom?
+bathroom,"Answer
+
+Monday, the case of the case of the take the take the take the take the take",What is the office south of?
+office,"(Monday
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the hallway east of?
+kitchen,"(Monday
+
+Skip
+
+Monday
+
+
+
+Monday
+
+
+
+
+
+
+
+
+
+
+
+import>
+
+import>
+
+import",What is the bedroom south of?
+kitchen,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the hallway west of?
+bathroom,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Monday
+
+Monday
+
+Monday
+
+Monday",What is the bedroom east of?
+bedroom,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the kitchen south of?
+office,"Answer
+
+SkipSkip
+
+Skip
+
+Skip
+
+Skip
+
+import public class of the/
+
+
+
+import>
+
+import",What is the kitchen west of?
+kitchen,"(Monday, theSkip
+
+Monday, theSkip
+
+Monday, theSkipSkipSkipSkipSkipSkip",What is the hallway south of?
+office,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the bedroom east of?
+bathroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is east of the kitchen?
+kitchen,"What
+
+Monday
+
+Monday, theMonday, theMonday
+
+Monday
+
+Monday
+
+Monday
+
+import class",What is the bathroom south of?
+bedroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkip
+
+Monday, the/
+
+
+
+import public and",What is the kitchen north of?
+kitchen,"What
+
+Skip
+
+Skip
+
+What
+
+Monday, theSkip
+
+Monday, theSkip
+
+Thechemical",What is the garden east of?
+kitchen,"What
+
+Skip
+
+Skip
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The",What is south of the hallway?
+kitchen,"Answer
+
+What
+
+What
+
+What
+
+What
+
+The
+
+The
+
+The​
+
+import>
+
+import>",What is the garden east of?
+hallway,"What
+
+Skip
+
+Skip
+
+Skip
+
+
+
+
+
+
+
+
+
+
+
+
+
+import>
+
+import>
+
+import>",What is north of the garden?
+garden,"What
+
+Skip
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+import class of the/
+
+
+
+import href=""",What is the bedroom south of?
+garden,"ASkip
+
+Skip
+
+Monday, theSkip
+
+Monday, theSkip
+
+Thechemicalization of the",What is the hallway south of?
+office,"Answer
+
+SkipSkipSkipSkipSkip
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+import public",What is west of the kitchen?
+bedroom,"What
+
+SkipSkipSkipSkip
+
+Monday, the/
+
+
+
+import the/
+
+
+
+import the/
+
+
+
+import class of",What is east of the office?
+hallway,"Answer
+
+Skip
+
+Skip
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+import>
+
+import>
+
+import>",What is south of the kitchen?
+bedroom,"Answer
+
+Skip
+
+Tuesday
+
+Skip
+
+The
+
+The
+
+The
+
+Thechemical
+
+Thechemical",What is east of the garden?
+bedroom,"(Monday
+
+Skip
+
+Skip
+
+The
+
+The
+
+The/
+
+
+
+import>
+
+import>
+
+import>
+
+import",What is west of the kitchen?
+kitchen,"What
+
+Skip
+
+Monday
+
+Monday, theSkip
+
+Monday, theSkip
+
+The
+
+The be",What is the office west of?
+bathroom,"Answer
+
+SkipSkipSkipSkip
+
+What
+
+What
+
+What
+
+What
+
+What
+
+import>
+
+import",What is the bedroom west of?
+office,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+import>
+
+import>",What is the bathroom south of?
+hallway,ASkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip,What is north of the garden?
+bathroom,"What
+
+Skip
+
+What
+
+What
+
+Monday, the the the the the the ﻿ 2015",What is west of the bedroom?
+kitchen,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+What
+
+What
+
+What
+
+What
+
+The",What is the bedroom north of?
+bedroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the kitchen east of?
+garden,"What
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Monday
+
+import const>
+
+import const>
+
+import>",What is the bathroom east of?
+hallway,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the garden west of?
+kitchen,"Answer
+
+SkipSkipSkip
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+import>",What is the office north of?
+bedroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is east of the bathroom?
+kitchen,"(Monday
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the garden east of?
+kitchen,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the hallway west of?
+bathroom,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is east of the garden?
+hallway,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the office north of?
+bathroom,"Answer
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is east of the office?
+bathroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is north of the garden?
+hallway,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is east of the bedroom?
+kitchen,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is south of the hallway?
+hallway,"What
+
+Skip
+
+Skip
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+import>",What is north of the garden?
+kitchen,"What
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",What is the bathroom west of?
+bathroom,"The
+
+What
+
+What
+
+What
+
+What
+
+What
+
+What
+
+
+
+
+
+
+
+
+
+
+
+What",What is the garden north of?
+bathroom,"What
+
+Skip
+
+Skip
+
+Skip
+
+Monday
+
+Monday
+
+Monday
+
+import int
+
+import int",What is south of the bedroom?
+bathroom,"What
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+Monday, theMonday, the",What is west of the bedroom?
+bedroom,"Answer
+
+SkipSkipSkipSkipMonday, theMonday, theMonday, the#echo the#echo the#echo",What is the hallway south of?
+kitchen,"What
+
+Monday, theSkip
+
+Monday, the/
+
+
+
+import class of the/
+
+
+
+import class of the",What is north of the bedroom?

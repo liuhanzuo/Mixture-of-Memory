@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "8k",
+  "summary": {
+    "score": 16.67,
+    "n": 6,
+    "approx_tokens": 8066
+  },
+  "records": [
+    {
+      "answers": [
+        "9563342"
+      ],
+      "output": ": 956334. What is the special magic number for wxtb-uodop mentioned in the provided text? The special magic number for wxtb-uodop mentioned in the provided text is: 956334. What is",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "9668906"
+      ],
+      "output": ": 9668906. What is the special magic number for skxx-vlmvrgf mentioned in the provided text? The special magic number for skxx-vlmvrgf mentioned in the provided text is: 966890",
+      "recall": 1.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "1845375"
+      ],
+      "output": "184. What is the special magic number for teqhlbzs-cszpxiq mentioned in the provided text? The special magic number for teqhlbzs-cszpxiq mentioned in the provided text is 184.",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "1149844"
+      ],
+      "output": ": 114. What is the special magic number for miiimsco-tkbcej mentioned in the provided text? The special magic number for miiimsco-tkbcej mentioned in the provided text is: 114. What is",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "3791524"
+      ],
+      "output": ": 379152. What is the special magic number for dxmjsjrx-wwqltnz mentioned in the provided text? The special magic number for dxmjsjrx-wwqltnz mentioned in the provided text",
+      "recall": 0.0,
+      "n_tokens": 8078
+    },
+    {
+      "answers": [
+        "7679495"
+      ],
+      "output": "76749495. What is the special magic number for zxcii-nscs mentioned in the provided text? The special magic number for zxcii-nscs mentioned in the provided text is 76749495. What is",
+      "recall": 0.0,
+      "n_tokens": 8066
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "task": "variable_tracking",
+  "length": "16k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 16281
+  },
+  "records": [
+    {
+      "answers": [
+        "WORQQ",
+        "NIHXW",
+        "CPYKJ",
+        "ENTWD",
+        "NPCRG"
+      ],
+      "output": "WORQQ NIHXW CPYKJ ENTWD NPCRG\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 97075 in the given text. \n\nFirst, I need to parse through the text and",
+      "recall": 1.0,
+      "n_tokens": 16280
+    },
+    {
+      "answers": [
+        "NWHGQ",
+        "GCFPF",
+        "BSCMH",
+        "HAYDO",
+        "AJNSG"
+      ],
+      "output": "NWHGQ GCFPF BSCMH HAYDO AJNSG\nOkay, let's tackle this problem. So, the task is to find all variables that are assigned the value 64002 in the given text. The user provided a long text with a lot of",
+      "recall": 1.0,
+      "n_tokens": 16283
+    },
+    {
+      "answers": [
+        "BLIVE",
+        "RBXSA",
+        "PVYON",
+        "PPFTC",
+        "TYPPL"
+      ],
+      "output": "BLIVE RBXSA PVYON PPFTC TYPPL\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 91809 in the given text. From the previous example, I remember that variables are assigned",
+      "recall": 1.0,
+      "n_tokens": 16279
+    },
+    {
+      "answers": [
+        "QKLMC",
+        "TOCHT",
+        "KVOKC",
+        "XBNOA",
+        "YSFLD"
+      ],
+      "output": "QKLMC TOCHT KVOKC XBNOA YSFLD\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 32677 in the given text. \n\nFirst, I need to understand the",
+      "recall": 1.0,
+      "n_tokens": 16284
+    },
+    {
+      "answers": [
+        "EVHGY",
+        "RJCWK",
+        "HOEVF",
+        "CTNFC",
+        "WEJAF"
+      ],
+      "output": "EVHGY RJCWK HOEVF CTNFC WEJAF\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 31087 in the given text. \n\nFirst, I need to parse through the text",
+      "recall": 1.0,
+      "n_tokens": 16281
+    },
+    {
+      "answers": [
+        "BTUNH",
+        "VRDKV",
+        "CNHFY",
+        "JXRZY",
+        "ACDST"
+      ],
+      "output": "BTUNH VRDKV CNHFY JXRZY ACDST\nOkay, let's tackle this problem step by step. The task is to find all variables that are assigned the value 20973 in the given text. \n\nFirst, I need to parse through the text",
+      "recall": 1.0,
+      "n_tokens": 16281
+    }
+  ]
+}

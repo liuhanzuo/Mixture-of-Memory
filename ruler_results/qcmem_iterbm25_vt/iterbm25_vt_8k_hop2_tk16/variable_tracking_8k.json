@@ -1,0 +1,32 @@
+{
+  "task": "variable_tracking",
+  "length": "8k",
+  "summary": {
+    "score": 95.8,
+    "n": 100,
+    "approx_tokens": 8101,
+    "avg_read_len": 8100.9,
+    "last_read_len": 8102
+  },
+  "baseline": "none",
+  "no_retrieval": false,
+  "qcmem": {
+    "resume_j": 12,
+    "top_prepay_b": 0,
+    "reuse_kv_blockdiag": false,
+    "selector": "iter_bm25",
+    "topk": 16,
+    "iter": {
+      "rounds": 0,
+      "hop_topk": 2
+    },
+    "sink_tokens": "bos",
+    "num_layers": 36,
+    "lora_adapter": "outputs/qcmem_distill_qwen_j12_r32_4k/final",
+    "chunk_size": 512
+  },
+  "model": {
+    "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
+    "bottleneck_ckpt": null
+  }
+}

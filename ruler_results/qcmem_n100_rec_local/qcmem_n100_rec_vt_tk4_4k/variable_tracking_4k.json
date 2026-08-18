@@ -1,0 +1,29 @@
+{
+  "task": "variable_tracking",
+  "length": "4k",
+  "summary": {
+    "score": 24.0,
+    "n": 100,
+    "approx_tokens": 4046,
+    "avg_read_len": 2509.6,
+    "last_read_len": 2511
+  },
+  "baseline": "none",
+  "no_retrieval": false,
+  "qcmem": {
+    "resume_j": 12,
+    "top_prepay_b": 0,
+    "reuse_kv_blockdiag": false,
+    "selector": "recency",
+    "topk": 4,
+    "iter": null,
+    "sink_tokens": "bos",
+    "num_layers": 36,
+    "lora_adapter": "outputs/qcmem_distill_qwen_j12_r32_4k/final",
+    "chunk_size": 512
+  },
+  "model": {
+    "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b",
+    "bottleneck_ckpt": null
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 65766,
+    "avg_read_len": 6397.2,
+    "last_read_len": 6375
+  },
+  "records": [
+    {
+      "sample_index": 4,
+      "label": "gnfookrw-rdsjerslc",
+      "expected": "849913",
+      "output": "<...> and I need to find the value. Let me check the list again.\n\nLooking through the provided data, I don't see a line with the identifier \"gnfookrw-rdsjerslc\". All the lines listed",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65689,
+      "read_len": 6298,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 12,
+      "label": "jmwiozage-jvzvnspxp",
+      "expected": "383553",
+      "output": "<...> but I don't see that line in the provided data. However, I can help you find it if you provide the line. Please check if you have the correct line or provide more context. If you have a specific line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65865,
+      "read_len": 6474,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 20,
+      "label": "maeaueknz-iqlgyga",
+      "expected": "438067",
+      "output": "<617354>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line maeaueknz-iqlgyga\". Let me go through the list again",
+      "pred": "617354",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65843,
+      "read_len": 6452,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 28,
+      "label": "imycuqcg-qoawshkem",
+      "expected": "621640",
+      "output": "<729456>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"imycuqcg-qoawshkem\". Let me go through the list",
+      "pred": "729456",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65715,
+      "read_len": 6324,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 36,
+      "label": "rnpapod-grmfooek",
+      "expected": "170560",
+      "output": "<256543>. \n\nWait, I need to find the line that contains the line \"rnpapod-grmfooek\" and extract the number inside the <REGISTER_CONTENT> tags. Let me check the list",
+      "pred": "256543",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65851,
+      "read_len": 6460,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 44,
+      "label": "bkjdsk-pzqyxzps",
+      "expected": "455963",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that matches the line number \"bkjdsk-pzqyxzps\".\n\nLooking through the list:\n\n- The",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65766,
+      "read_len": 6375,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    }
+  ]
+}

@@ -1,0 +1,811 @@
+{
+  "task": "niah_single_2",
+  "length": "16k",
+  "summary": {
+    "score": 26.0,
+    "n": 100,
+    "approx_tokens": 16045
+  },
+  "records": [
+    {
+      "answers": [
+        "1131794"
+      ],
+      "output": "1,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "7228214"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16.",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "4120604"
+      ],
+      "output": ": 4120604. 19:12 And Lot said, I beseech you, brethren, do not so wickedly. 19:13 Behold now, I have two daughters which have not known man; let me",
+      "recall": 1.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "6615831"
+      ],
+      "output": "666. What is the special magic number for yvkufram-qczkon mentioned in the provided text? The special magic number for yvkufram-qczkon mentioned in the provided text is 666. What is the special",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "4760133"
+      ],
+      "output": "666. This number is the sum of the letters of the name of the beast, which is the name of the beast, and the number of the name of the beast is 666. The number of the name of the beast is",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "6229572"
+      ],
+      "output": "1. What is the special magic number for fihirlr-pnmhvfn mentioned in the provided text? The special magic number for fihirlr-pnmhvfn mentioned in the provided text is 1. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "6528744"
+      ],
+      "output": "666. The special magic number for xlrufytc-opof mentioned in the provided text is 666. The special magic number for xlrufytc-opof mentioned in the provided text is 666. The special magic",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "7084322"
+      ],
+      "output": ": 7084322. 19:12 And Lot went out of the door, and spake unto his wife after him, which was behind him, and said, Run, take thyself, and hide thyself in the mountains",
+      "recall": 1.0,
+      "n_tokens": 16051
+    },
+    {
+      "answers": [
+        "3190199"
+      ],
+      "output": "666. What is the special magic number for wggrwneb-trosfjeg mentioned in the provided text? The special magic number for wggrwneb-trosfjeg mentioned in the provided text is",
+      "recall": 0.0,
+      "n_tokens": 16051
+    },
+    {
+      "answers": [
+        "9571639"
+      ],
+      "output": "1. 19:12 And they smote the men that were at the door of the house with blindness, both small and great: so that they wearied themselves, and their eyes were dim. 19:13 And Lot",
+      "recall": 0.0,
+      "n_tokens": 16033
+    },
+    {
+      "answers": [
+        "7213395"
+      ],
+      "output": "666. What is the special magic number for ygeoynyi-iqmzw mentioned in the provided text? The special magic number for ygeoynyi-iqmzw mentioned in the provided text is 666. What is the special",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "5815638"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16.",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "8998374"
+      ],
+      "output": "8998374. 19:12 And Lot said, I pray you, brethren, do not so wickedly. 19:13 Behold now, I have two daughters which have not known man; let me, I pray",
+      "recall": 1.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "1241238"
+      ],
+      "output": "666. The number 666 is the number of the beast. The number 666 is the number of the beast. The number 666 is the number of the beast. The number 666 is the number of the beast. The",
+      "recall": 0.0,
+      "n_tokens": 16051
+    },
+    {
+      "answers": [
+        "1074299"
+      ],
+      "output": "1. 19:12 And they smote the men that were at the door of the house with blindness, both small and great: so that they wearied themselves, and left off. 19:13 And Lot went out",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "3451776"
+      ],
+      "output": "1. The special magic number for bakebwo-sixblmgq mentioned in the provided text is 2. The special magic number for bakebwo-sixblmgq mentioned in the provided text is 3. The special magic",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "8452753"
+      ],
+      "output": ": 8452753. 19:12 And Lot said, I pray you, brethren, do not so wickedly. 19:13 Behold now, I have two daughters which have not known man; let me, I",
+      "recall": 1.0,
+      "n_tokens": 16051
+    },
+    {
+      "answers": [
+        "2702763"
+      ],
+      "output": ": 2702763. 19:12 And Lot went out of the door, and spake unto them that sat in the door of his house, and said, 19:13 I pray you, brethren, do not so",
+      "recall": 1.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "9872581"
+      ],
+      "output": "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "1184774"
+      ],
+      "output": "666. What is the special magic number for ywkzukp-dsvkposl mentioned in the provided text? The special magic number for ywkzukp-dsvkposl mentioned in the provided text is",
+      "recall": 0.0,
+      "n_tokens": 16051
+    },
+    {
+      "answers": [
+        "5936788"
+      ],
+      "output": "5936788. 19:12 And Lot said, I pray you, brethren, do not so wickedly. 19:13 Behold now, I have two daughters which have not known man; let me, I pray",
+      "recall": 1.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "8385175"
+      ],
+      "output": "666. What is the special magic number for xcbknucm-hmug mentioned in the provided text? The special magic number for xcbknucm-hmug mentioned in the provided text is 666. What is the special",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "1999267"
+      ],
+      "output": "666. What is the special magic number for kktkgq-mxybdkg mentioned in the provided text? The special magic number for kktkgq-mxybdkg mentioned in the provided text is 666. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "5361929"
+      ],
+      "output": "666. What is the special magic number for xuxu-bwzbehn mentioned in the provided text? The special magic number for xuxu-bwzbehn mentioned in the provided text is 666. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "2257459"
+      ],
+      "output": "666. What is the special magic number for oixx-xbrnqu mentioned in the provided text? The special magic number for oixx-xbrnqu mentioned in the provided text is 666. What is the special",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "1878512"
+      ],
+      "output": "666. This number is the sum of the letters of the name of the beast, and the number of the name of the beast is 666. The number of the beast is 666. The number of the beast is 666",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "6877775"
+      ],
+      "output": "666. What is the special magic number for wezpuqq-ipkerzj mentioned in the provided text? The special magic number for wezpuqq-ipkerzj mentioned in the provided text is 666. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "8564610"
+      ],
+      "output": "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,",
+      "recall": 0.0,
+      "n_tokens": 16033
+    },
+    {
+      "answers": [
+        "6251348"
+      ],
+      "output": "666. This number is the number of the beast. The beast is the Antichrist. The Antichrist is the man of sin. The man of sin is the son of perdition. The son of perdition is the",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "4593146"
+      ],
+      "output": ": 4593146. 19:12 And Lot said, I pray you, brethren, do not so wickedly. 19:13 Behold now, I have two daughters which have not known man; let me, I",
+      "recall": 1.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "4073424"
+      ],
+      "output": "666. What is the special magic number for bmadq-cmctwjh mentioned in the provided text? The special magic number for bmadq-cmctwjh mentioned in the provided text is 666. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "9146816"
+      ],
+      "output": ": 9146816. 19:12 And Lot said, I pray you, brethren, do not so wickedly. 19:13 Behold now, I have two daughters which have not known man; let me, I",
+      "recall": 1.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "6599942"
+      ],
+      "output": "666. This number is the sum of the letters of the name of the beast, which is the number of a man; and his number is six hundred three score and six. 13:18 And the beast was taken, and",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "9795082"
+      ],
+      "output": "1. 19:12 And they smote the men that were at the door of the house with blindness, both small and great: so that they wearied themselves, and their hands could not do for themselves. 19:",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "6568210"
+      ],
+      "output": "666. The special magic number for vtteije-sbulooj mentioned in the provided text is 666. The special magic number for vtteije-sbulooj mentioned in the provided text is 666. The special magic",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "3399711"
+      ],
+      "output": "666. What is the special magic number for kiru-zmwuhrb mentioned in the provided text? The special magic number for kiru-zmwuhrb mentioned in the provided text is 666. What is the special",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "7393423"
+      ],
+      "output": "1. The special magic number for nnrao-nirbp mentioned in the provided text is 2. The special magic number for nnrao-nirbp mentioned in the provided text is 3. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "8336968"
+      ],
+      "output": "666. This number is the sum of the letters of the name of the beast, which is the number of a man; and his number is six hundred three score and six. Revelation 13:18. The number of the beast",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "8035734"
+      ],
+      "output": ": 0. The special magic number for bvobufgs-bwhd mentioned in the provided text is: 0. The special magic number for bvobufgs-bwhd mentioned in the provided text is: 0. The special",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "2107332"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16.",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "4883133"
+      ],
+      "output": ": 4883133. 19:12 And Lot said, I pray you, brethren, do not so wickedly. 19:13 Behold now, I have two daughters which have not known man; let me, I",
+      "recall": 1.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "9826510"
+      ],
+      "output": "666. The special magic number for pdkjsbmx-kgxxhm mentioned in the provided text is 666. The special magic number for pdkjsbmx-kgxxhm mentioned in the provided text is 666",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "8472283"
+      ],
+      "output": "1. 19:12 And they smote the men that were at the door of the house with blindness, both small and great: so that they wearied themselves, and their hands could not do for pain, and for a",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "8990592"
+      ],
+      "output": "1. What is the special magic number for hrfb-kexgjzvv mentioned in the provided text? The special magic number for hrfb-kexgjzvv mentioned in the provided text is 1.",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "9266953"
+      ],
+      "output": ": 9266953. 19:12 And Lot said, I beseech you, brethren, do not so wickedly. 19:13 Behold now, I pray you, this city is near that I may flee",
+      "recall": 1.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "5826024"
+      ],
+      "output": ": 5826024. 19:12 And Lot said, Oh that I had waded the flood, and perished, before that I was born! 19:13 And they said unto him, Hast thou also a father",
+      "recall": 1.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "4434358"
+      ],
+      "output": ": 4434358. 19:12 And Lot went out of the door, 19:13 And said, I beseech you, brethren, do not so wickedly. 19:14 Behold now, I",
+      "recall": 1.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "3392795"
+      ],
+      "output": "666. What is the special magic number for lwqo-zlggfvz mentioned in the provided text? The special magic number for lwqo-zlggfvz mentioned in the provided text is 666. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "2116565"
+      ],
+      "output": "2116565. 19:12 And Lot went out, and spake unto his wife, and said, Bring, I pray you, your wife, and her daughters, and come, I pray you, and let them eat",
+      "recall": 1.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "4174571"
+      ],
+      "output": ": 4174571. 19:12 And Lot said unto them, Gentlemen, I beseech you, do not so wickedly. 19:13 Behold now, I have two daughters which have not known man",
+      "recall": 1.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "3623231"
+      ],
+      "output": ": 3623231. 19:12 And Lot said, Oh that I had two sons, that the men which came into the house might take them, and do to them as is good in their eyes: but do ye this",
+      "recall": 1.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "4196417"
+      ],
+      "output": "666. What is the special magic number for nxyb-ufaixu mentioned in the provided text? The special magic number for nxyb-ufaixu mentioned in the provided text is 666. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "6650395"
+      ],
+      "output": "666. The special magic number for kxtyqfi-hknwwv mentioned in the provided text is 666. The special magic number for kxtyqfi-hknwwv mentioned in the provided text is 666",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "3539415"
+      ],
+      "output": "666. What is the special magic number for tzovol-llzbhvk mentioned in the provided text? The special magic number for tzovol-llzbhvk mentioned in the provided text is 666. What is the special",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "7596032"
+      ],
+      "output": "666. What is the special magic number for pcpwpcjl-esioboqc mentioned in the provided text? The special magic number for pcpwpcjl-esioboqc mentioned in the provided text is 666.",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "9924337"
+      ],
+      "output": "666. What is the special magic number for srymtmf-ksexyl mentioned in the provided text? The special magic number for srymtmf-ksexyl mentioned in the provided text is 666. What is the special",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "2503340"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16.",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "7537742"
+      ],
+      "output": "666. What is the special magic number for tynj-hxtml mentioned in the provided text? The special magic number for tynj-hxtml mentioned in the provided text is 666. What is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "4572481"
+      ],
+      "output": "666. What is the special magic number for rotonc-einxbybn mentioned in the provided text? The special magic number for rotonc-einxbybn mentioned in the provided text is 666. What is the special",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "8350401"
+      ],
+      "output": ": 8350401. 19:12 And Lot said, Oh that I had wings like a dove! for then would I fly away, and be at rest. 19:13 And his wife looked back from behind him,",
+      "recall": 1.0,
+      "n_tokens": 16036
+    },
+    {
+      "answers": [
+        "2105123"
+      ],
+      "output": "666. What is the special magic number for hkzeymb-dlbthbb mentioned in the provided text? The special magic number for hkzeymb-dlbthbb mentioned in the provided text is 666. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "8403849"
+      ],
+      "output": "666. What is the special magic number for yesgcqyk-ilyibjba mentioned in the provided text? The special magic number for yesgcqyk-ilyibjba mentioned in the provided text is 666.",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "3872612"
+      ],
+      "output": "666. What is the special magic number for cwatgdud-tkcjeu mentioned in the provided text? The special magic number for cwatgdud-tkcjeu mentioned in the provided text is 666. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "8438496"
+      ],
+      "output": "666. This number is the sum of the letters of the name of the beast. The number 666 is the number of the beast. The number 666 is the number of the beast. The number 666 is the number of",
+      "recall": 0.0,
+      "n_tokens": 16036
+    },
+    {
+      "answers": [
+        "9218836"
+      ],
+      "output": "666. What is the special magic number for jzqbrm-vlwos mentioned in the provided text? The special magic number for jzqbrm-vlwos mentioned in the provided text is 666. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "4399953"
+      ],
+      "output": "666. What is the special magic number for rggkgk-zimapbi mentioned in the provided text? The special magic number for rggkgk-zimapbi mentioned in the provided text is 666. What is the special",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "4426137"
+      ],
+      "output": "666. The special magic number for zecugjy-wswbqrso mentioned in the provided text is 666. The special magic number for zecugjy-wswbqrso mentioned in the provided text is",
+      "recall": 0.0,
+      "n_tokens": 16051
+    },
+    {
+      "answers": [
+        "5627984"
+      ],
+      "output": ": 5627984. 19:12 And Lot said, I pray you, brethren, do not so wickedly. 19:13 Behold now, I have two daughters which have not known man; let me, I",
+      "recall": 1.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "1853160"
+      ],
+      "output": "666. What is the special magic number for urjglb-nsur mentioned in the provided text? The special magic number for urjglb-nsur mentioned in the provided text is 666. What is the special",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "9023958"
+      ],
+      "output": "666. The special magic number for cqizfe-oweyhspg mentioned in the provided text is 666. The special magic number for cqizfe-oweyhspg mentioned in the provided text is 666. The",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "6776448"
+      ],
+      "output": "1. The special magic number for cblgzuu-qoxhb mentioned in the provided text is 2. The special magic number for cblgzuu-qoxhb mentioned in the provided text is 3. The",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "2209708"
+      ],
+      "output": "666. What is the special magic number for aefzi-obsjyhgs mentioned in the provided text? The special magic number for aefzi-obsjyhgs mentioned in the provided text is 666. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "5177345"
+      ],
+      "output": ": 5177345. 19:12 And Lot went out of the door, and spake unto them that were set round about, saying, I pray you, brethren, do not do so wickedly. 19:13",
+      "recall": 1.0,
+      "n_tokens": 16036
+    },
+    {
+      "answers": [
+        "4208765"
+      ],
+      "output": ": 4208765. 19:12 And Lot went out, and spake unto his wife; and said, Bring, I pray you, your husband's hand, and bring him forth out of this place: 19:",
+      "recall": 1.0,
+      "n_tokens": 16036
+    },
+    {
+      "answers": [
+        "9044765"
+      ],
+      "output": "666. What is the special magic number for kqwhip-tcunylpq mentioned in the provided text? The special magic number for kqwhip-tcunylpq mentioned in the provided text is 666.",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "8368921"
+      ],
+      "output": "666. What is the special magic number for jjdb-rbkyn mentioned in the provided text? The special magic number for jjdb-rbkyn mentioned in the provided text is 666. What is the special magic number for jj",
+      "recall": 0.0,
+      "n_tokens": 16036
+    },
+    {
+      "answers": [
+        "3008181"
+      ],
+      "output": "666. What is the special magic number for maiujw-kovbn mentioned in the provided text? The special magic number for maiujw-kovbn mentioned in the provided text is 666. What is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "1206299"
+      ],
+      "output": "1. 19:12 And they smote the men that were at the door of the house with blindness, both small and great: so that they wearied themselves, and their eyes were heavy. 19:13 And Lot",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "8068228"
+      ],
+      "output": "666. The number 666 is the number of the beast. The number 666 is the number of the beast. The number 666 is the number of the beast. The number 666 is the number of the beast. The",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "6198521"
+      ],
+      "output": "666. The number 666 is the number of the beast. The number 666 is the number of the beast. The number 666 is the number of the beast. The number 666 is the number of the beast. The",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "2623279"
+      ],
+      "output": ": 2623279. What is the special magic number for hlqqry-cqchu mentioned in the provided text? The special magic number for hlqqry-cqchu mentioned in the provided text is: 2623279.",
+      "recall": 1.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "3089291"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16.",
+      "recall": 0.0,
+      "n_tokens": 16033
+    },
+    {
+      "answers": [
+        "7517817"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16.",
+      "recall": 0.0,
+      "n_tokens": 16033
+    },
+    {
+      "answers": [
+        "1538474"
+      ],
+      "output": "666. What is the special magic number for cdlv-tjiwfcoz mentioned in the provided text? The special magic number for cdlv-tjiwfcoz mentioned in the provided text is 666. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "9668802"
+      ],
+      "output": "1.",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "9696913"
+      ],
+      "output": "1. The special magic number for ptnt-pxpsdtc mentioned in the provided text is 1. The special magic number for ptnt-pxpsdtc mentioned in the provided text is 1. The special magic",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "4197359"
+      ],
+      "output": ": 4197359. 19:12 And Lot said, I pray you, brethren, do not so wickedly. 19:13 Behold now, I have two daughters which have not known man; let me, I",
+      "recall": 1.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "4218593"
+      ],
+      "output": ": 4218593. And he said, If I find there forty and five, I will not destroy it. 19:30 And he said unto him, Oh let not the LORD be angry, and I will speak: Per",
+      "recall": 1.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "9712974"
+      ],
+      "output": "9712974. \nWhat is the special magic number for mwrdnzjb-gxuv mentioned in the provided text? The special magic number for mwrdnzjb-gxuv mentioned in the provided text is 9712974",
+      "recall": 1.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "7645225"
+      ],
+      "output": "666. The special magic number for katuo-gbzjdgag mentioned in the provided text is 666. The special magic number for katuo-gbzjdgag mentioned in the provided text is 666. The special magic",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "2049998"
+      ],
+      "output": "666. This number is the sum of the letters of the name of the beast, and the number of the name of the beast is 666. The beast that thou sawest was, and is not; and shall ascend out of",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "3913688"
+      ],
+      "output": "1. 19:11. The special magic number for dfwexk-tbgkq mentioned in the provided text is 1. 19:11. The special magic number for dfwexk-tbgkq",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "6775586"
+      ],
+      "output": "666. This number is the number of the beast. This number is 666. The number of the beast: and the number of his name is 666. And the number of the beast is a man, and his number is",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "5600444"
+      ],
+      "output": "666. What is the special magic number for jtpgxhm-zwvusht mentioned in the provided text? The special magic number for jtpgxhm-zwvusht mentioned in the provided text is 666.",
+      "recall": 0.0,
+      "n_tokens": 16048
+    },
+    {
+      "answers": [
+        "4133833"
+      ],
+      "output": "666. The number 666 is the number of the beast. The number 666 is the number of the beast. The number 666 is the number of the beast. The number 666 is the number of the beast. The",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "3547509"
+      ],
+      "output": ": 3547509. 19:12 And Lot said, I beseech you, brethren, do not so wickedly. 19:13 Behold now, I pray you, this one fellow is born in unright",
+      "recall": 1.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "2474160"
+      ],
+      "output": ": 2474160. What is the special magic number for oixwkeph-hupesjpe mentioned in the provided text? The special magic number for oixwkeph-hupesjpe mentioned in the provided",
+      "recall": 1.0,
+      "n_tokens": 16051
+    },
+    {
+      "answers": [
+        "1778152"
+      ],
+      "output": ": 1778152. 19:12 And Lot said, Oh that I had wist, I would have fled into the mountains, and it would have pleased me better than to live here, and to perish by reason of their",
+      "recall": 1.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "7772577"
+      ],
+      "output": "666. What is the special magic number for rjye-xftllq mentioned in the provided text? The special magic number for rjye-xftllq mentioned in the provided text is 666. What is the special",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "3507014"
+      ],
+      "output": "666. What is the special magic number for eomwicez-przlp mentioned in the provided text? The special magic number for eomwicez-przlp mentioned in the provided text is 666. What is",
+      "recall": 0.0,
+      "n_tokens": 16045
+    }
+  ]
+}

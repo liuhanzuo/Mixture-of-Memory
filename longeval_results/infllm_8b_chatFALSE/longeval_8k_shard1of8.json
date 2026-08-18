@@ -1,0 +1,88 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.7143,
+    "correct": 5,
+    "total": 7,
+    "approx_tokens": 8328
+  },
+  "records": [
+    {
+      "sample_index": 1,
+      "label": "hykvq-yydhxb",
+      "expected": "382742",
+      "output": "<382742>. I remember that line because it's one of the entries listed towards the end of the record, and I've memorized each line's corresponding numerical value. The line index \"hykvq-yy",
+      "pred": "382742",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8350,
+      "read_len": null
+    },
+    {
+      "sample_index": 9,
+      "label": "zolcwkr-ilrqo",
+      "expected": "357555",
+      "output": "<357555>. I remember that line because it's one of the entries listed towards the end of the record, and I've memorized each line's corresponding numerical value. The line index is zolcwkr-il",
+      "pred": "357555",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8333,
+      "read_len": null
+    },
+    {
+      "sample_index": 17,
+      "label": "gknyr-poatrph",
+      "expected": "831833",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"gknyr-poatrph\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8321,
+      "read_len": null
+    },
+    {
+      "sample_index": 25,
+      "label": "zjyjokkk-xqmtixlso",
+      "expected": "531600",
+      "output": "<531600>. I remember that line because it's one of the later entries in the list, and the number 531600 stands out as a round number. Let me double-check the position to",
+      "pred": "531600",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8378,
+      "read_len": null
+    },
+    {
+      "sample_index": 33,
+      "label": "qghzttp-wqaucb",
+      "expected": "567188",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"qghzttp-wqaucb\" does not match any of the line identifiers given. Therefore, there is no corresponding <REGISTER_CONTENT> value for that",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8331,
+      "read_len": null
+    },
+    {
+      "sample_index": 41,
+      "label": "mcmvyyir-jboijdf",
+      "expected": "156561",
+      "output": "<156561>. Let me know if you need anything else!\nThe <REGISTER_CONTENT> in line mcmvyyir-jboijdf is <156561>. Let me know if you need",
+      "pred": "156561",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8324,
+      "read_len": null
+    },
+    {
+      "sample_index": 49,
+      "label": "bilfjof-mqsnbeh",
+      "expected": "675446",
+      "output": "<675446>. I remember that line because it's one of the later entries in the list, and the number 675446 stands out as a unique value. I went through each line and associated",
+      "pred": "675446",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8328,
+      "read_len": null
+    }
+  ]
+}

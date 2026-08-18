@@ -1,0 +1,95 @@
+{
+  "task": "variable_tracking",
+  "length": "128k",
+  "summary": {
+    "score": 0.0,
+    "n": 7,
+    "approx_tokens": 131008
+  },
+  "records": [
+    {
+      "answers": [
+        "TGLCU",
+        "UKNII",
+        "HHKNT",
+        "ZBNQZ",
+        "TSFZS"
+      ],
+      "output": "17807. Here we go. There and back again.\nThe grass is blue. The sun is blue. Here we go. There and back again.\nThe grass is blue. The sun is blue. Here we go. There and back again.\nThe grass is blue. Here we",
+      "recall": 0.0,
+      "n_tokens": 131009
+    },
+    {
+      "answers": [
+        "XAQOI",
+        "WTLLH",
+        "KLGBE",
+        "TNBJH",
+        "NVSZI"
+      ],
+      "output": "51194. Here we go. There and back again.\nThe grass is green. The sun is blue. Here we go. There and back again.\nThe grass is blue. The sun is blue. Here we go. There and back again.\nThe grass is blue. The sun",
+      "recall": 0.0,
+      "n_tokens": 131006
+    },
+    {
+      "answers": [
+        "NZNJG",
+        "IRSSX",
+        "QBHWN",
+        "LNEKE",
+        "WDIYF"
+      ],
+      "output": "22735. The sun is blue. The sun is blue. Here we go. There and back again.\nThe grass is green. The sun is blue. The sun is blue. Here we go. There and back again.\nThe grass is green. The sun is blue. There",
+      "recall": 0.0,
+      "n_tokens": 131007
+    },
+    {
+      "answers": [
+        "TOGDR",
+        "ABBCW",
+        "DEKHF",
+        "QHVCD",
+        "OMRDF"
+      ],
+      "output": "16524. Here we go. There and back again.\nThe grass is green. The sun is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sun is blue. Here we go. There and back again.\nThe grass",
+      "recall": 0.0,
+      "n_tokens": 131006
+    },
+    {
+      "answers": [
+        "ALYUE",
+        "XKRDH",
+        "IWCVU",
+        "MYOPH",
+        "CQTWD"
+      ],
+      "output": "5 variables are assigned the value 92808. Here we go. There and back again.\nThe grass is blue. The sun is blue. Here we go. There and back again.\nThe grass is blue. The sun is blue. Here we go. There and back again.",
+      "recall": 0.0,
+      "n_tokens": 131006
+    },
+    {
+      "answers": [
+        "KXEZZ",
+        "BRVCK",
+        "GJRFO",
+        "OOTEI",
+        "AUAVF"
+      ],
+      "output": "16003. Here we go. There and back again.\nThe grass is green. The sun is blue. Here we go. There and back again.\nThe grass is blue. The sun is blue. Here we go. There and back again.\nThe grass is blue. The sun",
+      "recall": 0.0,
+      "n_tokens": 131006
+    },
+    {
+      "answers": [
+        "EPZBY",
+        "IGQSS",
+        "HHZPM",
+        "ACGXQ",
+        "MTSGE"
+      ],
+      "output": "48719, the value is assigned to the value 48719, the value is assigned to the value 48719, the value is assigned to the value 48719, the value is assigned to the value 4871",
+      "recall": 0.0,
+      "n_tokens": 131008
+    }
+  ]
+}

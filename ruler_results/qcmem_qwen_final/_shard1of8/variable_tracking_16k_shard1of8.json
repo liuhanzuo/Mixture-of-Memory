@@ -1,0 +1,22 @@
+{
+  "task": "variable_tracking",
+  "length": "16k",
+  "summary": {
+    "score": 20.0,
+    "n": 7,
+    "approx_tokens": 16285
+  },
+  "qcmem": {
+    "resume_j": 12,
+    "top_prepay_b": 0,
+    "selector": "bm25",
+    "topk": 12,
+    "sink_tokens": "bos",
+    "num_layers": 36,
+    "lora_adapter": "outputs/qcmem_distill_qwen_j12_r32_4k/final",
+    "chunk_size": 512
+  },
+  "model": {
+    "model_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/models/Qwen--Qwen3-8b"
+  }
+}

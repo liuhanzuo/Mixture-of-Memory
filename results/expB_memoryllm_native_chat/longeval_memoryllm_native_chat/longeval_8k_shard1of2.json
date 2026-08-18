@@ -1,0 +1,270 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.2,
+    "correct": 5,
+    "total": 25,
+    "approx_tokens": 9009
+  },
+  "records": [
+    {
+      "sample_index": 1,
+      "label": "hpkyhd-jovtbtrb",
+      "expected": "918012",
+      "output": "The <REGISTER_CONTENT> in line hpkyhd-jovtbtrb is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9016
+    },
+    {
+      "sample_index": 3,
+      "label": "pamqrtdej-ycbgwtwdm",
+      "expected": "188507",
+      "output": "The <REGISTER_CONTENT> in line pamqrtdej-ycbgwtwdm",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8955
+    },
+    {
+      "sample_index": 5,
+      "label": "mbbbutypu-kujaxdrs",
+      "expected": "759389",
+      "output": "The <REGISTER_CONTENT> in line mbbbutypu-kujaxdrs",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8998
+    },
+    {
+      "sample_index": 7,
+      "label": "tadtqswbn-vcrsq",
+      "expected": "753638",
+      "output": "The <REGISTER_CONTENT> in line tadtqswbn-vcrsq is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9009
+    },
+    {
+      "sample_index": 9,
+      "label": "xptnwj-xxpozx",
+      "expected": "100755",
+      "output": "100755",
+      "pred": "100755",
+      "correct": true,
+      "n_lines": 512,
+      "n_tokens": 9007
+    },
+    {
+      "sample_index": 11,
+      "label": "bgtsfvi-hrzojs",
+      "expected": "482196",
+      "output": "The <REGISTER_CONTENT> in line bgtsfvi-hrzojs is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9045
+    },
+    {
+      "sample_index": 13,
+      "label": "ckpxh-zjbhjmk",
+      "expected": "268601",
+      "output": "268601",
+      "pred": "268601",
+      "correct": true,
+      "n_lines": 512,
+      "n_tokens": 8987
+    },
+    {
+      "sample_index": 15,
+      "label": "lgtwmwaka-cmyyk",
+      "expected": "291359",
+      "output": "The <REGISTER_CONTENT> in line lgtwmwaka-cmyyk is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9023
+    },
+    {
+      "sample_index": 17,
+      "label": "nkmotcfs-izafuosc",
+      "expected": "723068",
+      "output": "The <REGISTER_CONTENT> in line nkmotcfs-izafu",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9016
+    },
+    {
+      "sample_index": 19,
+      "label": "nkehn-aqjlplntd",
+      "expected": "425407",
+      "output": "425407",
+      "pred": "425407",
+      "correct": true,
+      "n_lines": 512,
+      "n_tokens": 9053
+    },
+    {
+      "sample_index": 21,
+      "label": "cxswzkc-nakph",
+      "expected": "660961",
+      "output": "The <REGISTER_CONTENT> in line cxswzkc-nakph is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9027
+    },
+    {
+      "sample_index": 23,
+      "label": "spvag-vkoqgnbg",
+      "expected": "600434",
+      "output": "600434",
+      "pred": "600434",
+      "correct": true,
+      "n_lines": 512,
+      "n_tokens": 9002
+    },
+    {
+      "sample_index": 25,
+      "label": "zhidoj-wdkucgcy",
+      "expected": "545420",
+      "output": "The <REGISTER_CONTENT> in line zhidoj-wdkucgcy is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9045
+    },
+    {
+      "sample_index": 27,
+      "label": "loytnf-njuragxby",
+      "expected": "992725",
+      "output": "The <REGISTER_CONTENT> in line loytnf-njuragxby",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8992
+    },
+    {
+      "sample_index": 29,
+      "label": "umcmovoeg-abngvxr",
+      "expected": "291950",
+      "output": "The <REGISTER_CONTENT> in line umcmovoeg-abngvxr is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9001
+    },
+    {
+      "sample_index": 31,
+      "label": "bovtuu-gxafjrj",
+      "expected": "744604",
+      "output": "The <REGISTER_CONTENT> in line bovtuu-gxafjrj is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9014
+    },
+    {
+      "sample_index": 33,
+      "label": "ecsyiv-fcxph",
+      "expected": "980833",
+      "output": "The <REGISTER_CONTENT> in line ecsyiv-fcxph is 909",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9008
+    },
+    {
+      "sample_index": 35,
+      "label": "gebqbqf-tsmly",
+      "expected": "561829",
+      "output": "The <REGISTER_CONTENT> in line gebqbqf-tsmly is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9026
+    },
+    {
+      "sample_index": 37,
+      "label": "wgpqotb-llsompkb",
+      "expected": "595157",
+      "output": "The <REGISTER_CONTENT> in line wgpqotb-llsomp",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9011
+    },
+    {
+      "sample_index": 39,
+      "label": "zeweleqrx-axkdfuhnd",
+      "expected": "403981",
+      "output": "The <REGISTER_CONTENT> in line zeweleqrx-axkdf",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9045
+    },
+    {
+      "sample_index": 41,
+      "label": "mngzqu-mfllqxmz",
+      "expected": "599627",
+      "output": "The <REGISTER_CONTENT> in line mngzqu-mfllqxmz",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8992
+    },
+    {
+      "sample_index": 43,
+      "label": "ixufyri-wkhddgmzi",
+      "expected": "335274",
+      "output": "109414",
+      "pred": "109414",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8985
+    },
+    {
+      "sample_index": 45,
+      "label": "fnmyz-pqnpyg",
+      "expected": "120806",
+      "output": "The <REGISTER_CONTENT> in line fnmyz-pqnpyg is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 8985
+    },
+    {
+      "sample_index": 47,
+      "label": "zhiafh-nybwyhp",
+      "expected": "391029",
+      "output": "391029",
+      "pred": "391029",
+      "correct": true,
+      "n_lines": 512,
+      "n_tokens": 9004
+    },
+    {
+      "sample_index": 49,
+      "label": "atmcxcur-chibttxi",
+      "expected": "981442",
+      "output": "The <REGISTER_CONTENT> in line atmcxcur-chibttxi is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 512,
+      "n_tokens": 9009
+    }
+  ],
+  "config": {
+    "model_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/baselines/memoryllm-8b-chat-hf",
+    "chunk_size": 1024,
+    "max_new_tokens": 16,
+    "use_chat_template": true,
+    "num_shards": 2,
+    "shard_index": 1,
+    "seed": 1234
+  }
+}

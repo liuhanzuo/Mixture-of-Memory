@@ -1,0 +1,59 @@
+{
+  "task": "niah_multikey_1",
+  "length": "32k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 31772
+  },
+  "records": [
+    {
+      "answers": [
+        "4233053"
+      ],
+      "output": "4233053. The number is explicitly stated in the text as follows: \"One of the special magic numbers for rxvnzrz-ueeq is: 4233053.\" This number",
+      "recall": 1.0,
+      "n_tokens": 31775
+    },
+    {
+      "answers": [
+        "9046070"
+      ],
+      "output": "9046070.\nThe special magic number for qhygz-mezeqd mentioned in the provided text is 9046070. One of the special magic numbers for qhygz-mezeqd",
+      "recall": 1.0,
+      "n_tokens": 31770
+    },
+    {
+      "answers": [
+        "6069850"
+      ],
+      "output": "6069850. The number is located in the text as follows: \"One of the special magic numbers for rrakqvu-rtaxbt is: 6069850.\" This number",
+      "recall": 1.0,
+      "n_tokens": 31781
+    },
+    {
+      "answers": [
+        "9749671"
+      ],
+      "output": "9749671.\nThe special magic number for zkddbc-cmtf mentioned in the provided text is 9749671. This number is explicitly stated in the text, which is part of",
+      "recall": 1.0,
+      "n_tokens": 31769
+    },
+    {
+      "answers": [
+        "1201527"
+      ],
+      "output": "1201527. One of the special magic numbers for joxod-nnppxi is: 1201527.\n\nTo find the special magic number for \"joxod-nnpp",
+      "recall": 1.0,
+      "n_tokens": 31777
+    },
+    {
+      "answers": [
+        "9331022"
+      ],
+      "output": "9331022.\nThe special magic number for dlnfd-gqwx mentioned in the provided text is 9331022.\nThe special magic number for dlnfd-gqwx mentioned in",
+      "recall": 1.0,
+      "n_tokens": 31772
+    }
+  ]
+}

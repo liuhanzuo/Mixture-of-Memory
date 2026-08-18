@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "64k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 65506
+  },
+  "records": [
+    {
+      "answers": [
+        "5931578"
+      ],
+      "output": "5931578. The number is found in the text as follows: \"And the children of Israel were fruitful, and increased abundantly, and multiplied, and waxed exceeding mighty; and the land was filled with",
+      "recall": 1.0,
+      "n_tokens": 65500
+    },
+    {
+      "answers": [
+        "8715978"
+      ],
+      "output": "8715978. This number is highlighted in the text as the answer to the quiz, indicating it is the specific number to be memorized. The number is found in the text as part of the narrative, and",
+      "recall": 1.0,
+      "n_tokens": 65497
+    },
+    {
+      "answers": [
+        "5529128"
+      ],
+      "output": "5529128. This number is found in the text as part of the verse 50:25, where it states, \"And Joseph took an oath of the children of Israel, saying, God will",
+      "recall": 1.0,
+      "n_tokens": 65500
+    },
+    {
+      "answers": [
+        "3628856"
+      ],
+      "output": "3628856. This number is significant as it is the factorial of 12 (12! = 479001600), but in the context of the text, it's",
+      "recall": 1.0,
+      "n_tokens": 65512
+    },
+    {
+      "answers": [
+        "1523299"
+      ],
+      "output": "1523299. The number is hidden within the text, and it's mentioned in the context of a special magic number. The number is 1523299, and it's a unique number",
+      "recall": 1.0,
+      "n_tokens": 65512
+    },
+    {
+      "answers": [
+        "1726094"
+      ],
+      "output": "1726094. The number is hidden within the text, and it's mentioned in the context of the generations of Shem, where it says, \"And the sons of Shem, and these are the names",
+      "recall": 1.0,
+      "n_tokens": 65506
+    }
+  ]
+}

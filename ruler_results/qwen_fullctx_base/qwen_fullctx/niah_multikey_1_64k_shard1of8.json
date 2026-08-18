@@ -1,0 +1,67 @@
+{
+  "task": "niah_multikey_1",
+  "length": "64k",
+  "summary": {
+    "score": 100.0,
+    "n": 7,
+    "approx_tokens": 64562
+  },
+  "records": [
+    {
+      "answers": [
+        "1693014"
+      ],
+      "output": "1693014. The number is found in the text at the following location: 2:7 And the LORD said unto Moses, I am the God of thy father, the God of Abraham, the God of",
+      "recall": 1.0,
+      "n_tokens": 64578
+    },
+    {
+      "answers": [
+        "7985449"
+      ],
+      "output": "7985449. The special magic number for ztni-lhgr mentioned in the provided text is 7106810. The special magic number for mvcpukrl-ykmhqk",
+      "recall": 1.0,
+      "n_tokens": 64568
+    },
+    {
+      "answers": [
+        "9514593"
+      ],
+      "output": "9514593. The special magic number for asmytm-bmfmo mentioned in the provided text is 7712769. The special magic number for zroldrpd-djch mentioned in",
+      "recall": 1.0,
+      "n_tokens": 64572
+    },
+    {
+      "answers": [
+        "1486038"
+      ],
+      "output": "1486038. The special magic number for ccauh-mmgqutpu mentioned in the provided text is 4630890. The special magic number for vpwmqye-qnb",
+      "recall": 1.0,
+      "n_tokens": 64570
+    },
+    {
+      "answers": [
+        "7212840"
+      ],
+      "output": "7212840. The special magic number for vdwgplgz-qsnnfs mentioned in the provided text is 5235796. The special magic number for jzzhdeb-x",
+      "recall": 1.0,
+      "n_tokens": 64574
+    },
+    {
+      "answers": [
+        "9724450"
+      ],
+      "output": "9724450. The special magic number for mmna-zfkpmp mentioned in the provided text is 5035497. The special magic number for omfe-jiihqfk mentioned in",
+      "recall": 1.0,
+      "n_tokens": 64565
+    },
+    {
+      "answers": [
+        "1394315"
+      ],
+      "output": "1394315.\nThe special magic number for kezeobn-lnsym mentioned in the provided text is 1394315.\n\nThe special magic number for kezeobn-lnsym mentioned in",
+      "recall": 1.0,
+      "n_tokens": 64562
+    }
+  ]
+}

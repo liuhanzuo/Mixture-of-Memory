@@ -1,0 +1,91 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.1667,
+    "correct": 1,
+    "total": 6,
+    "approx_tokens": 131406,
+    "avg_read_len": 6477.3,
+    "last_read_len": 6479
+  },
+  "records": [
+    {
+      "sample_index": 2,
+      "label": "rjeqa-xacyawd",
+      "expected": "668727",
+      "output": "<668727>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"rjeqa-xacyawd\". Let me go through each line one by one.",
+      "pred": "668727",
+      "correct": true,
+      "n_lines": 6144,
+      "n_tokens": 131425,
+      "read_len": 6498,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 10,
+      "label": "dbslvp-jgmhvybaq",
+      "expected": "698177",
+      "output": "<...> and I need to find the value. Let me check the list again.\n\nLooking through the provided data, I don't see a line that exactly matches \"dbslvp-jgmhvybaq\". However, there",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131347,
+      "read_len": 6420,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 18,
+      "label": "wuqmtxol-shuve",
+      "expected": "822822",
+      "output": "<...> and I need to find the number inside the <...> and give me the number only. The line is: line wuqmtxol-shuve: REGISTER_CONTENT is <...>\nOkay, let's see. I",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131319,
+      "read_len": 6392,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 26,
+      "label": "xcnhs-chuyb",
+      "expected": "601250",
+      "output": "<618434>. \n\nWait, but I don't see a line with the identifier \"xcnhs-chuyb\" in the provided data. Let me check again.\n\nLooking through the list:\n\n- The lines provided",
+      "pred": "618434",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131430,
+      "read_len": 6503,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 34,
+      "label": "cdtoxw-lztptob",
+      "expected": "971023",
+      "output": "<628351>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"cdtoxw-lztptob\". Let me go through the list again to make",
+      "pred": "628351",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131499,
+      "read_len": 6572,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 42,
+      "label": "docha-rxbnafkpe",
+      "expected": "811913",
+      "output": "<175211>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the lines, I see the line \"line fvnugj",
+      "pred": "175211",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131406,
+      "read_len": 6479,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    }
+  ]
+}

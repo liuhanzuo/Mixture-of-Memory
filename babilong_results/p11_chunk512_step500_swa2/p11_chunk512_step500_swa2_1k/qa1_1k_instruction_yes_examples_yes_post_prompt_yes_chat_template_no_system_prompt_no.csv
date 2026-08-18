@@ -1,0 +1,110 @@
+target,output,question
+bathroom,Mary is bathroom,Where is Mary? 
+kitchen,Answer: bathroom,Where is Sandra? 
+kitchen,Mary travelled to bedroom.,Where is Mary? 
+kitchen,Answer: The most recent location of John is garden.,Where is John? 
+bedroom,Answer: The most recent location of Sandra is bedroom.,Where is Sandra? 
+office,Answer: The most recent location of John is office.,Where is John? 
+garden,"Mary is in office.
+Mary is in office.
+Mary is in office.
+Mary is in office.",Where is Mary? 
+bathroom,Answer: bathroom,Where is Sandra? 
+kitchen,Answer: The most recent location of Mary is kitchen.,Where is Mary? 
+bedroom,Answer: The most recent location of John is bedroom.,Where is John? 
+office,office,Where is Daniel? 
+office,Mary?,Where is Daniel? 
+bathroom,Mary is bathroom,Where is Mary? 
+bathroom,Answer: bathroom,Where is Sandra? 
+bathroom,Answer: bathroom,Where is Sandra? 
+hallway,Mary is in hallway,Where is Mary? 
+kitchen,Answer: The most recent location of Sandra is bathroom.,Where is Sandra? 
+office,Answer: The most recent location of Daniel is office.,Where is Daniel? 
+kitchen,Answer: The most recent location of Sandra is kitchen.,Where is Sandra? 
+bedroom,Mary went back to the bedroom.,Where is John? 
+hallway,Answer: The most recent location of Sandra is hallway.,Where is Sandra? 
+bedroom,Mary is bedroom,Where is Mary? 
+bedroom,Mary,Where is John? 
+bedroom,Mary is bedroom,Where is Mary? 
+bedroom,Mary moved to the bedroom.,Where is Mary? 
+garden,"Mary is in garden.
+Mary went to the garden. Mary moved to the bedroom. Mary went back",Where is Mary? 
+bedroom,Answer: The most recent location of Daniel is bedroom.,Where is Daniel? 
+office,Answer: bathroom,Where is Sandra? 
+office,Mary?,Where is Sandra? 
+garden,Answer: The most recent location of Sandra is garden.,Where is Sandra? 
+garden,Answer: The most recent location of Daniel is garden.,Where is Daniel? 
+bathroom,"Mary is in bathroom.
+Mary went back to the hallway. Mary went back to the bathroom. Mary",Where is Mary? 
+office,Mary is in office,Where is Mary? 
+kitchen,Answer: The most recent location of Sandra is bathroom.,Where is Sandra? 
+garden,bathroom,Where is Sandra? 
+kitchen,Answer: The most recent location of Sandra is kitchen.,Where is Sandra? 
+kitchen,Answer: The most recent location of Sandra is kitchen.,Where is Sandra? 
+garden,Answer: The most recent location of John is garden.,Where is John? 
+garden,Mary went to the garden. Mary went back to the bedroom. Mary went to the garden. Mary,Where is Sandra? 
+bathroom,Answer: The most recent location of Sandra is bathroom.,Where is Sandra? 
+bedroom,Mary is bathroom,Where is Mary? 
+kitchen,Answer: bathroom,Where is Sandra? 
+office,Mary is office,Where is Mary? 
+bedroom,Mary is in bedroom.,Where is Mary? 
+office,Answer: The most recent location of Daniel is office.,Where is Daniel? 
+office,bathroom,Where is Sandra? 
+bathroom,Mary went to the office.,Where is Sandra? 
+bedroom,Answer: bathroom,Where is Sandra? 
+office,Answer: The most recent location of Daniel is office.,Where is Daniel? 
+bedroom,Answer: The most recent location of Sandra is bedroom.,Where is Sandra? 
+hallway,Answer: The most recent location of Daniel is hallway.,Where is Daniel? 
+bedroom,Answer: The most recent location of Sandra is bedroom.,Where is Sandra? 
+office,Mary went to the bathroom.,Where is John? 
+garden,Answer: bathroom,Where is John? 
+kitchen,"Answer: The most recent location of Daniel is kitchen.
+<example>
+Mary went to the bedroom.",Where is Daniel? 
+hallway,Mary is in bedroom,Where is Mary? 
+hallway,Answer: The most recent location of Sandra is office.,Where is Sandra? 
+hallway,Mary went to the bedroom.,Where is John? 
+bedroom,Mary travelled to the bathroom. Mary went to the bedroom. Mary travelled to the office. Mary went,Where is Mary? 
+bedroom,Answer: bathroom,Where is Sandra? 
+bedroom,Answer: The most recent location of Daniel is bedroom.,Where is Daniel? 
+kitchen,bathroom,Where is Sandra? 
+bedroom,bathroom,Where is Daniel? 
+garden,Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary,Where is John? 
+bathroom,Answer: The most recent location of Sandra is bathroom.,Where is Sandra? 
+garden,Answer: The most recent location of Sandra is garden.,Where is Sandra? 
+office,Answer: bathroom,Where is Daniel? 
+bedroom,Mary is in bedroom.,Where is Mary? 
+garden,Answer: The most recent location of Sandra is garden.,Where is Sandra? 
+bathroom,Mary travelled to the bedroom.,Where is Sandra? 
+office,Answer: The most recent location of John is office.,Where is John? 
+kitchen,Mary went back to the bedroom. Mary went back to the bedroom. Mary went back to the bedroom,Where is Daniel? 
+bedroom,Answer: The most recent location of John is bedroom.,Where is John? 
+office,Mary journeyed to the office.,Where is Daniel? 
+bathroom,bathroom,Where is Sandra? 
+office,Mary moved to the bathroom. Mary went to the bathroom. Mary travelled to the bathroom. Mary went,Where is John? 
+hallway,Mary is in hallway,Where is Mary? 
+office,Mary went to the office. Willshire found the means of patching up the business with the Moor,Where is John? 
+office,"Mary?
+Answer: The most recent location of Sandra is office. Mary is bathroom.",Where is Sandra? 
+bathroom,Answer: The most recent location of John is bathroom.,Where is John? 
+hallway,Mary went to the bathroom. Mary went to the bedroom. Mary went to the office. Mary went,Where is John? 
+hallway,Answer: The most recent location of Daniel is bedroom.,Where is Daniel? 
+hallway,Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary Mary,Where is Daniel? 
+bathroom,Answer: The most recent location of Daniel is bathroom.,Where is Daniel? 
+bathroom,Answer: The most recent location of John is bathroom.,Where is John? 
+bathroom,bathroom,Where is Daniel? 
+garden,Answer: The most recent location of John is garden.,Where is John? 
+bedroom,Answer: The most recent location of John is bedroom.,Where is John? 
+office,"Mary is in office.
+Answer: The most recent location of Mary is office.",Where is Mary? 
+garden,Answer: The most recent location of Sandra is garden.,Where is Sandra? 
+office,Answer: The most recent location of John is office.,Where is John? 
+bedroom,Mary?,Where is Daniel? 
+hallway,Answer: The most recent location of John is hallway.,Where is John? 
+kitchen,Answer: bathroom,Where is Daniel? 
+bedroom,Answer: The most recent location of Daniel is bedroom.,Where is Daniel? 
+hallway,garden,Where is Sandra? 
+garden,Answer: The most recent location of Sandra is garden.,Where is Sandra? 
+bedroom,Answer: bathroom,Where is John? 
+office,Answer: The most recent location of John is office.,Where is John? 
+garden,Answer: The most recent location of Sandra is garden.,Where is Sandra? 

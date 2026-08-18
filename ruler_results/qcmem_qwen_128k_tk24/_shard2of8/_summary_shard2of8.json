@@ -1,0 +1,23 @@
+{
+  "niah_single_2": {
+    "128k": {
+      "score": 100.0,
+      "n": 6,
+      "approx_tokens": 130663
+    }
+  },
+  "niah_multikey_1": {
+    "128k": {
+      "score": 83.33,
+      "n": 6,
+      "approx_tokens": 130742
+    }
+  },
+  "variable_tracking": {
+    "128k": {
+      "score": 20.0,
+      "n": 6,
+      "approx_tokens": 131003
+    }
+  }
+}

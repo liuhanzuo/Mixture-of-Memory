@@ -1,0 +1,1211 @@
+{
+  "task": "variable_tracking",
+  "length": "16k",
+  "summary": {
+    "score": 1.2,
+    "n": 100,
+    "approx_tokens": 16270
+  },
+  "records": [
+    {
+      "answers": [
+        "WUVEV",
+        "VYKBQ",
+        "VYIZT",
+        "DGKJV",
+        "SDMFE"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16272
+    },
+    {
+      "answers": [
+        "GGCWH",
+        "SDQIR",
+        "EACTD",
+        "NXPJZ",
+        "OVFFW"
+      ],
+      "output": "1. VAR NXPJZ 2. VAR NXPJZ 3. VAR NXPJZ 4. VAR NXPJZ 5. VAR NXPJZ\nQuestion: Find all variables that are assigned the value 12417 in the text above. Answer:",
+      "recall": 0.2,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "VTAEW",
+        "CZDIP",
+        "OJVXF",
+        "DZRNZ",
+        "QGQER"
+      ],
+      "output": "1. 52415, 2. 52415, 3. 52415, 4. 52415, 5. 52415. Question: Find all variables that are assigned the value 52415 in the text above. Answer: According to the chain(s)",
+      "recall": 0.0,
+      "n_tokens": 16269
+    },
+    {
+      "answers": [
+        "PKOSM",
+        "WREVS",
+        "LFAUC",
+        "YADYV",
+        "CVZQM"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "KOERO",
+        "IHOEG",
+        "HGPSI",
+        "SEHMU",
+        "WCHPJ"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "DZSQF",
+        "FWSCN",
+        "WFZOY",
+        "ZCYTT",
+        "OIXRK"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "VCLBT",
+        "JYOEI",
+        "VKSOU",
+        "NSSPS",
+        "WFIGT"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "VBJWD",
+        "IINXB",
+        "RGHYF",
+        "IJXTZ",
+        "VRIAE"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.\nQuestion: Find all variables that are assigned the value 96489 in the text above. Answer: According to",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "CIKKX",
+        "JSFWS",
+        "DMPWE",
+        "TJZXL",
+        "RZDAZ"
+      ],
+      "output": "1. The value of the variable 99811 is assigned to the variable 99811. 2. The value of the variable 99811 is assigned to the variable 99811. 3. The value of the variable 99811 is assigned to the variable 99811.",
+      "recall": 0.0,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "SCEVJ",
+        "RHKLG",
+        "NPUMG",
+        "MBITT",
+        "FCANJ"
+      ],
+      "output": "1. VAR FCANJ 2. VAR MBITT 3. VAR FCANJ 4. VAR MBITT 5. VAR FCANJ\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is",
+      "recall": 0.4,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "UDLHX",
+        "FUJDH",
+        "RKYSZ",
+        "FQYYJ",
+        "QHFPW"
+      ],
+      "output": "81846, 81846, 81846, 81846, 81846. Question: Find all variables that are assigned the value 81846 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value",
+      "recall": 0.0,
+      "n_tokens": 16269
+    },
+    {
+      "answers": [
+        "AASDB",
+        "IRIHT",
+        "JHSMV",
+        "QUVKC",
+        "GSVDW"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 73703 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "JLXIP",
+        "QCQRI",
+        "GIIYV",
+        "UUNWA",
+        "NDDEL"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 81044 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "NUJHU",
+        "CDYLL",
+        "WVUPH",
+        "ZPKIX",
+        "OVKKE"
+      ],
+      "output": "1. The value of the variable x in the equation 65161 = 65161. 2. The value of the variable y in the equation 65161 = 65161. 3. The value of the variable z in the equation 65161 = 65161.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "DNIHJ",
+        "GBDUC",
+        "RVFXP",
+        "HWYST",
+        "WUIUL"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 93667 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "JSBDL",
+        "KPVLQ",
+        "RPOQV",
+        "SFXAZ",
+        "FRWWC"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again. Question: Find all variables that are assigned the value 26776 in the text above. Answer: According to",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "LNTXX",
+        "REVNG",
+        "XSMYB",
+        "NRESG",
+        "GXRVT"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "VNXQZ",
+        "YZONY",
+        "IDUGL",
+        "POVCE",
+        "LPGEG"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 76893 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "QQRKF",
+        "KFJIZ",
+        "TPOWF",
+        "ZSTSU",
+        "EFIGD"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "CMLOR",
+        "TZYES",
+        "BDBOC",
+        "KQHIY",
+        "GCRUK"
+      ],
+      "output": "62662, 62662, 62662, 62662, 62662. Question: Find all variables that are assigned the value 62662 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "BQTAI",
+        "QYGLE",
+        "SQSBW",
+        "CTQCM",
+        "TKSIM"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "BKZWS",
+        "BNCZT",
+        "UWGFA",
+        "XLZTQ",
+        "PXDJZ"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "ALCQJ",
+        "FOTGJ",
+        "AEUNO",
+        "LZFJV",
+        "MLRNT"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 13306 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "ZJFPT",
+        "EOPLG",
+        "UIYJL",
+        "BICUC",
+        "FCOGN"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "JVSBZ",
+        "VIXAP",
+        "AHUTC",
+        "EBNOE",
+        "STDTO"
+      ],
+      "output": "78508, 78508, 78508, 78508, 78508. Question: Find all variables that are assigned the value 78508 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value",
+      "recall": 0.0,
+      "n_tokens": 16263
+    },
+    {
+      "answers": [
+        "YIGBN",
+        "JSOVY",
+        "NNQDE",
+        "WYJQI",
+        "XLVUG"
+      ],
+      "output": "1. 32489 2. 32489 3. 32489 4. 32489 5. 32489\nQuestion: Find all variables that are assigned the value 32489 in the text above. Answer: According to the chain(s) of variable assignment in",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "JEPWF",
+        "SXDKQ",
+        "XKRWD",
+        "SQSPJ",
+        "QNAGL"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 68584 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "SLPVD",
+        "HCYTE",
+        "LQDXM",
+        "BBRJB",
+        "EOLTL"
+      ],
+      "output": "72059, 72059, 72059, 72059, 72059. Question: Find all variables that are assigned the value 72059 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "UZANL",
+        "XGRXE",
+        "XTIPB",
+        "RJVOU",
+        "RLGGH"
+      ],
+      "output": "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "EVFVO",
+        "PJONF",
+        "FBVNL",
+        "VIPKP",
+        "ETCMP"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 97637 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "ZKVCT",
+        "GNDYT",
+        "GNHOV",
+        "QWGSX",
+        "BLKHO"
+      ],
+      "output": "45509, 45509, 45509, 45509, 45509. Question: Find all variables that are assigned the value 45509 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "UCNCH",
+        "NSNDP",
+        "YLUXO",
+        "JIRTM",
+        "XYFHE"
+      ],
+      "output": "1, 2, 3, 4, 5. Question: Find all variables that are assigned the value 77878 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value 77878, they",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "OVHYP",
+        "FKLCG",
+        "WKFQT",
+        "MGCKO",
+        "IDLEN"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 52509 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16265
+    },
+    {
+      "answers": [
+        "LVCKU",
+        "AZCCG",
+        "HETOP",
+        "WRBJN",
+        "GIXFN"
+      ],
+      "output": "1, 2, 3, 4, 5. Question: Find all variables that are assigned the value 66882 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value 66882, they",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "RJNLT",
+        "BBCKJ",
+        "NBZKG",
+        "ICOOD",
+        "JZVLB"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16265
+    },
+    {
+      "answers": [
+        "AUQZT",
+        "XSCGL",
+        "STYAM",
+        "OLRLN",
+        "UOSOH"
+      ],
+      "output": "33404, 33404, 33404, 33404, 33404. Question: Find all variables that are assigned the value 33404 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "KCYVQ",
+        "NOPRD",
+        "VBSCM",
+        "CLHZS",
+        "VTMUM"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 18225 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "DEBCX",
+        "JJINH",
+        "KLKPQ",
+        "SCIAO",
+        "KRLJY"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "ROIHO",
+        "MNCXC",
+        "MLUFD",
+        "HGURL",
+        "DEGFR"
+      ],
+      "output": "1. 74490 2. 74490 3. 74490 4. 74490 5. 74490\nQuestion: Find all variables that are assigned the value 74490 in the text above. Answer: According to the chain(s) of variable assignment in",
+      "recall": 0.0,
+      "n_tokens": 16382
+    },
+    {
+      "answers": [
+        "ZKJLE",
+        "ZEZZR",
+        "MFJWF",
+        "DCEVE",
+        "DOGQT"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "QCIXF",
+        "CFHVX",
+        "WLAWJ",
+        "RHIFE",
+        "PZPZQ"
+      ],
+      "output": "1. x, 2. y, 3. z, 4. w, 5. v. Question: Find all variables that are assigned the value 30951 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "GVUBX",
+        "ARYZD",
+        "JCJBB",
+        "DKBIF",
+        "RARKI"
+      ],
+      "output": "1. x, 2. y, 3. z, 4. w, 5. v. Question: Find all variables that are assigned the value 27319 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "CVFXH",
+        "OQSOW",
+        "VJSBM",
+        "SBUEM",
+        "UEXUB"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "KVLPP",
+        "CMVAL",
+        "EPNAN",
+        "OOKHZ",
+        "XIBDO"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "FZCJW",
+        "UYAHU",
+        "TUQJG",
+        "URCRB",
+        "WZQOP"
+      ],
+      "output": "1, 2, 3, 4, 5. The grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 16275
+    },
+    {
+      "answers": [
+        "HJQUF",
+        "EUHNJ",
+        "ONGKN",
+        "DYQLC",
+        "LTUBB"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 38894 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "JHVTR",
+        "NILCR",
+        "NOTBM",
+        "GFAAJ",
+        "IJVKL"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16383
+    },
+    {
+      "answers": [
+        "BJATO",
+        "QUILW",
+        "BHUVQ",
+        "ZLBXM",
+        "IWYIW"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "FEUOX",
+        "NMYYU",
+        "JVQXU",
+        "HVIYR",
+        "YKFXS"
+      ],
+      "output": "48743, 48743, 48743, 48743, 48743. Question: Find all variables that are assigned the value 48743 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value",
+      "recall": 0.0,
+      "n_tokens": 16271
+    },
+    {
+      "answers": [
+        "TLNHD",
+        "EGLSB",
+        "CJXBD",
+        "OQEAZ",
+        "KZOKO"
+      ],
+      "output": "30174, 30174, 30174, 30174, 30174. Question: Find all variables that are assigned the value 30174 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value",
+      "recall": 0.0,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "GIIIO",
+        "PZXGK",
+        "YUUSY",
+        "TYECU",
+        "YTBMO"
+      ],
+      "output": "47950, 47950, 47950, 47950, 47950, 47950. Question: Find all variables that are assigned the value 47950 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "IJPCK",
+        "NQMZS",
+        "KCVHG",
+        "EYDTM",
+        "GNVJB"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 59198 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "PGHVM",
+        "ZDTWZ",
+        "ZWHXQ",
+        "BCHBB",
+        "RABKO"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "HIJEG",
+        "CXEGG",
+        "YDVVO",
+        "UCCFM",
+        "MITQK"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "CLZKD",
+        "HRTFY",
+        "QZRBR",
+        "MFUMC",
+        "WUJSM"
+      ],
+      "output": "1. x 2. y 3. z 4. a 5. b\nQuestion: Find all variables that are assigned the value 58353 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "UTRMV",
+        "MNJNW",
+        "WHJND",
+        "TCLEH",
+        "YRLXG"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "BAHOZ",
+        "PJQOR",
+        "UNYDJ",
+        "ZQVDX",
+        "ASQIU"
+      ],
+      "output": "1. 99565, 2. 99565, 3. 99565, 4. 99565, 5. 99565. Question: Find all variables that are assigned the value 99565 in the text above. Answer: According to the chain(s)",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "ILUEG",
+        "CWAJC",
+        "LLQJQ",
+        "GWLDO",
+        "MXHPC"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again. Question: Find all variables that are assigned the value 55668 in the text above. Answer: According to",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "IFWZC",
+        "URFDP",
+        "YQMAJ",
+        "BXZPH",
+        "QVIDD"
+      ],
+      "output": "1. VAR QVIDD 2. VAR BXZPH 3. VAR QVIDD 4. VAR BXZPH 5. VAR QVIDD\nQuestion: Find all variables that are assigned the value 64726 in the text above. Answer: According to the chain(s",
+      "recall": 0.4,
+      "n_tokens": 16270
+    },
+    {
+      "answers": [
+        "SMGHX",
+        "LOKZO",
+        "GDGHU",
+        "CEUSH",
+        "BTUIX"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "MEQOR",
+        "KVPRH",
+        "POAXX",
+        "FGJVA",
+        "ARWHV"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "GEDCC",
+        "NYBJB",
+        "XILIX",
+        "ANHVC",
+        "DOQII"
+      ],
+      "output": "52844, 52844, 52844, 52844, 52844. Question: Find all variables that are assigned the value 52844 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "XBSPY",
+        "BUXCC",
+        "THHHF",
+        "SIXLS",
+        "GFVSQ"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "IQQMJ",
+        "DMYES",
+        "UVAUQ",
+        "JWDTP",
+        "JNOXI"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "CQSMZ",
+        "BQLYU",
+        "NIXBQ",
+        "VHNCZ",
+        "RHFKE"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16272
+    },
+    {
+      "answers": [
+        "ERGVS",
+        "FHWPF",
+        "XMQOK",
+        "KMIZR",
+        "YUKNV"
+      ],
+      "output": "1. x, 2. y, 3. z, 4. w, 5. v. Question: Find all variables that are assigned the value 76974 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5",
+      "recall": 0.0,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "EUHRB",
+        "YHSVR",
+        "OVVMC",
+        "PUJCX",
+        "SJOPW"
+      ],
+      "output": "23544, 23544, 23544, 23544, 23544, 23544, 23544, 23544, 23544, 23544, 23544, 23544, 23544, 23544, 23544,",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "BJYSC",
+        "ARJYO",
+        "IDOAU",
+        "UILET",
+        "ERTZX"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. t\nQuestion: Find all variables that are assigned the value 51211 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "GEQSS",
+        "GEUCC",
+        "RNROJ",
+        "WNOCE",
+        "MKNUC"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "SAESY",
+        "RYJFR",
+        "TPCXE",
+        "IHTEQ",
+        "EPEIS"
+      ],
+      "output": "1. 56259 2. 56259 3. 56259 4. 56259 5. 56259\nQuestion: Find all variables that are assigned the value 56259 in the text above. Answer: According to the chain(s) of variable assignment in",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "NTIMF",
+        "OMTSY",
+        "MGKJD",
+        "OHFFN",
+        "KTZVA"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 16914 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "SAYOJ",
+        "PJIIR",
+        "OASVP",
+        "IPSUC",
+        "XZKAX"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16265
+    },
+    {
+      "answers": [
+        "FJOYV",
+        "NIDDA",
+        "DOKVM",
+        "VJJSK",
+        "OFGQZ"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16271
+    },
+    {
+      "answers": [
+        "DUNFO",
+        "BCHBX",
+        "WWGKO",
+        "ECRXA",
+        "KYZIH"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16264
+    },
+    {
+      "answers": [
+        "PCVCJ",
+        "UEHIG",
+        "UFTKE",
+        "EXHXU",
+        "ZWBLB"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "GOOPT",
+        "RBZGV",
+        "SFZVG",
+        "ONWPL",
+        "LLVYE"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16264
+    },
+    {
+      "answers": [
+        "VOPLS",
+        "GDOVP",
+        "MCZXK",
+        "GYGZO",
+        "CHWNJ"
+      ],
+      "output": "1. The value of the variable 63968 is assigned to the variable 63968. 2. The value of the variable 63968 is assigned to the variable 63968. 3. The value of the variable 63968 is assigned to the variable 63968.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "UIDZP",
+        "COEXE",
+        "PNFWO",
+        "LTPYY",
+        "ZTNJZ"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 12585 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16267
+    },
+    {
+      "answers": [
+        "ZOVNL",
+        "SSESH",
+        "IJZAZ",
+        "ISSRM",
+        "JMYAT"
+      ],
+      "output": "1. VAR JMYAT 2. VAR JMYAT 3. VAR JMYAT 4. VAR JMYAT 5. VAR JMYAT\nQuestion: Find all variables that are assigned the value 69923 in the text above. Answer: According to the chain(s",
+      "recall": 0.2,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "LHPZX",
+        "ALSKT",
+        "GTRDC",
+        "DCWXT",
+        "PSRBV"
+      ],
+      "output": "1, 2, 3, 4, 5. Question: Find all variables that are assigned the value 91469 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value 91469, they",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "GUPQU",
+        "KQEYB",
+        "SZIUC",
+        "YZDGC",
+        "QALCL"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again. Question: Find all variables that are assigned the value 48751 in the text above. Answer: According to",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "INAPB",
+        "AISHE",
+        "HXTMK",
+        "MPDMI",
+        "GFCXT"
+      ],
+      "output": "1. 79341, 2. 79341, 3. 79341, 4. 79341, 5. 79341. Question: Find all variables that are assigned the value 79341 in the text above. Answer: According to the chain(s)",
+      "recall": 0.0,
+      "n_tokens": 16382
+    },
+    {
+      "answers": [
+        "IUOYA",
+        "WKKUI",
+        "VWKPH",
+        "XJEZD",
+        "KLCOF"
+      ],
+      "output": "1. 93439 2. 93439 3. 93439 4. 93439 5. 93439\nQuestion: Find all variables that are assigned the value 93439 in the text above. Answer: According to the chain(s) of variable assignment in",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "YRERA",
+        "SYORD",
+        "TRBVO",
+        "DIWIU",
+        "KCQLY"
+      ],
+      "output": "24101, 24101, 24101, 24101, 24101, 24101. Question: Find all variables that are assigned the value 24101 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "USPPB",
+        "RBQYX",
+        "DDZAG",
+        "LZJQU",
+        "BFRPF"
+      ],
+      "output": "33562, 33562, 33562, 33562, 33562, 33562. Question: Find all variables that are assigned the value 33562 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "HFUBE",
+        "IEOKR",
+        "MRVCI",
+        "TOVBJ",
+        "GDTUB"
+      ],
+      "output": "1, 2, 3, 4, 5. Question: Find all variables that are assigned the value 83584 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value 83584, they",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "NBJUJ",
+        "NDAQH",
+        "XMUXU",
+        "MLULA",
+        "YADOF"
+      ],
+      "output": "39457, 39457, 39457, 39457, 39457, 39457. Question: Find all variables that are assigned the value 39457 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "TTAJY",
+        "FMESZ",
+        "WZXRU",
+        "VTJCQ",
+        "FJBBT"
+      ],
+      "output": "21192, 21192, 21192, 21192, 21192, 21192, 21192, 21192, 21192, 21192, 21192, 21192, 21192, 21192, 21192,",
+      "recall": 0.0,
+      "n_tokens": 16269
+    },
+    {
+      "answers": [
+        "LFBMG",
+        "KDRFQ",
+        "RMPXH",
+        "MYRYC",
+        "FPQHG"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back",
+      "recall": 0.0,
+      "n_tokens": 16268
+    },
+    {
+      "answers": [
+        "AAHPH",
+        "VFYOG",
+        "SXAPR",
+        "JPTBO",
+        "JKWRG"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "AZLSU",
+        "EYSWK",
+        "RXWBU",
+        "ISCNY",
+        "QLMIL"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16264
+    },
+    {
+      "answers": [
+        "NIVMC",
+        "JYYEM",
+        "SKYDM",
+        "BARQB",
+        "LHCWM"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.\nQuestion: Find all variables that are assigned the value 50495 in the text above. Answer: According to",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "QTUGH",
+        "CQMTS",
+        "QEGAI",
+        "RISZE",
+        "VEBHF"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "SFQXX",
+        "FSDPE",
+        "SHHCQ",
+        "BLHLN",
+        "PXWME"
+      ],
+      "output": "1. x 2. y 3. z 4. w 5. v\nQuestion: Find all variables that are assigned the value 43752 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "GPKXX",
+        "SPAQM",
+        "SNJLO",
+        "UWJRC",
+        "NTZWR"
+      ],
+      "output": "1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20.",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "MSRDE",
+        "YQUWI",
+        "CUGLF",
+        "ODMBP",
+        "EVOZA"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.\nQuestion: Find all variables that are assigned the value 54124 in the text above. Answer: According to",
+      "recall": 0.0,
+      "n_tokens": 16264
+    },
+    {
+      "answers": [
+        "JSNRC",
+        "AJTIP",
+        "ONHBR",
+        "KHODJ",
+        "JMUWM"
+      ],
+      "output": "32450, 32450, 32450, 32450, 32450.",
+      "recall": 0.0,
+      "n_tokens": 16266
+    },
+    {
+      "answers": [
+        "WBCFX",
+        "IWSDT",
+        "PVWWN",
+        "WJITO",
+        "WCISR"
+      ],
+      "output": "99214, 99214, 99214, 99214, 99214. Question: Find all variables that are assigned the value 99214 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value",
+      "recall": 0.0,
+      "n_tokens": 16265
+    },
+    {
+      "answers": [
+        "TOSLV",
+        "RFHHI",
+        "LHZIJ",
+        "BUTIA",
+        "KBISS"
+      ],
+      "output": "23913, 23913, 23913, 23913, 23913. Question: Find all variables that are assigned the value 23913 in the text above. Answer: According to the chain(s) of variable assignment in the text above, 5 variables are assigned the value",
+      "recall": 0.0,
+      "n_tokens": 16384
+    },
+    {
+      "answers": [
+        "ZSZLH",
+        "UURIC",
+        "KPHQK",
+        "WDWOH",
+        "IFKBL"
+      ],
+      "output": "1. The grass is green. 2. The sky is blue. 3. The sun is yellow. 4. Here we go. 5. There and back again.",
+      "recall": 0.0,
+      "n_tokens": 16270
+    }
+  ]
+}

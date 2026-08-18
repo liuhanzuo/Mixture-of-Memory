@@ -1,0 +1,67 @@
+{
+  "task": "niah_single_2",
+  "length": "64k",
+  "summary": {
+    "score": 0.0,
+    "n": 7,
+    "approx_tokens": 65489
+  },
+  "records": [
+    {
+      "answers": [
+        "7428667"
+      ],
+      "output": ", the, the, the, the, the, the, the, the, the, the, the,.",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "answers": [
+        "1569719"
+      ],
+      "output": ", the, the, the, the, \u00c3, the, the, the, the, the, the, and, and, the, the, the, the, the, the, the, the,.",
+      "recall": 0.0,
+      "n_tokens": 65495
+    },
+    {
+      "answers": [
+        "5866851"
+      ],
+      "output": ", the, the, the, the, the, the, the, the, the, the, the,.",
+      "recall": 0.0,
+      "n_tokens": 65492
+    },
+    {
+      "answers": [
+        "5053331"
+      ],
+      "output": ", the, the, the, the, the, the,.",
+      "recall": 0.0,
+      "n_tokens": 65489
+    },
+    {
+      "answers": [
+        "4249562"
+      ],
+      "output": ", the, the, the.",
+      "recall": 0.0,
+      "n_tokens": 65489
+    },
+    {
+      "answers": [
+        "2806313"
+      ],
+      "output": ", the, the, the, the, the, the, the,.",
+      "recall": 0.0,
+      "n_tokens": 65486
+    },
+    {
+      "answers": [
+        "9659480"
+      ],
+      "output": ", the, the, the, the.",
+      "recall": 0.0,
+      "n_tokens": 65489
+    }
+  ]
+}

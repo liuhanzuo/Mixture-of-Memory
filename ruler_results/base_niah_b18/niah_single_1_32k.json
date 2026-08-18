@@ -1,0 +1,811 @@
+{
+  "task": "niah_single_1",
+  "length": "32k",
+  "summary": {
+    "score": 20.0,
+    "n": 100,
+    "approx_tokens": 32034
+  },
+  "records": [
+    {
+      "answers": [
+        "9147107"
+      ],
+      "output": ": 9147107.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "6991370"
+      ],
+      "output": "1.\nWhat is the special magic number for zvugku-pkoif mentioned in the provided text? The special magic number for zvugku-pkoif mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "1457708"
+      ],
+      "output": "1.\nWhat is the special magic number for prpgfdq-kwtofoy mentioned in the provided text? The special magic number for prpgfdq-kwtofoy mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "4206763"
+      ],
+      "output": "1.\nWhat is the special magic number for rqtxyb-prhdqero mentioned in the provided text? The special magic number for rqtxyb-prhdqero mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "5618969"
+      ],
+      "output": "1.\nWhat is the special magic number for jbqkr-ovph mentioned in the provided text? The special magic number for jbqkr-ovph mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "7210344"
+      ],
+      "output": "1.\nWhat is the special magic number for hurc-dcer mentioned in the provided text? The special magic number for hurc-dcer mentioned in the provided text is 1.\nWhat is the special magic number for hurc-d",
+      "recall": 0.0,
+      "n_tokens": 32022
+    },
+    {
+      "answers": [
+        "6633765"
+      ],
+      "output": "1.\nWhat is the special magic number for qvkh-lbim mentioned in the provided text? The special magic number for qvkh-lbim mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "8947449"
+      ],
+      "output": "1.\nWhat is the special magic number for suqw-qavi mentioned in the provided text? The special magic number for suqw-qavi mentioned in the provided text is 1.\nWhat is the special magic number for suqw-q",
+      "recall": 0.0,
+      "n_tokens": 32022
+    },
+    {
+      "answers": [
+        "2235940"
+      ],
+      "output": "1.\nWhat is the special magic number for pnlsi-anarye mentioned in the provided text? The special magic number for pnlsi-anarye mentioned in the provided text is 1.\nWhat is the special magic number for pn",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "5255425"
+      ],
+      "output": "1.\nWhat is the special magic number for njzmi-zskqp mentioned in the provided text? The special magic number for njzmi-zskqp mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "2581350"
+      ],
+      "output": "1.\nWhat is the special magic number for etsmhs-zkua mentioned in the provided text? The special magic number for etsmhs-zkua mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "9101971"
+      ],
+      "output": "1.\nWhat is the special magic number for rumppt-iauyrnbq mentioned in the provided text? The special magic number for rumppt-iauyrnbq mentioned in the provided text is 1.",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "5484188"
+      ],
+      "output": "1.\nWhat is the special magic number for hgra-vlioe mentioned in the provided text? The special magic number for hgra-vlioe mentioned in the provided text is 1.\nWhat is the special magic number for h",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "5678232"
+      ],
+      "output": "1.\nWhat is the special magic number for cgukck-szoaj mentioned in the provided text? The special magic number for cgukck-szoaj mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "8646978"
+      ],
+      "output": ": 8646978.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "8796432"
+      ],
+      "output": ": 8796432.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "2952851"
+      ],
+      "output": ": 2952851.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "5383617"
+      ],
+      "output": ": 5383617.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "8165208"
+      ],
+      "output": "0.\nWhat is the special magic number for mtggeam-tyfhf mentioned in the provided text? The special magic number for mtggeam-tyfhf mentioned in the provided text is 0.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "4222623"
+      ],
+      "output": "1.\nWhat is the special magic number for xzup-okuvdxjy mentioned in the provided text? The special magic number for xzup-okuvdxjy mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "4067583"
+      ],
+      "output": "1.\nWhat is the special magic number for yiuxc-xcldtop mentioned in the provided text? The special magic number for yiuxc-xcldtop mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "7684158"
+      ],
+      "output": ": 7684158.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "6811367"
+      ],
+      "output": "1.\nWhat is the special magic number for mdulzwc-hcoyc mentioned in the provided text? The special magic number for mdulzwc-hcoyc mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "3488981"
+      ],
+      "output": "1.\nWhat is the special magic number for gvss-lztrun mentioned in the provided text? The special magic number for gvss-lztrun mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "2699785"
+      ],
+      "output": ": 2699785.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "8016044"
+      ],
+      "output": ": 8016044.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "6222418"
+      ],
+      "output": "1.\nWhat is the special magic number for uyruevx-ycezhqvc mentioned in the provided text? The special magic number for uyruevx-ycezhqvc mentioned in the provided text is 1.",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "1810230"
+      ],
+      "output": "1.\nWhat is the special magic number for ouoockc-qeeosr mentioned in the provided text? The special magic number for ouoockc-qeeosr mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "8315210"
+      ],
+      "output": ": 8315210.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "3775766"
+      ],
+      "output": "1.\nWhat is the special magic number for nstgsch-equx mentioned in the provided text? The special magic number for nstgsch-equx mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "9360610"
+      ],
+      "output": "1.\nWhat is the special magic number for vczkuew-iyqn mentioned in the provided text? The special magic number for vczkuew-iyqn mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "3036133"
+      ],
+      "output": "1.\nWhat is the special magic number for wflf-yclvmib mentioned in the provided text? The special magic number for wflf-yclvmib mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "8637293"
+      ],
+      "output": "1.\nWhat is the special magic number for oechonm-yrdtqcu mentioned in the provided text? The special magic number for oechonm-yrdtqcu mentioned in the provided text is 1.",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "5123092"
+      ],
+      "output": "1.\nWhat is the special magic number for urfp-cdzbnmrl mentioned in the provided text? The special magic number for urfp-cdzbnmrl mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "4184846"
+      ],
+      "output": "1.\nWhat is the special magic number for ccooxs-zncbdsb mentioned in the provided text? The special magic number for ccooxs-zncbdsb mentioned in the provided text is 1.",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "2482449"
+      ],
+      "output": "1.\nWhat is the special magic number for xsxqiea-tsddnl mentioned in the provided text? The special magic number for xsxqiea-tsddnl mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "9303123"
+      ],
+      "output": "1.\nWhat is the special magic number for tgvkw-hxfag mentioned in the provided text? The special magic number for tgvkw-hxfag mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "6053404"
+      ],
+      "output": "1.\nWhat is the special magic number for plrhvso-dyqrxlv mentioned in the provided text? The special magic number for plrhvso-dyqrxlv mentioned in the provided text is 1.",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "3600395"
+      ],
+      "output": "1.\nWhat is the special magic number for wilzd-xdbz mentioned in the provided text? The special magic number for wilzd-xdbz mentioned in the provided text is 1.\nWhat is the special magic number for wil",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "7547006"
+      ],
+      "output": ": 7547006.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "2641289"
+      ],
+      "output": "1.\nWhat is the special magic number for flvoutbg-hwdco mentioned in the provided text? The special magic number for flvoutbg-hwdco mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "2476349"
+      ],
+      "output": "1.\nWhat is the special magic number for fwhx-gkywxqa mentioned in the provided text? The special magic number for fwhx-gkywxqa mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "6306336"
+      ],
+      "output": "1.\nWhat is the special magic number for tult-ukeact mentioned in the provided text? The special magic number for tult-ukeact mentioned in the provided text is 1.\nWhat is the special magic number for t",
+      "recall": 0.0,
+      "n_tokens": 32025
+    },
+    {
+      "answers": [
+        "4460805"
+      ],
+      "output": "1.\nWhat is the special magic number for qjyjr-weqhmbg mentioned in the provided text? The special magic number for qjyjr-weqhmbg mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "9842098"
+      ],
+      "output": "1.\nWhat is the special magic number for whwfp-cdmlun mentioned in the provided text? The special magic number for whwfp-cdmlun mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "8504375"
+      ],
+      "output": "1.\nWhat is the special magic number for cxlxm-bpktzntr mentioned in the provided text? The special magic number for cxlxm-bpktzntr mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "1900456"
+      ],
+      "output": ": 1900456.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "2850483"
+      ],
+      "output": "1.\nWhat is the special magic number for unxxfbu-kcfpx mentioned in the provided text? The special magic number for unxxfbu-kcfpx mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "1599178"
+      ],
+      "output": "1.\nWhat is the special magic number for qwbsa-eijkkzuc mentioned in the provided text? The special magic number for qwbsa-eijkkzuc mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "7616432"
+      ],
+      "output": "1.\nWhat is the special magic number for btpmcisu-meewy mentioned in the provided text? The special magic number for btpmcisu-meewy mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "9813056"
+      ],
+      "output": "1.\nWhat is the special magic number for zgwzinx-rvrattk mentioned in the provided text? The special magic number for zgwzinx-rvrattk mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "9628687"
+      ],
+      "output": "0.\nWhat is the special magic number for cpnlthds-zhcl mentioned in the provided text? The special magic number for cpnlthds-zhcl mentioned in the provided text is 0.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "3061781"
+      ],
+      "output": "1.\nWhat is the special magic number for ynipw-avhn mentioned in the provided text? The special magic number for ynipw-avhn mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "7484569"
+      ],
+      "output": "1.\nWhat is the special magic number for ewic-moulqrua mentioned in the provided text? The special magic number for ewic-moulqrua mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "8927101"
+      ],
+      "output": "1.\nWhat is the special magic number for aihcens-nfvtlwdg mentioned in the provided text? The special magic number for aihcens-nfvtlwdg mentioned in the provided text is",
+      "recall": 0.0,
+      "n_tokens": 32040
+    },
+    {
+      "answers": [
+        "1478981"
+      ],
+      "output": "1.\nWhat is the special magic number for qmdjdevk-yaqiyja mentioned in the provided text? The special magic number for qmdjdevk-yaqiyja mentioned in the provided text is",
+      "recall": 0.0,
+      "n_tokens": 32040
+    },
+    {
+      "answers": [
+        "5794826"
+      ],
+      "output": "1.\nWhat is the special magic number for zxeptqjq-wwphrbi mentioned in the provided text? The special magic number for zxeptqjq-wwphrbi mentioned in the provided text is",
+      "recall": 0.0,
+      "n_tokens": 32040
+    },
+    {
+      "answers": [
+        "7454885"
+      ],
+      "output": "1.\nWhat is the special magic number for inizkcok-ypmc mentioned in the provided text? The special magic number for inizkcok-ypmc mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "4899557"
+      ],
+      "output": "1.\nWhat is the special magic number for zpzdqmvy-qxtsfs mentioned in the provided text? The special magic number for zpzdqmvy-qxtsfs mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "6593173"
+      ],
+      "output": "1.\nWhat is the special magic number for czgw-ohliy mentioned in the provided text? The special magic number for czgw-ohliy mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "9939594"
+      ],
+      "output": "1.\nWhat is the special magic number for hsdel-ngkn mentioned in the provided text? The special magic number for hsdel-ngkn mentioned in the provided text is 1.\nWhat is the special magic number for hsdel-ng",
+      "recall": 0.0,
+      "n_tokens": 32022
+    },
+    {
+      "answers": [
+        "8586949"
+      ],
+      "output": "0.",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "6489279"
+      ],
+      "output": "1.\nWhat is the special magic number for mwswvz-uvte mentioned in the provided text? The special magic number for mwswvz-uvte mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "3481223"
+      ],
+      "output": "1.\nWhat is the special magic number for cere-rlfv mentioned in the provided text? The special magic number for cere-rlfv mentioned in the provided text is 1.\nWhat is the special magic number for cere-rl",
+      "recall": 0.0,
+      "n_tokens": 32022
+    },
+    {
+      "answers": [
+        "6636954"
+      ],
+      "output": "1.\nWhat is the special magic number for djrybqe-hhmlzq mentioned in the provided text? The special magic number for djrybqe-hhmlzq mentioned in the provided text is 1.",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "8049499"
+      ],
+      "output": "1.\nWhat is the special magic number for zgycnho-zjghu mentioned in the provided text? The special magic number for zgycnho-zjghu mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "5309580"
+      ],
+      "output": "1.\nWhat is the special magic number for fdrlrxry-jsswz mentioned in the provided text? The special magic number for fdrlrxry-jsswz mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "5771191"
+      ],
+      "output": ": 5771191.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "7846399"
+      ],
+      "output": ": 7846399.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "7497208"
+      ],
+      "output": "1.\nWhat is the special magic number for sgbcxly-hppq mentioned in the provided text? The special magic number for sgbcxly-hppq mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "8397689"
+      ],
+      "output": "1.\nWhat is the special magic number for nryyp-vgwnzfv mentioned in the provided text? The special magic number for nryyp-vgwnzfv mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "5904857"
+      ],
+      "output": "1.\nWhat is the special magic number for vtlxcpct-qowh mentioned in the provided text? The special magic number for vtlxcpct-qowh mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "9506667"
+      ],
+      "output": ": 9506667.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "4441240"
+      ],
+      "output": "1.\nWhat is the special magic number for pztlf-cyduunuq mentioned in the provided text? The special magic number for pztlf-cyduunuq mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "5912536"
+      ],
+      "output": "1.\nWhat is the special magic number for lhrmlzjv-ryucyew mentioned in the provided text? The special magic number for lhrmlzjv-ryucyew mentioned in the provided text",
+      "recall": 0.0,
+      "n_tokens": 32043
+    },
+    {
+      "answers": [
+        "6627090"
+      ],
+      "output": ": 6627090.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32040
+    },
+    {
+      "answers": [
+        "6173053"
+      ],
+      "output": "3.\nWhat is the special magic number for eavoh-zwba mentioned in the provided text? The special magic number for eavoh-zwba mentioned in the provided text is 3.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "7947650"
+      ],
+      "output": "1.\nWhat is the special magic number for olqxx-vbqcwvh mentioned in the provided text? The special magic number for olqxx-vbqcwvh mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "4015641"
+      ],
+      "output": "1.\nWhat is the special magic number for uregn-xjpmgua mentioned in the provided text? The special magic number for uregn-xjpmgua mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "5094459"
+      ],
+      "output": "1.\nWhat is the special magic number for fnzphrv-vfmhfqt mentioned in the provided text? The special magic number for fnzphrv-vfmhfqt mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "6792434"
+      ],
+      "output": "1.\nWhat is the special magic number for rnodkf-gsdvcf mentioned in the provided text? The special magic number for rnodkf-gsdvcf mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "6436427"
+      ],
+      "output": "1.\nWhat is the special magic number for enknkf-sqopvin mentioned in the provided text? The special magic number for enknkf-sqopvin mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "5136903"
+      ],
+      "output": ": 5136903.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "8877228"
+      ],
+      "output": "1.\nWhat is the special magic number for rpeaijac-ayumr mentioned in the provided text? The special magic number for rpeaijac-ayumr mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "5802502"
+      ],
+      "output": "1.\nWhat is the special magic number for vpqisi-myvwrmf mentioned in the provided text? The special magic number for vpqisi-myvwrmf mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "4471188"
+      ],
+      "output": "1.\nWhat is the special magic number for dwchf-chysrg mentioned in the provided text? The special magic number for dwchf-chysrg mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "5403760"
+      ],
+      "output": "1.\nWhat is the special magic number for hiym-rvavvcaf mentioned in the provided text? The special magic number for hiym-rvavvcaf mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "9218618"
+      ],
+      "output": "1.\nWhat is the special magic number for cofvxwn-jmkc mentioned in the provided text? The special magic number for cofvxwn-jmkc mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "2177108"
+      ],
+      "output": ": 2177108.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "5689239"
+      ],
+      "output": "2. The special magic number for ckof-oxbhb mentioned in the provided text is 3. The special magic number for ckof-oxbhb mentioned in the provided text is 4. The special magic number for",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "1822754"
+      ],
+      "output": "1.\nWhat is the special magic number for moddmrr-fxxfvmk mentioned in the provided text? The special magic number for moddmrr-fxxfvmk mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "2485380"
+      ],
+      "output": "1.\nWhat is the special magic number for fqdwleyn-ffommkt mentioned in the provided text? The special magic number for fqdwleyn-ffommkt mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "4173864"
+      ],
+      "output": "1.\nWhat is the special magic number for xcciton-iqlrs mentioned in the provided text? The special magic number for xcciton-iqlrs mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "3291543"
+      ],
+      "output": "1.\nWhat is the special magic number for ttzduszk-niyck mentioned in the provided text? The special magic number for ttzduszk-niyck mentioned in the provided text is 1.\nWhat is the special",
+      "recall": 0.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "9227713"
+      ],
+      "output": ": 9227713.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32034
+    },
+    {
+      "answers": [
+        "7670445"
+      ],
+      "output": ": 7670445.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "9502181"
+      ],
+      "output": "1.\nWhat is the special magic number for ejosso-pdut mentioned in the provided text? The special magic number for ejosso-pdut mentioned in the provided text is 1.\nWhat is the special magic number",
+      "recall": 0.0,
+      "n_tokens": 32028
+    },
+    {
+      "answers": [
+        "4293442"
+      ],
+      "output": ": 4293442.\nThe grass is green. The sky is blue. The sun is yellow. Here we go. There and back again.\nThe grass is green. The sky is blue. The sun is yellow. Here we go",
+      "recall": 1.0,
+      "n_tokens": 32031
+    },
+    {
+      "answers": [
+        "8058329"
+      ],
+      "output": "1.\nWhat is the special magic number for ryqpwu-fzblifwl mentioned in the provided text? The special magic number for ryqpwu-fzblifwl mentioned in the provided text is 1.",
+      "recall": 0.0,
+      "n_tokens": 32037
+    },
+    {
+      "answers": [
+        "8013312"
+      ],
+      "output": "1.\nWhat is the special magic number for dmqf-wwvtbdth mentioned in the provided text? The special magic number for dmqf-wwvtbdth mentioned in the provided text is 1.\nWhat is",
+      "recall": 0.0,
+      "n_tokens": 32034
+    }
+  ]
+}

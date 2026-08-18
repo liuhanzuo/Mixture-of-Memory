@@ -1,0 +1,52 @@
+{
+  "model_path": "models/Qwen3-8b-local",
+  "lengths": [
+    "8k",
+    "16k",
+    "32k",
+    "64k",
+    "128k"
+  ],
+  "limit": 50,
+  "max_new_tokens": 48,
+  "seed": 1234,
+  "output_dir": "longeval_results/infllm_8b_chatFALSE",
+  "num_shards": 8,
+  "shard_index": 1,
+  "device": "cuda:0",
+  "dtype": "bfloat16",
+  "use_chat_template": false,
+  "enable_thinking": false,
+  "score_only": false,
+  "n_local": null,
+  "topk": null,
+  "block_size": null,
+  "n_init": null,
+  "chunk_size": null,
+  "resolved_model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/models/Qwen3-8b-local",
+  "num_layers": 36,
+  "baseline": "infllm",
+  "infllm_mem_config": {
+    "type": "inf-llm",
+    "block_size": 128,
+    "n_init": 128,
+    "n_local": 4096,
+    "topk": 16,
+    "repr_topk": 4,
+    "max_cached_block": 32,
+    "exc_block_size": 512,
+    "fattn": false,
+    "cache_strategy": "lru",
+    "async_global_stream": false,
+    "pin_memory": false,
+    "faiss": false,
+    "perhead": false,
+    "distance_scale": 1.0,
+    "chunk_size": 8192,
+    "base": 1000000.0
+  },
+  "runtime": {
+    "node": "TENCENT64.site",
+    "cuda_visible_devices": "1"
+  }
+}

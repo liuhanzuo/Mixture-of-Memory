@@ -1,0 +1,265 @@
+target,output,question
+kitchen,"Answer, the the the the the the to the to the to the the take the take the take",Where is the football? 
+garden,"(201, the",Where is the milk? 
+bedroom,"Answer, to the to the to the to the to be, to be, and the to be",Where is the apple? 
+bedroom,Answer............,Where is the apple? 
+kitchen,"Answer, the the the the the the the the the take the take the take the take the take",Where is the apple? 
+hallway,"Answer, the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The",Where is the apple? 
+kitchen,(2016. The the,Where is the milk? 
+garden,Answer. The the the the the the the the the the the the the the the the the the,Where is the milk? 
+bedroom,"Answer, the the the the the the the the the take the take the take the take the take",Where is the milk? 
+bathroom,Answer. The the. The the the the the take the take the take the take the take the,Where is the milk? 
+bathroom,"Answer, the the the the the the the the the the take the take the take the take the",Where is the football? 
+bedroom,"Answer, the the the the the the the the the the the the take the take the take the",Where is the milk? 
+bathroom,"Answer, the",Where is the apple? 
+kitchen,"Answer, the
+
+The the
+
+The the the the the the the take the take the take the",Where is the football? 
+bedroom,Where the to the to the to the take the take the take the take the take the take the,Where is the apple? 
+garden,"(201, the the the the the the the the the to the take the the to be the",Where is the apple? 
+bedroom,"Answer, the the the the the the the the the the the the the the the the the take",Where is the football? 
+bedroom,"Answer, the the the the the the the the the the the the the the the",Where is the apple? 
+garden,"Answer, the",Where is the milk? 
+garden,"Answer, the to the take the take the take the take the take the take the take the take",Where is the milk? 
+office,Answer. The the to the the the the the the the the take the the take the take the,Where is the apple? 
+bedroom,Answer of the the the the the the the the the the the the the the the the the the,Where is the milk? 
+garden,(201. The the the the the the the the the the the the the the the take the,Where is the milk? 
+bathroom,Answer,Where is the milk? 
+office,"Answer, the",Where is the apple? 
+garden,"Answer, the the the the the the the the the the the the the the the the the the",Where is the football? 
+garden,"Answer, the the the the the the the the the take the take the take the take the take",Where is the football? 
+bedroom,"Answer, the to the the the the take the take the take the take the take the take the",Where is the apple? 
+hallway,"Answer, the",Where is the apple? 
+hallway,"(2016, and the the the the the the the the the take the take the take the",Where is the apple? 
+hallway,"(200, the the the the the the the the the the the the the the the the the",Where is the apple? 
+garden,"Answer, the
+
+
+
+
+
+The the
+
+The the
+
+The the take the take the take the",Where is the football? 
+hallway,"Answer. The the
+
+The the the the the the the the the the the the the the the",Where is the apple? 
+kitchen,"Answer. The the the the the........, the",Where is the football? 
+hallway,"Answer, the to the to the to the to the to the to the to the to the to",Where is the milk? 
+kitchen,Answer of the to the to the take the take the take the take the take the take the take,Where is the apple? 
+office,Where the to the to the the to the to the take the take the take the take the take,Where is the milk? 
+hallway,"Answer, the the the the the the the the the the take the take the take the take the",Where is the milk? 
+bathroom,"Answer, the
+
+
+
+
+
+
+
+
+
+The take, and the take, and the take the take",Where is the milk? 
+bathroom,"Answer, the the the the the the the the the the the the the the the the the the",Where is the milk? 
+bathroom,"(200, the the the the the the the the the take the take the take the take the",Where is the football? 
+hallway,"(2016, the to the, and the take the take the take the take the take the",Where is the football? 
+garden,"Answer, the",Where is the apple? 
+bedroom,"Answer, the
+
+The the to the
+
+The the take the take the take the take the take",Where is the apple? 
+kitchen,"Answer, the to the to the take the take the take the take the take the take the take",Where is the milk? 
+bedroom,"Answer, the the the the the the the the the the the the the the take the take the",Where is the milk? 
+hallway,"Answer, the the the the the the the the the the the the the the the the the the",Where is the apple? 
+garden,Where the to the to the to the to the to the to the take the take the take the,Where is the milk? 
+kitchen,"Where the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and the",Where is the football? 
+bathroom,Answer of the to the to the to the to the to the to the the the the to the,Where is the football? 
+garden,"Answer, the the the the the the the the the the the the the the take the take the",Where is the milk? 
+bedroom,What is the the the the the the the the the the the the the to the to the to,Where is the apple? 
+hallway,"Answer, the the the the the the the the the the the the the the the the the the",Where is the milk? 
+hallway,"Answer, the to the to the to the to the take the take the take the take the take",Where is the milk? 
+office,"Answer, the to the to the to the the to the the the the take the take the take",Where is the milk? 
+kitchen,"Answer, the to the to the to the take the take the take the take the take the take",Where is the apple? 
+bathroom,"Answer, the to the to the to be, to be the to be the to be the to",Where is the milk? 
+bathroom,"Answer, the to the to the to the to be the to be the to be the take the",Where is the milk? 
+office,"Answer, the the the the the the the the the the the take the take the take the take",Where is the football? 
+garden,Answer to the,Where is the football? 
+kitchen,"Answer, the the the the to the to the to be, and the take the take the take",Where is the apple? 
+bathroom,Answer to the to the to the to the to the take the take the take the take the take,Where is the apple? 
+garden,"Answer, to the to the to the take the take the take the take the take the take the",Where is the football? 
+bathroom,"What is the to the to be, and the the the the take the take the take the take",Where is the milk? 
+bathroom,Where the the the the to the take the take the take the take the take the take the take,Where is the milk? 
+hallway,"Answer, the the to the to the take the take the take the take the take the take the",Where is the milk? 
+bedroom,"Answer, the the the the the the the the the the the take the take the take the take",Where is the football? 
+garden,"Answer, the the the the the the the the the the the the the the the the take the",Where is the football? 
+bedroom,"Answer, to the to the to the to the to be, the to be the to be the",Where is the football? 
+bathroom,"Answer, the the the the the the the the the the the the the the the the the the",Where is the apple? 
+garden,"(1, to the to the to the to the to the the the to the take the the",Where is the milk? 
+office,Answer. The the the the the the the the the the the the the take the take the take,Where is the milk? 
+office,Answer. The the the the the the the take the take the take the take the take the take,Where is the football? 
+hallway,"Daniel, the the, the the the the the the the the the the the take the take the",Where is the football? 
+garden,Answer of the,Where is the football? 
+office,"(2015, the the the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+The the",Where is the milk? 
+kitchen,"Answer, the the the the take the take the take the take the take the take the take the",Where is the football? 
+office,"Answer, the the the the the the the the the the the the the the the the the the",Where is the milk? 
+kitchen,"Answer, the the the the the the the the the the the the the the take the take the",Where is the apple? 
+kitchen,Answer of the to the to the to the the the to the the the the the the the take,Where is the football? 
+office,"Answer, the",Where is the football? 
+kitchen,"Answer, the",Where is the apple? 
+office,"Answer, the the the the the the the the the the take the take the take the take the",Where is the apple? 
+bathroom,"Answer, the the the the the the the the the the the the the the the the the the",Where is the football? 
+bathroom,Answer. The the,Where is the football? 
+office,"Answer, the the the the the the the the the the the the the the the the the the",Where is the milk? 
+bathroom,"Answer, the the the the the the the the the the the the the the take the take the",Where is the apple? 
+bedroom,Answer the the to the to the to the take the take the take the take the take the take,Where is the milk? 
+hallway,"(2016, the the the the the take the take the take the take the take the take",Where is the apple? 
+bedroom,Answer. The the the. The the the the the take the take the take the take the take,Where is the milk? 
+bedroom,"Where to the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and the take the",Where is the apple? 
+bathroom,"Answer, the
+
+The the the the
+
+The the the the the the the the the the the",Where is the football? 
+bedroom,Answer. The the the the the the the the the the the the the the take the,Where is the football? 
+bedroom,Answer of the the the,Where is the football? 
+bedroom,(201. The take the take the take the take the take the take the take the take the,Where is the apple? 
+kitchen,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and the
+
+import and the take the take the",Where is the football? 
+garden,Answer. The the to the the the the the the the the the take the take the the the,Where is the milk? 
+office,"Answer, the the the the the the the the the the take the the take the take the take",Where is the milk? 
+bedroom,"Daniel, the
+
+
+
+The the the the the the the the the the the the the the the",Where is the milk? 
+kitchen,"Answer, the to the to be the to be the to be the to be the to be the",Where is the apple? 

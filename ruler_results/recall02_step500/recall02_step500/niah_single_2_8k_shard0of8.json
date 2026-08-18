@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "8k",
+  "summary": {
+    "score": 16.67,
+    "n": 6,
+    "approx_tokens": 8072
+  },
+  "records": [
+    {
+      "answers": [
+        "7144013"
+      ],
+      "output": ": 714. What is the special magic number for aelflz-xitwvevu mentioned in the provided text? The special magic number for aelflz-xitwvevu mentioned in the provided text is: 714.",
+      "recall": 0.0,
+      "n_tokens": 8072
+    },
+    {
+      "answers": [
+        "5411975"
+      ],
+      "output": ": 5415. What is the special magic number for kkwblbel-wblbel mentioned in the provided text? The special magic number for kkwblbel-wblbel mentioned in the provided text is: 5415.",
+      "recall": 0.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "7087709"
+      ],
+      "output": ": 708. What is the special magic number for yzrnpa-hqxdn mentioned in the provided text? The special magic number for yzrnpa-hqxdn mentioned in the provided text is:",
+      "recall": 0.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "4176495"
+      ],
+      "output": ": 417. 417. 417. 417. 417. 417. 417. 417. 417. 417. 417. 417. 417. 417. 417. 417",
+      "recall": 0.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "9250026"
+      ],
+      "output": ": 9250026. 10:6 And these are the generations of the sons of Ham, Canaan, the younger son, and his brethren. 10:7 And these are the generations of Canaan, the sons of",
+      "recall": 1.0,
+      "n_tokens": 8075
+    },
+    {
+      "answers": [
+        "7243275"
+      ],
+      "output": "724. 10:6 And these are the generations of the sons of Ham, Canaan, and the inhabitants of Canaan, and also the dispersed of the Canaanites abroad. 10:7 And these are the generations",
+      "recall": 0.0,
+      "n_tokens": 8072
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "status": "completed",
+  "task": "niah_single_3",
+  "length": "128k",
+  "n_requested": 100,
+  "sharding": {
+    "num_shards": 8,
+    "shard_index": 1
+  },
+  "summary": {
+    "score": 7.69,
+    "n": 13,
+    "approx_tokens": 130697
+  },
+  "score": 7.69,
+  "oom_count": 0,
+  "elapsed_seconds": 1076.94,
+  "runtime": {
+    "node": "TENCENT64.site",
+    "cuda_visible_devices": "0",
+    "device": "cuda:0",
+    "seed": 42,
+    "dtype": "bfloat16",
+    "attn_implementation": "eager"
+  },
+  "chat_template": false,
+  "enable_thinking": false,
+  "scoring": "scripts.eval_ruler_mem_space._string_match_all_one",
+  "baseline": "infllm",
+  "infllm": {
+    "mem_config": {
+      "type": "inf-llm",
+      "block_size": 128,
+      "n_init": 128,
+      "n_local": 4096,
+      "topk": 16,
+      "repr_topk": 4,
+      "max_cached_block": 32,
+      "exc_block_size": 512,
+      "fattn": false,
+      "cache_strategy": "lru",
+      "async_global_stream": false,
+      "pin_memory": false,
+      "faiss": false,
+      "perhead": false,
+      "distance_scale": 1.0,
+      "chunk_size": 8192,
+      "base": 1000000.0
+    },
+    "num_layers": 36
+  },
+  "model": {
+    "model_path": "models/Qwen3-8b-local",
+    "num_hidden_layers": 36
+  }
+}

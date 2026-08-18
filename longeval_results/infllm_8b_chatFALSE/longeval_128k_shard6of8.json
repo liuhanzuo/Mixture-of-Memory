@@ -1,0 +1,77 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 131519
+  },
+  "records": [
+    {
+      "sample_index": 6,
+      "label": "bfhqik-dpcvznkat",
+      "expected": "588801",
+      "output": "not present in the provided record. I have memorized the <REGISTER_CONTENT> values for the lines listed, but the line with the identifier \"bfhqik-dpcvznkat\" is not among them. Please check the line identifier",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131603,
+      "read_len": null
+    },
+    {
+      "sample_index": 14,
+      "label": "epfnjbrhv-bxwgj",
+      "expected": "375775",
+      "output": "<527980>.\nOkay, let me try to figure out how to answer this. The user provided a long list of lines, each with a unique identifier and a REGISTER_CONTENT value. They asked for the REGISTER_CONTENT of",
+      "pred": "527980",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131139,
+      "read_len": null
+    },
+    {
+      "sample_index": 22,
+      "label": "kxxrtasfr-yzkpyla",
+      "expected": "844485",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"kxxrtasfr-yzkpyla\". Please check the line index and try again. The available line indices are the ones listed in the record",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131451,
+      "read_len": null
+    },
+    {
+      "sample_index": 30,
+      "label": "racjibew-gcjjkuo",
+      "expected": "542399",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"racjibew-gcjjkuo\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131401,
+      "read_len": null
+    },
+    {
+      "sample_index": 38,
+      "label": "ljthbuk-dxqmkbnra",
+      "expected": "304253",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"ljthbuk-dxqmkbnra\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> for this line index. Please verify the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131467,
+      "read_len": null
+    },
+    {
+      "sample_index": 46,
+      "label": "bpxlhqjkg-xpbmti",
+      "expected": "267334",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"bpxlhqjkg-xpbmti\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131519,
+      "read_len": null
+    }
+  ]
+}

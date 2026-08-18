@@ -1,0 +1,67 @@
+{
+  "task": "niah_single_2",
+  "length": "16k",
+  "summary": {
+    "score": 100.0,
+    "n": 7,
+    "approx_tokens": 15387
+  },
+  "records": [
+    {
+      "answers": [
+        "6732428"
+      ],
+      "output": "6732428.\nThe special magic number for oiim-lchr mentioned in the provided text is 6732428.\nThe special magic number for oiim-lchr mentioned in the provided text is",
+      "recall": 1.0,
+      "n_tokens": 15375
+    },
+    {
+      "answers": [
+        "2220689"
+      ],
+      "output": "2220689.\nThe special magic number for mfql-bzfzzt mentioned in the provided text is 2220689.\nOkay, let me try to figure out how to find the special",
+      "recall": 1.0,
+      "n_tokens": 15381
+    },
+    {
+      "answers": [
+        "3714448"
+      ],
+      "output": "3714448.\nThe special magic number for yjepvhl-zpdjsqac mentioned in the provided text is 3714448.\nThe special magic number for yjepv",
+      "recall": 1.0,
+      "n_tokens": 15393
+    },
+    {
+      "answers": [
+        "4308894"
+      ],
+      "output": "4308894.\nThe special magic number for lcocof-epxhcejv mentioned in the provided text is 4308894.\nThe special magic number for lcocof-ep",
+      "recall": 1.0,
+      "n_tokens": 15390
+    },
+    {
+      "answers": [
+        "4594609"
+      ],
+      "output": "4594609.\nThe special magic number for hvixwuiu-fkgulev mentioned in the provided text is 4594609.\nThe special magic number for hvixwuiu",
+      "recall": 1.0,
+      "n_tokens": 15390
+    },
+    {
+      "answers": [
+        "3570114"
+      ],
+      "output": "3570114.\nThe special magic number for vuzncbst-qdbu mentioned in the provided text is 3570114.\nThe special magic number for vuzncbst-qdbu",
+      "recall": 1.0,
+      "n_tokens": 15384
+    },
+    {
+      "answers": [
+        "9965072"
+      ],
+      "output": "9965072. This number is explicitly stated in the text as one of the special magic numbers. The text is a passage from the King James Version of the Bible, specifically from Genesis 17:11",
+      "recall": 1.0,
+      "n_tokens": 15387
+    }
+  ]
+}

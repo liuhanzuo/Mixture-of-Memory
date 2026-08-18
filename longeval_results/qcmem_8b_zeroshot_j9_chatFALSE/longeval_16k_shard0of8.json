@@ -1,0 +1,104 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 7,
+    "approx_tokens": 16529,
+    "avg_read_len": 6306.9,
+    "last_read_len": 6290
+  },
+  "records": [
+    {
+      "sample_index": 0,
+      "label": "jbzfu-zdaqlcbif",
+      "expected": "153333",
+      "output": "<...> and I need to find the value. Let me check the list again.\n\nLooking through the provided data, I see that the line \"line jbzfu-zdaqlcbif\" is not listed. However, there is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16542,
+      "read_len": 6303,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 8,
+      "label": "ogkrizr-pagmz",
+      "expected": "135550",
+      "output": "<...> and I need to find the number inside the <...> and give me the number only.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"ogkrizr-p",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16610,
+      "read_len": 6371,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 16,
+      "label": "ldikcp-cqiybo",
+      "expected": "980874",
+      "output": "<186834>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line \"ldikcp-cqiybo\". Let me go through the list again to make sure I don't",
+      "pred": "186834",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16569,
+      "read_len": 6330,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 24,
+      "label": "enotbfnqg-kqexdvxj",
+      "expected": "230978",
+      "output": "<783123>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"enotbfnqg-kqexdvxj\". Let me go through the",
+      "pred": "783123",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16607,
+      "read_len": 6368,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 32,
+      "label": "xkpwm-bikqx",
+      "expected": "213961",
+      "output": "<946455>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line xkpwm-bikqx\". Let me go through each line one by one.",
+      "pred": "946455",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16451,
+      "read_len": 6212,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 40,
+      "label": "rpsnnuyet-yzmgvz",
+      "expected": "830869",
+      "output": "<530854>\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"rpsnnuyet-yzmgvz\". Let me go through the list again",
+      "pred": "530854",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16513,
+      "read_len": 6274,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 48,
+      "label": "tptuxc-unmiogclf",
+      "expected": "326640",
+      "output": "<759815>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. Let me go through each line one by one:\n\n1. line tpt",
+      "pred": "759815",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16529,
+      "read_len": 6290,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "model_path": "models/Meta-Llama-3-8B",
+  "checkpoint": "outputs/expL2ON_N128/mem_space_adapter_step000500.pt",
+  "adapter_config": "outputs/expL2ON_N128/adapter_config.json",
+  "output_dir": "longbench_results/L2ON_W6",
+  "hf_dataset": "THUDM/LongBench",
+  "datasets": null,
+  "base_mode": false,
+  "chunk_size": 512,
+  "swa_eval_chunks": 6,
+  "gpu_id": 3,
+  "num_gpus": 4,
+  "dtype": "bfloat16",
+  "attn_impl": "sdpa",
+  "use_chat_template": true,
+  "no_chat_template": false,
+  "score_only": false,
+  "max_samples": -1
+}

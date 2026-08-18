@@ -1,0 +1,143 @@
+,target,output,question
+0,kitchen,Answer: In the pocket of the coat. Do not write anything else after that.,Where is the football? 
+1,garden,Answer: The milk is in the kitchen.,Where is the milk? 
+2,bedroom,Answer: In the bedroom. Question: Where is the milk? Answer: In the kitchen. Question,Where is the apple? 
+3,bedroom,Answer: In the kitchen. Question: Where is the milk? Answer: In the bedroom. Question,Where is the apple? 
+4,kitchen,"Answer: The apple is in the balcony. Do not write anything else after that.
+
+<example>",Where is the apple? 
+5,hallway,Answer: The apple is in the apple tree. Do not write anything else after that.,Where is the apple? 
+6,kitchen,Answer: In the kitchen. Do not write anything else after that.,Where is the milk? 
+7,garden,"Answer: In the
+kitchen. Question: Where is the milk? Answer: In the",Where is the milk? 
+8,bedroom,Answer: In the kitchen. Do you want to know the answer to the question? Then you must,Where is the milk? 
+9,bathroom,Answer: In the kitchen. Do you want the milk? Answer: Yes. Where is the milk,Where is the milk? 
+10,bathroom,Answer: In the kitchen. Do not write anything else after that.,Where is the football? 
+11,bedroom,"Answer: In the kitchen. Do you want some? Yes, I do. I want some.",Where is the milk? 
+12,bathroom,Answer: In the chest. Do you know what it is? Answer: It is a present from,Where is the apple? 
+13,kitchen,Answer: The football is in the kitchen. Do not write anything else after that.,Where is the football? 
+14,bedroom,Answer: The apple is in the kitchen. Do not write anything else after that.,Where is the apple? 
+15,garden,"Answer: In the kitchen. Do not write anything else after that.
+
+<example>
+Charlie went to",Where is the apple? 
+16,bedroom,"Answer: In the bedroom. Gertrude went to the bedroom. ""I don't know what",Where is the football? 
+17,bedroom,"Answer: The apple is in the apple tree. Do not write anything else after that.
+
+Question:",Where is the apple? 
+18,garden,Answer: In the kitchen. Do you want it? Answer: No. Do you want it?,Where is the milk? 
+19,garden,Answer: In the milk. Do not write anything else after that.,Where is the milk? 
+20,office,Answer: In the kitchen. Answer: Where is the apple? Answer: In the kitchen. Answer,Where is the apple? 
+21,bedroom,Answer: The milk is in the kitchen. The milk is in the kitchen. The milk is in,Where is the milk? 
+22,garden,Answer: The milk is in the bedroom. Do not write anything else after that.,Where is the milk? 
+23,bathroom,Answer: In the kitchen. Question: Where is the milk? Answer: In the kitchen. Question,Where is the milk? 
+24,office,Answer: In the kitchen. Do not write anything else after that.,Where is the apple? 
+25,garden,"Answer: The football is in the
+yard. Do not go out there. The boys are playing",Where is the football? 
+26,garden,"Answer: In the kitchen. The answer is correct, but the question is not
+answered. The",Where is the football? 
+27,bedroom,"Answer: The apple is in the balcony. Do not write anything else after that.
+
+<example>",Where is the apple? 
+28,hallway,Answer: In the garden. The apple is in the garden. The apple is in the garden.,Where is the apple? 
+29,hallway,"Answer: It is rolled into a twist so as to possess an elasticity that allows it, without",Where is the apple? 
+30,hallway,"Answer: In the hallway. Do not
+write anything else after that.
+
+  [Transcriber",Where is the apple? 
+31,garden,Answer: In the kitchen. Do not write anything else after that.,Where is the football? 
+32,hallway,Answer: The apple is in the Big Wigwam. Do not write anything else after that.,Where is the apple? 
+33,kitchen,Answer: In the hallway. The answer is in the hallway. The question is in the hallway.,Where is the football? 
+34,hallway,Answer: In the kitchen. Do not write anything else after that.,Where is the milk? 
+35,kitchen,Answer: The apple is in the kitchen. Do not write anything else after that.,Where is the apple? 
+36,office,Answer: In the kitchen.,Where is the milk? 
+37,hallway,Answer: In the milk box. Do you want it? Yes. No. Yes. No.,Where is the milk? 
+38,bathroom,Answer: The milk is in the cow. Question: Where is the milk? Answer: The milk,Where is the milk? 
+39,bathroom,"Answer: The milk is in the kitchen. Do not write anything else after that.
+
+<example>",Where is the milk? 
+40,bathroom,"Answer: In the kitchen. I have
+been looking for it for a long time. I have",Where is the football? 
+41,hallway,"Answer: In the hall. Do you want to see it? Answer: Yes, I do.",Where is the football? 
+42,garden,"Answer: In the garden. Do you see it? Yes, I see it. It is in",Where is the apple? 
+43,bedroom,Answer: In the kitchen. Do not write anything else after that.,Where is the apple? 
+44,kitchen,Answer: The milk is in the kitchen. The milk is in the kitchen. The milk is in,Where is the milk? 
+45,bedroom,Answer: The milk is in the kitchen. Do not write anything else after that.,Where is the milk? 
+46,hallway,"Answer: The apple is in the kitchen. Do not write anything else after that.
+
+Question: Where",Where is the apple? 
+47,garden,Answer: The milk is in the kitchen. The milk is in the kitchen. The milk is in,Where is the milk? 
+48,kitchen,"Answer: The football is in the
+first location. The item is in the second location. The",Where is the football? 
+49,bathroom,Answer: In the bathroom. The answer is in the context. The question is in the context.,Where is the football? 
+50,garden,"Answer: In the kitchen. Do you want some? Answer: No, thank you. Do you",Where is the milk? 
+51,bedroom,Answer: In the kitchen. Do you know where the kitchen is? Answer: In the house.,Where is the apple? 
+52,hallway,Answer: The milk is in the kitchen. Do not write anything else after that.,Where is the milk? 
+53,hallway,"Answer: The milk is in the refrigerator. Do you want it? Answer: No, thank you",Where is the milk? 
+54,office,Answer: In the kitchen. Do you want it? Yes. Where is the milk? In the,Where is the milk? 
+55,kitchen,"Answer: The apple is in the kitchen. Do not write anything else after that.
+
+Question: Where",Where is the apple? 
+56,bathroom,Answer: In the kitchen. Do not write anything else after that.,Where is the milk? 
+57,bathroom,"Answer: In the kitchen. Do not
+worry, I will get it for you.",Where is the milk? 
+58,office,"Answer: The football is in the
+balcony. Do not write anything else after that.",Where is the football? 
+59,garden,Answer: The football is in the garden. Do not write anything else after that.,Where is the football? 
+60,kitchen,Answer: The apple is in the balcony. Do not write anything else after that.,Where is the apple? 
+61,bathroom,Answer: The apple is in the kitchen. Do not write anything else after that.,Where is the apple? 
+62,garden,"Answer: The football is in the
+balcony. Do not write anything else after that.",Where is the football? 
+63,bathroom,Answer: The milk is in the kitchen.,Where is the milk? 
+64,bathroom,Answer: The milk is in the kitchen. Do not write anything else after that.,Where is the milk? 
+65,hallway,Answer: The milk is in the kitchen. Do you know where the milk is? Answer: The,Where is the milk? 
+66,bedroom,"Answer: The football is in the kitchen. Do not write anything else after that.
+
+<example>",Where is the football? 
+67,garden,Answer: In the garden. Do you see the little girl in the bicycle bloomers? She is,Where is the football? 
+68,bedroom,"Answer: In the garden. Do you want to go to the garden? Answer: Yes, I",Where is the football? 
+69,bathroom,Answer: In the basket. Do not write anything else after that.,Where is the apple? 
+70,garden,Answer: In the kitchen. Question: Where is the milk? Answer: In the kitchen. Question,Where is the milk? 
+71,office,Answer: In the kitchen. Question: Where is the milk? Answer: In the kitchen. Question,Where is the milk? 
+72,office,"Answer: The football is in the bedroom. The boys were
+told to remain there until the",Where is the football? 
+73,hallway,"Answer: The football is in the ballough. Do not write anything else after that.
+
+<example",Where is the football? 
+74,garden,"Answer: In the hallway. Daniel moved to the hallway. He was
+seated on a chair",Where is the football? 
+75,office,Answer: In the kitchen. Do not go there. The milk is in the kitchen. Do not,Where is the milk? 
+76,kitchen,"Answer: The football is in the
+balcony. Do you want to go up there?",Where is the football? 
+77,office,"Answer: The milk is in the kitchen. Do not write anything else after that.
+
+<example>",Where is the milk? 
+78,kitchen,Answer: The apple is in the kitchen. The apple is in the kitchen. The apple is in,Where is the apple? 
+79,kitchen,Answer: In the churchyard. The football is in the churchyard. The football is in the,Where is the football? 
+80,office,"Answer: In the first location, the woodchuck is in the second location. The woodch",Where is the football? 
+81,kitchen,"Answer: In the hallway. Do not write anything else after that.
+
+Question: Where is the screw",Where is the apple? 
+82,office,"Answer: The apple is in the bedroom. Do not write anything else after that.
+
+<example>",Where is the apple? 
+83,bathroom,Answer: In the drawer of the desk. The drawer is in the desk. The drawer is in,Where is the football? 
+84,bathroom,Answer: In the first location. If a person got an item in the first location and travelled to,Where is the football? 
+85,office,Answer: In the kitchen. Do not write anything else after that.,Where is the milk? 
+86,bathroom,Answer: In the milk. Question: What is the milk? Answer: The milk is in the,Where is the apple? 
+87,bedroom,"Answer: In the kitchen. Do you want it? Yes, I do. Where is the butter",Where is the milk? 
+88,hallway,Answer: The apple is in the kitchen. Do not write anything else after that.,Where is the apple? 
+89,bedroom,Answer: The milk is in the kitchen. Do not write anything else after that.,Where is the milk? 
+90,bedroom,Answer: The apple is in the kitchen. Do not write anything else after that.,Where is the apple? 
+91,bathroom,"Answer: In the Wilderness, May 5, 1864. The football is in the Wilderness",Where is the football? 
+92,bedroom,"Answer: In the
+middle of the field. Do you see it? It is
+there,",Where is the football? 
+93,bedroom,"Answer: The football is in the garden. Do you want to play it? Answer: Yes,",Where is the football? 
+94,bedroom,Answer: The apple is in the kitchen. Do not write anything else after that.,Where is the apple? 
+95,kitchen,Answer: The football is in the balcony. Do not write anything else after that.,Where is the football? 
+96,garden,Answer: In the garden.,Where is the milk? 
+97,office,"Answer: In the kitchen. Do you know the milk? Answer: Yes, I know the milk",Where is the milk? 
+98,bedroom,"Answer: The milk is in the hallway. Do you want to know the answer? Yes, I",Where is the milk? 
+99,kitchen,"Answer: In the kitchen. Question: Where is the
+apple? Answer: In the kitchen.",Where is the apple? 

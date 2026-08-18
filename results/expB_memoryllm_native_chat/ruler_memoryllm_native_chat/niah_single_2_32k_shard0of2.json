@@ -1,0 +1,100 @@
+{
+  "task": "niah_single_2",
+  "length": "32k",
+  "summary": {
+    "score": 20.0,
+    "n": 10
+  },
+  "records": [
+    {
+      "sample_index": 0,
+      "answers": [
+        "8918552"
+      ],
+      "output": "The special magic number for ygjz-hgmog mentioned in the provided text is 8.",
+      "recall": 0.0,
+      "n_tokens": 32659
+    },
+    {
+      "sample_index": 2,
+      "answers": [
+        "6250103"
+      ],
+      "output": "The special magic number for ubpskqko-dzvamctv mentioned in the provided text is 13.",
+      "recall": 0.0,
+      "n_tokens": 32671
+    },
+    {
+      "sample_index": 4,
+      "answers": [
+        "5768715"
+      ],
+      "output": "The special magic number for seucfkbt-wwzqa mentioned in the provided text is 13.",
+      "recall": 0.0,
+      "n_tokens": 32665
+    },
+    {
+      "sample_index": 6,
+      "answers": [
+        "5128849"
+      ],
+      "output": "The special magic number for xaoqq-pkwymgg mentioned in the provided text is 11.",
+      "recall": 0.0,
+      "n_tokens": 32662
+    },
+    {
+      "sample_index": 8,
+      "answers": [
+        "9120720"
+      ],
+      "output": "The special magic number for sehctf-iynwnywg mentioned in the provided text is 13.",
+      "recall": 0.0,
+      "n_tokens": 32665
+    },
+    {
+      "sample_index": 10,
+      "answers": [
+        "6702374"
+      ],
+      "output": "The special magic number for qvllk-kvkqp mentioned in the provided text is 13.",
+      "recall": 0.0,
+      "n_tokens": 32662
+    },
+    {
+      "sample_index": 12,
+      "answers": [
+        "5497716"
+      ],
+      "output": "5497716",
+      "recall": 1.0,
+      "n_tokens": 32665
+    },
+    {
+      "sample_index": 14,
+      "answers": [
+        "9613094"
+      ],
+      "output": "The special magic number for qzrjy-ijdcroj mentioned in the provided text is 13.",
+      "recall": 0.0,
+      "n_tokens": 32668
+    },
+    {
+      "sample_index": 16,
+      "answers": [
+        "9804653"
+      ],
+      "output": "9804653",
+      "recall": 1.0,
+      "n_tokens": 32659
+    },
+    {
+      "sample_index": 18,
+      "answers": [
+        "9985429"
+      ],
+      "output": "The special magic number for abuie-zzpo mentioned in the provided text is 8.",
+      "recall": 0.0,
+      "n_tokens": 32659
+    }
+  ]
+}

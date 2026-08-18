@@ -1,0 +1,589 @@
+target,output,question
+Jeff,"Answer
+Jeff
+</question>
+</context>
+
+<example>
+Jeff picked up the milk there.",Who did Fred give the football to? 
+Bill,"Answer: Bill
+</question>
+</context>
+
+<example>
+Bill picked up the football there.",Who did Mary give the milk to? 
+Jeff,"Answer: Jeff
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who did Fred give the milk to? 
+milk,"Answer: apple
+</question>
+</context>
+</question>
+</context>
+</question>
+</",What did Mary give to Fred? 
+Fred,"Answer: Mary
+</question>
+</context>
+
+Question: Who received the milk? Answer: Mary",Who received the milk? 
+apple,"Answer: apple
+</question>
+</context>
+</question>
+</context>
+</question>
+</",What did Mary give to Jeff? 
+apple,"Answer: apple
+</question>
+</context>
+</context>
+</context>
+</context>
+</",What did Mary give to Jeff? 
+apple,"Answer: apple
+</question>
+</context>
+
+<example>
+Mary picked up the apple there.",What did Fred give to Bill? 
+Jeff,"Answer
+Jeff
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who gave the milk to Fred? 
+Fred,"Answer: Fred
+</question>
+
+<question>
+Who gave the apple to Mary? Answer: Fred",Who gave the apple to Mary? 
+Jeff,"Answer
+Jeff
+</question>
+<question>
+Mary received the apple? Answer
+Fred
+</",Who received the football? 
+Jeff,"Answer: Jeff
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who did Mary give the football to? 
+milk,"Answer: milk
+</question>
+
+<question>
+What did Fred give to Bill? Answer: apple",What did Mary give to Bill? 
+Bill,"Answer
+Bill
+</question>
+</context>
+
+<example>
+Mary picked up the milk there.",Who did Mary give the milk to? 
+milk,"Answer: milk
+</question>
+
+<question>
+What did Mary give to Bill? Answer: milk",What did Mary give to Bill? 
+apple,"Answer: apple
+</question>
+</context>
+</question>
+</context>
+</question>
+</",What did Fred give to Mary? 
+Mary,"Answer
+Mary
+</question>
+</context>
+
+<example>
+Mary took the apple there. Mary",Who received the football? 
+apple,"Answer: apple
+</question>
+<question>
+Mary gave the apple to Fred. Mary moved to",What did Fred give to Bill? 
+Jeff,"Answer: Jeff
+</question>
+</context>
+</question>
+</context>
+</question>
+</",Who received the apple? 
+Bill,"Answer
+Bill
+</question>
+
+<question>
+Who did Mary give the apple to? Answer",Who did Mary give the football to? 
+Fred,"Answer
+Fred
+</question>
+<question>
+Who gave the apple to Fred? Answer
+Mary",Who gave the milk to Jeff? 
+Mary,"Answer
+Fred
+</question>
+
+<question>
+Who gave the milk? Answer
+Mary
+</",Who received the milk? 
+Mary,"Answer: Mary
+</question>
+
+<question>
+Who gave the apple? Answer: Mary
+</",Who gave the milk? 
+milk,"Answer: milk
+</context>
+
+Question: What did Mary give to Bill? Answer: apple",What did Bill give to Mary? 
+milk,"Answer: milk
+</question>
+
+<question>
+What did Mary give to Fred? Answer: apple",What did Jeff give to Bill? 
+football,"Answer: football
+</question>
+
+<question>
+What did Jeff give to Fred? Answer: football",What did Jeff give to Fred? 
+Mary,"Answer
+Fred
+</question>
+
+<question>
+Who gave the apple? Answer
+Fred
+</",Who gave the football? 
+Mary,"Answer: Mary
+</question>
+
+<question>
+Who gave the apple to Bill? Answer: Mary",Who gave the apple to Bill? 
+Fred,"Answer
+Fred
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who received the apple? 
+Mary,"Answer
+Mary
+</question>
+
+<question>
+Who gave the apple to Fred? Answer
+Mary",Who gave the milk to Bill? 
+milk,"Answer: milk
+</question>
+</context>
+
+Question: What did Jeff give to Mary? Answer",What did Mary give to Jeff? 
+Mary,"Answer: Mary
+</question>
+</context>
+
+<example>
+Mary picked up the apple there.",Who gave the milk? 
+Fred,"Fred
+</context>
+Mary went to the bathroom. Jeff took the football there. Mary took the",Who gave the apple to Mary? 
+football,"Answer: apple
+</question>
+
+<example>
+Mary picked up the apple there. Mary gave the",What did Bill give to Mary? 
+apple,"Answer: apple
+</question>
+</context>
+
+Question: What did Mary give to Fred? Answer",What did Fred give to Mary? 
+apple,"Answer: apple
+</question>
+
+<question>
+What did Mary give to Fred? Answer: apple",What did Fred give to Bill? 
+Jeff,"Answer: Jeff
+</question>
+</context>
+
+<example>
+Fred picked up the milk there.",Who gave the milk? 
+Bill,"Answer: Bill
+</question>
+
+<question>
+Who did Mary give the apple to? Answer:",Who did Mary give the apple to? 
+Fred,"Answer
+Fred
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who gave the football to Mary? 
+milk,"Answer: milk
+</question>
+
+<question>
+What did Mary give to Fred? Answer: milk",What did Mary give to Fred? 
+milk,"Answer
+milk
+</question>
+
+<question>
+What did Mary give to Bill? Answer",What did Fred give to Mary? 
+Mary,"Answer
+Fred
+</question>
+</context>
+Mary went back to the kitchen. Fred grabbed the",Who gave the football? 
+Fred,"Answer
+Fred
+</question>
+<question>
+Who received the milk? Answer
+Fred
+</",Who received the apple? 
+Mary,"Answer
+Fred
+</question>
+
+<question>
+Who gave the apple? Answer
+Fred
+</",Who gave the apple? 
+Fred,"Answer
+Fred
+</question>
+</context>
+<example>
+Fred picked up the apple there.",Who gave the apple to Bill? 
+apple,"apple
+</context>
+Mary moved to the garden. Jeff went to the office. Bill went to",What did Fred give to Bill? 
+Fred,"Fred
+</context>
+Jeff went back to the garden. Bill went to the office. Fred went",Who received the apple? 
+Fred,"Answer: Jeff
+</question>
+</context>
+
+Question: Who received the apple? Answer: Fred",Who received the milk? 
+Mary,"Answer: Mary
+</context>
+
+<example>
+Mary picked up the apple there. Mary gave the",Who received the football? 
+apple,"Answer: apple
+</question>
+</context>
+</context>
+</context>
+</context>
+</",What did Bill give to Mary? 
+apple,"Answer: apple
+</question>
+</context>",What did Mary give to Fred? 
+apple,"Answer: apple
+</question>
+
+<question>
+What did Mary give to Fred? Answer: apple",What did Fred give to Bill? 
+apple,"Answer: apple
+</question>
+
+<question>
+What did Mary give to Fred? Answer: apple",What did Fred give to Bill? 
+milk,"Answer: milk
+</Question>
+</context>
+<example>
+Mary picked up the apple there.",What did Jeff give to Fred? 
+Mary,"Answer: Mary
+</context>
+
+<example>
+Mary picked up the apple there. Mary gave the",Who received the milk? 
+Jeff,"Answer
+Jeff
+</question>
+<question>
+Who gave the apple to? Answer
+Fred",Who gave the football? 
+Bill,"Answer
+Bill
+</question>
+
+<question>
+Who gave the football to Bill? Answer
+Fred",Who gave the football to Fred? 
+Mary,"Answer
+Fred
+</question>
+<question>
+Who gave the football? Answer
+Mary
+</",Who received the football? 
+Mary,"Answer: Mary
+</context>
+
+<example>
+Mary picked up the apple there. Mary gave the",Who gave the football to Fred? 
+Jeff,"Answer: Jeff
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who did Bill give the milk to? 
+Fred,"Answer
+Fred
+</question>
+<question>
+Mary gave the apple to Fred. Mary went to",Who gave the football to Jeff? 
+Jeff,"Answer: Jeff
+</question>
+</context>
+</question>
+</context>
+</question>
+</",Who gave the apple to Fred? 
+Bill,"Answer: Bill
+</question>
+
+<question>
+Who took the apple? Answer: Bill
+</",Who received the milk? 
+Jeff,"Answer: Jeff
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who did Bill give the apple to? 
+milk,"Answer
+apple
+</question>
+
+<question>
+What did Mary give to Fred? Answer
+apple",What did Mary give to Fred? 
+Jeff,"Answer
+Fred
+</question>
+</context>
+<question>
+Who gave the apple? Answer",Who received the apple? 
+Jeff,"Answer: Jeff
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who gave the apple to Bill? 
+apple,"Answer: apple
+</question>
+
+<question>
+What did Mary give to Fred? Answer: apple",What did Mary give to Fred? 
+Bill,"Answer
+Bill
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who did Fred give the apple to? 
+Jeff,"Answer: Mary
+</question>
+</context>
+<question>
+Who gave the football? Answer:",Who gave the apple? 
+Bill,"Answer
+Bill
+</question>
+
+<question>
+Who gave the apple to Fred? Answer
+Mary",Who gave the milk to Fred? 
+Bill,"Answer: Bill
+</question>
+</context>
+
+Question: Who did Bill give the apple to?",Who did Jeff give the football to? 
+Fred,"Answer: Fred
+</question>
+<question>
+Who gave the apple? Answer: Jeff
+</",Who gave the milk? 
+apple,"Answer: apple
+</question>
+
+<question>
+What did Mary give to Bill? Answer: apple",What did Mary give to Bill? 
+Jeff,"Answer: Jeff
+</question>
+</context>
+
+<question>
+Mary took the football there. Mary",Who received the milk? 
+Bill,"Answer: Bill
+</question>
+</context>
+
+Question: Who did Bill give the milk to?",Who did Fred give the milk to? 
+Bill,"Answer: Mary
+</context>
+
+Question: Who gave the apple? Answer: Bill
+</context",Who gave the apple? 
+Jeff,"Answer
+Jeff
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who gave the apple? 
+Fred,"Answer: Fred
+</context>
+
+Question: Who received the apple? Answer: Bill
+</context",Who received the football? 
+football,"Answer: football
+</context>
+
+Question: What did Fred give to Bill? Answer: apple",What did Mary give to Fred? 
+Mary,"Answer
+Mary
+</question>
+</context>
+
+<example>
+Mary picked up the apple there.",Who did Jeff give the apple to? 
+football,"Answer: football
+</question>
+
+<question>
+What did Mary give to Fred? Answer: apple",What did Jeff give to Mary? 
+Mary,"Answer
+Fred. What did Mary give to Fred?
+Answer: apple
+</question>
+</context",Who received the milk? 
+milk,"Answer
+milk
+</question>
+</context>
+
+<example>
+Mary gave the apple to Fred",What did Mary give to Fred? 
+Mary,"Answer: Mary
+</context>
+
+Question: Who gave the apple? Answer: Fred
+</context",Who gave the milk? 
+Bill,"Answer
+Bill
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who gave the milk to Mary? 
+Mary,"Answer
+Fred
+</question>
+
+<question>
+Who gave the apple to Fred? Answer
+Mary",Who received the football? 
+Fred,"Answer
+Fred
+</question>
+</context>
+
+<question>
+Who gave the apple? Answer",Who gave the apple? 
+milk,"Answer: milk
+</question>
+</context>",What did Fred give to Bill? 
+Fred,"Answer: Fred
+</question>
+</context>
+
+Question: Who did Mary give the apple to?",Who did Bill give the milk to? 
+Jeff,"Answer
+Fred
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who gave the apple? 
+Fred,"Answer: Fred
+</question>
+<question>
+Who did Mary give the apple to? Answer:",Who did Bill give the apple to? 
+Bill,"Answer
+Bill
+</question>
+<question>
+Who gave the apple to Fred? Answer
+Mary",Who gave the football to Jeff? 
+Bill,"Answer
+Bill
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who did Jeff give the apple to? 
+milk,"Answer: milk
+</question>
+
+<question>
+What did Fred give to Bill? Answer: apple",What did Mary give to Bill? 
+Mary,"Answer
+Mary
+</question>
+
+<question>
+Who did Mary give the milk to? Answer",Who did Bill give the milk to? 
+Mary,"Answer
+Mary
+</question>
+</context>
+</context>
+</context>
+</context>
+</",Who gave the milk to Jeff? 
+Fred,"Answer: Mary
+</context>
+
+Question: Who gave the apple? Answer: Fred
+</context",Who gave the milk? 
+Bill,"Answer: Mary
+</context>
+
+Question: Who received the apple? Answer: Bill
+</context",Who received the milk? 
+football,"Answer: football
+</context>
+
+Question: What did Mary give to Bill? Answer: football",What did Mary give to Bill? 

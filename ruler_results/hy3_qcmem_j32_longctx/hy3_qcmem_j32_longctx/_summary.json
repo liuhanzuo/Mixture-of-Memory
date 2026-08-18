@@ -1,0 +1,70 @@
+{
+  "niah_single_2": {
+    "16k": {
+      "score": 98.0,
+      "n": 50,
+      "approx_tokens": 16088,
+      "avg_read_len": 4312.2,
+      "last_read_len": 4313,
+      "secs": 1173.3
+    },
+    "32k": {
+      "score": 92.0,
+      "n": 50,
+      "approx_tokens": 32742,
+      "avg_read_len": 4580.9,
+      "last_read_len": 4583,
+      "secs": 1383.9
+    },
+    "64k": {
+      "score": 100.0,
+      "n": 50,
+      "approx_tokens": 65418,
+      "avg_read_len": 4495.7,
+      "last_read_len": 4491,
+      "secs": 1295.1
+    },
+    "128k": {
+      "score": 98.0,
+      "n": 50,
+      "approx_tokens": 131014,
+      "avg_read_len": 4548.6,
+      "last_read_len": 4551,
+      "secs": 1664.1
+    }
+  },
+  "niah_multikey_1": {
+    "16k": {
+      "score": 100.0,
+      "n": 50,
+      "approx_tokens": 16146,
+      "avg_read_len": 4375.8,
+      "last_read_len": 4371,
+      "secs": 1313.6
+    },
+    "32k": {
+      "score": 94.0,
+      "n": 50,
+      "approx_tokens": 31705,
+      "avg_read_len": 4571.3,
+      "last_read_len": 4570,
+      "secs": 1391.6
+    },
+    "64k": {
+      "score": 100.0,
+      "n": 50,
+      "approx_tokens": 65493,
+      "avg_read_len": 4560.7,
+      "last_read_len": 4566,
+      "secs": 1448.5
+    },
+    "128k": {
+      "score": 100.0,
+      "n": 50,
+      "approx_tokens": 130053,
+      "avg_read_len": 4275.2,
+      "last_read_len": 4102,
+      "secs": 1594.8
+    }
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 7,
+    "approx_tokens": 131272,
+    "avg_read_len": 6415.9,
+    "last_read_len": 6345
+  },
+  "records": [
+    {
+      "sample_index": 0,
+      "label": "vonculzso-tpbeioj",
+      "expected": "104362",
+      "output": "<529864>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the lines provided, the line with the identifier \"vonculz",
+      "pred": "529864",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131564,
+      "read_len": 6637,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 8,
+      "label": "hfyxsto-ndceia",
+      "expected": "557373",
+      "output": "<487910>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"hfyxsto-ndceia\". Let me go through the list again to make",
+      "pred": "487910",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131630,
+      "read_len": 6191,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 257
+    },
+    {
+      "sample_index": 16,
+      "label": "hhyhse-nmhwrdh",
+      "expected": "185813",
+      "output": "<159160>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the lines provided, the line with \"hhyhse-n",
+      "pred": "159160",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131391,
+      "read_len": 6464,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 24,
+      "label": "hwxdu-lofomauoa",
+      "expected": "853833",
+      "output": "<...> but I don't see that line in the provided data. However, I can help you find it if you provide the line. Please check if there's a typo in the line name or provide the line again. If the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131414,
+      "read_len": 6487,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 32,
+      "label": "vwxmphz-obsmrilh",
+      "expected": "863228",
+      "output": "<613245>\nOkay, let's see, I need to find the REGISTER_CONTENT for the line \"vwxmphz-obsmrilh\". Let me check the list you provided.\n\nFirst, I'll go through",
+      "pred": "613245",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131597,
+      "read_len": 6158,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 257
+    },
+    {
+      "sample_index": 40,
+      "label": "lbmzphkh-thetowuc",
+      "expected": "881685",
+      "output": "<...> and I need to find the value. Let me check the list again.\n\nLooking through the provided data, I don't see a line that exactly matches \"lbmzphkh-thetowuc\". However, there is",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131556,
+      "read_len": 6629,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 48,
+      "label": "ykeqeqh-zbrqmj",
+      "expected": "408266",
+      "output": "<...> in the data you provided. Let me check the list again to find the line that matches the line name \"ykeqeqh-zbrqmj\".\n\nLooking through the list:\n\n- The line \"line ykeq",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131272,
+      "read_len": 6345,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "task": "niah_multikey_1",
+  "length": "64k",
+  "summary": {
+    "score": 85.71,
+    "n": 7,
+    "approx_tokens": 64563
+  },
+  "records": [
+    {
+      "answers": [
+        "3957338"
+      ],
+      "output": "3957338. The number is found in the text where it says, \"One of the special magic numbers for fdrweegl-vqwbdxl is: 3957338.\" This",
+      "recall": 1.0,
+      "n_tokens": 64570
+    },
+    {
+      "answers": [
+        "2530883"
+      ],
+      "output": "2530883. The special magic number for sbkv-pyyalqe mentioned in the provided text is 1357612. The special magic number for uhabfyx-bfyn mentioned",
+      "recall": 1.0,
+      "n_tokens": 64566
+    },
+    {
+      "answers": [
+        "6466277"
+      ],
+      "output": ": 6466277. One of the special magic numbers for pxdemwlb-bvdks is: 7168270. One of the special magic numbers for pdxxpj-mmern",
+      "recall": 1.0,
+      "n_tokens": 64560
+    },
+    {
+      "answers": [
+        "7600904"
+      ],
+      "output": "7600904. The special magic number for vdnw-fjjloxct mentioned in the provided text is 1021898. The special magic number for zicyu-uoaov mentioned",
+      "recall": 1.0,
+      "n_tokens": 64566
+    },
+    {
+      "answers": [
+        "4043723"
+      ],
+      "output": "2104114. One of the special magic numbers for nquvju-qmcb is: 2104114. One of the special magic numbers for yynkewjf-tafy",
+      "recall": 0.0,
+      "n_tokens": 64567
+    },
+    {
+      "answers": [
+        "7112836"
+      ],
+      "output": "7112836. The special magic number for mwrext-uclssjel mentioned in the provided text is 4440947. The special magic number for ecbmxxz-w",
+      "recall": 1.0,
+      "n_tokens": 64576
+    },
+    {
+      "answers": [
+        "9116852"
+      ],
+      "output": "9116852. The number is found in the text under the line: \"One of the special magic numbers for hdlmo-yske is: 9116852.\" This number is",
+      "recall": 1.0,
+      "n_tokens": 64563
+    }
+  ]
+}

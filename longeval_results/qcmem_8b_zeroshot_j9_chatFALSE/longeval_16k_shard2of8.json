@@ -1,0 +1,91 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 16568,
+    "avg_read_len": 6314.7,
+    "last_read_len": 6329
+  },
+  "records": [
+    {
+      "sample_index": 2,
+      "label": "eduipws-iwipr",
+      "expected": "456020",
+      "output": "<592934>. \n\nWait, but I need to check the line that contains \"eduipws-iwipr\". Let me check again.\n\nLooking through the list:\n\nline eduipws-iwipr:",
+      "pred": "592934",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16499,
+      "read_len": 6260,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 10,
+      "label": "hbinl-ppkbfyop",
+      "expected": "312066",
+      "output": "<198345>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"hbinl-ppkbfyop\". Let me go through the list again to",
+      "pred": "198345",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16569,
+      "read_len": 6330,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 18,
+      "label": "yhvphioja-zgjmomn",
+      "expected": "711642",
+      "output": "<...>. Please provide the value.\nOkay, let's see. I need to find the value of the REGISTER_CONTENT for the line that starts with \"line yhvphioja-zgjmomn\". Let me go through the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16612,
+      "read_len": 6373,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 26,
+      "label": "etvbw-amwfnwdn",
+      "expected": "521904",
+      "output": "<610573>.\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"line etvbw-amwfnwdn\". Let me go through each line one by",
+      "pred": "610573",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16506,
+      "read_len": 6267,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 34,
+      "label": "kvuzv-brhru",
+      "expected": "592955",
+      "output": "<616899>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss it.\n\nLooking through the lines:\n\n- The line with \"kvuzv-brhru",
+      "pred": "616899",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16568,
+      "read_len": 6329,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    },
+    {
+      "sample_index": 42,
+      "label": "pkncl-matmdft",
+      "expected": "607973",
+      "output": "<534371>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss it.\n\nLooking through the lines:\n\n- The line with \"pkncl-matmd",
+      "pred": "534371",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16568,
+      "read_len": 6329,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 32
+    }
+  ]
+}

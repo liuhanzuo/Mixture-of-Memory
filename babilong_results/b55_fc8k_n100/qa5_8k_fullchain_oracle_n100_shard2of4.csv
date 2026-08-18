@@ -1,0 +1,35 @@
+"target","output","question","orig_chunk","full_chunk"
+"Jeff","Mary went back to the hallway. Jeff went back to the garden. Jeff went back to the hallway","Who did Fred give the milk to? ","{14}","{14}"
+"apple","Mary gave the apple to Jeff. Mary handed the apple to Jeff. Mary gave the apple to Jeff","What did Mary give to Jeff? ","{13}","{13}"
+"Jeff","Mary gave the football to Jeff. Mary gave the football to Jeff. Mary gave the football to Jeff","Who received the football? ","{10}","{10}"
+"milk","Mary","What did Mary give to Bill? ","{14}","{14}"
+"Jeff","Mary handed the apple to Jeff. Cherif Pasha was pleased. But I instinctively felt old","Who received the apple? ","{11}","{10}"
+"Mary","Mary handed the milk to Fred. Fred passed the milk to Mary. Mary passed the milk to Fred","Who gave the milk? ","{14}","{11, 14}"
+"Mary","Mary handed the football to Bill. Bill handed the football to Jeff. Jeff handed the football to Mary","Who gave the football? ","{13}","{7}"
+"milk","Mary handed the milk to Jeff. Mary passed the milk to Jeff. Mary handed the milk to Jeff","What did Mary give to Jeff? ","{12}","{12}"
+"apple","Mary passed the apple to Jeff. Jeff passed the apple to Fred. Fred passed the apple to Mary","What did Fred give to Mary? ","{14}","{14}"
+"Fred","Mary gave the football to Jeff. Mary gave the football to Fred. Mary gave the football to Jeff","Who gave the football to Mary? ","{11}","{11}"
+"Fred","Mary gave the apple to Fred. Mary gave the apple to Jeff. Mary gave the apple to E","Who received the apple? ","{13}","{8}"
+"Fred","Mary. Fred. Bill. Horace. Mary handed the apple to Fred. Fred handed the apple","Who received the apple? ","{14}","{14}"
+"apple","Mary handed the apple to Fred. Mary handed the apple to Fred. Mary handed the apple to Fred","What did Mary give to Fred? ","{13}","{13}"
+"Mary","Mary handed the milk to Fred. Mary handed the milk to Bill. Mary handed the milk to Fred","Who received the milk? ","{14}","{14}"
+"Mary","Mary handed the football to Fred. Mary gave the football to Fred. Mary handed the football to Fred","Who gave the football to Fred? ","{15}","{15}"
+"Bill","Mary handed the milk to Bill. Mary handed the milk to Jeff. Mary handed the milk to Bill","Who received the milk? ","{14}","{14}"
+"Jeff","Mary handed the milk to Jeff. Mary handed the milk to Jeff. Mary handed the milk to Jeff","Who gave the apple to Bill? ","{10}","{10}"
+"Bill","Bill or Anna?
+
+Question: What did Anna say about Anna's ambition?
+
+Question: What did Anna","Who gave the milk to Fred? ","{14}","{10}"
+"Jeff","Bill or","Who received the milk? ","{11}","{8}"
+"Fred","Mary. What is the name of the poem? Sampan Song. What is the name of the","Who received the football? ","{13}","{13}"
+"Mary","""I'm going to call him Captain Kneebone, because he's a
+captain","Who received the milk? ","{12}","{8}"
+"Mary","Mary. Mary received the football. Mary received the football. Mary received the football. Mary received the","Who received the football? ","{7}","{7}"
+"Jeff","Mary. Mary gave the apple there. Mary gave the apple there. Mary gave the apple there.","Who gave the apple? ","{11}","{11}"
+"milk","Mary gave the milk to Bill.
+
+Question: What did the man with the matted hair do?","What did Mary give to Bill? ","{13}","{13}"
+"Bill","Mary handed the milk to Bill.
+
+Question: Who received the milk? Mary handed the milk to Bill","Who received the milk? ","{14}","{14}"

@@ -1,0 +1,499 @@
+target,output,question
+Jeff,"Answer
+
+Monday, and the",Who did Fred give the football to? 
+Bill,(200,Who did Mary give the milk to? 
+Jeff,"(Monday, the the the the the the the the the the the the the the the the the",Who did Fred give the milk to? 
+milk,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,What did Mary give to Fred? 
+Fred,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,Who received the milk? 
+apple,"(Monday, the the the the the take the take the take the take the take the take the",What did Mary give to Jeff? 
+apple,"(200, the the the the take the take the take the take the take the take the take",What did Mary give to Jeff? 
+apple,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,What did Fred give to Bill? 
+Jeff,"(200
+
+Monday, the skip, and the take the take the take the take the take the",Who gave the milk to Fred? 
+Fred,"(200
+
+Monday and the",Who gave the apple to Mary? 
+Jeff,Answer,Who received the football? 
+Jeff,"(201
+
+Monday and the the the the the the the the the the the the the the the",Who did Mary give the football to? 
+milk,(200,What did Mary give to Bill? 
+Bill,(200,Who did Mary give the milk to? 
+milk,(200,What did Mary give to Bill? 
+apple,"(200
+
+Monday, the the the the the the the take the take the take the take the",What did Fred give to Mary? 
+Mary,Answer,Who received the football? 
+apple,"(200
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and",What did Fred give to Bill? 
+Jeff,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,Who received the apple? 
+Bill,"Answer
+
+Monday, the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and the the the the",Who did Mary give the football to? 
+Fred,(200,Who gave the milk to Jeff? 
+Mary,Answer of the,Who received the milk? 
+Mary,"Answer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import",Who gave the milk? 
+milk,"(Monday, the the the the the the the the the the the the the the the the the",What did Bill give to Mary? 
+milk,"(201
+
+Monday, the
+
+
+
+
+
+
+
+
+
+
+
+Monday and the the the the the the",What did Jeff give to Bill? 
+football,(200,What did Jeff give to Fred? 
+Mary,Answer,Who gave the football? 
+Mary,(201,Who gave the apple to Bill? 
+Fred,"(Monday, the the the the the the the the the the the the the the the the the",Who received the apple? 
+Mary,(200,Who gave the milk to Bill? 
+milk,"(201
+
+Monday, the skip, and the the the take the take the take the take the",What did Mary give to Jeff? 
+Mary,"Answer of the
+
+Monday, and the the the take the take the take the take the take the",Who gave the milk? 
+Fred,"(Monday, the take the take the take the take the take the take the take the make the",Who gave the apple to Mary? 
+football,"(200, the the the the the the the take the take the take the take the take the",What did Bill give to Mary? 
+apple,"(200
+
+Tuesday, the skip, and the skip, and the take the take the take the",What did Fred give to Mary? 
+apple,"(Monday, the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import",What did Fred give to Bill? 
+Jeff,"Answer
+
+Monday, the
+
+
+
+Monday and the the the the the the the the the the the",Who gave the milk? 
+Bill,(200,Who did Mary give the apple to? 
+Fred,"Answer of the
+
+
+
+
+
+Monday, and the the the the the the the the the the the",Who gave the football to Mary? 
+milk,(200,What did Mary give to Fred? 
+milk,"Answer
+
+Monday, the",What did Fred give to Mary? 
+Mary,Answer,Who gave the football? 
+Fred,(200,Who received the apple? 
+Mary,(200,Who gave the apple? 
+Fred,"Answer
+
+Monday, the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and the the the the the",Who gave the apple to Bill? 
+apple,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,What did Fred give to Bill? 
+Fred,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,Who received the apple? 
+Fred,"(Monday, the the the the the the the the the the the take the take the take the",Who received the milk? 
+Mary,"(201
+
+Monday, and the skip, and the take the take the take the take the take",Who received the football? 
+apple,"(Monday, the
+
+
+
+
+
+
+
+
+
+
+
+
+
+Monday and the the the the the the the",What did Bill give to Mary? 
+apple,"(201
+
+Monday, the
+
+
+
+
+
+
+
+
+
+
+
+Monday and the the the the the the",What did Mary give to Fred? 
+apple,"(200
+
+Monday, the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Monday and the the the the",What did Fred give to Bill? 
+apple,(200,What did Fred give to Bill? 
+milk,"(200
+
+Monday and the
+
+Monday and the the the the the the the the the the the",What did Jeff give to Fred? 
+Mary,"(Monday, the the the the the the the the the the the the the the the the the",Who received the milk? 
+Jeff,(200,Who gave the football? 
+Bill,"(201
+
+Monday, the the the the the the the the the the the the the the the",Who gave the football to Fred? 
+Mary,(200,Who received the football? 
+Mary,"(200, the the the the the the the the the the the the the the take the take",Who gave the football to Fred? 
+Jeff,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,Who did Bill give the milk to? 
+Fred,(200,Who gave the football to Jeff? 
+Jeff,"( (201
+
+
+
+
+
+
+
+Monday, and the take, and the take the take the take",Who gave the apple to Fred? 
+Bill,"(200, the the the the the the the take the take the take the take the take the",Who received the milk? 
+Jeff,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,Who did Bill give the apple to? 
+milk,"(200
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Monday and the the the the the the",What did Mary give to Fred? 
+Jeff,"(Monday
+
+Monday, the",Who received the apple? 
+Jeff,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,Who gave the apple to Bill? 
+apple,(200,What did Mary give to Fred? 
+Bill,(201,Who did Fred give the apple to? 
+Jeff,"(200
+
+Monday and the",Who gave the apple? 
+Bill,"(200
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and the the",Who gave the milk to Fred? 
+Bill,"(Monday, the the the the the the the take the take the take the take the take the",Who did Jeff give the football to? 
+Fred,"Answer of the
+
+Monday, and the the the the take the take the take the take the take",Who gave the milk? 
+apple,(200,What did Mary give to Bill? 
+Jeff,(200,Who received the milk? 
+Bill,"(200
+
+Monday, the
+
+Monday, and the take the take the take the take the take",Who did Fred give the milk to? 
+Bill,"(Monday, the the the take the take the take the take the take the take the take the",Who gave the apple? 
+Jeff,"Answer
+
+Monday, the
+
+Monday and the the the the the the the the the the the the",Who gave the apple? 
+Fred,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,Who received the football? 
+football,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,What did Mary give to Fred? 
+Mary,(201,Who did Jeff give the apple to? 
+football,"(201
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Monday and the the the the the the the the",What did Jeff give to Mary? 
+Mary,Answer of the,Who received the milk? 
+milk,"(200
+
+Monday, the the the the the the take the take the take the take the take",What did Mary give to Fred? 
+Mary,"Answer of the
+
+Monday, and the the the take the take the take, and the take the",Who gave the milk? 
+Bill,"Answer
+
+Monday, the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and",Who gave the milk to Mary? 
+Mary,Answer,Who received the football? 
+Fred,(200,Who gave the apple? 
+milk,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,What did Fred give to Bill? 
+Fred,"Answer of the
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and the take the take the take the take",Who did Bill give the milk to? 
+Jeff,"Answer of the
+
+Monday and the skip, and the take the take the take the take the take",Who gave the apple? 
+Fred,Answer,Who did Bill give the apple to? 
+Bill,"(Monday, the
+
+Monday and the the the the the the the the the the the the the",Who gave the football to Jeff? 
+Bill,"(200
+
+Monday and the",Who did Jeff give the apple to? 
+milk,(200,What did Mary give to Bill? 
+Mary,Answer of the,Who did Bill give the milk to? 
+Mary,"Answer
+
+Monday, the
+
+
+
+Monday and the the the the the the the the the the the",Who gave the milk to Jeff? 
+Fred,"Answer of the
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import and the take the take the",Who gave the milk? 
+Bill,"(Monday, the the the take the take the take the take the make the take the make the",Who received the milk? 
+football,( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (,What did Mary give to Bill? 

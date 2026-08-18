@@ -1,0 +1,35 @@
+"target","output","question","orig_chunk","full_chunk"
+"Bill","Mary gave the milk to Bill. Mary passed the milk to Bill. Mary handed the milk to Bill","Who did Mary give the milk to? ","{10}","{9, 10}"
+"apple","Mary gave the apple to Jeff. Mary handed the apple to Jeff. Mary gave the apple to Jeff","What did Mary give to Jeff? ","{13}","{13}"
+"Fred","Mary handed the apple to Fred. Holden, preached her funeral sermon on Phil. Mary journeyed to","Who gave the apple to Mary? ","{6}","{6}"
+"Bill","Bill. Mary handed the milk to Bill. Mary gave the milk to Bill. Mary gave the milk","Who did Mary give the milk to? ","{11}","{10}"
+"apple","Bill. Mary. Jimmie. Carl.
+
+Question: What did Jimmie say about the cabman","What did Fred give to Bill? ","{11}","{9}"
+"Mary","Mary. Fred. Carl. Sidney.
+
+Question: Who was the first to receive the milk? Mary","Who received the milk? ","{12}","{11, 12}"
+"football","Mary. Sidney. Fred. Jeff. Mary. Sidney. Fred. Jeff. Mary. Sidney.","What did Jeff give to Fred? ","{12}","{12, 7}"
+"Mary","Mary. Sidney. Charles. Bill.
+
+Question: What was the name of the church at Gunwal","Who gave the milk to Bill? ","{13}","{13}"
+"football","Mary. Sidney. Bill. Mary. Sidney. Bill. Mary. Sidney. Bill. Mary.","What did Bill give to Mary? ","{12}","{12}"
+"Bill","Mary gave the apple to Bill. Mary gave the apple to Pauline. Mary gave the apple to","Who did Mary give the apple to? ","{12}","{12}"
+"Mary","Mary gave the football to Fred. Fred gave the football to Mary. Fred gave the football to Mary","Who gave the football? ","{13}","{8, 9}"
+"apple","Answer: An apple. Fred went to the office. Fred went to the bedroom. Fred went to","What did Fred give to Bill? ","{14}","{14}"
+"apple","Answer: An apple. Mary picked up the apple there. You will choose the Mary passed the apple","What did Bill give to Mary? ","{14}","{14}"
+"milk","Answer: The milk. Mary picked up the milk and gave it to Fred. Jeff moved to the","What did Jeff give to Fred? ","{10}","{10}"
+"Mary","Answer: Mary. Question: Who gave the football to Mary? Answer: Fred. Question: Who","Who received the football? ","{10}","{9, 10}"
+"Jeff","Answer: Jeff. Question: Who discarded the football? Answer: Fred. Question: Who discarded the","Who gave the apple to Fred? ","{0, 13}","{13}"
+"Jeff","Answer: Jeff. Question: Who gave the apple? Answer: Fred. Question: Who gave the","Who received the apple? ","{13}","{13}"
+"Jeff","Answer: Jeff. Question: Who gave the apple to Bill? Answer: Jeff. Question: Who","Who gave the apple? ","{11}","{11}"
+"apple","Answer: Mary passed the apple to Bill. He had stopped the machine on the crest of a hill","What did Mary give to Bill? ","{8}","{8}"
+"Jeff","Answer: Mary gave the apple. George Mason's poem, with which he closes the above edition of","Who gave the apple? ","{14}","{14}"
+"football","Answer: He gave her the football.
+
+Question: What did the wife of the fat banker find Peter","What did Jeff give to Mary? ","{11}","{11}"
+"Bill","Mary gave the milk to Bill. The
+caterpillars, I say, have taken the","Who gave the milk to Mary? ","{13}","{13}"
+"Fred","Fred. Bill gave the milk to Fred. Bill gave the milk to Fred. Bill gave the milk","Who did Bill give the milk to? ","{14}","{9, 14}"
+"Bill","Bill. Belden. Gryce. Belden. Gryce. Gryce. Gryce.","Who did Jeff give the apple to? ","{12}","{12}"
+"Fred","Mary. Fred. Mary. Fred. Mary. Fred. Mary. Fred. Mary. Fred.","Who gave the milk? ","{14}","{10, 13}"

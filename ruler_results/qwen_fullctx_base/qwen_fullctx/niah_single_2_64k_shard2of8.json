@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "64k",
+  "summary": {
+    "score": 100.0,
+    "n": 6,
+    "approx_tokens": 65503
+  },
+  "records": [
+    {
+      "answers": [
+        "2787403"
+      ],
+      "output": "2787403. This number is found in the text when the angel of the LORD speaks to Jacob in a dream, saying, \"Jacob, thy name shall not be called any more Jacob, but Israel shall be",
+      "recall": 1.0,
+      "n_tokens": 65506
+    },
+    {
+      "answers": [
+        "8785958"
+      ],
+      "output": "8785958. The number is hidden within the text, and it's mentioned in the line: \"One of the special magic numbers for qaewo-lvaplmb is: 87859",
+      "recall": 1.0,
+      "n_tokens": 65503
+    },
+    {
+      "answers": [
+        "1365854"
+      ],
+      "output": "1365854. This number is highlighted in the text as the number that is to be memorized. The number is found in the text as follows: \"One of the special magic numbers for nyecuz-",
+      "recall": 1.0,
+      "n_tokens": 65500
+    },
+    {
+      "answers": [
+        "9001450"
+      ],
+      "output": "9001450. This number is highlighted in the text as a unique identifier or code, possibly related to a specific reference or code within the text's context. The number is presented as a distinct value, indicating its",
+      "recall": 1.0,
+      "n_tokens": 65503
+    },
+    {
+      "answers": [
+        "5456386"
+      ],
+      "output": "5456386. This number is highlighted in the text as the special magic number. The number is mentioned in the context of a specific reference within the text, and it is presented as the unique identifier or key for",
+      "recall": 1.0,
+      "n_tokens": 65506
+    },
+    {
+      "answers": [
+        "1488364"
+      ],
+      "output": "1488364. The number is hidden within the text and is the answer to the quiz. The number is found in the text as follows: \"And the sons of Joseph were Manasseh and Ephraim",
+      "recall": 1.0,
+      "n_tokens": 65503
+    }
+  ]
+}

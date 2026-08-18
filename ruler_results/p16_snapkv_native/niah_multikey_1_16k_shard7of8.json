@@ -1,0 +1,57 @@
+{
+  "status": "completed",
+  "task": "niah_multikey_1",
+  "length": "16k",
+  "n_requested": 100,
+  "sharding": {
+    "num_shards": 8,
+    "shard_index": 7
+  },
+  "summary": {
+    "score": 100.0,
+    "n": 12,
+    "approx_tokens": 15467,
+    "perf": {
+      "prefill_latency_s": 0.3866,
+      "prefill_peak_gb": 20.7014,
+      "decode_latency_per_tok_ms": 20.4177,
+      "compressed_kv_MB": 942.75,
+      "mean_retained_len": 6704.0,
+      "min_retained_len": 6704.0,
+      "max_retained_len": 6704.0
+    }
+  },
+  "score": 100.0,
+  "oom_count": 0,
+  "elapsed_seconds": 31.957,
+  "runtime": {
+    "node": "TENCENT64.site",
+    "cuda_visible_devices": "4",
+    "device": "cuda:0",
+    "seed": 42,
+    "dtype": "bfloat16",
+    "attn_implementation": "sdpa"
+  },
+  "chat_template": false,
+  "enable_thinking": false,
+  "scoring": "scripts.eval_ruler_mem_space._string_match_all_one",
+  "baseline": "snapkv-native",
+  "kvcompress": {
+    "method": "snapkv",
+    "max_capacity_prompt": 6657,
+    "window_size": 32,
+    "kernel_size": 5,
+    "pooling": "avgpool",
+    "gqa_score_agg": "mean",
+    "long_ctx": "native",
+    "yarn_factor": null,
+    "native_window": 40960,
+    "prompt_truncated_to_native": false,
+    "full_prompt_seen": true,
+    "num_layers": 36
+  },
+  "model": {
+    "model_path": "models/Qwen3-8b-local",
+    "num_hidden_layers": 36
+  }
+}

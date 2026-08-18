@@ -1,0 +1,14 @@
+==========================================
+RMT Evaluation Configuration
+==========================================
+Checkpoint dir: outputs/rmt_v7_8gpu_20260417_191424_20260417_191503/final
+Data path: data/rmt_train_wiki_zh_10k.jsonl
+Output dir: eval_results/rmt_v7_eval
+Eval type: all
+Num memory tokens: 64
+Segment length: 1024
+==========================================
+Activating virtual environment...
+Running evaluation...
+Command: python scripts/eval_rmt.py     --checkpoint_dir outputs/rmt_v7_8gpu_20260417_191424_20260417_191503/final     --data_path data/rmt_train_wiki_zh_10k.jsonl     --output_dir eval_results/rmt_v7_eval     --eval_type all --num_memory_tokens 64 --segment_length 1024
+

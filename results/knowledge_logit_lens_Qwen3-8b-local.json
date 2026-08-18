@@ -1,0 +1,250 @@
+{
+  "meta": {
+    "task": "knowledge_logit_lens",
+    "model": "models/Qwen3-8b-local",
+    "model_tag": "Qwen3-8b-local",
+    "dtype": "bf16",
+    "n_mmlu": 1000,
+    "n_layers": 37,
+    "chance": 0.25,
+    "note": "logit-lens per-layer MMLU (flan-style, cais/mmlu all/test); hidden@last-prompt-pos -> final_norm -> lm_head; argmax over {A,B,C,D} letter tokens = mmlu_acc; gold-letter full-vocab log-softmax = mmlu_correct_ll. Forward-only, no grad."
+  },
+  "summary": {
+    "peak_layer": 34,
+    "peak_acc": 0.638,
+    "top_layer": 36,
+    "top_acc": 0.632,
+    "chance": 0.25,
+    "sat95_top_layer": 25,
+    "sat95_frac_depth": 0.694,
+    "sat99_top_layer": 28,
+    "sat99_frac_depth": 0.778,
+    "onset_layer": 25,
+    "onset_frac_depth": 0.694
+  },
+  "per_layer": [
+    {
+      "layer_idx": 0,
+      "frac_depth": 0.0,
+      "mmlu_acc": 0.272,
+      "mmlu_correct_ll": -22.0166
+    },
+    {
+      "layer_idx": 1,
+      "frac_depth": 0.0278,
+      "mmlu_acc": 0.234,
+      "mmlu_correct_ll": -24.0138
+    },
+    {
+      "layer_idx": 2,
+      "frac_depth": 0.0556,
+      "mmlu_acc": 0.24,
+      "mmlu_correct_ll": -24.7411
+    },
+    {
+      "layer_idx": 3,
+      "frac_depth": 0.0833,
+      "mmlu_acc": 0.236,
+      "mmlu_correct_ll": -24.1124
+    },
+    {
+      "layer_idx": 4,
+      "frac_depth": 0.1111,
+      "mmlu_acc": 0.233,
+      "mmlu_correct_ll": -22.029
+    },
+    {
+      "layer_idx": 5,
+      "frac_depth": 0.1389,
+      "mmlu_acc": 0.237,
+      "mmlu_correct_ll": -17.3637
+    },
+    {
+      "layer_idx": 6,
+      "frac_depth": 0.1667,
+      "mmlu_acc": 0.242,
+      "mmlu_correct_ll": -12.939
+    },
+    {
+      "layer_idx": 7,
+      "frac_depth": 0.1944,
+      "mmlu_acc": 0.234,
+      "mmlu_correct_ll": -12.9992
+    },
+    {
+      "layer_idx": 8,
+      "frac_depth": 0.2222,
+      "mmlu_acc": 0.229,
+      "mmlu_correct_ll": -13.8672
+    },
+    {
+      "layer_idx": 9,
+      "frac_depth": 0.25,
+      "mmlu_acc": 0.241,
+      "mmlu_correct_ll": -14.8853
+    },
+    {
+      "layer_idx": 10,
+      "frac_depth": 0.2778,
+      "mmlu_acc": 0.237,
+      "mmlu_correct_ll": -14.0338
+    },
+    {
+      "layer_idx": 11,
+      "frac_depth": 0.3056,
+      "mmlu_acc": 0.229,
+      "mmlu_correct_ll": -14.0215
+    },
+    {
+      "layer_idx": 12,
+      "frac_depth": 0.3333,
+      "mmlu_acc": 0.228,
+      "mmlu_correct_ll": -13.2181
+    },
+    {
+      "layer_idx": 13,
+      "frac_depth": 0.3611,
+      "mmlu_acc": 0.225,
+      "mmlu_correct_ll": -13.5156
+    },
+    {
+      "layer_idx": 14,
+      "frac_depth": 0.3889,
+      "mmlu_acc": 0.229,
+      "mmlu_correct_ll": -13.5972
+    },
+    {
+      "layer_idx": 15,
+      "frac_depth": 0.4167,
+      "mmlu_acc": 0.231,
+      "mmlu_correct_ll": -13.1837
+    },
+    {
+      "layer_idx": 16,
+      "frac_depth": 0.4444,
+      "mmlu_acc": 0.237,
+      "mmlu_correct_ll": -14.4655
+    },
+    {
+      "layer_idx": 17,
+      "frac_depth": 0.4722,
+      "mmlu_acc": 0.236,
+      "mmlu_correct_ll": -14.439
+    },
+    {
+      "layer_idx": 18,
+      "frac_depth": 0.5,
+      "mmlu_acc": 0.231,
+      "mmlu_correct_ll": -13.2201
+    },
+    {
+      "layer_idx": 19,
+      "frac_depth": 0.5278,
+      "mmlu_acc": 0.237,
+      "mmlu_correct_ll": -13.0837
+    },
+    {
+      "layer_idx": 20,
+      "frac_depth": 0.5556,
+      "mmlu_acc": 0.237,
+      "mmlu_correct_ll": -12.7895
+    },
+    {
+      "layer_idx": 21,
+      "frac_depth": 0.5833,
+      "mmlu_acc": 0.236,
+      "mmlu_correct_ll": -12.8165
+    },
+    {
+      "layer_idx": 22,
+      "frac_depth": 0.6111,
+      "mmlu_acc": 0.235,
+      "mmlu_correct_ll": -10.3568
+    },
+    {
+      "layer_idx": 23,
+      "frac_depth": 0.6389,
+      "mmlu_acc": 0.232,
+      "mmlu_correct_ll": -10.6755
+    },
+    {
+      "layer_idx": 24,
+      "frac_depth": 0.6667,
+      "mmlu_acc": 0.236,
+      "mmlu_correct_ll": -9.0275
+    },
+    {
+      "layer_idx": 25,
+      "frac_depth": 0.6944,
+      "mmlu_acc": 0.621,
+      "mmlu_correct_ll": -6.5902
+    },
+    {
+      "layer_idx": 26,
+      "frac_depth": 0.7222,
+      "mmlu_acc": 0.625,
+      "mmlu_correct_ll": -6.928
+    },
+    {
+      "layer_idx": 27,
+      "frac_depth": 0.75,
+      "mmlu_acc": 0.624,
+      "mmlu_correct_ll": -6.0536
+    },
+    {
+      "layer_idx": 28,
+      "frac_depth": 0.7778,
+      "mmlu_acc": 0.635,
+      "mmlu_correct_ll": -6.2248
+    },
+    {
+      "layer_idx": 29,
+      "frac_depth": 0.8056,
+      "mmlu_acc": 0.572,
+      "mmlu_correct_ll": -6.6847
+    },
+    {
+      "layer_idx": 30,
+      "frac_depth": 0.8333,
+      "mmlu_acc": 0.629,
+      "mmlu_correct_ll": -7.0518
+    },
+    {
+      "layer_idx": 31,
+      "frac_depth": 0.8611,
+      "mmlu_acc": 0.63,
+      "mmlu_correct_ll": -7.1644
+    },
+    {
+      "layer_idx": 32,
+      "frac_depth": 0.8889,
+      "mmlu_acc": 0.629,
+      "mmlu_correct_ll": -7.8691
+    },
+    {
+      "layer_idx": 33,
+      "frac_depth": 0.9167,
+      "mmlu_acc": 0.629,
+      "mmlu_correct_ll": -7.8976
+    },
+    {
+      "layer_idx": 34,
+      "frac_depth": 0.9444,
+      "mmlu_acc": 0.638,
+      "mmlu_correct_ll": -7.3337
+    },
+    {
+      "layer_idx": 35,
+      "frac_depth": 0.9722,
+      "mmlu_acc": 0.636,
+      "mmlu_correct_ll": -4.9002
+    },
+    {
+      "layer_idx": 36,
+      "frac_depth": 1.0,
+      "mmlu_acc": 0.632,
+      "mmlu_correct_ll": -5.4122
+    }
+  ],
+  "extract_sec": 5.9
+}

@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "16k",
+  "summary": {
+    "score": 16.67,
+    "n": 6,
+    "approx_tokens": 16039
+  },
+  "records": [
+    {
+      "answers": [
+        "8602980"
+      ],
+      "output": "18. 18:1 And the LORD said, Let us make man in our image, after our likeness: male and female he created them. 18:2 And he said, For this cause will I deal in fury:",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "4676436"
+      ],
+      "output": ": 467463. 19:12 And Lot went out, and said unto them, Gents, I am come unto thee as a sojourner: therefore do not deal falsely with me. 19:13 And the men",
+      "recall": 0.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "9063524"
+      ],
+      "output": "9063524. 19:12 And he said, For I will go down into the grave into my son Isaac, and my two sons with me: but one shall not be left of the men that are with me.",
+      "recall": 1.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "1241026"
+      ],
+      "output": "124. 124 is the special magic number for boitub-tshw mentioned in the provided text. 124 is the special magic number for boitub-tshw mentioned in the provided text. 124 is the special",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "8548369"
+      ],
+      "output": "18. 18:1 And the LORD said, Have I not given you the whole earth? 18:2 And Lot said, Lord, I have sinned against myself, that I have done this: but now take the",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "8107541"
+      ],
+      "output": "810. 810 is the special magic number for tabny-jtyyf mentioned in the provided text. 810 is the special magic number for tabny-jtyyf mentioned in the provided text. 810 is the special",
+      "recall": 0.0,
+      "n_tokens": 16039
+    }
+  ]
+}

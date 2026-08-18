@@ -1,0 +1,77 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.6667,
+    "correct": 4,
+    "total": 6,
+    "approx_tokens": 8340
+  },
+  "records": [
+    {
+      "sample_index": 7,
+      "label": "uxzkgx-rbgrutb",
+      "expected": "387367",
+      "output": "<387367>. I remember that line because it's one of the later entries in the list, and the number 387367 stands out as a unique value. I went through each line and associated",
+      "pred": "387367",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8330,
+      "read_len": null
+    },
+    {
+      "sample_index": 15,
+      "label": "jkldiwt-aowtpc",
+      "expected": "123926",
+      "output": "<123926>. Wait, let me check again. Oh, I think I made a mistake. Let me find the correct value.\n\nLooking back at the record, the line with identifier \"jkldiwt-aow",
+      "pred": "123926",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8353,
+      "read_len": null
+    },
+    {
+      "sample_index": 23,
+      "label": "xmbnniv-vhzegnzap",
+      "expected": "866375",
+      "output": "<866375>. I remember that line because it's one of the later entries in the list, and the number 866375 stands out as a unique value. I can confirm this by recalling the",
+      "pred": "866375",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8314,
+      "read_len": null
+    },
+    {
+      "sample_index": 31,
+      "label": "zemziapo-xjwfslq",
+      "expected": "256210",
+      "output": "<256210>. I remember that line because it's one of the entries listed in the record provided. Each line has a unique identifier followed by its corresponding numerical value enclosed in <>. The line in question, zem",
+      "pred": "256210",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8316,
+      "read_len": null
+    },
+    {
+      "sample_index": 39,
+      "label": "bocdy-ppspbywh",
+      "expected": "694839",
+      "output": "<174528>. \n\nWait, I think I made a mistake. Let me check again. The line with the identifier \"bocdy-ppspbywh\" isn't listed in the provided record. However,",
+      "pred": "174528",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8372,
+      "read_len": null
+    },
+    {
+      "sample_index": 47,
+      "label": "tuwaasf-nqkcvjtz",
+      "expected": "679752",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"tuwaasf-nqkcvjtz\". Therefore, I cannot provide the corresponding <REGISTER_CONTENT> value for that line. Please check",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8340,
+      "read_len": null
+    }
+  ]
+}

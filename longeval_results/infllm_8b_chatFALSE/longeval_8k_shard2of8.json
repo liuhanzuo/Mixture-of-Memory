@@ -1,0 +1,77 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.3333,
+    "correct": 2,
+    "total": 6,
+    "approx_tokens": 8401
+  },
+  "records": [
+    {
+      "sample_index": 2,
+      "label": "ypofv-tfzptm",
+      "expected": "129771",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"ypofv-tfzptm\". Please check the line identifier and try again. The available lines are as listed in the record above.",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8353,
+      "read_len": null
+    },
+    {
+      "sample_index": 10,
+      "label": "hpowbfgk-yjwfbwx",
+      "expected": "303326",
+      "output": "<303326>. I have retrieved this value from the record you provided. Let me know if you need anything else!\nThe <REGISTER_CONTENT> in line hpowbfgk-yjwfbwx is <3",
+      "pred": "303326",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8342,
+      "read_len": null
+    },
+    {
+      "sample_index": 18,
+      "label": "ymrzk-xqcahi",
+      "expected": "290796",
+      "output": "<290796>. I remember that line because it's one of the entries listed in the record provided. Each line has a unique identifier followed by its corresponding numerical value enclosed in <>. The line \"ymrzk-x",
+      "pred": "290796",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8329,
+      "read_len": null
+    },
+    {
+      "sample_index": 26,
+      "label": "ckiuyiuol-hcfdgxf",
+      "expected": "552533",
+      "output": "not present in the provided record. The lines listed are all unique identifiers followed by their respective <REGISTER_CONTENT> values, but \"ckiuyiuol-hcfdgxf\" is not among them. Therefore, there is no <REGISTER",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8353,
+      "read_len": null
+    },
+    {
+      "sample_index": 34,
+      "label": "yanziyjw-gfjlsbzc",
+      "expected": "851588",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"yanziyjw-gfjlsbzc\". Please verify the line index and try again. The available line indices are the ones listed in",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8313,
+      "read_len": null
+    },
+    {
+      "sample_index": 42,
+      "label": "eymzpryra-cespo",
+      "expected": "535537",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"eymzpryra-cespo\" does not match any of the line identifiers provided. Therefore, there is no corresponding <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8401,
+      "read_len": null
+    }
+  ]
+}

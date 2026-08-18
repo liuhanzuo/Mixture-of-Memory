@@ -1,0 +1,104 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 7,
+    "approx_tokens": 65664,
+    "avg_read_len": 6412.6,
+    "last_read_len": 6273
+  },
+  "records": [
+    {
+      "sample_index": 0,
+      "label": "fuqeo-iprycoxa",
+      "expected": "111681",
+      "output": "<147807>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the lines, I see the line \"line amditx-w",
+      "pred": "147807",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65956,
+      "read_len": 6565,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 8,
+      "label": "xryemmn-ghjjbgge",
+      "expected": "224098",
+      "output": "<517569>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss it.\n\nLooking through the lines:\n\n- The line \"ibgqj-ppx",
+      "pred": "517569",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65747,
+      "read_len": 6356,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 16,
+      "label": "yrxxpkqia-zhkomdgds",
+      "expected": "339024",
+      "output": "<713458>. \n\nWait, I need to find the line that contains the line \"yrxxpkqia-zhkomdgds\" and extract the value of the REGISTER_CONTENT. Let me check the list again",
+      "pred": "713458",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65814,
+      "read_len": 6423,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 24,
+      "label": "hrekxxi-cnpbqt",
+      "expected": "509665",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that matches the line \"hrekxxi-cnpbqt\".\n\nLooking through the lines provided, I see that",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65809,
+      "read_len": 6418,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 32,
+      "label": "zfsyq-xozhx",
+      "expected": "944807",
+      "output": "<559543>\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"zfsyq-xozhx\". Let me go through the list again to make sure",
+      "pred": "559543",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65894,
+      "read_len": 6503,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 40,
+      "label": "zsiohq-yuowuct",
+      "expected": "735211",
+      "output": "<283075>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the lines, I see the line \"line hmykgqe",
+      "pred": "283075",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65741,
+      "read_len": 6350,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 48,
+      "label": "utkqcs-buvwrg",
+      "expected": "612457",
+      "output": "<556934>\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"utkqcs-buvwrg\". Let me go through the list again to make sure",
+      "pred": "556934",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65664,
+      "read_len": 6273,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    }
+  ]
+}

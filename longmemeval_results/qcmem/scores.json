@@ -1,0 +1,23 @@
+{
+  "benchmark": "longmemeval",
+  "n_samples": 2,
+  "overall_f1": 3.9999999999999996,
+  "overall_em": 0.0,
+  "overall_acc": 50.0,
+  "by_ability": {
+    "information_extraction": {
+      "n": 2,
+      "f1": 3.9999999999999996,
+      "em": 0.0,
+      "acc": 50.0
+    }
+  },
+  "by_question_type": {
+    "single-session-user": {
+      "n": 2,
+      "f1": 3.9999999999999996,
+      "em": 0.0,
+      "acc": 50.0
+    }
+  }
+}

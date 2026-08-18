@@ -1,0 +1,91 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 65899,
+    "avg_read_len": 6360.7,
+    "last_read_len": 6508
+  },
+  "records": [
+    {
+      "sample_index": 5,
+      "label": "kkjwvwffd-mezkt",
+      "expected": "171133",
+      "output": "<...> and I need to find the value of it. Let me check the list again.\n\nLooking through the provided data, I don't see a line with the identifier \"kkjwvwffd-mezkt\". All the lines",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65836,
+      "read_len": 6445,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 13,
+      "label": "tdalmrnar-aqslmbjk",
+      "expected": "207258",
+      "output": "<543210>. \n\nWait, but I need to check if that's correct. Let me count the lines again to make sure I didn't miss any. Let's see, the last line provided is line uzlr",
+      "pred": "543210",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65760,
+      "read_len": 6369,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 21,
+      "label": "phapcd-agivrq",
+      "expected": "652019",
+      "output": "<232043>. \n\nWait, but I need to check if there's a line with the line number 232043. Let me check again.\n\nLooking through the list:\n\nLooking through the lines provided",
+      "pred": "232043",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65639,
+      "read_len": 6248,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 29,
+      "label": "iytypn-crgho",
+      "expected": "694678",
+      "output": "<655234>\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"iytypn-crgho\". Let me go through the list again to make sure I",
+      "pred": "655234",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65814,
+      "read_len": 6423,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    },
+    {
+      "sample_index": 37,
+      "label": "rwigy-lweft",
+      "expected": "910045",
+      "output": "<986215>. \n\nOkay, let's see. I need to find the number associated with the line \"line rwigy-lweft\". Let me go through the list again to make sure I don't miss it",
+      "pred": "986215",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 66074,
+      "read_len": 6171,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 129
+    },
+    {
+      "sample_index": 45,
+      "label": "pmbpsci-icgpzbrg",
+      "expected": "379205",
+      "output": "<100744>. \n\nWait, let me check again to make sure I didn't miss any lines. Let me go through the list again.\n\nLooking through the lines, the line with \"pmbpsci-ic",
+      "pred": "100744",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65899,
+      "read_len": 6508,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 128
+    }
+  ]
+}

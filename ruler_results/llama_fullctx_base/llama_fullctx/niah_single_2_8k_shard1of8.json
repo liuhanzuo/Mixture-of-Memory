@@ -1,0 +1,67 @@
+{
+  "task": "niah_single_2",
+  "length": "8k",
+  "summary": {
+    "score": 100.0,
+    "n": 7,
+    "approx_tokens": 8063
+  },
+  "records": [
+    {
+      "answers": [
+        "8726021"
+      ],
+      "output": ": 8726021.",
+      "recall": 1.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "3978252"
+      ],
+      "output": ": 3978252.",
+      "recall": 1.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "1959856"
+      ],
+      "output": ": 1959856.",
+      "recall": 1.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "4619191"
+      ],
+      "output": ": 4619191.",
+      "recall": 1.0,
+      "n_tokens": 8066
+    },
+    {
+      "answers": [
+        "3898726"
+      ],
+      "output": ": 3898726.",
+      "recall": 1.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "9992106"
+      ],
+      "output": ": 9992106.",
+      "recall": 1.0,
+      "n_tokens": 8069
+    },
+    {
+      "answers": [
+        "3315450"
+      ],
+      "output": ": 3315450.",
+      "recall": 1.0,
+      "n_tokens": 8063
+    }
+  ]
+}

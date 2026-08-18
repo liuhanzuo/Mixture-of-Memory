@@ -1,0 +1,77 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.5,
+    "correct": 3,
+    "total": 6,
+    "approx_tokens": 8334
+  },
+  "records": [
+    {
+      "sample_index": 4,
+      "label": "sksnjsar-nqsevds",
+      "expected": "413834",
+      "output": "not present in the provided record. The lines listed are all unique identifiers followed by their respective <REGISTER_CONTENT> values, and \"sksnjsar-nqsevds\" does not match any of the line identifiers provided. Therefore",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8318,
+      "read_len": null
+    },
+    {
+      "sample_index": 12,
+      "label": "iuaqfteno-ihuzejedv",
+      "expected": "290961",
+      "output": "<290961>. I remember that line because it's one of the later entries in the list, and the number 290961 stands out as a unique value. I associated it with the line identifier",
+      "pred": "290961",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8293,
+      "read_len": null
+    },
+    {
+      "sample_index": 20,
+      "label": "agzxjsrp-icywa",
+      "expected": "295331",
+      "output": "not present in the provided record. The line indices listed in the record are unique identifiers, and \"agzxjsrp-icywa\" does not match any of the line indices provided. Therefore, there is no corresponding <REGISTER_CONTENT>",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8318,
+      "read_len": null
+    },
+    {
+      "sample_index": 28,
+      "label": "jsjtafus-uajmbx",
+      "expected": "765474",
+      "output": "<765474>. I remember that line because it's one of the later entries in the list, and the number 765474 stands out as a unique value. I can confirm this by recalling the",
+      "pred": "765474",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8371,
+      "read_len": null
+    },
+    {
+      "sample_index": 36,
+      "label": "jfhfv-gtxtklmf",
+      "expected": "330762",
+      "output": "<389863>. I remember that line because it's one of the entries listed in the record provided. Each line has a unique identifier followed by its corresponding numerical value enclosed in <>. The line in question, jfh",
+      "pred": "389863",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8301,
+      "read_len": null
+    },
+    {
+      "sample_index": 44,
+      "label": "ahfvagie-bzbrheji",
+      "expected": "378642",
+      "output": "<378642>. Let me know if you need anything else!\nThe <REGISTER_CONTENT> in line ahfvagie-bzbrheji is <378642>. Let me know if you need",
+      "pred": "378642",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8334,
+      "read_len": null
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "task": "niah_single_2",
+  "length": "16k",
+  "summary": {
+    "score": 16.67,
+    "n": 6,
+    "approx_tokens": 16045
+  },
+  "records": [
+    {
+      "answers": [
+        "3823025"
+      ],
+      "output": "3823025. 19:12 And he said, For I will go down into the grave into my son Isaac, for I have two sons, one is called Esau, and the other, Jacob. 19:13",
+      "recall": 1.0,
+      "n_tokens": 16045
+    },
+    {
+      "answers": [
+        "9383197"
+      ],
+      "output": "938. 19:12 And Lot went out, and said unto them, Gibeon is near, and Saron: now therefore make yea league with them, and let them come to us. 19:13 And",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "7132138"
+      ],
+      "output": ": 13:13 And there came a man of the sons of the sojourners of the Philistines, and took to wife Lot's daughter, and took her to wife. 13:14 And Lot said, My",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "5161309"
+      ],
+      "output": "516. 17:1 And the LORD said unto Moses, Come, let us make man in our image, after our likeness: and let them have dominion over the fish of the sea, and over the fowl of the",
+      "recall": 0.0,
+      "n_tokens": 16039
+    },
+    {
+      "answers": [
+        "1377560"
+      ],
+      "output": ": 137565331. 19:12 And Lot went out, and said unto them, Gents, I am come unto thee as a sojourner: now therefore deal righteously by me: 19:13 And",
+      "recall": 0.0,
+      "n_tokens": 16042
+    },
+    {
+      "answers": [
+        "6759108"
+      ],
+      "output": "675. 14:1 And the LORD said unto Moses, Go down, and thou and Aaron, unto the people, unto the place of the Egyptian; and say, If any man saith, If he be a Jew,",
+      "recall": 0.0,
+      "n_tokens": 16045
+    }
+  ]
+}

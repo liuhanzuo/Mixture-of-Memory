@@ -1,0 +1,91 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 131406,
+    "avg_read_len": 6392.5,
+    "last_read_len": 6479
+  },
+  "records": [
+    {
+      "sample_index": 4,
+      "label": "dfbpq-btcffmw",
+      "expected": "472274",
+      "output": "<250183>. \n\nWait, but I need to find the value of REGISTER_CONTENT for the line \"dfbpq-btcffmw\". Let me check again.\n\nLooking through the list:\n\nLooking for the line that",
+      "pred": "250183",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131617,
+      "read_len": 6178,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 257
+    },
+    {
+      "sample_index": 12,
+      "label": "pzwhsy-gmiffbzma",
+      "expected": "406080",
+      "output": "<...> and I need to find the number inside the angle brackets. Let me check the list again to find the line that matches the line number \"pzwhsy-gmiffbzma\".\n\nLooking through the lines provided, I see",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131578,
+      "read_len": 6651,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 20,
+      "label": "jxhpfulda-rgmys",
+      "expected": "819491",
+      "output": "<...> but I can't see the value. Let me check the provided data again.\n\nLooking through the list, I don't see a line with the identifier \"jxhpfulda-rgmys\". All the lines provided have",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131317,
+      "read_len": 6390,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 28,
+      "label": "wnrtue-idxfno",
+      "expected": "415501",
+      "output": "<683754>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me look for the line that starts with \"line wnrtue-idxfno: REGISTER_CONTENT",
+      "pred": "683754",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131401,
+      "read_len": 6474,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    },
+    {
+      "sample_index": 36,
+      "label": "khxiljenb-okkllfi",
+      "expected": "263620",
+      "output": "<699448>.\n\nOkay, let's see, I need to find the number associated with the line \"khxiljenb-okkllfi\". \n\nFirst, I'll go through the list you provided and look",
+      "pred": "699448",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131622,
+      "read_len": 6183,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 257
+    },
+    {
+      "sample_index": 44,
+      "label": "jnxnwji-ithkthnwe",
+      "expected": "158991",
+      "output": "<...> and I need to find the number inside the angle brackets. The line is: line jnxnwji-ithkthnwe: REGISTER_CONTENT is <...>\nOkay, let's see. I need to find the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131406,
+      "read_len": 6479,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 256
+    }
+  ]
+}

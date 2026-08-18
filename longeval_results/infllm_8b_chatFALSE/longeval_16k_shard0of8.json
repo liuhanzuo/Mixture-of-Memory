@@ -1,0 +1,88 @@
+{
+  "length": "16k",
+  "summary": {
+    "accuracy": 0.4286,
+    "correct": 3,
+    "total": 7,
+    "approx_tokens": 16529
+  },
+  "records": [
+    {
+      "sample_index": 0,
+      "label": "jbzfu-zdaqlcbif",
+      "expected": "153333",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"jbxfu-zdaqlcbif\". Please check the line index for accuracy. If there's a typo or if the line index is different,",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16542,
+      "read_len": null
+    },
+    {
+      "sample_index": 8,
+      "label": "ogkrizr-pagmz",
+      "expected": "135550",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"ogkrizr-pagmz\". Please check the line index again or provide additional information if needed. The available lines have unique identifiers, and",
+      "pred": "",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16610,
+      "read_len": null
+    },
+    {
+      "sample_index": 16,
+      "label": "ldikcp-cqiybo",
+      "expected": "980874",
+      "output": "<980874>. I remember that line because it's one of the earlier entries in the list, and the number stands out as being quite high. Let me double-check to make sure I didn't mix up any numbers",
+      "pred": "980874",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16569,
+      "read_len": null
+    },
+    {
+      "sample_index": 24,
+      "label": "enotbfnqg-kqexdvxj",
+      "expected": "230978",
+      "output": "<104109>. \n\nWait, let me check again. The line enotbfnqg-kqexdvxj is not listed in the provided record. The line indices given in the record are unique identifiers",
+      "pred": "104109",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16607,
+      "read_len": null
+    },
+    {
+      "sample_index": 32,
+      "label": "xkpwm-bikqx",
+      "expected": "213961",
+      "output": "<946455>. \n\nWait, let me check again. The line with the identifier \"xkpwm-bikqx\" is not listed in the provided record. However, there is a line with the identifier \"px",
+      "pred": "946455",
+      "correct": false,
+      "n_lines": 768,
+      "n_tokens": 16451,
+      "read_len": null
+    },
+    {
+      "sample_index": 40,
+      "label": "rpsnnuyet-yzmgvz",
+      "expected": "830869",
+      "output": "<830869>. I remember that line because it's one of the later entries in the list, and the number stands out as a higher value compared to some others. Let me double-check to make sure I didn't",
+      "pred": "830869",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16513,
+      "read_len": null
+    },
+    {
+      "sample_index": 48,
+      "label": "tptuxc-unmiogclf",
+      "expected": "326640",
+      "output": "<326640>. I remember that line from the record you provided. Let me double-check to make sure I didn't mix up any numbers. Yes, that's correct. The line with the identifier tptuxc",
+      "pred": "326640",
+      "correct": true,
+      "n_lines": 768,
+      "n_tokens": 16529,
+      "read_len": null
+    }
+  ]
+}

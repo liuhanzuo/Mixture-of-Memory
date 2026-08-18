@@ -1,0 +1,991 @@
+target,output,question
+kitchen,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the garden? 
+garden,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the hallway? 
+office,"(Monday
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the hallway? 
+kitchen,"(Monday
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the office? 
+garden,"Answer
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the hallway? 
+hallway,"Answer
+
+Skip
+
+Skip
+
+The
+
+The
+
+The be be be be be be be be be",Where was the milk before the office? 
+kitchen,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the office? 
+hallway,"Answer
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the kitchen? 
+garden,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the hallway? 
+kitchen,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+The
+
+The
+
+The
+
+The​
+
+import>
+
+import>",Where was the milk before the bedroom? 
+office,"(Monday
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the kitchen? 
+kitchen,"Answer
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the office? 
+bedroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the kitchen? 
+kitchen,"(Monday
+
+Skip
+
+What
+
+What
+
+The
+
+The/
+
+
+
+import>
+
+import>
+
+import>
+
+import",Where was the football before the garden? 
+kitchen,"(Monday
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the garden? 
+hallway,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the kitchen? 
+hallway,"Answer
+
+Skip
+
+
+
+
+
+
+
+
+
+The
+
+The​
+
+
+
+The​
+
+The​
+
+import>
+
+import",Where was the apple before the office? 
+bathroom,"Answer
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the office? 
+hallway,"Answer
+
+Skip
+
+Skip
+
+The
+
+The
+
+The​
+
+The​
+
+The​
+
+The​
+
+import>",Where was the apple before the bedroom? 
+bedroom,"Answer
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the office? 
+bathroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the bedroom? 
+garden,"(Monday
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the hallway? 
+bathroom,"Answer
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the hallway? 
+bathroom,"(1
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the office? 
+kitchen,"Answer
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the bathroom? 
+office,"(Monday
+
+Monday
+
+Monday • • • • • • • • • • • • • •",Where was the milk before the bathroom? 
+hallway,"Answer
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the bathroom? 
+kitchen,"(Monday
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the garden? 
+bedroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip
+
+The​
+
+import>",Where was the football before the bathroom? 
+bedroom,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the bathroom? 
+hallway,"(Monday
+
+Skip
+
+Skip
+
+Skip
+
+The
+
+The/
+
+
+
+import>
+
+import>
+
+import>
+
+import",Where was the apple before the bedroom? 
+bathroom,"Answer
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the hallway? 
+kitchen,"Answer
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the garden? 
+hallway,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+SkipSkip
+
+The​
+
+import>
+
+import>
+
+import>
+
+import",Where was the football before the garden? 
+hallway,"Answer
+
+Skip
+
+Skip
+
+What
+
+What
+
+What
+
+What
+
+The​
+
+
+
+The​
+
+import",Where was the apple before the garden? 
+bedroom,"Answer
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the office? 
+bedroom,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+The
+
+The
+
+The​
+
+The​
+
+import>
+
+import>",Where was the football before the office? 
+kitchen,"(Monday
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the bedroom? 
+bathroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the bedroom? 
+garden,"Answer
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the bedroom? 
+garden,"Answer
+
+Skip
+
+Skip
+
+The
+
+The
+
+The​
+
+The​
+
+The​
+
+import>
+
+import>",Where was the football before the kitchen? 
+office,"Answer
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the bathroom? 
+garden,"Answer
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the bedroom? 
+garden,"Answer
+
+
+
+
+
+
+
+
+
+
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Thechemical
+
+import>",Where was the milk before the office? 
+garden,"Answer
+
+Skip
+
+What
+
+What
+
+The
+
+The/
+
+
+
+import>
+
+import>
+
+import>
+
+import>",Where was the milk before the office? 
+garden,"Answer
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the hallway? 
+hallway,"Answer
+
+Skip
+
+Skip
+
+What
+
+What
+
+What
+
+The take
+
+The​
+
+import>
+
+import",Where was the football before the garden? 
+garden,"(Monday
+
+Skip
+
+What
+
+What
+
+What
+
+What
+
+Thechemical
+
+import>
+
+import>",Where was the football before the bedroom? 
+office,"Answer
+
+Skip
+
+SkipSkip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the kitchen? 
+office,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the kitchen? 
+hallway,"Answer
+
+Skip
+
+Skip
+
+
+
+
+
+
+
+
+
+
+
+The​
+
+import>
+
+import>
+
+import>
+
+import",Where was the apple before the office? 
+kitchen,"Answer
+
+Skip
+
+Skip
+
+The
+
+The
+
+The ﻿﻿﻿﻿﻿﻿﻿﻿﻿",Where was the milk before the office? 
+garden,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+What
+
+What
+
+What
+
+The
+
+The
+
+The",Where was the football before the bedroom? 
+hallway,"(Monday
+
+Monday
+
+The
+
+The
+
+The
+
+The
+
+Thechemical
+
+Thechemical
+
+The",Where was the apple before the kitchen? 
+bathroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the hallway? 
+hallway,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the bedroom? 
+garden,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+The
+
+The/
+
+
+
+import>
+
+import>
+
+import>
+
+import>",Where was the milk before the office? 
+bathroom,"Answer
+
+Skip
+
+What
+
+What
+
+What
+
+The
+
+The​
+
+The​
+
+The​
+
+import>",Where was the football before the garden? 
+garden,"(Monday
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the kitchen? 
+bedroom,"Answer
+
+Skip
+
+Monday
+
+The
+
+The
+
+The
+
+The ﻿﻿﻿﻿﻿﻿﻿",Where was the milk before the office? 
+bathroom,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the kitchen? 
+kitchen,"Answer
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the hallway? 
+office,"Answer
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the garden? 
+kitchen,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the office? 
+hallway,"Answer
+
+What
+
+What
+
+What
+
+What • • • • • • • ••••",Where was the apple before the office? 
+bedroom,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the bathroom? 
+office,"(Monday
+
+Skip
+
+What
+
+What
+
+The
+
+The ﻿﻿﻿﻿﻿﻿﻿﻿",Where was the apple before the kitchen? 
+kitchen,"Answer
+
+Monday
+
+Monday
+
+Monday
+
+Monday
+
+The/
+
+
+
+import>
+
+import>
+
+import>
+
+import>",Where was the football before the hallway? 
+garden,"Answer
+
+What
+
+What
+
+What
+
+What
+
+The
+
+The
+
+Thechemical
+
+Thechemical",Where was the football before the office? 
+kitchen,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the garden? 
+hallway,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the bedroom? 
+garden,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+The​
+
+The​
+
+The​
+
+The​
+
+import>",Where was the apple before the kitchen? 
+bedroom,"Answer
+
+Skip
+
+Skip
+
+The
+
+The
+
+The​
+
+The​
+
+The​
+
+import>
+
+import>",Where was the apple before the garden? 
+office,"Answer
+
+Skip
+
+What
+
+What
+
+What
+
+What
+
+What
+
+What
+
+What
+
+The​",Where was the apple before the garden? 
+bathroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the hallway? 
+kitchen,"(Monday
+
+Tuesday
+
+The
+
+The
+
+The​
+
+The​
+
+The​
+
+The​
+
+import>
+
+import",Where was the football before the bedroom? 
+hallway,"(Monday
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the bathroom? 
+bedroom,"Answer
+
+Skip
+
+TheSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the garden? 
+kitchen,"(Monday
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the hallway? 
+garden,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the bathroom? 
+bathroom,"Answer
+
+Skip
+
+Monday
+
+Monday
+
+Monday
+
+
+
+The
+
+The
+
+The
+
+Thechemical",Where was the apple before the garden? 
+hallway,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the kitchen? 
+hallway,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+The/
+
+
+
+import>
+
+import>
+
+import>
+
+import>",Where was the football before the kitchen? 
+kitchen,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the bathroom? 
+hallway,"Answer
+
+Skip
+
+What
+
+The
+
+The
+
+The/
+
+
+
+import>
+
+import>
+
+import>
+
+import>",Where was the milk before the bedroom? 
+bathroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the bedroom? 
+bedroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the office? 
+hallway,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the bedroom? 
+garden,"Answer
+
+Skip
+
+Skip
+
+What
+
+What
+
+The ﻿﻿﻿﻿﻿﻿﻿﻿﻿",Where was the apple before the kitchen? 
+bathroom,"Answer
+
+Skip
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the garden? 
+office,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the bedroom? 
+hallway,"(1
+
+Skip
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the bedroom? 
+garden,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the kitchen? 
+garden,"Answer
+
+Skip
+
+What
+
+What
+
+The​
+
+The​
+
+The​
+
+The​
+
+import>
+
+import href",Where was the milk before the bedroom? 
+kitchen,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the garden? 
+bedroom,"Answer
+
+Skip
+
+Monday
+
+Monday
+
+Monday, theSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the milk before the hallway? 
+bathroom,"Answer
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+Skip
+
+The
+
+The​
+
+«
+
+The​",Where was the football before the hallway? 
+bedroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the football before the office? 
+bathroom,"Answer
+
+Skip
+
+Skip
+
+What
+
+The
+
+The/
+
+
+
+import>
+
+import>
+
+import>
+
+import>",Where was the football before the garden? 
+bedroom,"Answer
+
+SkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkipSkip",Where was the apple before the hallway? 

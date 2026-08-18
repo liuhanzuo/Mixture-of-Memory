@@ -1,0 +1,91 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 8299,
+    "avg_read_len": 6278.2,
+    "last_read_len": 6252
+  },
+  "records": [
+    {
+      "sample_index": 3,
+      "label": "vcjcn-dfogjfc",
+      "expected": "713950",
+      "output": "<...> and I need to find it. Let me check the list again.\n\nOkay, let's see. I need to find the line that starts with \"line vcjcn-dfogjfc\" and extract the number inside",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8286,
+      "read_len": 6239,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 11,
+      "label": "tfjagnqjn-lwwifa",
+      "expected": "983160",
+      "output": "<...> I need to find the value for this line. Let me check the list again.\n\nOkay, let's see. I need to find the line that starts with \"line tfjagnqjn-lwwifa\" and extract",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8363,
+      "read_len": 6316,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 19,
+      "label": "kzcefi-hvmqijpdp",
+      "expected": "415116",
+      "output": "<...> and I need to find the number inside the <...> and give me the number only. Please answer with the number only, no other text.\nOkay, let's see. I need to find the REGISTER_CONTENT for the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8361,
+      "read_len": 6314,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 27,
+      "label": "nffws-dwbny",
+      "expected": "665741",
+      "output": "<543210>. \n\nWait, but I need to check if that's correct. Let me check the list again. Let me go through the lines again to find the line that starts with \"nffws-dwb",
+      "pred": "543210",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8308,
+      "read_len": 6261,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 35,
+      "label": "gbclm-yygglqylg",
+      "expected": "176298",
+      "output": "<716354>\nOkay, let's see. I need to find the value of REGISTER_CONTENT for the line that starts with \"gbclm-yygglqylg\". Let me go through the list again",
+      "pred": "716354",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8334,
+      "read_len": 6287,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    },
+    {
+      "sample_index": 43,
+      "label": "bxxubdgt-eutzamgo",
+      "expected": "116020",
+      "output": "<882024>. \n\nWait, let me check again. Let me go through the list again to make sure I didn't miss any lines. Let me check each line one by one.\n\nLooking through the list:\n\n-",
+      "pred": "882024",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8299,
+      "read_len": 6252,
+      "n_selected_chunks": 12,
+      "n_context_chunks": 16
+    }
+  ]
+}

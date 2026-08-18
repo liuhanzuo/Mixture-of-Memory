@@ -1,0 +1,67 @@
+{
+  "task": "niah_single_2",
+  "length": "32k",
+  "summary": {
+    "score": 0.0,
+    "n": 7,
+    "approx_tokens": 32668
+  },
+  "records": [
+    {
+      "answers": [
+        "8047601"
+      ],
+      "output": ",, the, versa,. and and and, and,,. and. and,,,,,.,,., versa, able to, of,,.,,,,,,,, the,.",
+      "recall": 0.0,
+      "n_tokens": 32659
+    },
+    {
+      "answers": [
+        "7176660"
+      ],
+      "output": ",,, versa, versa of the,, in, and,. and.,,,,,,.,,. and versa, able to, of of,.,,,, and. and. of the.",
+      "recall": 0.0,
+      "n_tokens": 32659
+    },
+    {
+      "answers": [
+        "8859057"
+      ],
+      "output": ", versa,,,,,.,,,,,,,,,..., and,. of of,,,,,, and. and... The and,,,.swing, versa. and",
+      "recall": 0.0,
+      "n_tokens": 32668
+    },
+    {
+      "answers": [
+        "4882701"
+      ],
+      "output": ", versa,.swing, the and and,,,,. and,.,,,, the,.,., versa, able to of of,,.,,,,,,,,,...,",
+      "recall": 0.0,
+      "n_tokens": 32662
+    },
+    {
+      "answers": [
+        "2326743"
+      ],
+      "output": ", the,,,,,,.,.,,,,,.,. and,.swing to, versa of,,,,. and, and, of the.,,.... and,. and",
+      "recall": 0.0,
+      "n_tokens": 32668
+    },
+    {
+      "answers": [
+        "3491737"
+      ],
+      "output": ", the,,,,,,.,.,,,,,,. and,,.swing to, versa of,,,,. And, and, of the., and,... and,. and",
+      "recall": 0.0,
+      "n_tokens": 32668
+    },
+    {
+      "answers": [
+        "1853106"
+      ],
+      "output": ", able,,,,,.,,,,,,,,,..., and,. of of,,,,,, and. and,.. The and,,,.swing, versa. and",
+      "recall": 0.0,
+      "n_tokens": 32668
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "length": "64k",
+  "summary": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 7,
+    "approx_tokens": 65714
+  },
+  "records": [
+    {
+      "sample_index": 1,
+      "label": "tzskmlct-vszju",
+      "expected": "206519",
+      "output": "<513041>. \n\nWait, let me check again. The line index is tzskmlct-vszju. Let me find it in the record.\n\nLooking through the lines, I see:\n\nline tzskml",
+      "pred": "513041",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65668,
+      "read_len": null
+    },
+    {
+      "sample_index": 9,
+      "label": "myavrotz-ipngboqa",
+      "expected": "321611",
+      "output": "not present in the provided record. The lines listed have unique identifiers, and \"myavrotz-ipngboqa\" does not match any of the line indices provided. Therefore, there is no corresponding <REGISTER_CONTENT> value for that",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65875,
+      "read_len": null
+    },
+    {
+      "sample_index": 17,
+      "label": "klrba-zympd",
+      "expected": "324692",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"klrba-zympd\". Please check the line index again or provide additional information if needed. The available lines have unique identifiers such as",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65908,
+      "read_len": null
+    },
+    {
+      "sample_index": 25,
+      "label": "ddtmn-knhhrvfj",
+      "expected": "616981",
+      "output": "<120472>. \n\nWait, I need to check again. The line index is ddtmn-knhhrvfj. Let me search through the lines again to make sure I didn't make a mistake.\n\nLooking",
+      "pred": "120472",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65715,
+      "read_len": null
+    },
+    {
+      "sample_index": 33,
+      "label": "kwptzq-rsqxuktjm",
+      "expected": "512215",
+      "output": "not present in the provided record. The lines listed do not include a line with the identifier \"kwptzq-rsqxuktjm\". Please check the line identifier and try again. If the identifier is correct, then the requested line",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65759,
+      "read_len": null
+    },
+    {
+      "sample_index": 41,
+      "label": "zkxcf-mjuvkju",
+      "expected": "574598",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"zkxcf-mjuvkju.\" Please verify the line index and provide the correct one if available. If it's a typo or an error, please",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65661,
+      "read_len": null
+    },
+    {
+      "sample_index": 49,
+      "label": "vyxca-oktioim",
+      "expected": "260295",
+      "output": "not present in the provided record. The line indices listed in the record do not include \"vyxca-oktioim\". Please check the line index and try again. The available line indices are the ones listed with their corresponding <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 3072,
+      "n_tokens": 65714,
+      "read_len": null
+    }
+  ]
+}

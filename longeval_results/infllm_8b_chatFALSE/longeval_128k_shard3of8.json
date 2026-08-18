@@ -1,0 +1,77 @@
+{
+  "length": "128k",
+  "summary": {
+    "accuracy": 0.1667,
+    "correct": 1,
+    "total": 6,
+    "approx_tokens": 131514
+  },
+  "records": [
+    {
+      "sample_index": 3,
+      "label": "nihconm-oldxerh",
+      "expected": "212502",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"nihconm-oldxerh\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value associated",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131473,
+      "read_len": null
+    },
+    {
+      "sample_index": 11,
+      "label": "yrtolp-xnoegu",
+      "expected": "330268",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"yrtolp-xnoegu\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT> value",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131505,
+      "read_len": null
+    },
+    {
+      "sample_index": 19,
+      "label": "obgjirm-cozirxhlp",
+      "expected": "877353",
+      "output": "not present in the provided record. The lines listed in the record have unique identifiers, and \"obgjirm-cozirxhlp\" does not match any of the line identifiers provided. Therefore, there is no <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131732,
+      "read_len": null
+    },
+    {
+      "sample_index": 27,
+      "label": "vhkdv-jgmomniq",
+      "expected": "613415",
+      "output": "<613415>. I remember that line from the record you provided. Let me double-check to make sure I didn't mix up any numbers. Yes, that's correct. The line with the identifier vhkdv-j",
+      "pred": "613415",
+      "correct": true,
+      "n_lines": 6144,
+      "n_tokens": 131303,
+      "read_len": null
+    },
+    {
+      "sample_index": 35,
+      "label": "sznvu-zzynritx",
+      "expected": "842875",
+      "output": "<...>. Please provide the number.\nOkay, let me try to figure out the answer. The user provided a long list of lines, each with a unique identifier and a REGISTER_CONTENT value. They're asking for the REGISTER_CONTENT of the",
+      "pred": "",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131415,
+      "read_len": null
+    },
+    {
+      "sample_index": 43,
+      "label": "ehmltn-xyrrnu",
+      "expected": "853198",
+      "output": "<573099>.\nOkay, let me try to figure out how to answer this. The user provided a list of lines, each with a unique identifier and a REGISTER_CONTENT value. They asked for the REGISTER_CONTENT of the",
+      "pred": "573099",
+      "correct": false,
+      "n_lines": 6144,
+      "n_tokens": 131514,
+      "read_len": null
+    }
+  ]
+}

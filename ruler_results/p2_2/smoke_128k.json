@@ -1,0 +1,125 @@
+{
+  "meta": {
+    "device": "NVIDIA H20",
+    "driver": "535.247.01",
+    "torch": "2.13.0",
+    "cuda": "13.2",
+    "chunk_bytes": 4194304,
+    "pack_bytes": 50331648,
+    "topk": 12,
+    "ts": "2026-08-01T02:18:25"
+  },
+  "results": [
+    {
+      "backend": "gpu",
+      "size": "128k",
+      "tokens": 131072,
+      "n_chunks": 256,
+      "store_bytes": 1073741824,
+      "store_gb": 1.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 5,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4
+      ],
+      "qps_duration_s": 2.0,
+      "write_gb_s": 1201.97,
+      "retrieve_ms": 0.1812,
+      "transfer_ms": 0.0,
+      "qps": {
+        "1": 5304.8,
+        "4": 6413.7
+      },
+      "peak_gpu_gb": 1.281,
+      "peak_host_gb": 0.754,
+      "peak_host_maxrss_gb": 0.851,
+      "status": "ok"
+    },
+    {
+      "backend": "cpu",
+      "size": "128k",
+      "tokens": 131072,
+      "n_chunks": 256,
+      "store_bytes": 1073741824,
+      "store_gb": 1.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 5,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4
+      ],
+      "qps_duration_s": 2.0,
+      "write_gb_s": 139.6,
+      "store_pinned": true,
+      "retrieve_ms": 0.9374,
+      "transfer_ms": 1.4087,
+      "qps": {
+        "1": 737.0,
+        "4": 585.5
+      },
+      "peak_gpu_gb": 0.281,
+      "peak_host_gb": 2.178,
+      "peak_host_maxrss_gb": 2.181,
+      "status": "ok"
+    },
+    {
+      "backend": "nvme",
+      "size": "128k",
+      "tokens": 131072,
+      "n_chunks": 256,
+      "store_bytes": 1073741824,
+      "store_gb": 1.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 5,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4
+      ],
+      "qps_duration_s": 2.0,
+      "write_gb_s": 2.14,
+      "odirect": true,
+      "retrieve_ms": 12.0304,
+      "transfer_ms": 0.8999,
+      "qps": {
+        "1": 104.0,
+        "4": 225.0
+      },
+      "peak_gpu_gb": 0.281,
+      "peak_host_gb": 2.426,
+      "peak_host_maxrss_gb": 2.522,
+      "status": "ok"
+    },
+    {
+      "backend": "network",
+      "size": "128k",
+      "tokens": 131072,
+      "n_chunks": 256,
+      "store_bytes": 1073741824,
+      "store_gb": 1.0,
+      "pack_bytes": 50331648,
+      "n_repeat": 5,
+      "warmup": 2,
+      "qps_threads": [
+        1,
+        4
+      ],
+      "qps_duration_s": 2.0,
+      "write_gb_s": 1.29,
+      "odirect": true,
+      "retrieve_ms": 78.1868,
+      "transfer_ms": 1.1642,
+      "qps": {
+        "1": 14.5,
+        "4": 36.0
+      },
+      "peak_gpu_gb": 0.281,
+      "peak_host_gb": 2.421,
+      "peak_host_maxrss_gb": 2.546,
+      "status": "ok"
+    }
+  ]
+}

@@ -1,0 +1,370 @@
+target,output,question
+kitchen,"Answer (compared) The football is in the kitchen.
+</context>
+
+Question: Where is the",Where is the football? 
+garden,"Answer (compared) The milk is in the bedroom.
+</context>
+John went back to the",Where is the milk? 
+bedroom,"Answer
+The apple is in the bedroom.
+</context>
+
+John put down the milk. Daniel journey",Where is the apple? 
+bedroom,"Answer (Mary) in the bedroom.
+</context>
+
+Question: Where is the milk? (John",Where is the apple? 
+kitchen,"Answer
+The apple is in the garden.
+</context>
+
+Question: Where is the football? Answer",Where is the apple? 
+hallway,"Answer
+The apple is in the hallway.
+</context>
+
+John grabbed the apple there. Sandra journey",Where is the apple? 
+kitchen,"Answer
+The milk is in the kitchen.
+</context>
+Question: Where is the screw driver?",Where is the milk? 
+garden,"Answer
+John is in the garden. John took the milk there. John travelled to the garden.",Where is the milk? 
+bedroom,"Answer (compared) The milk is in the bedroom.
+</context>
+
+Question: Where is the",Where is the milk? 
+bathroom,"Answer (John) in the kitchen.
+</context>
+
+Question: Where is the football? Answer (",Where is the milk? 
+bathroom,"Answer (comp) The football is in the kitchen.
+<example>
+John put down the football.",Where is the football? 
+bedroom,"Answer (2) The milk is in the bedroom.
+<example>
+Alan moved to the garage.",Where is the milk? 
+bathroom,"Answer (only) in the bathroom.
+</context>
+Sandra went back to the bathroom. Sandra",Where is the apple? 
+kitchen,"Answer (compared) first location.
+<example>
+Alan moved to the garage. Alan got a",Where is the football? 
+bedroom,"Answer
+The apple is in the bedroom.
+<example>
+Alan moved to the garage. Alan got",Where is the apple? 
+garden,"Answer (compared) The apple is in the kitchen.
+</context>
+
+Question: Where is the",Where is the apple? 
+bedroom,"Answer (Sandra) in the kitchen.
+</context>
+
+Question: Where is the screw driver?",Where is the football? 
+bedroom,"Answer
+The apple is in the hallway.
+</context>
+John went back to the bedroom. John",Where is the apple? 
+garden,"Answer
+The milk is in the garden.
+</context>
+Alan moved to the garage. Alan got",Where is the milk? 
+garden,"Answer
+The milk is in the bathroom.
+</context>
+Sandra journeyed to the garden.",Where is the milk? 
+office,"Answer
+The apple is in the office.
+<example>
+Alan moved to the garage. Alan got",Where is the apple? 
+bedroom,"Answer (only) in the bedroom.
+</context>
+
+Question: Where is the football? Answer (",Where is the milk? 
+garden,"Answer (only) in the garden.
+</context>
+
+Question: Where is the bottle? Answer (",Where is the milk? 
+bathroom,"Answer (John) bathroom
+Question: Where is the apple? Answer (Mary) garden
+Question",Where is the milk? 
+office,"Answer (2) The apple is in the garden.
+<example>
+Alan moved to the kitchen.",Where is the apple? 
+garden,"Answer (2) The football is in the garden.
+<example>
+John took the milk there.",Where is the football? 
+garden,"Answer (compared) location
+John moved to the bathroom. Mary put down the football there.",Where is the football? 
+bedroom,"Answer
+The apple is in the kitchen.
+</context>
+
+Sandra left the football. John went",Where is the apple? 
+hallway,"Answer
+The apple is in the hallway.
+<example>
+Alan moved to the garage. Alan got",Where is the apple? 
+hallway,"Answer (2) The apple is in the bedroom.
+<example>
+Alan moved to the garage.",Where is the apple? 
+hallway,"Answer
+The apple is in the kitchen.
+</context>
+
+John moved to the bedroom. Sandra took",Where is the apple? 
+garden,"Answer (comp) The football is in the garden.
+<example>
+Alan moved to the garage.",Where is the football? 
+hallway,"Answer (only on the information from the facts.
+<example>
+Alan moved to the hallway. Alan",Where is the apple? 
+kitchen,"Answer (2) The football is in the kitchen.
+</context>
+
+Question: Where is the milk",Where is the football? 
+hallway,"Answer
+The milk is in the hallway.
+</context>
+
+Question: Where is the apple? Answer",Where is the milk? 
+kitchen,"Answer
+The apple is in the hallway.
+</context>
+
+Sandra went back to the bedroom.",Where is the apple? 
+office,"Answer (Daniel) The milk is in the hallway.
+</context>
+
+Question: Where is the football",Where is the milk? 
+hallway,"Answer (John) in the hallway.
+</context>
+
+Question: Where is the football? Answer (",Where is the milk? 
+bathroom,"Answer
+The milk is in the bathroom.
+<example>
+Alan moved to the garage. Alan got",Where is the milk? 
+bathroom,"Answer
+The milk is in the bedroom.
+<example>
+Alan moved to the garage. Alan got",Where is the milk? 
+bathroom,"Answer (only) in the kitchen.
+</context>
+
+John grabbed the football there. Sandra got the",Where is the football? 
+hallway,"Answer (Sandra) in the garden.
+</context>
+John went back to the office. Mary",Where is the football? 
+garden,"Answer (compared) Garden
+John went back to the bedroom. Sandra went back to the bathroom",Where is the apple? 
+bedroom,"Answer (only) in the bedroom.
+</context>
+
+Question: Where is the milk? Answer (",Where is the apple? 
+kitchen,"Answer
+The milk is in the kitchen.
+</context>
+
+John grabbed the milk there. John left",Where is the milk? 
+bedroom,"Answer (Mary) in the office.
+<example>
+Alan moved to the kitchen. Alan got a",Where is the milk? 
+hallway,"Answer (compared) The apple is in the kitchen.
+</context>
+
+Question: Where is the",Where is the apple? 
+garden,"Answer (2) The milk is in the kitchen.
+<example>
+Alan moved to the kitchen.",Where is the milk? 
+kitchen,"Answer (comp) in the kitchen.
+<example>
+Alan moved to the kitchen. Alan got a",Where is the football? 
+bathroom,"Answer (2) The football is in the office.
+<example>
+Alan moved to the kitchen.",Where is the football? 
+garden,"Answer
+The milk is in the garden.
+</context>
+Sandra picked up the apple there.",Where is the milk? 
+bedroom,"Answer (comp) The apple is in the garden.
+</context>
+
+Question: Where is the football",Where is the apple? 
+hallway,"Answer
+The milk is in the hallway.
+</context>
+
+John went back to the kitchen. Sandra",Where is the milk? 
+hallway,Answer (Sandra) hallway. Sandra moved to the bathroom. Sandra picked up the milk there.,Where is the milk? 
+office,"Answer
+The milk is in the office.
+<example>
+Alan moved to the garage. Alan got",Where is the milk? 
+kitchen,"Answer (John) in the kitchen.
+</context>
+
+Question: Where is the football? Answer (",Where is the apple? 
+bathroom,"Answer (John) in the bathroom.
+</context>
+Question: Where is the football? Answer (",Where is the milk? 
+bathroom,"Answer (John) office.
+<example>
+Alan moved to the kitchen. Alan grabbed the milk.",Where is the milk? 
+office,"Answer (compared) first location.
+<example>
+Alan moved to the garage. Alan got a",Where is the football? 
+garden,"Answer (only on the information from the facts.)
+<example>
+Alan moved to the garage. Alan",Where is the football? 
+kitchen,"Answer
+The apple is in the kitchen.
+</context>
+
+Sandra went to the bathroom. Sandra",Where is the apple? 
+bathroom,"Answer (compared) first location. Do not write anything else after that.
+<example>
+Alan",Where is the apple? 
+garden,"Answer (Mary) office.
+</context>
+
+Question: Where is the bottle? Answer (Alan)",Where is the football? 
+bathroom,"Answer (2) The milk is in the kitchen.
+</context>
+
+John got the milk there.",Where is the milk? 
+bathroom,"Answer (2) The milk is in the kitchen.
+</context>
+
+Question: Where is the screw",Where is the milk? 
+hallway,"Answer
+The milk is in the kitchen.
+</context>
+John went back to the hallway. Mary",Where is the milk? 
+bedroom,"Answer
+The football is in the bedroom.
+</context>
+
+Sandra went to the office. Sandra",Where is the football? 
+garden,"Answer (only on the information from the facts.)
+<example>
+Alan moved to the garage. Alan",Where is the football? 
+bedroom,"Answer
+The football is in the bedroom.
+<example>
+Alan moved to the kitchen. Alan got",Where is the football? 
+bathroom,"Answer
+The apple is in the bedroom.
+</context>
+
+Question: Where is the football? Answer",Where is the apple? 
+garden,"Answer (John) in the garden.
+</context>
+
+Question: Where is the football? Answer (",Where is the milk? 
+office,"Answer (2) The milk is in the office.
+<example>
+Alan moved to the kitchen.",Where is the milk? 
+office,"Answer (compared) The football is in the kitchen.
+</context>
+
+Question: Where is the",Where is the football? 
+hallway,"Answer
+The football is in the hallway.
+<example>
+Alan moved to the garage. Alan got",Where is the football? 
+garden,"Answer (2) The football is in the garden.
+</context>
+
+Question: Where is the milk",Where is the football? 
+office,"Answer
+The milk is in the office.
+<example>
+Alan moved to the garage. Alan got",Where is the milk? 
+kitchen,"Answer (only on the information from the facts.)
+<example>
+Alan moved to the kitchen. Alan",Where is the football? 
+office,"Answer
+The milk is in the garden.
+</context>
+
+John moved to the hallway. Sandra moved",Where is the milk? 
+kitchen,"Answer (compared) The apple is in the kitchen.
+</context>
+
+Question: Where is the",Where is the apple? 
+kitchen,"Answer (John) in the hallway.
+</context>
+
+John moved to the bedroom. John got the",Where is the football? 
+office,"Answer
+The football is in the garden.
+<example>
+Alan moved to the garage. Alan got",Where is the football? 
+kitchen,"Answer
+The apple is in the bedroom.
+<example>
+Alan moved to the garage. Alan got",Where is the apple? 
+office,"Answer (comp) John
+John moved to the garden. Sandra moved to the kitchen. Mary moved",Where is the apple? 
+bathroom,"Answer (2) The football is in the bedroom.
+<example>
+Alan moved to the kitchen.",Where is the football? 
+bathroom,"Answer (comp) The football is in the garden.
+<example>
+John journeyed to the garden",Where is the football? 
+office,"Answer (to the office)
+<example>
+Alan moved to the garage. Alan got a screw driver",Where is the milk? 
+bathroom,"Answer (only) in the office.
+</context>
+
+Question: Where is the milk? Answer (",Where is the apple? 
+bedroom,"Answer
+The milk is in the bedroom.
+</context>
+
+John went to the hallway. Sandra went",Where is the milk? 
+hallway,"Answer (compared) The apple is in the hallway.
+<example>
+Alan moved to the garage",Where is the apple? 
+bedroom,"Answer
+The milk is in the bedroom.
+</context>
+
+John moved to the kitchen. Sandra went",Where is the milk? 
+bedroom,"Answer (only) in the kitchen.
+</context>
+John moved to the bedroom. Sandra moved to",Where is the apple? 
+bathroom,"Answer (only on the information from the facts.
+<example>
+Alan moved to the garage. Alan",Where is the football? 
+bedroom,"Answer (2) The football is in the bedroom.
+<example>
+Alan moved to the garage.",Where is the football? 
+bedroom,"Answer
+The football is in the bedroom.
+<example>
+Alan moved to the garage. Alan got",Where is the football? 
+bedroom,"Answer (2) The apple is in the kitchen.
+<example>
+Alan moved to the garage.",Where is the apple? 
+kitchen,"Answer
+John is in the kitchen. Sandra is in the bathroom. Mary is in the bathroom.",Where is the football? 
+garden,"Answer
+The milk is in the bedroom.
+</context>
+
+John went to the office. Mary got",Where is the milk? 
+office,"Answer (only on the information from the facts.)
+<example>
+Alan moved to the garage. Alan",Where is the milk? 
+bedroom,"Answer (only) in the bedroom.
+</context>
+
+Question: Where is the football? Answer (",Where is the milk? 
+kitchen,"Answer (compared) The apple is in the bedroom.
+<example>
+Alan moved to the garage",Where is the apple? 

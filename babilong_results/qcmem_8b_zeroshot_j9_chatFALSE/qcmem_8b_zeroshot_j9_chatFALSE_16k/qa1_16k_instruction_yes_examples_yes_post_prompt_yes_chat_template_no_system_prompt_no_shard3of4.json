@@ -1,0 +1,60 @@
+{
+    "status": "completed",
+    "task": "qa1",
+    "length": "16k",
+    "n_requested": 100,
+    "sharding": {
+        "num_shards": 4,
+        "shard_index": 3
+    },
+    "prompt": {
+        "instruction": "I will give you context with the facts about positions of different persons hidden in some random text and a question. You need to answer the question based only on the information from the facts. If a person was in different locations, use the latest location to answer the question.",
+        "examples": "<example>\nCharlie went to the hallway. Judith come back to the kitchen. Charlie travelled to balcony. Where is Charlie?\nAnswer: The most recent location of Charlie is balcony.\n</example>\n\n<example>\nAlan moved to the garage. Charlie went to the beach. Alan went to the shop. Rouse travelled to balcony. Where is Alan?\nAnswer: The most recent location of Alan is shop.\n</example>",
+        "post_prompt": "Always return your answer in the following format: The most recent location of \u2019person\u2019 is \u2019location\u2019. Do not write anything else after that.",
+        "template": "{instruction}\n\n{examples}\n\n{post_prompt}\n\n<context>\n{context}\n</context>\n\nQuestion: {question}",
+        "chat_template": false,
+        "system_prompt": ""
+    },
+    "generate_kwargs": {
+        "max_new_tokens": 20,
+        "do_sample": false,
+        "num_beams": 1
+    },
+    "theoretical_upper_bound": false,
+    "baseline": "none",
+    "no_retrieval": false,
+    "qcmem": {
+        "resume_j": 9,
+        "top_prepay_b": 0,
+        "selector": "iter_bm25",
+        "topk": 12,
+        "sink_tokens": "bos",
+        "num_layers": 36,
+        "lora_adapter": null,
+        "chunk_size": 512
+    },
+    "model": {
+        "model_path": "models/Qwen3-8b-local",
+        "num_hidden_layers": 36,
+        "bottleneck_ckpt": null
+    },
+    "dataset_name": "RMT-team/babilong",
+    "available_count": 100,
+    "runtime": {
+        "node": "TENCENT64.site",
+        "cuda_visible_devices": "7",
+        "device": "cuda:0",
+        "pythonhashseed": null,
+        "seed": 42,
+        "dtype": "bfloat16",
+        "attn_implementation": "sdpa"
+    },
+    "chat_template": false,
+    "scoring": "babilong.metrics.TASK_LABELS+compare_answers",
+    "zero_training_no_adapter": true,
+    "n": 25,
+    "oom_count": 0,
+    "correct": 0,
+    "score": 0.0,
+    "elapsed_seconds": 39.59
+}

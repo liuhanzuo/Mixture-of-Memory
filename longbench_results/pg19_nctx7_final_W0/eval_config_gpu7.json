@@ -1,0 +1,26 @@
+{
+  "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/models/Meta-Llama-3-8B",
+  "checkpoint": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/distill_pg19_chunk512_nctx7/mem_space_adapter.pt",
+  "adapter_config": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/distill_pg19_chunk512_nctx7/adapter_config.json",
+  "output_dir": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/longbench_results/pg19_nctx7_final_W0",
+  "hf_dataset": "THUDM/LongBench",
+  "datasets": [
+    "hotpotqa",
+    "narrativeqa",
+    "qasper",
+    "multifieldqa_en",
+    "2wikimqa",
+    "musique"
+  ],
+  "base_mode": false,
+  "chunk_size": 512,
+  "swa_eval_chunks": 0,
+  "gpu_id": 7,
+  "num_gpus": 8,
+  "dtype": "bfloat16",
+  "attn_impl": "sdpa",
+  "use_chat_template": false,
+  "no_chat_template": true,
+  "score_only": false,
+  "max_samples": -1
+}

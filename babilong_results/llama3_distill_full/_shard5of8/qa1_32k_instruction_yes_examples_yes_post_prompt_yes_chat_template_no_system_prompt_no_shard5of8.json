@@ -1,0 +1,29 @@
+{
+    "prompt": {
+        "instruction": "I will give you context with the facts about positions of different persons hidden in some random text and a question. You need to answer the question based only on the information from the facts. If a person was in different locations, use the latest location to answer the question.",
+        "examples": "<example>\nCharlie went to the hallway. Judith come back to the kitchen. Charlie travelled to balcony. Where is Charlie?\nAnswer: The most recent location of Charlie is balcony.\n</example>\n\n<example>\nAlan moved to the garage. Charlie went to the beach. Alan went to the shop. Rouse travelled to balcony. Where is Alan?\nAnswer: The most recent location of Alan is shop.\n</example>",
+        "post_prompt": "Always return your answer in the following format: The most recent location of \u2019person\u2019 is \u2019location\u2019. Do not write anything else after that.",
+        "template": "{instruction}\n\n{examples}\n\n{post_prompt}\n\n<context>\n{context}\n</context>\n\nQuestion: {question}",
+        "chat_template": false,
+        "system_prompt": ""
+    },
+    "generate_kwargs": {
+        "max_new_tokens": 20,
+        "do_sample": false,
+        "num_beams": 1
+    },
+    "theoretical_upper_bound": false,
+    "qcmem": {
+        "resume_j": 12,
+        "top_prepay_b": 0,
+        "selector": "bm25",
+        "topk": 12,
+        "sink_tokens": "bos",
+        "num_layers": 32,
+        "lora_adapter": "outputs/qcmem_distill_llama3_j12_r32_4k/final"
+    },
+    "model": {
+        "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/models/Meta-Llama-3-8B",
+        "chunk_size": 512
+    }
+}

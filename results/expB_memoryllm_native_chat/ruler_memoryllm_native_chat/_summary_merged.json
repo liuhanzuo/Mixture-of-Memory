@@ -1,0 +1,53 @@
+{
+  "niah_single_2": {
+    "32k": {
+      "score": 20.0,
+      "n": 20,
+      "n_shards": 2
+    },
+    "64k": {
+      "score": 6.0,
+      "n": 50,
+      "n_shards": 2
+    },
+    "128k": {
+      "score": 12.0,
+      "n": 50,
+      "n_shards": 2
+    }
+  },
+  "niah_multikey_1": {
+    "32k": {
+      "score": 28.0,
+      "n": 50,
+      "n_shards": 2
+    },
+    "64k": {
+      "score": 12.0,
+      "n": 50,
+      "n_shards": 2
+    },
+    "128k": {
+      "score": 6.0,
+      "n": 50,
+      "n_shards": 2
+    }
+  },
+  "variable_tracking": {
+    "32k": {
+      "score": 0.8,
+      "n": 50,
+      "n_shards": 2
+    },
+    "64k": {
+      "score": 0.0,
+      "n": 50,
+      "n_shards": 2
+    },
+    "128k": {
+      "score": 0.0,
+      "n": 50,
+      "n_shards": 2
+    }
+  }
+}

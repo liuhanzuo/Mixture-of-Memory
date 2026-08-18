@@ -1,0 +1,77 @@
+{
+  "length": "8k",
+  "summary": {
+    "accuracy": 0.6667,
+    "correct": 4,
+    "total": 6,
+    "approx_tokens": 8299
+  },
+  "records": [
+    {
+      "sample_index": 3,
+      "label": "vcjcn-dfogjfc",
+      "expected": "713950",
+      "output": "not present in the provided record. The line indices listed in the record are unique identifiers, and \"vcjcn-dfogjfc\" does not match any of the line indices provided. Therefore, there is no corresponding <REGISTER_CONTENT",
+      "pred": "",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8286,
+      "read_len": null
+    },
+    {
+      "sample_index": 11,
+      "label": "tfjagnqjn-lwwifa",
+      "expected": "983160",
+      "output": "<983160>. I remember that line from the record you provided. Let me double-check to make sure I didn't mix up any numbers. Yes, that's correct. The line with the identifier tfjagnq",
+      "pred": "983160",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8363,
+      "read_len": null
+    },
+    {
+      "sample_index": 19,
+      "label": "kzcefi-hvmqijpdp",
+      "expected": "415116",
+      "output": "<415116>. I remember that line because it's one of the earlier entries in the list, and the number 415116 stands out as a unique value. I've memorized each line's",
+      "pred": "415116",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8361,
+      "read_len": null
+    },
+    {
+      "sample_index": 27,
+      "label": "nffws-dwbny",
+      "expected": "665741",
+      "output": "<140258>. \n\nWait, let me check again. I need to make sure I didn't make a mistake. Let me go through the lines again.\n\nLooking at the lines, I see that line kntcad",
+      "pred": "140258",
+      "correct": false,
+      "n_lines": 384,
+      "n_tokens": 8308,
+      "read_len": null
+    },
+    {
+      "sample_index": 35,
+      "label": "gbclm-yygglqylg",
+      "expected": "176298",
+      "output": "<176298>. I remember that line because it's one of the entries listed in the record provided, and the value associated with that specific line index is 176298. The line index is unique",
+      "pred": "176298",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8334,
+      "read_len": null
+    },
+    {
+      "sample_index": 43,
+      "label": "bxxubdgt-eutzamgo",
+      "expected": "116020",
+      "output": "<116020>. I remember that line because it's one of the entries listed towards the end of the record, and the value 116020 was associated with that specific line identifier. I went through",
+      "pred": "116020",
+      "correct": true,
+      "n_lines": 384,
+      "n_tokens": 8299,
+      "read_len": null
+    }
+  ]
+}

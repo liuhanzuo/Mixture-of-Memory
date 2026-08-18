@@ -1,0 +1,57 @@
+{
+  "status": "completed",
+  "task": "niah_single_2",
+  "length": "32k",
+  "n_requested": 100,
+  "sharding": {
+    "num_shards": 8,
+    "shard_index": 0
+  },
+  "summary": {
+    "score": 100.0,
+    "n": 13,
+    "approx_tokens": 31702,
+    "perf": {
+      "prefill_latency_s": 0.8315,
+      "prefill_peak_gb": 25.4336,
+      "decode_latency_per_tok_ms": 23.2743,
+      "compressed_kv_MB": 944.367,
+      "mean_retained_len": 6715.5,
+      "min_retained_len": 433.0,
+      "max_retained_len": 12998.0
+    }
+  },
+  "score": 100.0,
+  "oom_count": 0,
+  "elapsed_seconds": 70.648,
+  "runtime": {
+    "node": "TENCENT64.site",
+    "cuda_visible_devices": "0",
+    "device": "cuda:0",
+    "seed": 42,
+    "dtype": "bfloat16",
+    "attn_implementation": "sdpa"
+  },
+  "chat_template": false,
+  "enable_thinking": false,
+  "scoring": "scripts.eval_ruler_mem_space._string_match_all_one",
+  "baseline": "pyramidkv-native",
+  "kvcompress": {
+    "method": "pyramidkv",
+    "max_capacity_prompt": 6657,
+    "window_size": 32,
+    "kernel_size": 5,
+    "pooling": "avgpool",
+    "gqa_score_agg": "mean",
+    "long_ctx": "native",
+    "yarn_factor": null,
+    "native_window": 40960,
+    "prompt_truncated_to_native": false,
+    "full_prompt_seen": true,
+    "num_layers": 36
+  },
+  "model": {
+    "model_path": "models/Qwen3-8b-local",
+    "num_hidden_layers": 36
+  }
+}

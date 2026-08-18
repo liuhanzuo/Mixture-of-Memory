@@ -1,0 +1,42 @@
+{
+  "8k": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 8299,
+    "avg_read_len": 6278.2,
+    "last_read_len": 6252
+  },
+  "16k": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 16586,
+    "avg_read_len": 6299.8,
+    "last_read_len": 6347
+  },
+  "32k": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 32940,
+    "avg_read_len": 6350.0,
+    "last_read_len": 6317
+  },
+  "64k": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 6,
+    "approx_tokens": 65738,
+    "avg_read_len": 6394.5,
+    "last_read_len": 6347
+  },
+  "128k": {
+    "accuracy": 0.1667,
+    "correct": 1,
+    "total": 6,
+    "approx_tokens": 131514,
+    "avg_read_len": 6478.0,
+    "last_read_len": 6587
+  }
+}
