@@ -1,0 +1,96 @@
+{
+  "b12_rung": "P",
+  "operator": "coarsen",
+  "coefficients": "ls",
+  "coarsen_map": {
+    "q_proj": 1,
+    "k_proj": 1,
+    "v_proj": 1,
+    "o_proj": 1,
+    "gate_proj": 1,
+    "up_proj": 1,
+    "down_proj": 8
+  },
+  "density_two_matmul_deployment_pct": 55.03157383419689,
+  "live_branch_params": 325844992,
+  "psi_density_points_given_back": 0.6159426434271252,
+  "union9_mean_primary_pp": 60.05342574059202,
+  "loss_vs_R0_pp": 2.3800742594079836,
+  "tau_pp": 1.79,
+  "pass_bar": 60.6435,
+  "qualifies_for_rank_claim": "yes",
+  "verdict": "INDETERMINATE: loss 2.3801 pp is in the (1.79, 3.58) band = 1-2 CI widths at n=1. MUST NOT be called either way.",
+  "per_task": {
+    "boolq": {
+      "n_scored": 3270,
+      "expected_n": 3270,
+      "metric": "acc",
+      "value": 0.7189602446483181
+    },
+    "rte": {
+      "n_scored": 277,
+      "expected_n": 277,
+      "metric": "acc",
+      "value": 0.5667870036101083
+    },
+    "hellaswag": {
+      "n_scored": 10042,
+      "expected_n": 10042,
+      "metric": "acc_norm",
+      "value": 0.6927902808205537
+    },
+    "race": {
+      "n_scored": 1045,
+      "expected_n": 1045,
+      "metric": "acc",
+      "value": 0.3980861244019139
+    },
+    "piqa": {
+      "n_scored": 1838,
+      "expected_n": 1838,
+      "metric": "acc",
+      "value": 0.7448313384113167
+    },
+    "winogrande": {
+      "n_scored": 1267,
+      "expected_n": 1267,
+      "metric": "acc",
+      "value": 0.6740331491712708
+    },
+    "arc_easy": {
+      "n_scored": 2376,
+      "expected_n": 2376,
+      "metric": "acc_norm",
+      "value": 0.7630471380471381
+    },
+    "arc_challenge": {
+      "n_scored": 1172,
+      "expected_n": 1172,
+      "metric": "acc_norm",
+      "value": 0.4402730375426621
+    },
+    "openbookqa": {
+      "n_scored": 500,
+      "expected_n": 500,
+      "metric": "acc_norm",
+      "value": 0.406
+    }
+  },
+  "n_scored_assertion": "PASSED -- all 9 tasks, per-task n_scored == expected",
+  "compute_caps": "10.0",
+  "gpus": "0,1,2,3",
+  "verify_2of4_pre_rc": 2,
+  "is_dense_on_disk": true,
+  "harness": "lm_eval 0.4.8, --model hf, dtype=bfloat16, parallelize=True, add_bos_token=False, --batch_size auto, --num_fewshot 0, --seed 0",
+  "comparable_only_to": "cells measured on compute_cap 10.0 (sm_100/B200)",
+  "anchors_on_disk": {
+    "R0_hard_fold_DENSE": 62.4335,
+    "R1_hard_drop_2of4": 57.0678
+  },
+  "must_not_claim": [
+    "That this is a training-time rank ablation. It is post-hoc surgery on a checkpoint trained with SLoRB_k=16 and cannot bound what training with a larger k would give.",
+    "Any placement of this rung in a 2:4 column -- it is FOLDED and dense on disk.",
+    "Pareto superiority over CAST-repro pure 2:4, which scores 62.0919 at density EXACTLY 50.0% (below every rung). Unreachable by construction.",
+    "Any reading of this row without stating n=1 and that tau is 33.4% of the entire R0-R1 window (5.3657 pp)."
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "wiki_ppl": {
+    "model.pt": 9.74037694615868
+  },
+  "lm_eval": {
+    "model.pt": {
+      "boolq": 64.25076452599389,
+      "rte": 54.51263537906137,
+      "hellaswag": 45.02091216889066,
+      "winogrande": 59.27387529597474,
+      "arc_easy": 64.43602693602693,
+      "arc_challenge": 30.802047781569964,
+      "openbookqa": 24.2,
+      "mean": 48.92803744107393
+    }
+  },
+  "config": {
+    "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama2-7b",
+    "block_size": 4096,
+    "lm_eval_tasks": [
+      "boolq",
+      "rte",
+      "hellaswag",
+      "winogrande",
+      "arc_easy",
+      "arc_challenge",
+      "openbookqa"
+    ],
+    "lm_eval_batch_size": 32,
+    "lm_eval_num_fewshot": 0,
+    "distributed": false,
+    "world_size": 1
+  }
+}

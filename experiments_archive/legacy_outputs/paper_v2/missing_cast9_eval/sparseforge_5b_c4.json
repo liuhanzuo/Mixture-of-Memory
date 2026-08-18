@@ -1,0 +1,13 @@
+{
+  "checkpoint": "/apdcephfs_wzc1/share_304376610/pighzliu_code/out_llama/models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260413_201320/model_best_lm_eval.pt",
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama2-7b",
+  "dataset": "/apdcephfs_wzc1/share_304376610/pighzliu_code/data/c4_llama/val.bin",
+  "c4_ppl": 9.167483208225367,
+  "c4_tokens": 1048576,
+  "c4_seconds": 27.489160299301147,
+  "seqlen": 2048,
+  "checkpoint_dataset": "qa_format_sft_llama",
+  "checkpoint_iter": 17000,
+  "slorb": true,
+  "slorb_k": 16
+}

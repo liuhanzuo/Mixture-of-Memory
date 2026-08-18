@@ -1,0 +1,18 @@
+{
+  "method": "SparseForge",
+  "protocol": "end_to_end_joint_mask_weight_slorb",
+  "seed": 0,
+  "max_iters": 1192,
+  "global_batch_size": 256,
+  "sequence_length": 2048,
+  "tokens": 624951296,
+  "mask_switch_step": 150,
+  "hardening_start": 350,
+  "hardening_duration": 842,
+  "final_finetune_iters": 0,
+  "learning_rate": 1e-4,
+  "min_lr": 1e-5,
+  "weight_decay": 0.1,
+  "slorb_k": 16,
+  "slorb_init_type": "sum"
+}

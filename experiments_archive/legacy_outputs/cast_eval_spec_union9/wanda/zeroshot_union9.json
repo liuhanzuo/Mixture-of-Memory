@@ -1,0 +1,175 @@
+{
+  "model": "wanda_llama2_7b_2of4",
+  "harness_version": "b86c479",
+  "lm_eval_pip_version": "0.4.8",
+  "n_fewshot": {
+    "boolq": 0,
+    "rte": 0,
+    "hellaswag": 0,
+    "race": 0,
+    "piqa": 0,
+    "winogrande": 0,
+    "arc_easy": 0,
+    "arc_challenge": 0,
+    "openbookqa": 0
+  },
+  "batch_size": "auto",
+  "batch_sizes_detected": [
+    64
+  ],
+  "add_bos_token": false,
+  "chat_template": null,
+  "dtype": "bfloat16",
+  "tasks": [
+    "boolq",
+    "rte",
+    "hellaswag",
+    "race",
+    "piqa",
+    "winogrande",
+    "arc_easy",
+    "arc_challenge",
+    "openbookqa"
+  ],
+  "primary_metric_per_task": {
+    "boolq": "acc",
+    "rte": "acc",
+    "hellaswag": "acc_norm",
+    "race": "acc",
+    "piqa": "acc",
+    "winogrande": "acc",
+    "arc_easy": "acc_norm",
+    "arc_challenge": "acc_norm",
+    "openbookqa": "acc_norm"
+  },
+  "per_task": {
+    "boolq": {
+      "primary_metric": "acc",
+      "n_samples": 3270,
+      "task_version": 2.0,
+      "acc": 0.6819571865443425,
+      "acc_stderr": 0.00814542760718586,
+      "acc_norm": null,
+      "acc_norm_stderr": null
+    },
+    "rte": {
+      "primary_metric": "acc",
+      "n_samples": 277,
+      "task_version": 1.0,
+      "acc": 0.5342960288808665,
+      "acc_stderr": 0.03002557981936636,
+      "acc_norm": null,
+      "acc_norm_stderr": null
+    },
+    "hellaswag": {
+      "primary_metric": "acc_norm",
+      "n_samples": 10042,
+      "task_version": 1.0,
+      "acc": 0.4129655447122087,
+      "acc_stderr": 0.004913604782666059,
+      "acc_norm": 0.5513841864170484,
+      "acc_norm_stderr": 0.004963362085275328
+    },
+    "race": {
+      "primary_metric": "acc",
+      "n_samples": 1045,
+      "task_version": 2.0,
+      "acc": 0.35406698564593303,
+      "acc_stderr": 0.01480083471167726,
+      "acc_norm": null,
+      "acc_norm_stderr": null
+    },
+    "piqa": {
+      "primary_metric": "acc",
+      "n_samples": 1838,
+      "task_version": 1.0,
+      "acc": 0.7029379760609358,
+      "acc_stderr": 0.010661725404814675,
+      "acc_norm": 0.7116430903155604,
+      "acc_norm_stderr": 0.010569190399220779
+    },
+    "winogrande": {
+      "primary_metric": "acc",
+      "n_samples": 1267,
+      "task_version": 1.0,
+      "acc": 0.6298342541436464,
+      "acc_stderr": 0.013570454689603929,
+      "acc_norm": null,
+      "acc_norm_stderr": null
+    },
+    "arc_easy": {
+      "primary_metric": "acc_norm",
+      "n_samples": 2376,
+      "task_version": 1.0,
+      "acc": 0.6106902356902357,
+      "acc_stderr": 0.010005212782878208,
+      "acc_norm": 0.5711279461279462,
+      "acc_norm_stderr": 0.01015544065290014
+    },
+    "arc_challenge": {
+      "primary_metric": "acc_norm",
+      "n_samples": 1172,
+      "task_version": 1.0,
+      "acc": 0.29436860068259385,
+      "acc_stderr": 0.013318528460539387,
+      "acc_norm": 0.3174061433447099,
+      "acc_norm_stderr": 0.013602239088038159
+    },
+    "openbookqa": {
+      "primary_metric": "acc_norm",
+      "n_samples": 500,
+      "task_version": 1.0,
+      "acc": 0.23,
+      "acc_stderr": 0.018839050391123182,
+      "acc_norm": 0.358,
+      "acc_norm_stderr": 0.021461434862859133
+    }
+  },
+  "union9": {
+    "tasks": [
+      "boolq",
+      "rte",
+      "hellaswag",
+      "race",
+      "piqa",
+      "winogrande",
+      "arc_easy",
+      "arc_challenge",
+      "openbookqa"
+    ],
+    "n_tasks": 9,
+    "mean_primary": 0.5223345230183809,
+    "mean_plain_acc": 0.4945685347067514
+  },
+  "cast7": {
+    "tasks": [
+      "hellaswag",
+      "race",
+      "piqa",
+      "winogrande",
+      "arc_easy",
+      "arc_challenge",
+      "openbookqa"
+    ],
+    "n_tasks": 7,
+    "mean_primary": 0.4978224988200314,
+    "mean_plain_acc": 0.4621233709907933
+  },
+  "ast7": {
+    "tasks": [
+      "boolq",
+      "rte",
+      "hellaswag",
+      "winogrande",
+      "arc_easy",
+      "arc_challenge",
+      "openbookqa"
+    ],
+    "n_tasks": 7,
+    "mean_primary": 0.5205722493512228,
+    "mean_plain_acc": 0.4848731215219848
+  },
+  "source_results_json": "results_2026-08-11T12-03-50.149830.json",
+  "source_model_args": "pretrained=/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/wanda_llama2_7b/hf_pruned,dtype=bfloat16,parallelize=True,trust_remote_code=True,add_bos_token=False,trust_remote_code=True",
+  "note": "Union-9 = CAST-7 union AST-7. primary_metric_per_task is fixed and identical across all arms (acc_norm for hellaswag/arc_easy/arc_challenge/openbookqa; acc for piqa/winogrande/race/boolq/rte). Both source papers' headline aggregates are PLAIN ACC, so cast7/ast7 comparisons against CAST 55.91 / AST 58.62-57.94 must use mean_plain_acc, not mean_primary."
+}

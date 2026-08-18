@@ -1,0 +1,25 @@
+{
+  "heartbeat_interval_seconds": 1800,
+  "active_poll_seconds": 60,
+  "queued_poll_seconds": 300,
+  "expected_gpu_count": 8,
+  "gpu_idle_memory_threshold_mib": 2048,
+  "gpu_idle_utilization_threshold_percent": 10,
+  "max_gpu_temperature_c": 85,
+  "minimum_project_free_gib": 500,
+  "stall_seconds": 1800,
+  "terminate_grace_seconds": 120,
+  "auto_launch_queue": true,
+  "auto_restart_registered_runs": true,
+  "external_runs": [
+    {
+      "id": "preexisting-olmo2-probe2-7b",
+      "read_only": true,
+      "pid": 490809,
+      "cwd": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory",
+      "log_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/logs/olmo2_7B_keep12fresh2.log",
+      "success_path": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/olmo2_probe2_7B_keep12fresh2/step200000.pt",
+      "notes": "Pre-existing run discovered during inventory. Monitor only; never terminate or restart."
+    }
+  ]
+}

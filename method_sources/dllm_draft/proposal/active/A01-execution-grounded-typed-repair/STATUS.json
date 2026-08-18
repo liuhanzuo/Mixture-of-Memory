@@ -1,0 +1,43 @@
+{
+  "id": "A01",
+  "slug": "execution-grounded-typed-repair",
+  "status": "active_gate_only",
+  "priority": 1,
+  "updated": "2026-08-08",
+  "evidence_level": "implemented_runtime_primitive_plus_unrun_neural_repair_gate",
+  "related_work_status": "audited",
+  "novelty_status": "narrow_gap_after_strong_collisions",
+  "closest_prior_art": [
+    "Targeted Remasking (arXiv:2605.26436)",
+    "Edit-Based Refinement / ME-DLM (arXiv:2605.09603)",
+    "Multi-Block Editing (arXiv:2607.22663)",
+    "Speculative Correction (arXiv:2608.02625)",
+    "Detect-Remask-Repair (arXiv:2606.12807)",
+    "Beep fine-grained fix localization (arXiv:2111.07739)",
+    "DEAR multi-hunk tree repair (arXiv:2205.01859)",
+    "Loc2Repair localization-repair decomposition (arXiv:2606.30963)"
+  ],
+  "next_gate": [
+    "freeze a deterministic 64-item HumanEvalPack-Python repair manifest",
+    "build gold AST-to-token region mappings and preservation masks",
+    "implement flat oracle span remask and typed oracle subtree collapse with a strong checkpoint",
+    "add random-span, random-subtree, full-regeneration, and Qwen FIM or iterative AR baselines",
+    "run structural smoke tests before any GPU launch",
+    "run the paired 64-item oracle repair gate"
+  ],
+  "promotion_criteria": [
+    "oracle typed repair gains at least 5 of 64 tasks",
+    "regresses at most 2 of 64 tasks",
+    "preserves all tokens outside the selected region exactly",
+    "uses no more than 35 percent extra cumulative model tokens relative to the routed no-repair path",
+    "beats matched-size random subtree repair",
+    "offers a statistically and operationally meaningful advantage over full regeneration or AR repair"
+  ],
+  "kill_criteria": [
+    "oracle typed repair fails the gained/lost gate",
+    "oracle typed repair does not beat matched random localization",
+    "outside-region preservation is not exact",
+    "the method requires hidden tests or asymmetric oracle length",
+    "full regeneration or Qwen FIM is at least as good at equal or lower measured cost"
+  ]
+}

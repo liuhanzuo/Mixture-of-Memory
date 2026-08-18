@@ -1,0 +1,122 @@
+{
+  "model": "cast_repro_zero2_step7500_2of4",
+  "harness_version": "b86c479",
+  "lm_eval_pip_version": "0.4.8",
+  "n_fewshot": {
+    "boolq": 0,
+    "rte": 0
+  },
+  "batch_size": "auto",
+  "batch_sizes_detected": [
+    64
+  ],
+  "add_bos_token": false,
+  "chat_template": null,
+  "dtype": "bfloat16",
+  "tasks": [
+    "boolq",
+    "rte"
+  ],
+  "primary_metric_per_task": {
+    "boolq": "acc",
+    "rte": "acc"
+  },
+  "per_task": {
+    "boolq": {
+      "primary_metric": "acc",
+      "n_samples": 3270,
+      "task_version": 2.0,
+      "acc": 0.692354740061162,
+      "acc_stderr": 0.00807201552786952,
+      "acc_norm": null,
+      "acc_norm_stderr": null
+    },
+    "rte": {
+      "primary_metric": "acc",
+      "n_samples": 277,
+      "task_version": 1.0,
+      "acc": 0.7472924187725631,
+      "acc_stderr": 0.026157719758464693,
+      "acc_norm": null,
+      "acc_norm_stderr": null
+    }
+  },
+  "union9": {
+    "tasks": [
+      "boolq",
+      "rte",
+      "hellaswag",
+      "race",
+      "piqa",
+      "winogrande",
+      "arc_easy",
+      "arc_challenge",
+      "openbookqa"
+    ],
+    "n_present": 2,
+    "n_required": 9,
+    "mean_primary": null,
+    "mean_plain_acc": null,
+    "incomplete": true,
+    "missing": [
+      "hellaswag",
+      "race",
+      "piqa",
+      "winogrande",
+      "arc_easy",
+      "arc_challenge",
+      "openbookqa"
+    ]
+  },
+  "cast7": {
+    "tasks": [
+      "hellaswag",
+      "race",
+      "piqa",
+      "winogrande",
+      "arc_easy",
+      "arc_challenge",
+      "openbookqa"
+    ],
+    "n_present": 0,
+    "n_required": 7,
+    "mean_primary": null,
+    "mean_plain_acc": null,
+    "incomplete": true,
+    "missing": [
+      "hellaswag",
+      "race",
+      "piqa",
+      "winogrande",
+      "arc_easy",
+      "arc_challenge",
+      "openbookqa"
+    ]
+  },
+  "ast7": {
+    "tasks": [
+      "boolq",
+      "rte",
+      "hellaswag",
+      "winogrande",
+      "arc_easy",
+      "arc_challenge",
+      "openbookqa"
+    ],
+    "n_present": 2,
+    "n_required": 7,
+    "mean_primary": null,
+    "mean_plain_acc": null,
+    "incomplete": true,
+    "missing": [
+      "hellaswag",
+      "winogrande",
+      "arc_easy",
+      "arc_challenge",
+      "openbookqa"
+    ]
+  },
+  "source_results_json": "results_2026-08-11T11-58-43.303079.json",
+  "source_model_args": "pretrained=/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/cast_repro_zero2/hf_final,dtype=bfloat16,parallelize=True,trust_remote_code=True,add_bos_token=False,trust_remote_code=True",
+  "note": "Union-9 = CAST-7 union AST-7. primary_metric_per_task is fixed and identical across all arms (acc_norm for hellaswag/arc_easy/arc_challenge/openbookqa; acc for piqa/winogrande/race/boolq/rte). Both source papers' headline aggregates are PLAIN ACC, so cast7/ast7 comparisons against CAST 55.91 / AST 58.62-57.94 must use mean_plain_acc, not mean_primary."
+}

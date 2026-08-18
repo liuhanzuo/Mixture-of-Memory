@@ -1,0 +1,114 @@
+data:
+  train_batch_size: 128
+  micro_batch_size_per_gpu: 8
+  train_files: data/scaffold_edu_v0/train_data.parquet
+  val_files: data/scaffold_edu_v0/eval_data.parquet
+  max_length: 1024
+  truncation: error
+  chat_template: null
+  num_workers: 4
+  prefetch_factor: 2
+  pad_to_max_length: false
+  bucket_by_length: false
+  bucket_multiplier: 50
+
+model:
+  partial_pretrain: models/Dream-Coder-v0-Base-7B
+  fsdp_config:
+    wrap_policy:
+      min_num_params: 0
+    cpu_offload: false
+    offload_params: false
+  external_lib: null
+  enable_gradient_checkpointing: true
+  trust_remote_code: true
+  attn_implementation: flash_attention_2
+  lora_rank: 0
+  lora_alpha: 16
+  target_modules: all-linear
+  modules_to_save: null
+  token_row_only: false
+  token_row_notations: null
+  teacher_kl_weight: 0.0
+  teacher_kl_temperature: 1.0
+  teacher_kl_roles: [TOKEN_STMT, TOKEN_HDR, TOKEN_DOC]
+  teacher_kl_topk: 256
+  teacher_sharding: replicated
+  teacher_partial_pretrain: null
+  use_liger: false
+
+optim:
+  lr: 1.0e-5
+  betas: [0.9, 0.95]
+  weight_decay: 0.01
+  warmup_steps_ratio: 0.1
+  clip_grad: 1.0
+
+ulysses_sequence_parallel_size: 1
+use_remove_padding: false
+
+trainer:
+  default_local_dir: outputs/scaffold_sft_v0
+  default_hdfs_dir: null
+  resume_path: null
+  resume_training: false
+  project_name: scaffold-coder
+  experiment_name: scaffold_sft_v0
+  total_epochs: 5
+  total_training_steps: null
+  logger: ['console']
+  seed: 1
+  save_checkpoint_steps: 2000
+  skip_checkpoint: false
+  profile_every_steps: 0
+  metrics_jsonl: null
+
+scaffold:
+  mode: hierarchical
+  desync_sigma: 0.0
+  dreamon_max_delete: 64
+  plain_all_mask_probability: 0.0
+  plain_high_noise_probability: 0.0
+  plain_high_noise_min_t: 0.8
+  rung:
+    root_probability: 0.10
+    body_probability: 0.20
+    leaf_probability: 0.70
+    leaf_u_min: 0.05
+    leaf_u_max: 1.0
+    token_merge_base_probability: 0.25
+    line_merge_probability: 0.25
+    static_merge_mix_probability: 0.5
+    max_token_delete: 1
+    max_line_delete: 1
+    weighting: mdlm
+    maximum_weight: 20.0
+    normalize_within_sample: true
+  band:
+    content_end: 0.45
+    structural_end: 0.95
+    content_width: 0.30
+    content_start_spread: 0.15
+    structural_overlap_fraction: 0.15
+    depth_cap: 6
+    token_merge_base_probability: 0.5
+    static_merge_mix_probability: 0.5
+    line_merge_probability: 0.5
+    max_token_delete: 1
+    max_line_delete: 1
+    maximum_weight: 20.0
+    normalize_within_sample: true
+    region_collapse_mode: all_mask
+    region_collapse_exponent: 1.0
+
+# Retained because the upstream trainer/config accesses this section.
+diffusion:
+  diffusion_steps: 64
+  decoding_strategy: stochastic0.5-linear
+  token_reweighting: false
+  alpha: 0.25
+  gamma: 2
+  time_reweighting: scaffold_explicit
+  topk_decoding: false
+  cart_p: 0.1
+  weight_eos: false

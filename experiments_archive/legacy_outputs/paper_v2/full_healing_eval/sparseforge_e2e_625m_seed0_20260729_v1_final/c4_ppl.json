@@ -1,0 +1,13 @@
+{
+  "checkpoint": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/paper_v2/sparseforge_e2e_625m/sparseforge_e2e_625m_seed0_20260729_v1/_apdcephfs_wzc1_share_304376610_pighzliu_code_models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260729_205605/model.pt",
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama2-7b",
+  "dataset": "/apdcephfs_wzc1/share_304376610/pighzliu_code/data/c4_llama/val.bin",
+  "c4_ppl": 310.0446362767369,
+  "c4_tokens": 1048576,
+  "c4_seconds": 27.616922616958618,
+  "seqlen": 2048,
+  "checkpoint_dataset": "c4_llama",
+  "checkpoint_iter": 1192,
+  "slorb": true,
+  "slorb_k": 16
+}

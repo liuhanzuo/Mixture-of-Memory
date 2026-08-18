@@ -1,0 +1,14 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/sparseforge_5b_hf/soft_fold",
+  "seqlen": 2048,
+  "load_seconds": 5.318474292755127,
+  "global_zero_ratio": 2.902759508267173e-07,
+  "linear_zero_ratio": 3.0883235634917423e-10,
+  "exact_2of4_tile_ratio": 0.0,
+  "linear_layers": 224,
+  "linear_parameters": 6476005376,
+  "nm_tiles": 1619001344,
+  "wikitext2_ppl": 6.648588977245516,
+  "wikitext2_tokens": 335872,
+  "wikitext2_seconds": 7.294189691543579
+}

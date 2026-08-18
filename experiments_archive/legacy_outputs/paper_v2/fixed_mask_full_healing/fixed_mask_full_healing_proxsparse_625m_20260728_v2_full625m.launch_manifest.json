@@ -1,0 +1,15 @@
+{
+  "method": "proxsparse",
+  "initial_mask_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/paper_v2/common_recovery_masks/proxsparse_official_top2_mask.pt",
+  "change_mask": false,
+  "freeze_non_slorb": false,
+  "train_sparse_base_weights": true,
+  "train_slorb": true,
+  "slorb_k": 16,
+  "slorb_init_type": "zero",
+  "trainable_projection": true,
+  "max_iters": 1192,
+  "global_batch_size": 256,
+  "sequence_length": 2048,
+  "tokens": 624951296
+}

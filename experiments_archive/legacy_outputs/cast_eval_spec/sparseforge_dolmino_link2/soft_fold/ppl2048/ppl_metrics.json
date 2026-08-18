@@ -1,0 +1,14 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/sparseforge_dolmino_link2_hf/soft_fold",
+  "seqlen": 2048,
+  "load_seconds": 3.935448408126831,
+  "global_zero_ratio": 2.9012754798887133e-07,
+  "linear_zero_ratio": 1.5441617817458712e-10,
+  "exact_2of4_tile_ratio": 0.0,
+  "linear_layers": 224,
+  "linear_parameters": 6476005376,
+  "nm_tiles": 1619001344,
+  "wikitext2_ppl": 6.528712077792869,
+  "wikitext2_tokens": 335872,
+  "wikitext2_seconds": 7.285644769668579
+}

@@ -1,0 +1,100 @@
+{
+  "arm": "slorb",
+  "variant": "hard_fold",
+  "source_ckpt": "/apdcephfs_wzc1/share_304376610/pighzliu_code/out_llama_tokenmatched_slorb/models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260814_125037/model.pt",
+  "source_iter": "7501",
+  "2of4_eligible": "false",
+  "verify_pre_rc": 2,
+  "verify_post_rc": 2,
+  "tasks": "boolq,rte,hellaswag,race,piqa,winogrande,arc_easy,arc_challenge,openbookqa",
+  "n_tasks": 9,
+  "harness": "lm_eval 0.4.8, --model hf, dtype=bfloat16, parallelize=True, add_bos_token=False, --batch_size auto, --num_fewshot 0, --seed 0",
+  "ppl": {
+    "4096": {
+      "wikitext2_ppl": 6.193778987680964,
+      "wikitext2_tokens": 335872,
+      "linear_zero_ratio": 1.0809132472221097e-09,
+      "exact_2of4_tile_ratio": 0.0
+    },
+    "2048": {
+      "wikitext2_ppl": 6.604781759218246,
+      "wikitext2_tokens": 335872,
+      "linear_zero_ratio": 1.0809132472221097e-09,
+      "exact_2of4_tile_ratio": 0.0
+    }
+  },
+  "per_task": {
+    "boolq": {
+      "acc": 0.710703363914373,
+      "acc_norm": null,
+      "primary_metric": "acc",
+      "n_samples": 3270
+    },
+    "rte": {
+      "acc": 0.7292418772563177,
+      "acc_norm": null,
+      "primary_metric": "acc",
+      "n_samples": 277
+    },
+    "hellaswag": {
+      "acc": 0.5165305715992831,
+      "acc_norm": 0.7008564031069509,
+      "primary_metric": "acc_norm",
+      "n_samples": 10042
+    },
+    "race": {
+      "acc": 0.4,
+      "acc_norm": null,
+      "primary_metric": "acc",
+      "n_samples": 1045
+    },
+    "piqa": {
+      "acc": 0.7546245919477693,
+      "acc_norm": 0.7616974972796517,
+      "primary_metric": "acc",
+      "n_samples": 1838
+    },
+    "winogrande": {
+      "acc": 0.67008681925809,
+      "acc_norm": null,
+      "primary_metric": "acc",
+      "n_samples": 1267
+    },
+    "arc_easy": {
+      "acc": 0.7306397306397306,
+      "acc_norm": 0.7306397306397306,
+      "primary_metric": "acc_norm",
+      "n_samples": 2376
+    },
+    "arc_challenge": {
+      "acc": 0.38139931740614336,
+      "acc_norm": 0.43856655290102387,
+      "primary_metric": "acc_norm",
+      "n_samples": 1172
+    },
+    "openbookqa": {
+      "acc": 0.292,
+      "acc_norm": 0.404,
+      "primary_metric": "acc_norm",
+      "n_samples": 500
+    }
+  },
+  "union9": {
+    "mean_primary": 0.6154132598915839,
+    "mean_plain_acc": 0.5761362524468564
+  },
+  "cast7": {
+    "mean_primary": 0.5855391568362236,
+    "mean_plain_acc": 0.5350401472644309
+  },
+  "ast7": {
+    "mean_primary": 0.6262992495823552,
+    "mean_plain_acc": 0.5758002400105625
+  },
+  "rte_integral": {
+    "acc": 0.7292418772563177,
+    "n": 277,
+    "k": 202.0,
+    "k_rounded": 202
+  }
+}

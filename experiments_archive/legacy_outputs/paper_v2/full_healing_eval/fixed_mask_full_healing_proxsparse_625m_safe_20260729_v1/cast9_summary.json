@@ -1,0 +1,38 @@
+{
+  "method": "ProxSparse fixed-mask full-healing safe 625M",
+  "tasks": {
+    "hellaswag": 52.12109141605258,
+    "race": 39.90430622009569,
+    "piqa": 76.278563656148,
+    "winogrande": 66.61404893449092,
+    "arc_easy": 70.37037037037037,
+    "arc_challenge": 36.177474402730375,
+    "openbookqa": 28.000000000000004,
+    "boolq": 71.9571865443425,
+    "rte": 61.73285198555957
+  },
+  "ast7_mean": 55.28186052193519,
+  "cast7_mean": 52.78083642855542,
+  "wiki_ppl": 7.128407363096167,
+  "training_final_wiki_ppl": 7.126368999481201,
+  "ast7_tasks": [
+    "boolq",
+    "rte",
+    "hellaswag",
+    "winogrande",
+    "arc_easy",
+    "arc_challenge",
+    "openbookqa"
+  ],
+  "cast7_tasks": [
+    "hellaswag",
+    "race",
+    "piqa",
+    "winogrande",
+    "arc_easy",
+    "arc_challenge",
+    "openbookqa"
+  ],
+  "c4_ppl": 8.362232356074026,
+  "c4_tokens": 1048576
+}

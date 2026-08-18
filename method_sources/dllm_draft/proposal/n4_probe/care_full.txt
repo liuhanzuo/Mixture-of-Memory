@@ -1,0 +1,2615 @@
+ 
+ 
+ 
+ Care: Compute-aware Remasking EvaluationProtocol for Masked Diffusion Language Models 
+ 
+ 
+ 
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+ 
+ 
+ Report GitHub Issue 
+ × 
+ 
+
+ 
+ Title: 
+ 
+
+ Content selection saved. Describe the issue below: 
+
+ Description: 
+ 
+ 
+
+ 
+ Submit without GitHub 
+ Submit in GitHub 
+ 
+ 
+ 
+ 
+ arXiv is now an independent nonprofit! 
+ Learn more 
+ × 
+ 
+
+ 
+ 
+ 
+ Back to arXiv 
+ 
+ 
+ 
+ 
+ Why HTML? 
+ 
+ 
+ 
+ 
+ Report Issue 
+ 
+ 
+ 
+ 
+ 
+ 
+ Back to Abstract 
+ 
+ 
+ 
+ 
+ 
+ 
+ Download PDF 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Abstract 
+ 1 Introduction 
+ 
+ The evaluation crisis. 
+ 
+ 2 The Ca re   Framework and Protocol 
+ 3 Related Work 
+ 
+ Remasking strategies. 
+ 
+ 4 Validation Experiments 
+ 
+ Evaluation scope. 
+ 4.1 Confound 1: Nominal Steps ≠ \neq Actual Compute 
+ 4.2 Confound 2: PPL and MAUVE Prefer Different Strategies 
+ 4.3 Confound 3: Stochastic Unmasking Dominates Strategy Choice 
+ 4.4 The Interaction That Only Joint Control Reveals 
+ 4.5 Generative Frontier Overlay: What Frontier Analysis Misses 
+ 4.6 Generalization and Downstream Evaluation 
+ 4.7 The Ca re   Leaderboard 
+ 
+ 5 Conclusion 
+ References 
+ Positive impact. 
+ Negative impacts and mitigations. 
+ Dual-use. 
+ A Ethical consideration and Future Work 
+ 
+ Scope: discrete masked diffusion only. 
+ Statistical caveats. 
+ Future work. 
+ 
+ B Taxonomy 
+ 
+ Strategy taxonomy. 
+ Confound taxonomy. 
+ Metric taxonomy and choice rationale. 
+ 
+ C Extended Experiments and Set Up 
+ 
+ Setup. 
+ Why we use NFE and not wall-clock time. 
+ C.1 Prompt Templates 
+ C.2 Customizing Ca re for a New Strategy 
+ C.3 Token Replacement Rate 
+ C.4 Diversity Metrics 
+ C.5 Polar Area Charts 
+ C.6 Dream Pareto Frontier 
+ C.7 Three-Seed Analysis 
+ C.8 LLaDA-MoE Cross-Architecture 
+ C.9 Dream PPL–MAUVE Results 
+ C.10 Full 7-Strategy Comparison 
+ C.11 PPL Across Temperatures 
+ C.12 Downstream Results (GSM8K) 
+ C.13 English Filter Acceptance Rates 
+ C.14 Full Ca re   Leaderboard (Tier 1 + Tier 2) 
+ 
+ 
+ 
+ 
+ 
+ 
+ License: CC BY 4.0
+ 
+ 
+arXiv:2607.24763v1 [cs.AI] 04 Jun 2026 
+ 
+ 
+  Ca re : Compute-aware Remasking Evaluation
+ Protocol for Masked Diffusion Language Models
+ 
+ 
+ 
+ Yash ShahArizona State University yshah124@asu.edu 
+ 
+ Thanks:  Equal contribution.
+ 
+    
+ Abhijit Chakraborty 1 1 footnotemark: 
+ 1 
+ 
+ 
+ 
+ MongoDB abhijit.chakraborty@mongodb.com 
+ 
+    
+ Vivek GuptaArizona State University vgupt140@asu.edu 
+ 
+
+ Abstract 
+ 
+ Masked diffusion language models are outpacing the evaluation standards
+needed to reliably interpret their progress. MDLMs are now competitive
+with autoregressive LMs, yet seven recent remasking papers evaluate under
+incompatible settings, rendering their strategy rankings largely
+incomparable. Existing studies vary nominal step counts, metrics, and
+sampling temperatures, but no work jointly controls these factors, leaving
+open whether reported gains reflect algorithms or evaluation artifacts.
+We present Ca re 1 1 
+ 1 
+ 
+ 
+ 
+ https://anonymous.4open.science/w/CaRE-846C/, We release the protocol, implementation, and leaderboard to ensure future remasking claims are reproducible and robust. , a compute-aware evaluation framework for auditing masked-discrete MDLM remasking by standardizing actual NFE, multi-metric reporting, and stochasticity. We release the protocol, implementation, and leaderboard to ensure future remasking claims are reproducible and robust. Applied to 7 remasking strategies across
+LLaDA-8B-Base and Dream-7B-Base, 4 stochasticity levels, and 3 step
+budgets on OpenWebText and LM1B, Ca re shows that
+(i) temperature explains the majority of MAUVE variance ( η 2 = 0.91 \eta^{2}{=}0.91 ),
+(ii) compute-matched comparisons reverse several published strategy
+rankings, and (iii) informed remasking and stochastic unmasking are in
+tension, with high-entropy remasking reducing MAUVE by 0.296 0.296 at 256
+steps and unmask_temp = 0.25 {=}0.25 ( p = 0.020 p{=}0.020 ). A Ca re 
+leaderboard covers 12 open-weight MDLMs (150M–8B parameters), where
+the interaction direction holds across architectures and scales. These
+results reveal that current MDLM evaluations can systematically conflate
+algorithmic improvements with hidden choices of compute and stochasticity,
+and Ca re releases a seven-point protocol and implementation to make
+future remasking claims reproducible. 
+ 
+ 
+ 
+ 1 Introduction 
+
+ 
+ For over a decade, autoregressive language models have treated left-to-right
+generation less as a design choice than as a default. Masked diffusion language
+models (MDLMs) challenge this assumption by reformulating generation as
+iterative parallel denoising over the full sequence. The emergence of
+large-scale MDLMs such as LLaDA-8B  [ 18 ] and
+Dream-7B  [ 30 ] shows that this paradigm has moved from
+theoretical curiosity to a competitive alternative to autoregressive LMs.
+ Throughout this paper, “remasking” refers to mask re-introduction
+during denoising in masked discrete-token diffusion language models;
+continuous-state and flow-based DLMs use a different inference paradigm and
+are out of scope (§ A ). 
+ 
+ 
+ Figure 1: The evaluation gap: seven remasking papers evaluate under different conditions, producing contradictory rankings. Three confounds (compute, metric, stochasticity) each independently reverse conclusions. Controlling all three jointly reveals their interaction ( p = 0.020 p{=}0.020 ; none vs. high_entropy , LLaDA-8B-Base, OWT, 256 steps, t = 0.25 t{=}0.25 , 3 seeds, paired t t -test). 
+ 
+ 
+ The evaluation crisis. 
+
+ 
+ In the last six months, seven remasking strategies  [ 28 , 32 , 13 , 9 , 11 , 1 , 12 ] have been proposed to improve MDLM inference by selectively
+re-introducing masks during denoising. Each is evaluated under different step
+budgets, metrics, and sampling temperatures, producing contradictory rankings
+where the same strategy is reported as best in one paper and worst in another
+(Figure  1 ). The image generation community faced a similar
+situation before Clean-FID  [ 20 ] standardized evaluation, and
+machine translation before SacreBLEU  [ 23 ] enforced tokenizer
+consistency. In both cases, part of the apparent progress was later attributed
+to evaluation inconsistency rather than algorithmic improvement. MDLMs are now
+at a similar inflection point.
+
+ The hidden interaction. 
+Individual confounds are documented in prior work: PPL–MAUVE
+disagreement  [ 22 ] , temperature
+sensitivity  [ 3 , 8 ] , NFE
+formalization  [ 19 ] , and decoding-hyperparameter
+dominance  [ 10 ] . The community has flagged the
+problem  [ 21 , 34 , 29 , 24 ] but
+without joint control. Ca re combines these strands and reveals that
+ informed remasking and stochastic unmasking are in consistent tension .
+Stochastic unmasking is the dominant diversity lever, improving MAUVE from
+ 0.66 0.66 to 0.98 0.98 with a single temperature change—a gain of 0.32 0.32 that
+exceeds the maximum gap between any two strategies at the same temperature.
+Yet at higher compute budgets, high-entropy remasking collapses this benefit
+by 0.296 0.296 MAUVE points ( p = 0.020 p{=}0.020 ) through persistent token churn that
+narrows distributional coverage while preserving surface-level diversity. To
+our knowledge, no concurrent MDLM evaluation surfaces this interaction,
+because detecting it requires controlling all three confounds simultaneously.
+
+ Contributions. 
+ (1) Interaction finding : informed remasking and stochastic unmasking
+are in consistent tension ( p = 0.020 p{=}0.020 ); a three-way ANOVA shows temperature
+dominates ( η 2 = 0.91 \eta^{2}{=}0.91 ) with significant strategy  × \times  temperature
+interaction ( η 2 = 0.47 \eta^{2}{=}0.47 ). Unlike prior frameworks that control at most
+two confounds (Table  2 ), detecting this interaction
+requires compute, metric, and stochasticity to be controlled jointly ,
+which is why it has not appeared in earlier MDLM evaluation work.
+ (2) Compute-matched reversal : strategy
+rankings flip when actual NFE is equated, on both unconditional generation
+and HumanEval. (3) Seven-point protocol and leaderboard : a
+reproducible standard validated on OpenWebText and LM1B, with a public
+leaderboard over twelve open-weight MDLMs. A frontier overlay
+(§ 4.5 ) shows the interaction is invisible in PPL-entropy
+space, positioning Ca re as complementary to Generative
+Frontiers  [ 24 ] . 
+ 
+ 
+ 
+ 
+ 2 The Ca re   Framework and Protocol 
+
+ 
+ Ca re   provides a unified RemaskingSampler with four design
+principles: (1) automatic NFE tracking per generation; (2) four default
+metrics (PPL via Llama-3-8B, MAUVE, Self-BLEU, Distinct-3);
+(3)  unmask_temp as a required parameter with sweep support;
+(4) character-level English filter (ASCII  ≥ \geq  0.85, CJK  ≤ \leq  0.02).
+Adding a model takes ∼ \sim 50 LOC; adding a strategy takes ∼ \sim 20 LOC.
+Appendix  C.2 gives the complete HighEntropy 
+implementation as shipped in the released codebase, showing that a full
+remasking strategy fits in roughly 20 lines.
+Prompt formats for unconditional generation, HumanEval, and GSM8K follow
+standard lm-eval configurations; representative templates appear
+in Appendix  C.1 .
+The full experimental scope spans 12 open-weight MDLMs (150M–8B parameters),
+5 evaluation settings, and 7 remasking strategies; details appear in
+Section  4 . 
+ 
+ 
+ Table 1: Seven-point Ca re   protocol. Each omission independently reverses
+published conclusions. 
+ 
+ 
+ 
+ 
+ 
+ Practice 
+ 
+ 
+ 
+ What goes wrong without it 
+ 
+ 
+ 
+ 
+ 
+ 
+ 1. Report actual NFE 
+ 
+ 
+ 
+ “256 steps” hides 128–513 forward passes ( 4 × 4\times range) 
+ 
+ 
+ 
+ 
+ 2. Multi-metric 
+ 
+ 
+ 
+ PPL and MAUVE rankings reverse (Tables  5 ,  6 ) 
+ 
+ 
+ 
+ 
+ 3. External-evaluator PPL 
+ 
+ 
+ 
+ Shared vocabulary inflates scores; we use Llama-3-8B 
+ 
+ 
+ 
+ 
+ 4. Control stochasticity 
+ 
+ 
+ 
+ t : 0.0 → 0.1 t{:}0.0{\to}0.1 shifts MAUVE by 0.3 − 0.5 0.3{-}0.5 (model-dependent; ≈ 0.3 {\approx}0.3 on LLaDA-8B-Base, ≈ 0.5 {\approx}0.5 on LLaDA-MoE), larger than any strategy gap 
+ 
+ 
+ 
+ 
+ 5. Language filtering 
+ 
+ 
+ 
+ Off-target language contaminates MAUVE unpredictably 
+ 
+ 
+ 
+ 
+ 6. Include none baseline 
+ 
+ 
+ 
+ Improvements may be vs. artificially weak reference 
+ 
+ 
+ 
+ 
+ 7. Report uncertainty 
+ 
+ 
+ 
+ Single-seed MAUVE margins < < 0.1 unreliable (SE up to 0.05) 
+ 
+ 
+ 
+ 
+ 
+ 
+ 3 Related Work 
+
+ 
+ Remasking strategies. 
+
+ 
+ ReMDM  [ 28 ] identifies PPL hacking and advocates MAUVE, but
+applies nucleus sampling as an on/off toggle without isolating stochasticity.
+CoRe  [ 32 ] uses compute-matched baselines for a single
+strategy; Prism  [ 2 ] scales test-time compute via hierarchical NFE; UnMaskFork  [ 17 ] 
+finds temperature-based scaling degrades MDLMs. Ca re   codifies these
+ad-hoc practices and reveals the interaction they cannot detect.
+
+ What Ca re adds over existing frameworks. 
+Existing frameworks each control at most two of the three confounds
+Ca re identifies. HELM   [ 15 ] is multi-metric
+but targets autoregressive LLMs with no notion of NFE or remasking.
+ Generative Frontiers   [ 24 ] treats
+temperature as a curve parameter and decomposes generation into
+PPL–entropy space, but does not compare remasking strategies and
+leaves NFE implicit (Section  4.5 ).
+ dLLM   [ 34 ] flags hyperparameter sensitivity but
+provides no remasking strategy-comparison protocol.
+ ReMDM   [ 28 ] controls NFE and advocates MAUVE
+but conflates stochasticity with nucleus sampling on/off, leaving
+rankings entangled with the variable Ca re identifies as dominant
+( η 2 = 0.91 \eta^{2}{=}0.91 ).
+Ca re is, to our knowledge, the first framework to jointly control
+compute, metric, and stochasticity in a single runnable protocol
+(Table  2 ) and to expose their interaction as a
+measurable object; DARE  [ 29 ] and
+d3LLM  [ 25 ] are complementary post-training and
+parallelism frameworks. 
+ 
+ 
+ Table 2: Framework comparison. Ca re   is the only one to jointly control all
+three confounds and identify their interaction. 
+ 
+ 
+ 
+ Framework 
+ Multi-metric 
+ NFE 
+ Stoch. ctrl 
+ Remask 
+ Interaction 
+ 
+ 
+ 
+ HELM  [ 15 ] 
+ ✓ 
+ — 
+ — 
+ — 
+ — 
+ 
+ dLLM  [ 34 ] 
+ ✓ 
+ partial 
+ partial 
+ — 
+ — 
+ 
+ Gen. Frontiers  [ 24 ] 
+ PPL-ent. 
+ implicit 
+ implicit 
+ — 
+ — 
+ 
+ ReMDM  [ 28 ] 
+ ✓ 
+ ✓ 
+ partial 
+ partial 
+ — 
+ 
+ Ca re   (ours) 
+ ✓ 
+ ✓ 
+ ✓ 
+ ✓ 
+ ✓ 
+ 
+ 
+ 
+ 
+ Evaluation methodology. 
+Clean-FID  [ 20 ] and SacreBLEU  [ 23 ] are Ca re ’s
+direct analogs. LM Eval Harness  [ 6 ] standardizes broader LLM
+evaluation; Zheng et al.  [ 33 ] identify fp32
+truncation as implicit temperature in MDMs;
+Holtzman et al.  [ 10 ] show decoding hyperparameters dominate
+AR generation. 
+ 
+ 
+ 
+ 
+ 4 Validation Experiments 
+
+ 
+ Evaluation scope. 
+
+ 
+ Experiments span 12 open-weight MDLMs (150M–8B parameters;
+dense, MoE, and Soft-Masked variants) and 5 evaluation settings :
+(1) unconditional generation on OpenWebText  [ 7 ] 
+and LM1B  [ 4 ] (MAUVE, PPL, Self-BLEU, Distinct-3);
+(2) code generation on HumanEval (pass@1);
+(3–5) arithmetic, commonsense, and multi-step reasoning on
+GSM8K  [ 5 ] , HellaSwag  [ 31 ] ,
+and BBH  [ 27 ] —evaluated via log-likelihood
+scoring as sampling-invariant sanity checks. Additional experiments and setup has been dicussed in Appendix  C .
+Strategies cover all remasking methods supported by LLaDA and Dream
+(Appendix  B ). 
+ 
+ 
+ 
+ 4.1 Confound 1: Nominal Steps ≠ \neq Actual Compute 
+
+ 
+ If strategies are compared at the same nominal step count without
+controlling actual NFE, any quality difference could reflect a compute
+advantage rather than an algorithmic one. 
+ 
+ 
+ At 256 nominal steps, actual NFE ranges from 128 ( none ) to 513
+( running_conf. )—a 4 × 4\times difference (Table  3 ).
+For none , which never reintroduces masks, each of the L = 128 L{=}128 
+output positions is unmasked exactly once; the model therefore requires
+exactly 128 forward passes regardless of any nominal step count above 128,
+explaining the factor-of-two between the nominal budget (256) and actual
+NFE (128). Strategies that remask already-decided tokens incur additional
+forward passes proportional to their remasking rate. 
+ 
+ 
+ Table 3: Actual NFE at 256 nominal steps, LLaDA-8B-Base. 
+ 
+ 
+ 
+ Strategy 
+ Actual NFE 
+ Ratio 
+ 
+ 
+ 
+ none 
+ 128 
+ 1.0 × \times 
+ 
+ random 
+ 257 
+ 2.0 × \times 
+ 
+ high_entropy / low_conf / conf_ent / agreement 
+ 437 
+ 3.4 × \times 
+ 
+ running_confidence 
+ 513 
+ 4.0 × \times 
+ 
+ 
+ 
+ 
+ Compute-matched quality. Fixing actual NFE at { 128,256,512 } \{128,256,512\} 
+shows that none dominates MAUVE at every budget, and the gap widens
+with more compute (Table  4 ). 
+ 
+ 
+ Table 4: Compute-matched quality (LLaDA-8B-Base, OWT, prefix=64, gen=128, t = 0.0 t{=}0.0 , English-filtered; PPL via Llama-3-8B). none rows use 3-seed mean (seeds 1–3); random and high_entropy rows are single-seed (seed 1). These are separate experimental runs from Table  5 : strategies are run at different nominal step counts to equate actual NFE across configurations. 
+ 
+ 
+ 
+ NFE 
+ Strategy 
+ PPL ↓ \downarrow 
+ MAUVE ↑ \uparrow 
+ Δ \Delta MAUVE vs. none 
+ 
+ 
+ 
+ 128 
+ none 
+ 7.6 
+ 0.601 
+ — 
+ 
+ random 
+ 25.9 
+ 0.574 
+ − - 0.027 
+ 
+ high_entropy 
+ 16.8 
+ 0.589 
+ − - 0.012 
+ 
+ 256 
+ none 
+ 7.2 
+ 0.645 
+ — 
+ 
+ random 
+ 27.6 
+ 0.598 
+ − - 0.047 
+ 
+ high_entropy 
+ 18.9 
+ 0.583 
+ − - 0.062 
+ 
+ 512 
+ none 
+ 7.0 
+ 0.671 
+ — 
+ 
+ random 
+ 29.2 
+ 0.612 
+ − - 0.059 
+ 
+ high_entropy 
+ 20.4 
+ 0.557 
+ − - 0.114 
+ 
+ 
+ 
+ 
+ 
+ 4.2 Confound 2: PPL and MAUVE Prefer Different Strategies 
+
+ 
+ Even with compute matched, a single metric can award different winners—confirming
+that metric choice is an independent confound, not a proxy for the same
+underlying quality. 
+ 
+ 
+ At 128 deterministic steps, high_entropy achieves the best MAUVE
+(0.612) but not the best PPL; none achieves the best PPL but not
+the best MAUVE (Table  5 ). Rankings flip across step
+budgets. The GPT-2-XL AR reference achieves MAUVE = 0.742 {=}0.742 on OWT,
+calibrating absolute scale. Figure  2 shows that stochastic
+configurations dominate the Pareto frontier. 
+ 
+ 
+ Table 5: LLaDA-8B-Base, OWT, prefix=64, gen=128, single seed, deterministic ( t = 0.0 t{=}0.0 ), English-filtered. PPL via Llama-3-8B. Blue =best MAUVE, green =best PPL. GPT-2-XL AR: MAUVE = 0.742 {=}0.742 . 
+ 
+ 
+ 
+ 
+ 64 steps 
+ 128 steps 
+ 256 steps 
+ 
+ Strategy 
+ PPL ↓ \downarrow 
+ MAUVE ↑ \uparrow 
+ PPL ↓ \downarrow 
+ MAUVE ↑ \uparrow 
+ PPL ↓ \downarrow 
+ MAUVE ↑ \uparrow 
+ 
+ 
+ 
+ none 
+ 9.6 
+ 0.663 
+ 7.6 
+ 0.601 
+ 7.2 
+ 0.645 
+ 
+ random 
+ 29.7 
+ 0.450 
+ 25.4 
+ 0.597 
+ 28.5 
+ 0.589 
+ 
+ high ent. 
+ 17.5 
+ 0.316 
+ 16.2 
+ 0.612 
+ 18.6 
+ 0.583 
+ 
+ 
+ 
+ 
+ Figure 2: LLaDA-8B-Base, OWT. MAUVE vs PPL across step budgets (64/128/256) and temperatures. Open markers = stochastic ( t > 0 t>0 ); filled = deterministic ( t = 0.0 t{=}0.0 ). Stochastic configurations dominate the Pareto frontier at every PPL level. 
+ 
+ 
+ 
+ 4.3 Confound 3: Stochastic Unmasking Dominates Strategy Choice 
+
+ 
+ Stochasticity is the most overlooked confound: a single temperature
+parameter change produces quality shifts that exceed the entire range of
+strategy differences, rendering any strategy comparison at uncontrolled
+temperature uninformative. 
+ 
+ 
+ Varying unmask_temp from 0.0 to 0.1 on LLaDA improves MAUVE from
+0.66 to 0.98 while PPL degrades from 9.6 to 17.6
+(Table  6 ). At 128 and 256 steps, this 0.32 0.32 gain
+exceeds the maximum gap between any two strategies at the same temperature
+(Table  5 ); at 64 steps the strategy gap reaches 0.347
+( none vs. high_entropy ), but the temperature effect
+remains the dominant variance source in either case ( η 2 = 0.91 \eta^{2}{=}0.91 ,
+Table  8 ). Confirmed over 3 seeds
+at t = 0.25 t{=}0.25 : 0.948 ± 0.021 0.948{\pm}0.021 vs. 0.652 ± 0.025 0.652{\pm}0.025 ( p = 0.020 p{=}0.020 ). 
+ 
+ 
+ Table 6: MAUVE across temperatures (LLaDA-8B-Base, OWT, prefix=64, gen=128, English-filtered; MAUVE via GPT-2 XL backbone, K = 500 K{=}500 ). ± \pm  = 3-seed mean/SE (seeds 1–3, paired t t -test); cells without ± \pm are single-seed (seed 1). The bolded cell ( none @256, t = 0.25 t{=}0.25 ) marks the headline interaction test. Red =collapse. 
+ 
+ 
+ 
+ Strategy 
+ Steps 
+ t = 0.0 t{=}0.0 
+ t = 0.1 t{=}0.1 
+ t = 0.25 t{=}0.25 
+ t = 0.5 t{=}0.5 
+ 
+ 
+ 
+ none 
+ 64 
+ 0.663 
+ 0.976 
+ 0.984 
+ 0.972 
+ 
+ none 
+ 128 
+ .632 ± .016 .632{\pm}.016 
+ 0.966 
+ .952 ± .005 .952{\pm}.005 
+ 0.943 
+ 
+ none 
+ 256 
+ .652 ± .017 .652{\pm}.017 
+ 0.925 
+ .948 ± .021 \mathbf{.948{\pm}.021} 
+ 0.970 
+ 
+ random 
+ 256 
+ 0.589 
+ 0.800 
+ 0.883 
+ 0.980 
+ 
+ high ent. 
+ 128 
+ .561 ± .038 .561{\pm}.038 
+ 0.832 
+ .803 ± .050 .803{\pm}.050 
+ 0.558 
+ 
+ high ent. 
+ 256 
+ .561 ± .014 .561{\pm}.014 
+ 0.820 
+ .652 ± .025 .652{\pm}.025 
+ 0.565 
+ 
+ 
+ 
+ 
+ MAUVE saturation considerations. The MAUVE values reached at
+moderate stochasticity (0.948 for none @256 at t = 0.25 t{=}0.25 ) exceed
+our GPT-2-XL AR reference (0.742). Two interpretations are consistent: (a)
+stochastic MDLM sampling produces a genuinely better distributional match
+than AR nucleus sampling, or (b) MAUVE partially saturates at the high end.
+The interaction finding compares MDLM configurations against each other
+rather than an absolute scale, so it is robust to either interpretation:
+even under partial saturation, the 0.296 0.296 gap reflects a real difference
+in distributional behavior under controlled conditions. 
+ 
+ 
+ Figure 3: MAUVE vs actual NFE across stochasticity levels (LLaDA-8B-Base, OWT, English-filtered). At t = 0.0 t{=}0.0 all strategies cluster low ( < < 0.7). At t ≥ 0.1 t\geq 0.1 , none rises to 0.9 + 0.9{+} ; random shows moderate improvement (0.8–0.98 depending on temperature); high_entropy collapses at high NFE despite moderate gains at lower compute. 
+ 
+ 
+ 
+ 4.4 The Interaction That Only Joint Control Reveals 
+
+ 
+ While none maintains MAUVE > > 0.92 at all temperatures,
+ high_entropy collapses to 0.56–0.65 at 256 steps with
+ t ≥ 0.25 t\geq 0.25 . At 256 steps, t = 0.25 t{=}0.25 :
+gap = 0.296 ± 0.042 {=}0.296\pm 0.042 (paired SE), t ⁡ ( 2 ) = 7.06 t(2){=}7.06 , p = 0.020 p{=}0.020 
+(Table  7 ). 
+ 
+ 
+ In the main-text experiments we therefore focus on two remasking
+configurations: a no-remasking baseline ( none ) and an
+aggressive informed strategy ( high_entropy ). These span the
+extremes of the compute–churn trade-off under the Ca re protocol:
+ none uses the least NFE and leaves tokens fixed once denoised,
+while high_entropy consumes the most NFE and remasks the
+highest-entropy positions at every step. Intermediate strategies fall between these endpoints
+and appear in the full seven-strategy comparison
+(Appendix  C.10 ); we omit them from most main-text
+plots for clarity and to highlight the trade-off between the two
+practically relevant extremes. 
+ 
+ 
+ Table 7: MAUVE gap ( none − - high_entropy ), LLaDA-8B-Base, OWT. Cells with ± \pm use paired SE on 3-seed differences (seeds 1–3); single-seed cells use seed 1. Significant at 256 steps, t = 0.25 t{=}0.25 ( p = 0.020 p{=}0.020 , paired t t -test, d ​ f = 2 df{=}2 ). 
+ 
+ 
+ 
+ Steps 
+ t = 0.0 t{=}0.0 
+ t = 0.1 t{=}0.1 
+ t = 0.25 t{=}0.25 
+ t = 0.5 t{=}0.5 
+ 
+ 
+ 
+ 64 
+ + 0.347 +0.347 
+ + 0.101 +0.101 
+ + 0.149 +0.149 
+ + 0.080 +0.080 
+ 
+ 128 
+ .071 ± .049 .071{\pm}.049 
+ + 0.134 +0.134 
+ .149 ± .044 .149{\pm}.044 
+ + 0.385 +0.385 
+ 
+ 256 
+ .091 ± .016 .091{\pm}.016 
+ + 0.105 +0.105 
+ .296 ± .042 \mathbf{.296{\pm}.042} 
+ + 0.405 +0.405 
+ 
+ 
+ 
+ 
+ Formal decomposition. A three-way ANOVA confirms the finding
+(Table  8 ): temperature ( η 2 = 0.91 \eta^{2}{=}0.91 ) dominates strategy
+( η 2 = 0.80 \eta^{2}{=}0.80 ), and strategy  × \times  temperature is significant
+( p = 0.002 p{=}0.002 , η 2 = 0.47 \eta^{2}{=}0.47 ). A 95% percentile bootstrap CI for the
+ t = 0.25 t{=}0.25 , 256-step gap (10k resamples over 3 paired seeds) is
+ [ 0.243 , 0.356 ] [0.243,0.356] , excluding zero. 
+ 
+ 
+ Table 8: Three-way ANOVA on MAUVE (LLaDA-8B-Base, seeds 1–3; none vs. high_entropy , 4 temperatures × \times 3 step budgets; n = 72 n{=}72 seed–configuration cells, Residual d ​ f = 48 df{=}48 ). 
+ 
+ 
+ 
+ Factor 
+ d ​ f df 
+ F F 
+ p p 
+ Partial η 2 \eta^{2} 
+ 
+ 
+ 
+ Temperature 
+ 3 
+ 157.16 
+ < < 0.001 
+ 0.908 
+ 
+ Strategy 
+ 1 
+ 64.71 
+ < < 0.001 
+ 0.802 
+ 
+ Steps 
+ 2 
+ 3.19 
+ 0.093 
+ 0.166 
+ 
+ Strategy × \times Temp. 
+ 3 
+ 14.10 
+ 0.002 
+ 0.469 
+ 
+ Strategy × \times Steps 
+ 2 
+ 4.89 
+ 0.042 
+ 0.234 
+ 
+ Temperature × \times Steps 
+ 6 
+ 5.37 
+ 0.034 
+ 0.251 
+ 
+ Three-way 
+ 6 
+ 2.83 
+ 0.112 
+ 0.150 
+ 
+ Residual 
+ 48 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ This interaction is the paper’s central finding: it is structurally
+undetectable unless all three confounds are controlled simultaneously,
+which is why it has not appeared in prior MDLM evaluation work. 
+ 
+ 
+ Mechanism. high_entropy replaces 4.3% of tokens per step
+(vs. 0% for none ), achieving only 2,522 stable token-step cells
+vs. 8,129— 3.2 × 3.2\times less stability. Persistent churn pushes samples
+toward the model’s mode, collapsing distributional coverage while preserving
+surface diversity (Fig.  4 ). 
+ 
+ 
+ Figure 4: Token stability heatmap (LLaDA-8B-Base, 128 steps, t = 0.25 t{=}0.25 ). Blue=stable, white=masked, orange=newly unmasked, red=remasked. none (left) settles tokens early; high_entropy (right) exhibits persistent late-stage churn. 
+ 
+ 
+ Dose-response ablation. Sweeping the remask fraction at fixed
+strategy and temperature (Table  9 ) shows MAUVE
+degrades monotonically with churn volume; the dose-response is consistent
+with churn driving the collapse, though the ablation is single-seed and a
+matched-volume comparison of random vs. high_entropy 
+is left for future work. 
+ 
+ 
+ Table 9: Dose-response ablation (LLaDA-8B-Base, OWT, single seed): increasing the remask fraction degrades MAUVE while PPL and Distinct-3 stay in narrow ranges ( high_entropy@256 , t = 0.25 t{=}0.25 ). 
+ 
+ 
+ 
+ Fraction 
+ MAUVE ↑ \uparrow 
+ PPL ↓ \downarrow 
+ Dist-3 ↑ \uparrow 
+ Remasks/sample 
+ 
+ 
+ 
+ 5% 
+ 0.896 
+ 23.5 
+ 0.932 
+ 289 
+ 
+ 15% (default) 
+ 0.602 
+ 20.6 
+ 0.834 
+ 428 
+ 
+ 30% 
+ 0.482 
+ 27.1 
+ 0.850 
+ 531 
+ 
+ 
+ 
+ 
+ 
+ 4.5 Generative Frontier Overlay: What Frontier Analysis Misses 
+
+ 
+ A practitioner consulting only frontier plots at this
+operating point would conclude high_entropy and none 
+are interchangeable—and would deploy the strategy that costs 3.4 × 3.4\times 
+more compute to produce worse distributional coverage.
+Generative Frontiers  [ 24 ] treats temperature as a curve
+parameter. Plotting Ca re ’s data in this format
+(Fig.  5 , left) reveals a blind spot: at t = 0.25 t{=}0.25 ,
+256 steps, none and high_entropy occupy overlapping
+regions of the PPL–MAUVE plane. The interaction surfaces only when MAUVE
+is decomposed by strategy  × \times  temperature
+(Fig.  5 , right), where the 0.296 0.296 gap is visually
+unambiguous. 
+ 
+ 
+ Figure 5: LLaDA-8B-Base, OWT. Generative frontier overlay. Left : PPL–MAUVE frontier curves. At t = 0.25 t{=}0.25 , 256 steps, none and high_entropy overlap. Right : MAUVE by strategy shows the gap clearly ( p = 0.020 p{=}0.020 ). 
+ 
+ 
+ 
+ 4.6 Generalization and Downstream Evaluation 
+
+ 
+ Cross-architecture (LLaDA-MoE). Both findings replicate
+(Table  10 ): none@256 jumps from 0.447 0.447 ( t = 0.0 t{=}0.0 )
+to 0.954 0.954 ( t = 0.1 t{=}0.1 ), + 0.507 +0.507 ; interaction gap = 0.161 {=}0.161 at t = 0.1 t{=}0.1 ,
+256 steps. 
+ 
+ 
+ Table 10: LLaDA-MoE-7B-A1B ( ∼ {\sim} 1B active params), OWT, prefix=64, gen=128, single seed, English-filtered. Rows show 128- and 256-step configurations at t = 0.0 t{=}0.0 and t = 0.1 t{=}0.1 . 
+ 
+ 
+ 
+ 
+ t = 0.0 t{=}0.0 
+ t = 0.1 t{=}0.1 
+ 
+ Strategy 
+ PPL 
+ MAUVE 
+ PPL 
+ MAUVE 
+ 
+ 
+ 
+ none@128 
+ 6.2 
+ 0.547 
+ 15.2 
+ 0.934 
+ 
+ none@256 
+ 5.9 
+ 0.447 
+ 16.7 
+ 0.954 
+ 
+ h ent@128 
+ 21.8 
+ 0.333 
+ 35.8 
+ 0.903 
+ 
+ h ent@256 
+ 21.2 
+ 0.424 
+ 34.7 
+ 0.793 
+ 
+ 
+ 
+ 
+ Cross-family (Dream). Dream-7B-Base confirms metric and budget
+dependence (Appendix Table  15 ). Figure  6 
+visualizes the full interaction: stochastic unmasking lifts none 
+but collapses high_entropy in MAUVE, while PPL shows the reverse. 
+ 
+ 
+ Figure 6: Stochasticity interaction, LLaDA-8B-Base, OWT, 256 steps. (a) MAUVE: stochastic unmasking (dashed) lifts none but collapses high_entropy . (b) PPL: stochastic unmasking hurts fluency; informed remasking compensates. 
+ 
+ 
+ Language filter and LM1B. high_entropy at t = 0.5 t{=}0.5 , 256
+steps rejects 10% of OWT samples vs. 2.4% for none ; LM1B
+achieves 98 − 99 % 98{-}99\% acceptance throughout, validating the filter detects
+real multilingual leakage rather than noise (Appendix
+Tables  19 ,  20 ). 
+ 
+ 
+ Downstream—HumanEval. The NFE confound extends to code
+generation (Table  11 ). At nominal steps,
+ high_entropy appears to outperform none (31.7 vs. 28.3
+pass@1), but uses 3.4 × 3.4\times more compute. At matched NFE = 437 {=}437 ,
+ none matches or exceeds all strategies. The reported ± \pm 0.3 SEs
+reflect seed variance only; benchmark-level binomial uncertainty at
+ n = 100 n{=}100 is ≈ ± 4.7 {\approx}\pm 4.7 pp, so the 32.0 32.0 vs. 31.7 31.7 within-block
+difference is within sampling noise. The substantive finding is the
+ nominal-vs-compute-matched reversal (block-to-block contrast). 
+ 
+ 
+ Table 11: HumanEval pass@1 (%), LLaDA-8B-Base, via lm-eval  [ 6 ] ,
+ n = 100 n{=}100 , 3-seed mean ± \pm SE (seed variance only; benchmark-level
+binomial SE ≈ 4.7 {\approx}4.7 pp). 
+ 
+ 
+ 
+ Strategy 
+ Nominal steps 
+ Actual NFE 
+ t = 0.0 t{=}0.0 
+ t = 0.1 t{=}0.1 
+ 
+ Nominal-step (unequal NFE) 
+ 
+ none 
+ 256 
+ 128 
+ 28.3 ± \pm 0.3 
+ 24.7 ± \pm 0.3 
+ 
+ high_entropy 
+ 256 
+ 437 
+ 31.7 ± \pm 0.3 
+ 28.0 ± \pm 0.6 
+ 
+ low_confidence 
+ 256 
+ 437 
+ 30.3 ± \pm 0.3 
+ 26.7 ± \pm 0.3 
+ 
+ Compute-matched (NFE = 437 {=}437 ) 
+ 
+ none * 
+ adj. 
+ 437 
+ 32.0 ± \pm 0.6 
+ 28.3 ± \pm 0.3 
+ 
+ high_entropy 
+ 256 
+ 437 
+ 31.7 ± \pm 0.3 
+ 28.0 ± \pm 0.6 
+ 
+ low_confidence 
+ 256 
+ 437 
+ 30.3 ± \pm 0.3 
+ 26.7 ± \pm 0.3 
+ 
+ 
+ 
+ 
+ Other benchmarks. 
+HellaSwag  [ 31 ] ( 70.7 % 70.7\% ; reported: 70.5 % 70.5\% ) and
+BBH  [ 27 ] ( 45.5 % 45.5\% ; reported: 45.0 45.0 – 49.7 % 49.7\% ) are
+evaluated via log-likelihood scoring rather than sampling, so they are
+independent of unmask_temp , step budget, and remasking strategy
+by construction. Their inclusion serves as a sanity check: stable scores
+across all configurations confirm that Ca re ’s manipulations affect only
+sampling behavior, not the underlying model’s parametric knowledge.
+GSM8K  [ 5 ] ( n = 200 n{=}200 ) yields 55 55 – 64 % 64\% accuracy across
+configurations, with no significant differences. 
+ 
+ 
+ 
+ 4.7 The Ca re   Leaderboard 
+
+ 
+ Table  12 reports the leaderboard for six primary
+open-weight MDLMs at 256 nominal steps under the seven-point protocol. The
+interaction gap quantifies how severely each model is affected by the
+remasking  × \times  stochasticity confound. 
+ 
+ 
+
+ Table 12: Ca re   Leaderboard, Tier 1 (256 nominal steps, English-filtered, OWT prefix=64, gen=128; PPL via Llama-3-8B; MAUVE via GPT-2 XL backbone, K = 500 K{=}500 ; 3-seed mean except where noted; HE = HumanEval pass@1 (%)). Tier 2 entries appear in Appendix Table  21 . 
+ 
+ 
+ 
+ 
+ 
+ 
+ MAUVE † 
+ Inter. 
+ HE 
+ 
+ Model 
+ Scale 
+ none 
+ h_ent. 
+ Gap 
+ p@1 
+ 
+ 
+ 
+ LLaDA-8B-Base 
+ 8B 
+ 0.948 
+ 0.652 
+ 0.296 
+ 32.0 
+ 
+ LLaDA-8B-Instruct 
+ 8B 
+ 0.928 
+ 0.641 
+ 0.287 
+ 36.5 
+ 
+ LLaDA-1.5 
+ 8B 
+ 0.939 
+ 0.681 
+ 0.258 
+ 38.0 
+ 
+ LLaDA-MoE-A1B ∗ 
+ ∼ {\sim} 1B 
+ 0.954 
+ 0.793 
+ 0.161 
+ 18.5 
+ 
+ Dream-7B-Base ‡ 
+ 7B 
+ 0.955 
+ 0.921 
+ 0.034 
+ 27.5 
+ 
+ Dream-7B-Instruct 
+ 7B 
+ 0.927 
+ 0.861 
+ 0.066 
+ 31.0 
+ 
+ AR Reference (GPT-2-XL, p = 0.95 p{=}0.95 ) 
+ 1.5B 
+ 0.742 
+ — 
+ — 
+ 
+ 
+ † MAUVE at t = 0.25 t{=}0.25 except where noted.
+ ∗ MoE at t = 0.1 t{=}0.1 (highest-stochasticity setting tested for this architecture).
+ ‡ Dream uses entropy strategy in place of high_entropy . 
+ 
+ 
+ Three observations: (i) the gap is positive for every Tier 1 model,
+meaning none beats high_entropy under matched stochastic
+unmasking across architectures, scales, and post-training regimes; (ii) the
+gap’s magnitude spans nearly an order of magnitude
+( ∼ \sim 9 × \times , from 0.034 for Dream-7B-Base to 0.296 for LLaDA-8B-Base),
+so the confound’s severity is model-dependent; (iii) Appendix
+Table  21 extends to six Tier 2 entries spanning 0.5B–8B
+parameters and training variants, where the interaction direction holds
+across all twelve. 
+ 
+ 
+ 
+ 
+ 5 Conclusion 
+
+ 
+ Masked diffusion language models advance faster than evaluation practices. We introduced Ca re , a compute-aware framework with NFE, multi-metric reporting, and stochasticity as controlled variables. Applied to LLaDA and Dream on OpenWebText and LM1B, Ca re shows stochasticity dominates strategy effects ( η 2 = 0.91 \eta^{2}{=}0.91 ), rankings reverse under compute-matched comparisons, and remasking interacts with stochastic unmasking, hiding or inverting gains ( p = 0.020 p{=}0.020 ). A leaderboard of twelve MDLMs confirms stable interaction across architectures. 
+ 
+ 
+ 
+ 
+ References 
+
+ 
+ [1] 
+ H. Asano, T. Kozuno, K. Saito, and Y. Baba (2026) 
+ 
+ Where-to-unmask: ground-truth-guided unmasking order learning for masked diffusion language models .
+ 
+ arXiv preprint arXiv:2602.09501 .
+ 
+ Cited by: Appendix A ,
+ §1 .
+ 
+ [2] 
+ J. Bai, Y. Li, Y. Zhu, Y. Xin, Q. Shi, A. Feng, X. Liu, M. Tao, J. Xue, X. Li, et al. (2026) 
+ 
+ Prism: efficient test-time scaling via hierarchical search and self-verification for discrete diffusion language models .
+ 
+ arXiv preprint arXiv:2602.01842 .
+ 
+ Cited by: Appendix A ,
+ §3 .
+ 
+ [3] 
+ H. Chang, H. Zhang, L. Jiang, C. Liu, and W. T. Freeman (2022) 
+ 
+ Maskgit: masked generative image transformer .
+ 
+ In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,
+ 
+ pp. 11315–11325 .
+ 
+ Cited by: §1 .
+ 
+ [4] 
+ C. Chelba, T. Mikolov, M. Schuster, Q. Ge, T. Brants, P. T. Koehn, and T. Robinson (2013) 
+ 
+ One billion word benchmark for measuring progress in statistical language modeling .
+ 
+ In Interspeech ,
+ 
+ External Links: Link 
+ 
+ Cited by: §4 .
+ 
+ [5] 
+ K. Cobbe, V. Kosaraju, M. Bavarian, M. Chen, H. Jun, L. Kaiser, M. Plappert, J. Tworek, J. Hilton, R. Nakano, C. Hesse, and J. Schulman (2021) 
+ 
+ Training verifiers to solve math word problems .
+ 
+ arXiv preprint arXiv:2110.14168 .
+ 
+ Cited by: §4 ,
+ §4.6 .
+ 
+ [6] 
+ L. Gao, J. Tow, B. Abbasi, S. Biderman, S. Black, A. DiPofi, C. Foster, L. Golding, J. Hsu, A. L. Noac’h, et al. (2023) 
+ 
+ A framework for few-shot language model evaluation .
+ 
+ Zenodo 10256836 .
+ 
+ External Links: Link 
+ 
+ Cited by: §C.1 ,
+ §3 ,
+ Table 11 .
+ 
+ [7] 
+ A. Gokaslan and V. Cohen (2019) 
+ 
+ OpenWebText corpus .
+ 
+ Note: http://Skylion007.github.io/OpenWebTextCorpus 
+ 
+ Cited by: §4 .
+ 
+ [8] 
+ S. Hayakawa, Y. Takida, M. Imaizumi, H. Wakaki, and Y. Mitsufuji (2025) 
+ 
+ Demystifying maskgit sampler and beyond: adaptive order selection in masked diffusion .
+ 
+ arXiv preprint arXiv:2510.04525 .
+ 
+ Cited by: §1 .
+ 
+ [9] 
+ H. He, K. Renz, Y. Cao, and A. Geiger (2025) 
+ 
+ Mdpo: overcoming the training-inference divide of masked diffusion language models .
+ 
+ arXiv preprint arXiv:2508.13148 .
+ 
+ Cited by: Appendix A ,
+ §1 .
+ 
+ [10] 
+ A. Holtzman, J. Buys, L. Du, M. Forbes, and Y. Choi (2019) 
+ 
+ The curious case of neural text degeneration .
+ 
+ ArXiv abs/1904.09751 .
+ 
+ External Links: Link 
+ 
+ Cited by: §1 ,
+ §3 .
+ 
+ [11] 
+ Z. Huang, Y. Wang, Z. Chen, and G. Qi (2025) 
+ 
+ Don’t settle too early: self-reflective remasking for diffusion language models .
+ 
+ arXiv preprint arXiv:2509.23653 .
+ 
+ Cited by: Appendix A ,
+ §1 .
+ 
+ [12] 
+ J. Kim, J. Geuter, D. Alvarez-Melis, S. Kakade, and S. Chen (2026) 
+ 
+ Stop training for the worst: progressive unmasking accelerates masked diffusion training .
+ 
+ arXiv preprint arXiv:2602.10314 .
+ 
+ Cited by: Appendix A ,
+ §1 .
+ 
+ [13] 
+ J. Kim, S. Kim, T. Lee, D. Z. Pan, H. Kim, S. Kakade, and S. Chen (2025) 
+ 
+ Fine-tuning masked diffusion for provable self-correction .
+ 
+ arXiv preprint arXiv:2510.01384 .
+ 
+ Cited by: §1 .
+ 
+ [14] 
+ J. Li, M. Galley, C. Brockett, J. Gao, and W. B. Dolan (2016) 
+ 
+ A diversity-promoting objective function for neural conversation models .
+ 
+ In Proceedings of the 2016 conference of the North American chapter of the association for computational linguistics: human language technologies ,
+ 
+ pp. 110–119 .
+ 
+ Cited by: Appendix B .
+ 
+ [15] 
+ P. Liang, R. Bommasani, T. Lee, D. Tsipras, D. Soylu, M. Yasunaga, Y. Zhang, D. Narayanan, Y. Wu, A. Kumar, et al. (2022) 
+ 
+ Holistic evaluation of language models .
+ 
+ arXiv preprint arXiv:2211.09110 .
+ 
+ Cited by: §3 ,
+ Table 2 .
+ 
+ [16] 
+ C. Lu, Y. Zhou, F. Bao, J. Chen, C. Li, and J. Zhu (2022) 
+ 
+ Dpm-solver: a fast ode solver for diffusion probabilistic model sampling in around 10 steps .
+ 
+ Advances in neural information processing systems 35 , pp. 5775–5787 .
+ 
+ Cited by: Appendix C .
+ 
+ [17] 
+ K. Misaki and T. Akiba (2026) 
+ 
+ UnMaskFork: test-time scaling for masked diffusion via deterministic action branching .
+ 
+ arXiv preprint arXiv:2602.04344 .
+ 
+ Cited by: §3 .
+ 
+ [18] 
+ S. Nie, F. Zhu, Z. You, X. Zhang, J. Ou, J. Hu, J. Zhou, Y. Lin, J. Wen, and C. Li (2025) 
+ 
+ Large language diffusion models .
+ 
+ arXiv preprint arXiv:2502.09992 .
+ 
+ Cited by: §1 .
+ 
+ [19] 
+ J. Ou, S. Nie, K. Xue, F. Zhu, J. Sun, Z. Li, and C. Li (2024) 
+ 
+ Your absorbing discrete diffusion secretly models the conditional distributions of clean data .
+ 
+ arXiv preprint arXiv:2406.03736 .
+ 
+ Cited by: Appendix B ,
+ §1 .
+ 
+ [20] 
+ G. Parmar, R. Zhang, and J. Zhu (2022) 
+ 
+ On aliased resizing and surprising subtleties in gan evaluation .
+ 
+ In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,
+ 
+ pp. 11410–11420 .
+ 
+ Cited by: §1 ,
+ §3 .
+ 
+ [21] 
+ H. Peng, P. Liu, Z. Dong, D. Cheng, J. Li, Y. Tang, S. Wang, and W. X. Zhao (2025) 
+ 
+ How efficient are diffusion language models? a critical examination of efficiency evaluation practices .
+ 
+ arXiv preprint arXiv:2510.18480 .
+ 
+ Cited by: §1 .
+ 
+ [22] 
+ K. Pillutla, S. Swayamdipta, R. Zellers, J. Thickstun, S. Welleck, Y. Choi, and Z. Harchaoui (2021) 
+ 
+ Mauve: measuring the gap between neural text and human text using divergence frontiers .
+ 
+ Advances in Neural Information Processing Systems 34 , pp. 4816–4828 .
+ 
+ Cited by: Appendix B ,
+ §1 .
+ 
+ [23] 
+ M. Post (2018) 
+ 
+ A call for clarity in reporting bleu scores .
+ 
+ In Proceedings of the third conference on machine translation: Research papers ,
+ 
+ pp. 186–191 .
+ 
+ Cited by: §1 ,
+ §3 .
+ 
+ [24] 
+ P. Pynadath, J. Shi, and R. Zhang (2026) 
+ 
+ Generative frontiers: why evaluation matters for diffusion language models .
+ 
+ arXiv preprint arXiv:2604.02718 .
+ 
+ Cited by: Appendix B ,
+ Appendix C ,
+ §1 ,
+ §3 ,
+ Table 2 ,
+ §4.5 .
+ 
+ [25] 
+ Y. Qian, J. Su, L. Hu, P. Zhang, Z. Deng, P. Zhao, and H. Zhang (2026) 
+ 
+ D3LLM: ultra-fast diffusion llm using pseudo-trajectory distillation .
+ 
+ arXiv preprint arXiv:2601.07568 .
+ 
+ Cited by: §3 .
+ 
+ [26] 
+ J. Song, C. Meng, and S. Ermon (2020) 
+ 
+ Denoising diffusion implicit models .
+ 
+ arXiv preprint arXiv:2010.02502 .
+ 
+ Cited by: Appendix C .
+ 
+ [27] 
+ M. Suzgun, N. Scales, N. Schärli, S. Gehrmann, Y. Tay, H. W. Chung, A. Chowdhery, Q. Le, E. Chi, D. Zhou, et al. (2023) 
+ 
+ Challenging big-bench tasks and whether chain-of-thought can solve them .
+ 
+ In Findings of the Association for Computational Linguistics: ACL 2023 ,
+ 
+ pp. 13003–13051 .
+ 
+ Cited by: §4 ,
+ §4.6 .
+ 
+ [28] 
+ G. Wang, Y. Schiff, S. S. Sahoo, and V. Kuleshov (2025) 
+ 
+ Remasking discrete diffusion models with inference-time scaling .
+ 
+ arXiv preprint arXiv:2503.00307 .
+ 
+ Cited by: Appendix A ,
+ Appendix B ,
+ Appendix C ,
+ §1 ,
+ §3 ,
+ Table 2 .
+ 
+ [29] 
+ J. Yang, Y. Jiang, X. Hu, S. Cheng, B. Qi, and J. Shao (2026) 
+ 
+ DARE: diffusion large language models alignment and reinforcement executor .
+ 
+ arXiv preprint arXiv:2604.04215 .
+ 
+ Cited by: §1 ,
+ §3 .
+ 
+ [30] 
+ J. Ye, Z. Xie, L. Zheng, J. Gao, Z. Wu, X. Jiang, Z. Li, and L. Kong (2025) 
+ 
+ Dream 7b: diffusion large language models .
+ 
+ arXiv preprint arXiv:2508.15487 .
+ 
+ Cited by: §1 .
+ 
+ [31] 
+ R. Zellers, A. Holtzman, Y. Bisk, A. Farhadi, and Y. Choi (2019) 
+ 
+ HellaSwag: can a machine really finish your sentence? .
+ 
+ In Annual Meeting of the Association for Computational Linguistics ,
+ 
+ External Links: Link 
+ 
+ Cited by: §4 ,
+ §4.6 .
+ 
+ [32] 
+ K. Zhai, S. Mollah, Z. Wang, and M. Shah (2026) 
+ 
+ CoRe: context-robust remasking for diffusion language models .
+ 
+ arXiv preprint arXiv:2602.04096 .
+ 
+ Cited by: Appendix A ,
+ §1 ,
+ §3 .
+ 
+ [33] 
+ K. Zheng, Y. Chen, H. Mao, M. Liu, J. Zhu, and Q. Zhang (2024) 
+ 
+ Masked diffusion models are secretly time-agnostic masked models and exploit inaccurate categorical sampling .
+ 
+ ArXiv abs/2409.02908 .
+ 
+ External Links: Link 
+ 
+ Cited by: Appendix A ,
+ §3 .
+ 
+ [34] 
+ Z. Zhou, L. Chen, H. Tong, and D. Song (2026) 
+ 
+ Dllm: simple diffusion language modeling .
+ 
+ arXiv preprint arXiv:2602.22661 .
+ 
+ Cited by: §1 ,
+ §3 ,
+ Table 2 .
+ 
+ [35] 
+ Y. Zhu, S. Lu, L. Zheng, J. Guo, W. Zhang, J. Wang, and Y. Yu (2018) 
+ 
+ Texygen: a benchmarking platform for text generation models .
+ 
+ In The 41st international ACM SIGIR conference on research & development in information retrieval ,
+ 
+ pp. 1097–1100 .
+ 
+ Cited by: Appendix B .
+ 
+ 
+ 
+ 
+ Broader Impact 
+
+ 
+ Ca re is an evaluation framework rather than a new model or capability,
+so its societal effects are mediated by how the research community uses it. 
+ 
+ 
+ Positive impact. 
+
+ 
+ Standardized, compute-aware evaluation reduces
+the rate at which apparent algorithmic progress turns out to reflect
+evaluation artifacts. The Clean-FID and SacreBLEU precedents suggest that
+domain-specific evaluation standards can recover years of overstated gains
+and redirect community effort toward genuine improvements. For MDLMs
+specifically, our compute-matched results indicate that several recent
+reported gains may shrink or reverse under fair comparison; making this
+visible early reduces wasted compute and research effort. The leaderboard
+infrastructure lowers the barrier for new MDLM proposals to be compared
+honestly against prior work. 
+ 
+ 
+ 
+ Negative impacts and mitigations. 
+
+ 
+ Leaderboard gaming : public leaderboards can incentivize
+hyperparameter overfitting on reported metrics. We mitigate this with
+multi-metric reporting, stochasticity sweeps that surface sensitivity, and
+verified-vs-pending status flags. Gatekeeping : standardized
+protocols can become barriers to entry. We have kept Ca re accessible
+( ∼ \sim 50 LOC per added model, ∼ \sim 20 per added strategy; reproducible
+on a single 8-GPU node) and treat each of the seven practices as
+independently reportable rather than all-or-nothing. Scope :
+Ca re addresses inference-time evaluation and does not speak to
+training-data, content-moderation, or deployment-safety questions; the
+MDLMs we evaluate inherit the safety, fairness, and bias properties of
+their training corpora, which our findings neither improve nor worsen. 
+ 
+ 
+ 
+ Dual-use. 
+
+ 
+ The framework does not increase MDLM capabilities,
+scale, or speed; it only changes how generations are measured. Honest
+evaluation can in principle accelerate development of more capable MDLMs
+by clarifying which research directions work, but the alternative—
+continued evaluation incoherence—carries its own costs. We view the
+dual-use risk as low and substantially outweighed by the
+scientific-integrity benefits. 
+ 
+ 
+ 
+ 
+ 
+ Appendix A Ethical consideration and Future Work 
+
+ 
+ Scope: discrete masked diffusion only. 
+
+ 
+ Ca re is scoped to masked discrete-token diffusion language
+models —the only family where remasking, NFE accounting, and
+distributional metrics over a finite vocabulary are jointly well-defined.
+This is a design choice, not a gap: the seven remasking papers motivating
+Ca re are all masked discrete-token
+models  [ 28 , 32 , 2 , 9 , 11 , 1 , 12 ] . The protocol does
+not apply to continuous-state diffusion LMs (e.g., Diffusion-LM, PLAID)
+or flow-based LMs, which require different compute accounting and metrics. 
+ 
+ 
+ 
+ Statistical caveats. 
+
+ 
+ The three confounds we study are not exhaustive—numerical
+precision  [ 33 ] , prompt format, and sequence length
+also matter but produce smaller measured effects. Headline tests use
+3 seeds, corroborated by a bootstrap CI (Section  4.4 );
+larger seed counts would strengthen marginal claims. The interaction
+analysis focuses on none vs. high_entropy ; the
+remaining five strategies appear in the deterministic seven-strategy
+comparison (Appendix  C.10 ) but are not re-evaluated at the
+stochastic headline configuration. 
+ 
+ 
+ 
+ Future work. 
+
+ 
+ Two natural extensions are beyond our current scope. For continuous
+diffusion LMs, an analog of Ca re 
+would replace remasking with embedding-space perturbations and use
+tokenization-free distributional metrics. For flow-based LMs, compute
+accounting requires integrating over flow time rather than counting
+forward passes. A unified compute-aware evaluation framework spanning
+masked-discrete, continuous, and flow-mapping LMs is a natural next step. 
+ 
+ 
+ 
+ 
+ Appendix B Taxonomy 
+
+ 
+ Strategy taxonomy. 
+
+ 
+ The seven strategies supported by LLaDA are categorized based on their selection criteria: no-op ( none , serving as the baseline); stochastic ( random , independent of state); confidence-based ( low_confidence , running_confidence ); entropy-based ( high_entropy , conf_entropy ); and agreement-based ( agreement ). Dream introduces origin / entropy / maskgit , which are similar but not identical (§ 4 ). 
+ 
+ 
+ 
+ Confound taxonomy. 
+
+ 
+ Ca re manages three aspects simultaneously: compute (nominal steps versus actual NFE), metric (PPL/MAUVE/diversity), and stochasticity ( unmask_temp values of 0.0, 0.1, 0.25, 0.5). Each of these can independently alter rankings; the interaction discussed in § 4.4 is positioned on the strategy  × \times  stochasticity axis. 
+ 
+ 
+ 
+ Metric taxonomy and choice rationale. 
+
+ 
+ Ca re employs four metrics, each identifying a unique failure mode that others might overlook: PPL (evaluated by Llama-3-8B) for fluency, though it is susceptible to PPL manipulation  [ 28 ] ; MAUVE   [ 22 ] for distributional alignment, which is the current benchmark in MDLM evaluation  [ 19 , 24 ] ; Self-BLEU   [ 35 ] for assessing pairwise diversity; and Distinct-3   [ 14 ] for evaluating vocabulary richness. Empirical evidence shows that PPL and MAUVE rankings can reverse (Section  4.2 ); Self-BLEU and MAUVE show divergence (Section  4.4 ), indicating that no single metric is sufficient. BERTScore, ROUGE- n n , and evaluations based solely on perplexity were excluded because they fail to capture the distributional failure modes that are central to this study. The protocol mandates reporting all four metrics together. 
+ 
+ 
+ 
+ 
+ Appendix C Extended Experiments and Set Up 
+
+ 
+ Setup. 
+
+ 
+ We use a 64-token prefix from OpenWebText or LM1B and generate 128 tokens;
+PPL is computed via Llama-3-8B. All generations are filtered by a
+character-level English filter (ASCII  ≥ \geq  0.85). Key results use
+3 seeds with paired t t -tests; seed variance reflects sampling
+stochasticity only (fixed pretrained checkpoints). Per-configuration
+standard errors use sample SD / 3 \sqrt{3} ( 𝚍𝚍𝚘𝚏 = 1 \mathtt{ddof}{=}1 ); gap
+SEs are computed on paired seed-wise differences. MAUVE uses the
+standard implementation with K = 500 K{=}500 and a GPT-2 XL backbone. On
+LLaDA, unmask_temp scales Gumbel noise on unmasking logits
+( t = 0 t{=}0 selects argmax); Dream uses an analogous alg_temp .
+Prompt examples appear in Appendix  C.1 .
+For inference-only evaluation, three seeds provide sufficient resolution
+to detect the effect sizes we report: the key interaction gap
+( 0.296 0.296 MAUVE, paired SE = 0.042 =0.042 ) yields t ⁡ ( 2 ) = 7.06 t(2){=}7.06 , with a
+bootstrapped 95% CI of [ 0.243 , 0.356 ] [0.243,0.356] excluding zero
+(§ 4.4 ). This practice is consistent with
+inference-time evaluation in recent diffusion LM
+work  [ 28 , 24 ] , where three seeds
+are standard given the high per-run compute cost. While three seeds is
+sufficient to detect the large effect sizes in our headline results,
+future work evaluating marginal strategies with smaller expected gaps
+should scale to five or more seeds. Cross-family comparisons inherit the
+small implementation differences between LLaDA and Dream. 
+ 
+ 
+ 
+ Why we use NFE and not wall-clock time. 
+
+ 
+ We measure compute via actual NFE rather than wall-clock time. NFE
+counts the forward passes a strategy consumes per generation—the
+quantity directly controlled by the sampler—and is hardware
+invariant. NFE-based comparison is standard in diffusion sampler
+evaluation  [ 26 , 16 ] , where
+quality-versus-NFE curves are the canonical efficiency plot, and has
+been adopted in recent MDLM work. Wall-clock time conflates
+algorithmic cost with implementation details (batching, kernels,
+hardware generation) that vary across labs. Because per-step forward
+passes dominate MDLM runtime, NFE differences translate to
+proportional latency differences on matched hardware; Section  A 
+discusses limits of this approximation. 
+ 
+ 
+ 
+ C.1 Prompt Templates 
+
+ 
+ All unconditional generation experiments use a 64-token prefix sampled from
+the held-out OpenWebText test split (or LM1B test split for the cross-
+dataset check), followed by 128 tokens of generation. 
+ 
+ 
+ 
+ Prefix (64 tokens, OWT example):
+ ‘‘The development of large-scale language models has been one of the most
+significant advances in artificial intelligence over the past decade.
+Researchers have explored several architectures, training paradigms, and
+inference techniques in pursuit of’’
+ 
+ Generation budget: 128 tokens.
+ 
+ Stop conditions: EOS token, or 128-token cap reached.
+ 
+ 
+ 
+ 
+ For HumanEval, prompts follow the standard
+ lm-eval   [ 6 ] format: function signature plus
+docstring, with the model expected to complete the function body. We use
+the unmodified release version of the benchmark. For GSM8K, prompts use
+the 4-shot in-context format from the original lm-eval 
+configuration; we do not modify the in-context exemplars. 
+ 
+ 
+ 
+ C.2 Customizing Ca re for a New Strategy 
+
+ 
+ Adding a new remasking strategy requires implementing one method on the
+ RemaskingSampler interface. The base class handles NFE accounting,
+language filtering, multi-metric evaluation, and seed control. The example
+below is the implementation of HighEntropy as it ships in the
+released framework: 
+ 
+ 
+ ⬇ 
+ class HighEntropy ( RemaskingStrategy ): 
+ 
+ "" "Re-mask the top-k highest-entropy positions per step." "" 
+ 
+ def __init__ ( self , fraction =0.15): 
+ 
+ self . fraction = fraction 
+ 
+ 
+ 
+ def select ( self , logits , history , step ): 
+ 
+ # logits: (B, L, V) current step output distribution 
+ 
+ # history: list of token sequences from prior steps 
+ 
+ # returns: boolean mask (B, L) for positions to remask 
+ 
+ probs = logits . softmax ( dim =-1) 
+ 
+ entropy = -( probs * probs . log ()). sum ( dim =-1) # (B, L) 
+ 
+ k = int ( self . fraction * logits . shape [1]) 
+ 
+ return topk_mask ( entropy , k = k ) 
+ 
+ 
+ 
+ 
+ A complete strategy is approximately 20 lines of code. Adding a new model
+backbone takes approximately 50 lines—a thin wrapper around the model’s
+native sampling API that routes per-step logits and history into the
+ RemaskingSampler . See the released codebase for additional
+worked examples of all seven strategies and the three Dream variants. 
+ 
+ 
+ 
+ C.3 Token Replacement Rate 
+
+ 
+ Figure 7: Token replacement rate per denoising step (LLaDA-8B-Base, t = 0.25 t{=}0.25 , 128 steps, 10 samples). 
+ 
+ 
+ 
+ C.4 Diversity Metrics 
+
+ 
+ Figure 8: Diversity at 256 steps (LLaDA-8B-Base, OWT). (a) Self-BLEU: high_entropy has lowest (most pairwise-diverse) yet worst MAUVE. (b) Distinct-3 vocabulary collapses at t ≥ 0.25 t\geq 0.25 , exposing distributional collapse despite surface diversity. 
+ 
+ 
+ 
+ C.5 Polar Area Charts 
+
+ 
+ Figure 9: Polar area charts: deterministic vs stochastic (LLaDA-8B-Base, OWT, 128 steps, 3-seed mean). Each axis shows one of the four core metrics normalized to [0,1]. 
+ 
+ 
+ 
+ C.6 Dream Pareto Frontier 
+
+ 
+ Figure 10: Dream-7B MAUVE vs PPL Pareto. 
+ 
+ 
+ 
+ C.7 Three-Seed Analysis 
+
+ 
+ Table 13: Three-seed MAUVE on English-filtered results (LLaDA-8B-Base, OWT, prefix=64, gen=128). 
+ 
+ 
+ 
+ Config 
+ Temp 
+ Seed 1 
+ Seed 2 
+ Seed 3 
+ Mean ± \pm SE 
+ 
+ 
+ 
+ none@128 
+ 0.0 
+ 0.601 
+ 0.645 
+ 0.651 
+ 0.632 ± 0.016 0.632\pm 0.016 
+ 
+ none@256 
+ 0.0 
+ 0.645 
+ 0.684 
+ 0.628 
+ 0.652 ± 0.017 0.652\pm 0.017 
+ 
+ h ent@128 
+ 0.0 
+ 0.612 
+ 0.488 
+ 0.584 
+ 0.561 ± 0.038 0.561\pm 0.038 
+ 
+ h ent@256 
+ 0.0 
+ 0.583 
+ 0.566 
+ 0.535 
+ 0.561 ± 0.014 0.561\pm 0.014 
+ 
+ none@128 
+ 0.25 
+ 0.960 
+ 0.942 
+ 0.954 
+ 0.952 ± 0.005 0.952\pm 0.005 
+ 
+ none@256 
+ 0.25 
+ 0.979 
+ 0.958 
+ 0.907 
+ 0.948 ± 0.021 0.948\pm 0.021 
+ 
+ h ent@128 
+ 0.25 
+ 0.878 
+ 0.709 
+ 0.821 
+ 0.803 ± 0.050 0.803\pm 0.050 
+ 
+ h ent@256 
+ 0.25 
+ 0.602 
+ 0.682 
+ 0.671 
+ 0.652 ± 0.025 0.652\pm 0.025 
+ 
+ 
+ 
+ 
+ 
+ C.8 LLaDA-MoE Cross-Architecture 
+
+ 
+ Table 14: LLaDA-MoE-7B-A1B ( ∼ {\sim} 1B active params), OWT, prefix=64, gen=128, single seed, English-filtered. Rows show 128- and 256-step configurations at t = 0.0 t{=}0.0 and t = 0.1 t{=}0.1 . 
+ 
+ 
+ 
+ 
+ t = 0.0 t{=}0.0 
+ t = 0.1 t{=}0.1 
+ 
+ Strategy 
+ PPL 
+ MAUVE 
+ PPL 
+ MAUVE 
+ 
+ 
+ 
+ none@128 
+ 6.2 
+ 0.547 
+ 15.2 
+ 0.934 
+ 
+ none@256 
+ 5.9 
+ 0.447 
+ 16.7 
+ 0.954 
+ 
+ h ent@128 
+ 21.8 
+ 0.333 
+ 35.8 
+ 0.903 
+ 
+ h ent@256 
+ 21.2 
+ 0.424 
+ 34.7 
+ 0.793 
+ 
+ 
+ 
+ 
+ 
+ C.9 Dream PPL–MAUVE Results 
+
+ 
+ Table 15: Dream-7B-Base results, native API (OWT, prefix=64, gen=128, English-filtered, single seed). origin = Dream’s no-remask baseline; ent = entropy-based remasking; mg = MaskGIT-style. Green =best PPL, blue =best MAUVE. 
+ 
+ 
+ 
+ 
+ 64 steps 
+ 128 steps 
+ 256 steps 
+ 
+ Strategy 
+ PPL ↓ \downarrow 
+ MAUVE ↑ \uparrow 
+ PPL ↓ \downarrow 
+ MAUVE ↑ \uparrow 
+ PPL ↓ \downarrow 
+ MAUVE ↑ \uparrow 
+ 
+ 
+ 
+ origin 
+ 28.4 
+ 0.889 
+ 26.4 
+ 0.860 
+ 24.0 
+ 0.955 
+ 
+ ent t = 0 t{=}0 
+ 43.7 
+ 0.748 
+ 18.5 
+ 0.977 
+ 18.5 
+ 0.921 
+ 
+ ent t = .5 t{=}.5 
+ 22.7 
+ 0.910 
+ 19.1 
+ 0.958 
+ 19.3 
+ 0.928 
+ 
+ mg t = 0 t{=}0 
+ 6.7 
+ 0.603 
+ 6.4 
+ 0.811 
+ 6.3 
+ 0.781 
+ 
+ mg t = .5 t{=}.5 
+ 17.1 
+ 0.920 
+ 16.2 
+ 0.851 
+ 15.5 
+ 0.917 
+ 
+ 
+ 
+ 
+ 
+ C.10 Full 7-Strategy Comparison 
+
+ 
+ We report all seven LLaDA-supported remasking strategies here for
+completeness; the main text uses none and high_entropy 
+as a running pair because they define the extremes of compute and churn
+under the Ca re protocol. 
+ 
+ 
+ Table 16: All 7 strategies at 128 steps (LLaDA-8B-Base, OWT, deterministic, prefix=32, seed 1). Prefix=32 was used for this exploratory comparison; all main-body experiments use prefix=64. Absolute MAUVE values differ; strategy rank order is consistent. 
+ 
+ 
+ 
+ Strategy 
+ PPL ↓ \downarrow 
+ MAUVE ↑ \uparrow 
+ SelfBLEU ↓ \downarrow 
+ Dist-3 ↑ \uparrow 
+ NFE 
+ 
+ 
+ 
+ none 
+ 7.3 
+ 0.515 
+ 0.070 
+ 0.667 
+ 128 
+ 
+ random 
+ 7.1 
+ 0.441 
+ 0.060 
+ 0.640 
+ 129 
+ 
+ high entropy 
+ 6.6 
+ 0.552 
+ 0.045 
+ 0.641 
+ 219 
+ 
+ low confidence 
+ 6.8 
+ 0.440 
+ 0.066 
+ 0.653 
+ 219 
+ 
+ running conf. 
+ 6.6 
+ 0.337 
+ 0.048 
+ 0.621 
+ 257 
+ 
+ conf entropy 
+ 6.9 
+ 0.471 
+ 0.050 
+ 0.654 
+ 219 
+ 
+ agreement 
+ 6.7 
+ 0.414 
+ 0.064 
+ 0.616 
+ 219 
+ 
+ 
+ 
+ 
+ 
+ C.11 PPL Across Temperatures 
+
+ 
+ Table 17: PPL across temperatures (LLaDA-8B-Base, Llama-3-8B evaluator,
+English-filtered). 
+ 
+ 
+ 
+ Strategy 
+ Steps 
+ t = 0.0 t{=}0.0 
+ t = 0.1 t{=}0.1 
+ t = 0.25 t{=}0.25 
+ t = 0.5 t{=}0.5 
+ 
+ 
+ 
+ none 
+ 64 
+ 9.6 
+ 17.6 
+ 23.9 
+ 33.0 
+ 
+ none 
+ 128 
+ 7.6 
+ 16.2 
+ 23.1 
+ 29.0 
+ 
+ none 
+ 256 
+ 7.2 
+ 15.8 
+ 23.4 
+ 30.4 
+ 
+ high ent. 
+ 64 
+ 17.5 
+ 28.3 
+ 26.9 
+ 26.2 
+ 
+ high ent. 
+ 128 
+ 16.2 
+ 28.3 
+ 25.6 
+ 22.5 
+ 
+ high ent. 
+ 256 
+ 18.6 
+ 25.3 
+ 20.6 
+ 19.6 
+ 
+ 
+ 
+ 
+ 
+ C.12 Downstream Results (GSM8K) 
+
+ 
+ Table 18: GSM8K accuracy (%), LLaDA-Instruct, 4-shot, n = 200 n{=}200 ,
+SE ≈ 3.5 {\approx}3.5 %. 
+ 
+ 
+ 
+ Strategy 
+ Steps 
+ t = 0.0 t{=}0.0 
+ t = 0.1 t{=}0.1 
+ 
+ 
+ 
+ none 
+ 128 
+ 61.5 
+ 64.0 
+ 
+ none 
+ 256 
+ 62.0 
+ 60.5 
+ 
+ high ent. 
+ 128 
+ 61.0 
+ 55.5 
+ 
+ high ent. 
+ 256 
+ 56.0 
+ 62.5 
+ 
+ 
+ 
+ 
+ 
+ C.13 English Filter Acceptance Rates 
+
+ 
+ Table 19: OWT acceptance rates (%), LLaDA-8B-Base. 
+ 
+ 
+ 
+ Strategy 
+ Steps 
+ t = 0.0 t{=}0.0 
+ t = 0.1 t{=}0.1 
+ t = 0.25 t{=}0.25 
+ t = 0.5 t{=}0.5 
+ 
+ 
+ 
+ none 
+ 64/128/256 
+ 99.6 
+ 98.0–98.4 
+ 96.8–97.2 
+ 96.0–97.6 
+ 
+ random 
+ 64/128/256 
+ 99.6 
+ 95.6–98.0 
+ 94.8–97.6 
+ 95.6–98.4 
+ 
+ high ent. 
+ 64/128/256 
+ 99.6 
+ 94.0–96.4 
+ 94.0–94.4 
+ 90.0–93.2 
+ 
+ 
+ 
+ 
+ Table 20: OWT vs. LM1B acceptance rates (%), LLaDA-8B-Base. 
+ 
+ 
+ 
+ Corpus 
+ Strategy 
+ t = 0.0 t{=}0.0 
+ t = 0.1 t{=}0.1 
+ t = 0.25 t{=}0.25 
+ t = 0.5 t{=}0.5 
+ 
+ 
+ 
+ OWT 
+ none 
+ 99.6 
+ 98.0–98.4 
+ 96.8–97.2 
+ 96.0–97.6 
+ 
+ OWT 
+ high ent. 
+ 99.6 
+ 94.0–96.4 
+ 94.0–94.4 
+ 90.0–93.2 
+ 
+ LM1B 
+ none 
+ 99.5 
+ 99.1 
+ 98.8 
+ 98.5 
+ 
+ LM1B 
+ high ent. 
+ 99.3 
+ 98.7 
+ 98.4 
+ 98.1 
+ 
+ 
+ 
+ 
+ 
+ C.14 Full Ca re   Leaderboard (Tier 1 + Tier 2) 
+
+ 
+ Table  21 reports the full leaderboard. Tier 1 rows
+reproduce Table  12 ; Tier 2 extends across
+architecture and scale. The interaction direction holds across all twelve
+models. 
+ 
+ 
+
+ Table 21: Full Ca re   leaderboard (256 nominal steps, English-filtered, OWT prefix=64, gen=128; PPL via Llama-3-8B; MAUVE via GPT-2 XL backbone, K = 500 K{=}500 ; 3-seed mean except where noted). Interaction gap = MAUVE( none ) − - MAUVE( high_ent. ) at t = 0.25 t{=}0.25 . 
+ 
+ 
+ 
+ 
+ 
+ 
+ none , t = 0.25 t{=}0.25 
+ h_ent. , t = 0.25 t{=}0.25 
+ Inter. 
+ HE 
+ 
+ Model 
+ Scale 
+ PPL 
+ MAUVE 
+ PPL 
+ MAUVE 
+ Gap 
+ p@1 
+ 
+ Tier 1: Primary open-weight MDLMs 
+ 
+ LLaDA-8B-Base 
+ 8B 
+ 23.4 
+ 0.948 
+ 20.6 
+ 0.652 
+ 0.296 
+ 32.0 
+ 
+ LLaDA-8B-Instruct 
+ 8B 
+ 22.7 
+ 0.928 
+ 20.1 
+ 0.641 
+ 0.287 
+ 36.5 
+ 
+ LLaDA-1.5 
+ 8B 
+ 21.9 
+ 0.939 
+ 19.4 
+ 0.681 
+ 0.258 
+ 38.0 
+ 
+ LLaDA-MoE-A1B 
+ ∼ {\sim} 1B 
+ — 
+ 0.954 ∗ 
+ — 
+ 0.793 ∗ 
+ 0.161 ∗ 
+ 18.5 
+ 
+ Dream-7B-Base 
+ 7B 
+ — 
+ 0.955 
+ — 
+ 0.921 ‡ 
+ 0.034 ‡ 
+ 27.5 
+ 
+ Dream-7B-Instruct 
+ 7B 
+ 23.8 
+ 0.927 
+ 21.8 
+ 0.861 
+ 0.066 
+ 31.0 
+ 
+ Tier 2: Extended coverage (architecture / scale diversity) 
+ 
+ Tiny-A2D (Qwen-0.5B) 
+ 0.5B 
+ 38.5 
+ 0.662 
+ 34.2 
+ 0.448 
+ 0.214 
+ 4.5 
+ 
+ Tiny-A2D (Qwen-0.6B) 
+ 0.6B 
+ 36.8 
+ 0.691 
+ 32.7 
+ 0.476 
+ 0.215 
+ 5.8 
+ 
+ DiffuLLaMA-7B 
+ 7B 
+ 26.4 
+ 0.872 
+ 22.6 
+ 0.617 
+ 0.255 
+ 21.0 
+ 
+ Dream-Coder-7B 
+ 7B 
+ 27.1 
+ 0.886 
+ 23.4 
+ 0.742 
+ 0.144 
+ 34.0 
+ 
+ SM-Dream-7B 
+ 7B 
+ 24.7 
+ 0.913 
+ 21.6 
+ 0.823 
+ 0.090 
+ 29.5 
+ 
+ BERT-Chat 
+ 150M 
+ 45.5 
+ 0.418 
+ 41.2 
+ 0.283 
+ 0.135 
+ 0.8 
+ 
+ AR Reference 
+ 
+ GPT-2-XL ( p = 0.95 p{=}0.95 ) 
+ 1.5B 
+ 14.1 
+ 0.742 
+ — 
+ — 
+ — 
+ 
+ 
+ ∗ MoE measured at t = 0.1 t{=}0.1 . ‡ Dream
+ entropy strategy. SM = Soft-Masked. “—” PPL for Dream-7B-Base
+reflects Dream’s native API not exposing intermediate logits compatible
+with the Llama-3-8B external PPL evaluator; MAUVE is unaffected. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Experimental support, please
+ view the build logs 
+ for errors. Generated by
+ 
+ 
+ L
+ A 
+ T
+ E 
+ 
+ xml 
+ 
+ .
+ 
+ 
+ Instructions for reporting errors 
+ We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+ support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+ methods listed below: 
+ 
+ Click the "Report Issue" ( 
+ 
+ ) button, located in the page header. 
+ 
+ Tip: You can select the relevant text first, to include it in your report. 
+ Our team has already identified the following issues . We appreciate your time reviewing and reporting rendering errors we
+ may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+ should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+ all. 
+ Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion , and welcome developer contributions . 
+ 
+ 
+ 
+ 
+ 
+ We gratefully acknowledge support from
+ our major funders ,
+ member institutions , ,
+ and all contributors.
+ 
+ 
+ About 
+ · 
+ Help 
+ · 
+ Contact 
+ · 
+ Subscribe 
+ · 
+ Copyright 
+ · 
+ Privacy 
+ · 
+ Accessibility 
+ · 
+ Operational Status (opens in new tab) 
+ 
+ 
+
+ 
+ Major funding support from 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

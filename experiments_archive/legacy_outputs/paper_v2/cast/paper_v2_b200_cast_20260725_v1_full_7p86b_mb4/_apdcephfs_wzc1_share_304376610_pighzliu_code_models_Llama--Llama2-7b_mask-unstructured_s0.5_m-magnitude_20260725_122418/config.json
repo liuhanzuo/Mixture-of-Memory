@@ -1,0 +1,15 @@
+{
+  "block_size": 4096,
+  "out_dir": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/paper_v2/cast/paper_v2_b200_cast_20260725_v1_full_7p86b_mb4",
+  "batch_size": 4,
+  "learning_rate": 2e-05,
+  "max_iters": 7500,
+  "weight_decay": 0.0,
+  "beta1": 0.9,
+  "beta2": 0.95,
+  "grad_clip": 1.0,
+  "decay_lr": true,
+  "warmup_iters": 100,
+  "lr_decay_iters": 7500,
+  "min_lr": 2e-06
+}

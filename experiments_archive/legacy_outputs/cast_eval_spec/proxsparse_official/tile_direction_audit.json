@@ -1,0 +1,457 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/paper_v2/staged_diskb_models/proxsparse_models/Llama-2-7b-hf-en_sft_final_400_len4096_batch1_lambda0.25",
+  "in_scope_tensors": 224,
+  "elems": 6476005376,
+  "zeros": 3238002756,
+  "zero_frac": 0.5000000105003001,
+  "tiles": 1619001344,
+  "tile_nonzero_histogram": {
+    "0": 0,
+    "1": 68,
+    "2": 1619001276,
+    "3": 0,
+    "4": 0
+  },
+  "tiles_gt2_TOTAL_budget_violations": 0,
+  "tiles_lt2_TOTAL_sparser_than_2of4": 68,
+  "exact_2of4_tile_ratio": 0.9999999579987995,
+  "strict_gate_would_pass": false,
+  "deployable_2of4": true,
+  "n_offending_layers": 48,
+  "offending_layers": [
+    {
+      "layer": "model.layers.0.self_attn.k_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 4
+    },
+    {
+      "layer": "model.layers.0.self_attn.v_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 3
+    },
+    {
+      "layer": "model.layers.0.self_attn.o_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 4
+    },
+    {
+      "layer": "model.layers.0.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.1.self_attn.k_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.1.self_attn.v_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 5
+    },
+    {
+      "layer": "model.layers.1.self_attn.o_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 6
+    },
+    {
+      "layer": "model.layers.1.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.2.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.3.mlp.gate_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.3.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.4.self_attn.o_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.5.self_attn.k_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.5.self_attn.v_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.5.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.6.self_attn.o_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.7.self_attn.k_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.7.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.8.self_attn.v_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.8.self_attn.o_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.9.self_attn.v_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.9.mlp.gate_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.12.self_attn.k_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 2
+    },
+    {
+      "layer": "model.layers.12.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.13.mlp.gate_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.13.mlp.down_proj",
+      "shape": [
+        4096,
+        11008
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.14.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.14.mlp.down_proj",
+      "shape": [
+        4096,
+        11008
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.15.self_attn.v_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.15.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.18.self_attn.v_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.18.mlp.gate_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.19.self_attn.v_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.19.self_attn.o_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.19.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.21.self_attn.o_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.21.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.22.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.23.self_attn.v_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.23.mlp.gate_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 2
+    },
+    {
+      "layer": "model.layers.23.mlp.down_proj",
+      "shape": [
+        4096,
+        11008
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 2
+    },
+    {
+      "layer": "model.layers.26.self_attn.q_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.26.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.27.mlp.gate_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.28.mlp.gate_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.28.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.30.self_attn.k_proj",
+      "shape": [
+        4096,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    },
+    {
+      "layer": "model.layers.31.mlp.up_proj",
+      "shape": [
+        11008,
+        4096
+      ],
+      "tiles_gt2": 0,
+      "tiles_lt2": 1
+    }
+  ],
+  "note": "A tile with <2 nonzeros is a strict subset of an allowed 2:4 tile (fewer live weights, same compressed format, runs on 2:4 tensor cores), so it does not break 2:4 deployability. A tile with >2 nonzeros does. Scoring gates on tiles_gt2 == 0.",
+  "verdict": "PASS"
+}

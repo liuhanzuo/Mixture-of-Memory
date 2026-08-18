@@ -1,0 +1,14 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/paper_v2/staged_diskb_models/outputs/paper_v2/trainingfree_3seed/models/sparsegpt_seed1",
+  "seqlen": 2048,
+  "load_seconds": 5.664201021194458,
+  "global_zero_ratio": 0.4805292056060675,
+  "linear_zero_ratio": 0.5000000718035229,
+  "exact_2of4_tile_ratio": 0.9999997127859086,
+  "linear_layers": 224,
+  "linear_parameters": 6476005376,
+  "nm_tiles": 1619001344,
+  "wikitext2_ppl": 10.065769090237534,
+  "wikitext2_tokens": 335872,
+  "wikitext2_seconds": 7.164085626602173
+}

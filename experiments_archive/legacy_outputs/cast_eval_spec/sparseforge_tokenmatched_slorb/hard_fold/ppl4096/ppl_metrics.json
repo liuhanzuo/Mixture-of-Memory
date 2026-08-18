@@ -1,0 +1,14 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/sparseforge_tokenmatched_slorb_hf/hard_fold",
+  "seqlen": 4096,
+  "load_seconds": 6.621930122375488,
+  "global_zero_ratio": 2.9101796501594714e-07,
+  "linear_zero_ratio": 1.0809132472221097e-09,
+  "exact_2of4_tile_ratio": 0.0,
+  "linear_layers": 224,
+  "linear_parameters": 6476005376,
+  "nm_tiles": 1619001344,
+  "wikitext2_ppl": 6.193778987680964,
+  "wikitext2_tokens": 335872,
+  "wikitext2_seconds": 7.854649305343628
+}

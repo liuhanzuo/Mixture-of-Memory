@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/MrsTybos+1utNlD+XdrczDgMIEo</id>
+  <title>arXiv Query: search_query=&amp;id_list=2505.19223&amp;start=0&amp;max_results=10</title>
+  <updated>2026-08-16T03:43:24Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=10&amp;id_list=2505.19223" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>10</opensearch:itemsPerPage>
+  <opensearch:totalResults>1</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2505.19223v2</id>
+    <title>LLaDA 1.5: Variance-Reduced Preference Optimization for Large Language Diffusion Models</title>
+    <updated>2025-10-12T15:42:47Z</updated>
+    <link href="https://arxiv.org/abs/2505.19223v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2505.19223v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>While Masked Diffusion Models (MDMs), such as LLaDA, present a promising paradigm for language modeling, there has been relatively little effort in aligning these models with human preferences via reinforcement learning. The challenge primarily arises from the high variance in Evidence Lower Bound (ELBO)-based likelihood estimates required for preference optimization. To address this issue, we propose Variance-Reduced Preference Optimization (VRPO), a framework that formally analyzes the variance of ELBO estimators and derives bounds on both the bias and variance of preference optimization gradients. Building on this theoretical foundation, we introduce unbiased variance reduction strategies, including optimal Monte Carlo budget allocation and antithetic sampling, that significantly improve the performance of MDM alignment. We demonstrate the effectiveness of VRPO by applying it to LLaDA, and the resulting model, LLaDA 1.5, outperforms its SFT-only predecessor consistently and significantly across mathematical (GSM8K +4.7), code (HumanEval +3.0, MBPP +1.8), and alignment benchmarks (IFEval +4.0, Arena-Hard +4.3). Furthermore, LLaDA 1.5 demonstrates a highly competitive mathematical performance compared to strong language MDMs and ARMs. Project page: https://ml-gsai.github.io/LLaDA-1.5-Demo/.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-05-25T16:36:20Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Fengqi Zhu</name>
+    </author>
+    <author>
+      <name>Rongzhen Wang</name>
+    </author>
+    <author>
+      <name>Shen Nie</name>
+    </author>
+    <author>
+      <name>Xiaolu Zhang</name>
+    </author>
+    <author>
+      <name>Chunwei Wu</name>
+    </author>
+    <author>
+      <name>Jun Hu</name>
+    </author>
+    <author>
+      <name>Jun Zhou</name>
+    </author>
+    <author>
+      <name>Jianfei Chen</name>
+    </author>
+    <author>
+      <name>Yankai Lin</name>
+    </author>
+    <author>
+      <name>Ji-Rong Wen</name>
+    </author>
+    <author>
+      <name>Chongxuan Li</name>
+    </author>
+  </entry>
+</feed>

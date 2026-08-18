@@ -1,0 +1,18 @@
+{
+  "algorithm": "Wanda 2:4 (Sun et al., arXiv:2306.11695)",
+  "dense_reference": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama2-7b",
+  "calibration": {
+    "source": "/apdcephfs_wzc1/share_304376610/pighzliu_code/data/c4_llama/train.bin",
+    "dtype": "uint16",
+    "nsamples": 128,
+    "seqlen": 2048,
+    "seed": 0
+  },
+  "storage_dtype": "bfloat16",
+  "in_scope_tensors": 224,
+  "in_scope_elements": 6476005376,
+  "in_scope_zero_frac": 0.5,
+  "in_scope_bad_tiles": 0,
+  "in_scope_exact_2of4_frac": 1.0,
+  "prune_seconds": 23.95
+}

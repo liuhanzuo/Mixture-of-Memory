@@ -1,0 +1,58 @@
+{
+  "_name_or_path": "memoryllm-8b-chat",
+  "add_bos_embedding": true,
+  "add_decoder_lora": true,
+  "architectures": [
+    "MemoryLLM"
+  ],
+  "attention_bias": false,
+  "attention_dropout": 0.0,
+  "bos_token_id": 128000,
+  "drop_memory_per_layer": true,
+  "eos_token_id": 128001,
+  "hidden_act": "silu",
+  "hidden_size": 4096,
+  "initializer_range": 0.02,
+  "intermediate_size": 14336,
+  "lora_config": {
+    "inference_mode": false,
+    "lora_alpha": 32,
+    "lora_dropout": 0.1,
+    "r": 16,
+    "target_modules": [
+      "q_proj",
+      "v_proj",
+      "k_proj",
+      "up_proj",
+      "down_proj",
+      "gate_proj",
+      "lm_head"
+    ]
+  },
+  "max_length": 512,
+  "max_position_embeddings": 8192,
+  "max_seq_length": 2048,
+  "mlp_bias": false,
+  "model_type": "llama",
+  "new_memory_embedding_fullset": true,
+  "num_attention_heads": 32,
+  "num_blocks": 50,
+  "num_hidden_layers": 32,
+  "num_key_value_heads": 8,
+  "num_memory_tokens": 12800,
+  "num_tokens": 256,
+  "pad_token_id": 128009,
+  "pretraining_tp": 1,
+  "rms_norm_eps": 1e-05,
+  "rope_scaling": {
+    "factor": 1.8125,
+    "type": "linear"
+  },
+  "rope_theta": 500000.0,
+  "shrink_to_one_embedding": true,
+  "tie_word_embeddings": false,
+  "torch_dtype": "float32",
+  "transformers_version": "4.43.0.dev0",
+  "use_cache": true,
+  "vocab_size": 128256
+}

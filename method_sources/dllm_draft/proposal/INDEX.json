@@ -1,0 +1,15 @@
+{
+  "updated": "2026-08-08",
+  "active": [
+    {
+      "id": "A01",
+      "slug": "execution-grounded-typed-repair",
+      "priority": 1,
+      "status": "active_gate_only"
+    }
+  ],
+  "backlog": [],
+  "archive": [
+    "../ELASTIC_SCAFFOLD_PROPOSAL.md"
+  ]
+}

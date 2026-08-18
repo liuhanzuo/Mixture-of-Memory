@@ -1,0 +1,1512 @@
+ρ
+-EOS: Training-free Bidirectional Variable-Length Control for Masked Diffusion LLMs
+Report GitHub Issue
+×
+Title:
+Content selection saved. Describe the issue below:
+Description:
+Submit without GitHub
+Submit in GitHub
+arXiv is now an independent nonprofit!
+Learn more
+×
+Back to arXiv
+Why HTML?
+Report Issue
+Back to Abstract
+Download PDF
+Abstract
+1 Introduction
+2 Related Work
+3 Methods
+3.1 Overview
+3.2 Implicit Token
+3.3 Implicit EOS Density
+3.4 Bidirectional Length Adjustment
+3.5 One-Stage Bidirectional Variable-Length Denoising
+4 Experiments
+4.1 Experimental Setups
+4.2 Main Results
+4.3 Robustness and Ablation Studies
+5 Conclusion
+References
+A Appendix
+A.1 Why does ρ \rho - EOS work? – Implicit length awareness in masked dLLMs by treating padding EOS as a part of response.
+A.2 Why does implicit EOS density ρ \rho outperform EOS confidence for single-stage length control? – A side effect of treating padding EOS as part of the response.
+License: arXiv.org perpetual non-exclusive license
+arXiv:2601.22527v1 [cs.CL] 30 Jan 2026
+ρ \rho - EOS : Training-free Bidirectional Variable-Length Control
+for Masked Diffusion LLMs
+Jingyi Yang
+Affiliation:  Shanghai Artificial Intelligence Laboratory
+Affiliation:  Fudan University
+Yuxian Jiang
+Affiliation:  Shanghai Artificial Intelligence Laboratory
+Affiliation:  Fudan University
+Jing Shao
+Affiliation:  Shanghai Artificial Intelligence Laboratory
+Correspondence to: shaojing@pjlab.org.cn
+Abstract
+Beyond parallel generation and global context modeling, current masked diffusion large language models (dLLMs) suffer from a fundamental limitation: they require a predefined, fixed generation length, which lacks flexibility and forces an inevitable trade-off between output quality and computational efficiency.
+To address this, we study the denoising dynamics and find that the implicit density ( ρ \rho ) of end-of-sequence ( EOS ) tokens serves as a reliable signal of generation sufficiency.
+In particular, the evolving implicit EOS density during denoising reveals whether the current masked space is excessive or insufficient, thereby guiding the adjustment direction for generation length.
+Building on this insight, we propose ρ \rho - EOS , a training-free, single-stage strategy that enables bidirectional variable-length generation for masked dLLMs.
+Unlike prior two-stage approaches–which require separate length adjustment and iterative mask insertion phases while supporting only unidirectional expansion– ρ \rho - EOS achieves bidirectional length adjustment within a unified denoising process by continuously estimating the implicit EOS density: excessively high density triggers MASK token contraction, while insufficient density induces expansion.
+Extensive experiments on mathematics and code benchmarks demonstrate that ρ \rho - EOS achieves comparable performance while substantially improving inference efficiency and token utilization.
+Keywords:  Machine Learning, ICML
+1 Introduction
+Autoregressive large language models  ( 8 ; 7 ; 27 ; 1 ) have exhibited scaling laws and versatile capabilities in language understanding and generation. Recently, diffusion large language models (dLLMs)  ( 24 ; 17 ; 12 ; 26 ) have emerged as a promising alternative paradigm, attracting increasing attention.
+In contrast to autoregressive models that generate next-tokens sequentially, dLLMs formulate text generation as a discrete probabilistic denoising process. Starting from a fully masked sequence, dLLMs iteratively unmask MASK tokens in parallel, which enables global context modeling and flexible generation orders.
+Figure 1 : The Evolution Trend of Implicit EOS Density During the Denoising Process. (a) Illustration of the calculation for implicit EOS density. (b.1) Trends of implicit EOS density on GSM8k. (b.2) Trends of implicit EOS density on MBPP.
+Despite these advantages, the generation length of dLLMs is fundamentally constrained by their length-rigid generation paradigm. Specifically, inference starts from a fixed number of pre-filled MASK tokens, which strictly determines the final output length.
+In practice, empirically specifying this length presents a severe dilemma, particularly for long chain reasoning  ( 20 ; 23 ) or tasks that require adaptive switching between short and long thinking modes (hybrid reasoning)  ( 2 ; 3 ) .
+If the predefined length is too short, the model lacks sufficient token budget to solve complex reasoning tasks. Conversely, adopting a universally long generation length incurs substantial computational overhead, and often results in a low token utilization for tasks with inherently short length, causing significant computational waste.
+This rigidity stands in sharp contrast to autoregressive models, which can naturally adjust their output length at test time.
+To mitigate this limitation, DAEDAL  ( 19 ) proposes a two-stage solution that supports only unidirectional expansion through separate initial length adjustment and iterative mask insertion phases.
+Its first stage iteratively expands an initial short sequence to a coarse target length by checking trailing EOS tokens confidence: if the confidence of EOS tokens is below a threshold, a fixed block of MASK tokens is appended. The second stage then performs iterative mask insertion during denoising to further expand remaining low-confidence regions.
+While effective, this two-stage pipeline inevitably introduces additional inference latency, making it less suitable for high-throughput or latency-sensitive deployment scenarios.
+In addition, DAEDAL only supports unidirectional length expansion, lacking the ability to contract the generation length, which becomes problematic when the initial length is overly long, or when earlier length expansion decisions are overly aggressive and require later contraction.
+To this end, we revisit the denoising dynamics of masked dLLMs and identify an implicit length-indicative signal.
+As illustrated in Figure  1 , under different fixed generation lengths, the implicit EOS density exhibits clearly distinguishable trends throughout the denoising process.
+When the implicit EOS density is very low, it indicates that the remaining length is insufficient, as the model requires additional space to generate semantic content. In contrast, when the density becomes high, it indicates that the remaining length is excessive, i.e., there is surplus generation capacity. When the length is appropriate—balancing performance and effective token ratio—the density gradually converges to an intermediate equilibrium region.
+Crucially, this signal emerges naturally during denoising and reflects the model’s internal assessment of length sufficiency.
+Motivated by this observation, we introduce ρ \rho - EOS , a training-free and bidirectional variable-length denoising strategy. Unlike prior two-stage approaches, ρ \rho - EOS enables denoising and length adaptation jointly within a single stage by monitoring the implicit EOS density.
+Extensive experiments demonstrate that ρ \rho - EOS achieves performance comparable to fixed-length baselines and DAEDAL with significantly improving inference efficiency and token utilization across diverse tasks.
+Furthermore, compared to DAEDAL, our ρ \rho - EOS supports bidirectional length adjustment, making it more flexible and effective for practical deployment scenarios.
+2 Related Work
+Figure 2 : The Formulation of Implicit and Explicit Concept for Token and Density. (Upper Left) The standard denoising process of masked diffusion large language models (e.g., LLaDA). (Lower Left) The two stage of DAEDAL. (Right) The bidirectional variable-length denoising process of ρ \rho - EOS .
+Diffusion Large Language Models.
+Given the success of diffusion models in continuous generative modeling, recent work has extended this approach to discrete domains for text generation  ( 5 ; 16 ; 14 ; 22 ; 34 ; 25 ) . A prominent paradigm is masked diffusion large language models (dLLMs), which iteratively denoise a masked sequence for bidirectional, parallel generation  ( 24 ; 35 ; 36 ; 13 ; 32 ) . However, this generation paradigm requires a predefine a fixed generation length, which can lead to either redundant computation when the predefined length is overly long or degraded generation quality when the length budget is insufficient  ( 19 ) .
+Another line of dLLMs, known as block diffusion language models  ( 4 ; 10 ; 21 ) , naturally supports variable-length generation for adopting a hybrid paradigm that divides a sequence into blocks, performs discrete diffusion within each block, and conditions autoregressively on all preceding blocks.
+In this work, we focus on masked dLLMs and aim to address fixed-length limitation without compromising single-stage denoising paradigm.
+Variable-Length Strategies for Masked dLLMs.
+To alleviate the fixed-length constraint of masked dLLMs, recent works have explored training-based and training-free approaches.
+For instance, FlexMDMs  ( 18 ) decompose the denoising process into insertion and unmasking steps, learning to predict the number of new MASK tokens to insert before each position.
+DreamOn  ( 29 ) introduces special control tokens, where EXPAND splits into two MASK tokens to extend the sequence, and DELETE is removed to shorten it.
+dLLM-Var  ( 31 ) enables masked dLLMs be able to infer in a block diffusion manner via training the models to accurately predict the EOS token.
+In contrast, DAEDAL  ( 19 ) proposes a training-free alternative that decouples length adjustment from denoising. It first performs length expansion then follow a adaptive denoising. While DAEDAL improves inference efficiency to some extent, its two-stage design potentially introduces additional latency and only supports unidirectional length expansion, which limits flexibility.
+Moreover, length flexibility also plays a critical role in reinforcement learning (RL) fine-tuning, where diverse reasoning depths and response structures can facilitate exploration  ( 33 ; 15 ; 30 ; 28 ) . In such settings, RL rollouts and high-throughput deployment are often tightly bottlenecked by inference latency, making multi-stage decoding strategies particularly unfavorable.
+These considerations further motivate the need for a single-stage, training-free, and bidirectional length control mechanism tailored to masked dLLMs.
+3 Methods
+3.1 Overview
+To address the fixed-length limitation in standard masked diffusion large language models (dLLMs) inference, we introduce ρ \rho - EOS , a training-free, single-stage bidirectional variable-length denoising strategy that enables dLLMs to dynamically adapt their generation length on the fly during the denoising process itself, rather than predefining fixed-length or relying on multi-stage heuristics adjustments.
+3.2 Implicit Token
+We first clarify the concept of Implicit Token . At each denoising step, the input 𝐱 t \mathbf{x}_{t} at time step t t is forwarded through the model ( p θ ​ ( ⋅ ) p_{\theta}(\cdot) ) to obtain the logits of input (denote as 𝐱 t logits \mathbf{x}_{t}^{\text{logits}} ). These logits are then processed via argmax ⁡ ( softmax ⁡ ( ⋅ ) ) \mathrm{argmax}(\mathrm{softmax}(\cdot)) , yielding a prediction of tokens:
+𝐱 t logits \displaystyle\mathbf{x}_{t}^{\text{logits}}
+= p θ ​ ( 𝐱 t ) , \displaystyle=p_{\theta}(\mathbf{x}_{t}),
+(1)
+𝐱 ^ 0 \displaystyle\hat{\mathbf{x}}_{0}
+= argmax ⁡ ( softmax ⁡ ( 𝐱 t logits ) ) , \displaystyle=\mathrm{argmax}(\mathrm{softmax}(\mathbf{x}_{t}^{\text{logits}})),
+(2)
+𝐱 t − τ \displaystyle\mathbf{x}^{t-\tau}
+= Remask ​ ( 𝐱 ^ 0 ) , \displaystyle=\text{Remask}(\hat{\mathbf{x}}_{0}),
+(3)
+where p θ ​ ( ⋅ ) p_{\theta}(\cdot) denotes the model, and 𝐱 ^ 0 \hat{\mathbf{x}}_{0} represents the model’s prediction of the clean sequence. We refer to 𝐱 ^ 0 \hat{\mathbf{x}}_{0} as the implicit 𝐱 0 \mathbf{x}_{0} , since it is not immediately committed as final response.
+Moreover, the tokens in 𝐱 ^ 0 \hat{\mathbf{x}}_{0} that correspond to the remaining MASK position in 𝐱 t \mathbf{x}_{t} are defined as the Implicit Tokens at time step t t (i.e., { i | 𝐱 ^ 0 i ∧ ( 𝐱 t i = MASK ) } \{i|\hat{\mathbf{x}}^{i}_{0}\land(\mathbf{x}^{i}_{t}=\texttt{MASK})\} ).
+After applying Remask ​ ( ⋅ ) \text{Remask}(\cdot) , only a subset of 𝐱 ^ 0 \hat{\mathbf{x}}_{0} is decoded into Explicit Tokens , while the remaining implicit tokens of 𝐱 ^ 0 \hat{\mathbf{x}}_{0} are remasked to form 𝐱 t − τ \mathbf{x}_{t-\tau} .
+This iterative process continues until a fully denoised sequence is obtained, which constitutes the standard inference procedure of masked dLLMs.
+A schematic illustration is shown in Figure  2 .
+3.3 Implicit EOS Density
+Based on the notion of implicit tokens, we define Implicit Density ( ρ \rho ) as the ratio between implicit tokens with specific properties and masked tokens at time step t .
+As depicted at the right panel of Figure  2 , implicit token density:
+ρ = # Implicit Token at ​ t # Remaining  MASK  Token at ​ t , \rho=\frac{\text{\# Implicit Token at}~t}{\text{\# Remaining {MASK} Token at}~t},
+(4)
+where # Implicit Token at ​ t \text{\# Implicit Token at}~t denotes the number of implicit tokens with certain properties at timestep t t , and # Remaining MASK Token at ​ t \text{\# Remaining MASK Token at}~t represents the number of remaining MASK tokens in 𝐱 t \mathbf{x}_{t} needed to be denoised.
+Subsequently, we conclude the implicit EOS density:
+ρ EOS = # Implicit  EOS  Token at ​ t # Remaining  MASK  Token at ​ t . \rho_{\texttt{EOS}}=\frac{\text{\# Implicit {EOS} Token at}~t}{\text{\# Remaining {MASK} Token at}~t}.
+(5)
+Figure 3 : Example of piecewise expansion factor function for constants, linearity, and exponentiation.
+Algorithm 1 The Inference Process of ρ \rho - EOS
+Input:
+Prompt 𝐩 \mathbf{p}
+, model p θ p_{\theta}
+, initial/max length L init / L max L_{\text{init}}/L_{\text{max}}
+, density thresholds [ ρ low , ρ high ] [\rho_{\text{low}},\rho_{\text{high}}]
+, confidence threshold τ high \tau_{\text{high}}
+, expansion factor function E factor ​ ( ⋅ ) \mathrm{E}_{\text{factor}}(\cdot)
+, max length adjustment step N N Output: \While
+clean sequence 𝐱 \mathbf{x} L cur ← L init L_{\text{cur}}\leftarrow L_{\text{init}}
+, n ← 0 n\leftarrow 0 𝐱 t ← [ 𝐩 , MASK , … , MASK ⏟ L init ] \mathbf{x}^{t}\leftarrow[\mathbf{p},\underbrace{\texttt{MASK},\dots,\texttt{MASK}}_{L_{\text{init}}}]
+Initialize sequence
+ContainsMask ​ ( 𝐱 t ) \text{ContainsMask}(\mathbf{x}_{t}) 𝐱 t logits ← p θ ​ ( 𝐱 t ) \mathbf{x}_{t}^{\text{logits}}\leftarrow p_{\theta}(\mathbf{x}_{t}) ρ EOS ← ImplicitEOSDensity ​ ( 𝐱 t logits ) \rho_{\texttt{EOS}}\leftarrow\text{ImplicitEOSDensity}(\mathbf{x}_{t}^{\text{logits}}) 𝐱 t conf , 𝐱 ^ 0 ← Decode ​ ( 𝐱 t logits ) \mathbf{x}_{t}^{\text{conf}},\hat{\mathbf{x}}_{0}\leftarrow\text{Decode}(\mathbf{x}_{t}^{\text{logits}}) i ∈ { ( 𝐱 t i = MASK ) ∧ ( 𝐱 t conf , i > τ high ) } i\in\{(\mathbf{x}_{t}^{i}=\texttt{MASK})\land(\mathbf{x}_{t}^{\text{conf},i}>\tau_{\text{high}})\} 𝐱 t − τ i ← 𝐱 ^ 0 i \mathbf{x}_{t-\tau}^{i}\leftarrow\hat{\mathbf{x}}_{0}^{i} 0 < L cur < L max 0<L_{\text{cur}}<L_{\text{max}}
+and n < N n<N ρ EOS ∈ [ ρ low , ρ high ] \rho_{\texttt{EOS}}\in[\rho_{\text{low}},\rho_{\text{high}}] 𝐱 t , L cur ← 𝐱 t − τ , L cur \mathbf{x}_{t},L_{\text{cur}}\leftarrow\mathbf{x}_{t-\tau},L_{\text{cur}}
+Hold L cur L_{\text{cur}} ρ EOS < ρ low \rho_{\texttt{EOS}}<\rho_{\text{low}}
+Expand L cur L_{\text{cur}} 𝐱 t − τ ← 𝐱 t − τ ⊕ [ MASK , … , MASK ⏟ E factor ​ ( ρ EOS ) ] \mathbf{x}_{t-\tau}\leftarrow\mathbf{x}_{t-\tau}\oplus[\underbrace{\texttt{MASK},\dots,\texttt{MASK}}_{\mathrm{E}_{\text{factor}}(\rho_{\texttt{EOS}})}] L cur ← L cur + E factor ​ ( ρ EOS ) L_{\text{cur}}\leftarrow L_{\text{cur}}+\mathrm{E}_{\text{factor}}(\rho_{\texttt{EOS}})
+Contract L cur L_{\text{cur}} 𝐱 t − τ ← 𝐱 t − τ 0 : ( | 𝐱 | − E factor ​ ( ρ EOS ) ) \mathbf{x}_{t-\tau}\leftarrow\mathbf{x}_{t-\tau}^{0:(|\mathbf{x}|-\mathrm{E}_{\text{factor}}(\rho_{\texttt{EOS}}))} L cur ← L cur − E factor ​ ( ρ EOS ) L_{\text{cur}}\leftarrow L_{\text{cur}}-\mathrm{E}_{\text{factor}}(\rho_{\texttt{EOS}}) n ← n + 1 n\leftarrow n+1 return 𝐱 \mathbf{x}
+\State
+\State \State \State \Comment \State \State \State \For \State \EndFor \If \If \State \Comment \ElsIf \Comment \State \State \Else \Comment \State \State \EndIf \EndIf \State \EndWhile \State
+3.4 Bidirectional Length Adjustment
+As illustrated in Figure  1 (which shows the trend of ρ EOS \rho_{\texttt{EOS}} on GSM8k and MBPP across fixed-length ranging from 64 to 1024), we observe that masked dLLMs implicitly encode length sufficiency information in ρ EOS \rho_{\texttt{EOS}} . When the masked budget is sufficient to complete the response, the model assigns higher probability mass to EOS , resulting in a larger ρ EOS \rho_{\texttt{EOS}} . Conversely, when the available length is insufficient, the model tends to fully utilize the masked space for semantic contents, leading to a persistently low ρ EOS \rho_{\texttt{EOS}} .
+This behavior indicates that ρ EOS \rho_{\texttt{EOS}} serves as a reliable internal signal for assessing whether the current generation length is appropriate.
+Similarly, as demonstrated in Figure  1 , when the generation length is excessively long (e.g., 512 or 1024), the ρ EOS \rho_{\texttt{EOS}} converges toward near 1, indicating a waste of capacity. Conversely, when the length is too short (e.g., 64 or 128), the density converges toward 0, signaling insufficient semantic content.
+This observation suggests that the ideal implicit EOS density does not converge to an extreme value but rather reaches an intermediate length-sufficiency equilibrium state , which reflects a suitable length for both quality and efficiency.
+To operate this criterion robust, we empirically define the length-equilibrium region using two thresholds ρ low \rho_{\text{low}} and ρ high \rho_{\text{high}} . When ρ EOS ∈ [ ρ low , ρ high ] \rho_{\texttt{EOS}}\in[\rho_{\text{low}},\rho_{\text{high}}] , the model suspends length modification and focuses solely on denoising, enabling stable bidirectional control without oscillatory behavior.
+When ρ EOS < ρ low \rho_{\texttt{EOS}}<\rho_{\text{low}} , the remaining masked space is insufficient and length expansion is triggered via MASK insertion.
+Conversely, when ρ EOS > ρ high \rho_{\texttt{EOS}}>\rho_{\text{high}} , the model indicates surplus generation capacity and the sequence is contracted by removing partial trailing MASK .
+Table 1 : Main Results on LLaDA-Instruct-8B across Four Benchmarks. We compare the ρ \rho - EOS performance against DAEDAL and various baseline configurations. 𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc} denotes accuracy, 𝑬 token \bm{E_{\text{token}}} is the average effective tokens (the response length excluding trailing padding), 𝑵 token \bm{N_{\text{token}}} is the average total tokens, and 𝑬 ratio \bm{E_{\text{ratio}}} is the effective token ratio. 𝑻 runtime \bm{T_{\text{runtime}}} represents the runtime spent on the evaluation (in seconds). The best configuration for the baseline is highlighted in orange . DAEDAL is highlighted in blue , and ρ \rho - EOS is highlighted in red . Under the ρ \rho - EOS setting, Sym and Asym denote the symmetric and asymmetric lower-upper threshold centered around 0.5. The best results are bold , and the second-best results are underlined .
+Benchmark
+Metric
+Fixed-Length Denoising (Baseline)
+DAEDAL
+ρ \rho - EOS
+ρ \rho - EOS
+64
+128
+256
+512
+1024
+2048
+64
+64 Sym
+64 Asym
+GSM8K
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+47.9
+68.0
+77.8
+83.6
+83.9
+82.7
+84.6
+81.8
+84.2
+𝑬 token \bm{E_{\text{token}}}
+62.1
+124.1
+233.7
+286.8
+282.9
+297.3
+246.0
+198.4
+252.5
+𝑵 token \bm{N_{\text{token}}}
+64
+128
+256
+512
+1024
+2048
+331.0
+231.8
+361.0
+𝑬 ratio \bm{E_{\text{ratio}}}
+97.1%
+97.0%
+91.3%
+56.0%
+27.6%
+14.5%
+74.5%
+85.6%
+70.0%
+𝑻 runtime \bm{T_{\text{runtime}}}
+174
+360
+860
+2458
+8238
+30305
+1090
+645
+823
+MATH500
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+24.0
+29.0
+35.4
+38.4
+40.4
+40.0
+40.0
+37.0
+40.6
+𝑬 token \bm{E_{\text{token}}}
+61.7
+123.3
+244.7
+423.9
+585.8
+706.5
+464.6
+428.8
+558.7
+𝑵 token \bm{N_{\text{token}}}
+64
+128
+256
+512
+1024
+2048
+618.3
+486.3
+682.2
+𝑬 ratio \bm{E_{\text{ratio}}}
+96.4%
+96.3%
+95.6%
+82.8%
+57.2%
+34.5%
+75.2%
+88.2%
+81.9%
+𝑻 runtime \bm{T_{\text{runtime}}}
+98
+208
+462
+1202
+3663
+12764
+2207
+1398
+1968
+MBPP
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+21.0
+28.8
+36.7
+38.7
+37.5
+38.8
+39.4
+39.6
+40.6
+𝑬 token \bm{E_{\text{token}}}
+61
+122
+232
+331
+335
+336
+308.4
+324.0
+335.9
+𝑵 token \bm{N_{\text{token}}}
+64
+128
+256
+512
+1024
+2048
+558.3
+507.4
+594.4
+𝑬 ratio \bm{E_{\text{ratio}}}
+94.9%
+95.5%
+90.4%
+64.5%
+32.9%
+16.3%
+55.2%
+63.9%
+55.5%
+𝑻 runtime \bm{T_{\text{runtime}}}
+176
+332
+713
+1728
+4760
+15172
+3551
+2031
+2030
+HUMANEVAL
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+17.1
+26.2
+36.6
+45.1
+45.1
+48.2
+44.5
+43.3
+43.9
+𝑬 token \bm{E_{\text{token}}}
+59.6
+125
+247.3
+462
+631.1
+691.1
+494.7
+570.4
+643.1
+𝑵 token \bm{N_{\text{token}}}
+64
+128
+256
+512
+1024
+2048
+813.0
+654.0
+769.9
+𝑬 ratio \bm{E_{\text{ratio}}}
+93.2%
+97.7%
+96.6%
+90.2%
+61.6%
+33.8%
+64.8%
+88.4%
+83.5%
+𝑻 runtime \bm{T_{\text{runtime}}}
+111
+230
+543
+1474
+4569
+16046
+1283
+580
+593
+Figure 4 : E ratio \mathrm{E}_{\text{ratio}} per sample.
+Formally, the length adjustment is defined as:
+𝐱 = \displaystyle\mathbf{x}=
+{ 𝐱 ← 𝐱 ⊕ [ MASK , … , MASK ⏟ E factor ​ ( ρ EOS ) ] if  ​ ρ EOS < ρ low 𝐱 ← 𝐱 0 : ( | 𝐱 | − E factor ​ ( ρ EOS ) ) else if  ρ EOS > ρ high 𝐱 otherwise  \displaystyle\left\{\begin{aligned} &\mathbf{x}\leftarrow\mathbf{x}\oplus[\underbrace{\texttt{MASK},\dots,\texttt{MASK}}_{\mathrm{E}_{\text{factor}}(\rho_{\texttt{EOS}})}]\quad~~\text{if }\rho_{\texttt{EOS}}<\rho_{\text{low}}\\
+&\mathbf{x}\leftarrow\mathbf{x}^{0:(|\mathbf{x}|-\mathrm{E}_{\text{factor}}(\rho_{\texttt{EOS}}))}\quad\qquad\text{else if }\rho_{\texttt{EOS}}>\rho_{\text{high}}\\
+&\mathbf{x}\quad\qquad\qquad\qquad\qquad\qquad\text{otherwise }\\
+\end{aligned}\right.
+(6)
+with the update to current generation length L cur L_{\text{cur}} :
+L cur = \displaystyle L_{\text{cur}}=
+{ L cur + E factor ​ ( ρ EOS ) if  ​ ρ EOS < ρ low L cur − E factor ​ ( ρ EOS ) else if  ​ ρ EOS > ρ high L cur otherwise  \displaystyle\left\{\begin{aligned} &L_{\text{cur}}+\mathrm{E}_{\text{factor}}(\rho_{\texttt{EOS}})\qquad~~\text{if }\rho_{\texttt{EOS}}<\rho_{\text{low}}\\
+&L_{\text{cur}}-\mathrm{E}_{\text{factor}}(\rho_{\texttt{EOS}})\qquad\text{else if }\rho_{\texttt{EOS}}>\rho_{\text{high}}\\
+&L_{\text{cur}}\qquad\qquad\qquad\qquad~\text{otherwise }\\
+\end{aligned}\right.
+(7)
+Beyond above, we further investigate how aggressively the adjustment should be performed through different expansion factor functions E factor ​ ( ⋅ ) \mathrm{E}_{\text{factor}}(\cdot) . DAEDAL  ( 19 ) adopts a constant expansion factor, a design that is simple and stable but lead to multiple adjustment iterations when the initial length is severely mismatched.
+Motivated by Figure  1 , we additionally consider linear and exponential designs, as depicted in Figure  3 .
+The piecewise linear function scales the adjustment magnitude proportionally to the distance between ρ EOS \rho_{\texttt{EOS}} and the length-equilibrium region boundaries.
+The piecewise exponential function further amplifies this effect when ρ EOS \rho_{\texttt{EOS}} is extremely low or high, enabling more aggressive expansion or contraction.
+The key motivation is to rapidly drive the generation into the stable ρ EOS \rho_{\texttt{EOS}} region, so that the model can enter the pure denoising phase early without repeatedly interleaving length adjustment steps.
+Compared to unidirectional expansion, bidirectional control improves flexibility and token utilization. As illustrated in Figure  2 , if the length becomes overly aggressive after expansion, the proposed mechanism can actively contract the sequence, leading to more efficient and stable generation.
+3.5 One-Stage Bidirectional Variable-Length Denoising
+Overall, by integrating implicit EOS density estimation with bidirectional length adjustment, ρ \rho - EOS realizes training-free and bidirectional variable-length generation in a fully unified, single-stage denoising process, i.e., jointly performs unmasking (decoding) and length adjustment.
+At each denoising step, the model p θ ​ ( ⋅ ) p_{\theta}(\cdot) performs once forward pass on the 𝐱 t \mathbf{x}_{t} to obtain 𝐱 t logits \mathbf{x}_{t}^{\text{logits}} and the implicit prediction 𝐱 ^ 0 \hat{\mathbf{x}}_{0} (Equation  3 ).
+After applying the Remask ⁡ ( ⋅ ) \mathrm{Remask}(\cdot) operation to produce 𝐱 t − τ = Remask ⁡ ( 𝐱 ^ 0 ) \mathbf{x}_{t-\tau}=\mathrm{Remask}(\hat{\mathbf{x}}_{0}) , we compute ρ EOS \rho_{\texttt{EOS}} according to Equation  5 and adjust the current sequence length using the bidirectional strategy in Equations  6 and  7 .
+This step-level denoising process is repeated until entire denoising completes. By coupling denoising and length adjustment within a single inference loop, ρ \rho - EOS enables dynamic expansion when additional reasoning space is needed and contraction when redundancy is detected, without introducing extra stages.
+Algorithm  1 provides a detailed description of the full procedure.
+4 Experiments
+Table 2 : Main Results on LLaDA-1.5-8B across Four Benchmarks. We compare the ρ \rho - EOS performance against DAEDAL and various baseline configurations. 𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc} denotes accuracy, 𝑬 token \bm{E_{\text{token}}} is the average effective tokens (the response length excluding trailing padding), 𝑵 token \bm{N_{\text{token}}} is the average total tokens, and 𝑬 ratio \bm{E_{\text{ratio}}} is the effective token ratio. 𝑻 runtime \bm{T_{\text{runtime}}} represents the runtime spent on the evaluation (in seconds). The best configuration for the baseline is highlighted in orange . DAEDAL is highlighted in blue , and ρ \rho - EOS is highlighted in red . Under the ρ \rho - EOS setting, Sym and Asym denote the symmetric and asymmetric lower-upper threshold centered around 0.5. The best results are bold , and the second-best results are underlined .
+Benchmark
+Metric
+Fixed-Length Denoising (Baseline)
+DAEDAL
+ρ \rho - EOS
+ρ \rho - EOS
+64
+128
+256
+512
+1024
+2048
+64
+64 Sym
+64 Asym
+GSM8K
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+49.9
+71.2
+80.5
+83.6
+83.9
+84.2
+85.1
+83.3
+84.5
+𝑬 token \bm{E_{\text{token}}}
+62.4
+124.8
+236.7
+292.6
+287
+293.9
+254.7
+214.5
+231.6
+𝑵 token \bm{N_{\text{token}}}
+64
+128
+256
+512
+1024
+2048
+348.3
+254.3
+362.4
+𝑬 ratio \bm{E_{\text{ratio}}}
+97.1%
+97.0%
+91.2%
+56.0%
+27.7%
+14.4%
+72.9%
+84.4%
+63.9%
+𝑻 runtime \bm{T_{\text{runtime}}}
+149
+335
+844
+2488
+8450
+30875
+1056
+721
+990
+MATH500
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+22.8
+30.2
+35.2
+39.2
+42.8
+39.4
+42.6
+38.2
+41.0
+𝑬 token \bm{E_{\text{token}}}
+62.1
+124.8
+246.5
+428.6
+583.5
+713.7
+489.1
+339.5
+583.4
+𝑵 token \bm{N_{\text{token}}}
+64
+128
+256
+512
+1024
+2048
+662.6
+373.1
+711.3
+𝑬 ratio \bm{E_{\text{ratio}}}
+97.0%
+97.5%
+96.3%
+83.7%
+57.0%
+34.9%
+73.8%
+91.0%
+82.0%
+𝑻 runtime \bm{T_{\text{runtime}}}
+97
+192
+444
+1177
+3616
+12610
+2460
+850
+637
+MBPP
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+21.2
+30.4
+39.2
+38.8
+39.4
+39.4
+38.2
+40.8
+40.8
+𝑬 token \bm{E_{\text{token}}}
+60.9
+123.7
+238.2
+347.3
+343.5
+356.2
+321.8
+336.1
+334.1
+𝑵 token \bm{N_{\text{token}}}
+64
+128
+256
+512
+1024
+2048
+587.1
+535.6
+540.8
+𝑬 ratio \bm{E_{\text{ratio}}}
+95.1%
+96.6%
+93.0%
+67.8%
+33.6%
+17.4%
+54.8%
+62.8%
+61.8%
+𝑻 runtime \bm{T_{\text{runtime}}}
+156
+313
+690
+1689
+4688
+14895
+4124
+3001
+2565
+HUMANEVAL
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+17.6
+20.7
+38.4
+45.1
+49.4
+48.8
+43.9
+44.5
+44.5
+𝑬 token \bm{E_{\text{token}}}
+60.3
+124.9
+251.7
+473.8
+672.1
+761.6
+523
+460.8
+686.6
+𝑵 token \bm{N_{\text{token}}}
+64
+128
+256
+512
+1024
+2048
+806.4
+509.7
+809.5
+𝑬 ratio \bm{E_{\text{ratio}}}
+94.2%
+97.5%
+98.3%
+92.5%
+65.6%
+37.2%
+64.4%
+90.4%
+84.8%
+𝑻 runtime \bm{T_{\text{runtime}}}
+47
+78
+162
+406
+1212
+4187
+743
+433
+647
+Figure 5 : E ratio \mathrm{E}_{\text{ratio}} per sample.
+4.1 Experimental Setups
+Implementation Details.
+We follow the experimental settings of DAEDAL  ( 19 ) to ensure fairness and reproducibility. All experiments are conducted under the standard generation, without employing additional acceleration or caching mechanisms, and the batch size is set to 8. To mitigate randomness from a single evaluation run, each experiment is repeated three times, and we report the averaged results.
+Benchmarks and Metrics.
+To comprehensively evaluate the effectiveness of ρ \rho - EOS , we conduct experiments on four benchmarks covering mathematics and code task.
+For mathematics, we evaluate on GSM8K  ( 11 ) , which consists of grade-school math word problems, and MATH500 ( 20 ) , a more challenging benchmark composed of competition-level mathematical problems. Accuracy is adopted as the performance metric.
+For code generation, we employ MBPP ( 6 ) , which focuses on entry-level Python programming tasks, and HumanEval ( 9 ) , a more challenging handwritten benchmark for program synthesis. We report the standard pass@1 (accuracy) metric to assess functional correctness. In addition to accuracy ( 𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc} ), we introduce four efficiency-related metrics: the total number of generated tokens ( 𝑵 token \bm{N_{\text{token}}} ), the number of effective tokens after removing trailing EOS padding ( 𝑬 token \bm{E_{\text{token}}} ), the effective token ratio ( 𝑬 ratio = 𝑬 token 𝑵 token \bm{E_{\text{ratio}}=\frac{E_{\text{token}}}{N_{\text{token}}}} ), and the evaluation runtime ( 𝑻 runtime \bm{T_{\text{runtime}}} , in seconds).
+Table 3 : Various-Initial Length Results on LLaDA-Instruct-8B and LLaDA-1.5-8B. We compare ρ \rho - EOS at various-initial lengths (128 to 1024) against DAEDAL. The best results are bold , and the second-best results are underlined .
+Benchmark
+Metric
+LLaDA Various-Init-Length
+LLaDA1.5 Various-Init-Length
+128
+256
+512
+1024
+Average
+128
+256
+512
+1024
+Average
+DAEDAL
+ρ \rho - EOS
+DAEDAL
+ρ \rho - EOS
+DAEDAL
+ρ \rho - EOS
+DAEDAL
+ρ \rho - EOS
+DAEDAL
+ρ \rho - EOS
+DAEDAL
+ρ \rho - EOS
+DAEDAL
+ρ \rho - EOS
+DAEDAL
+ρ \rho - EOS
+DAEDAL
+ρ \rho - EOS
+DAEDAL
+ρ \rho - EOS
+GSM8K
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+84.6
+84.6
+84.0
+83.7
+85.3
+84.4
+84.8
+84.8
+84.7
+84.4
+85.1
+85.2
+85.0
+83.8
+84.2
+84.3
+85.9
+84.9
+85.1
+84.5
+𝑬 token \bm{E_{\text{token}}}
+246.3
+231.8
+250.2
+284.7
+286.8
+288.6
+281.3
+282.6
+266.2
+271.9
+254.7
+257.8
+256.9
+261.0
+275.7
+293.7
+284.0
+292.5
+267.8
+276.3
+𝑵 token \bm{N_{\text{token}}}
+330.8
+313.0
+341.1
+336.4
+530.0
+438.6
+1040.0
+666.8
+560.5
+438.7
+349.3
+370.5
+356.4
+321.0
+531.4
+474.2
+1040.0
+398.0
+569.3
+390.9
+𝑬 ratio \bm{E_{\text{ratio}}}
+74.5%
+74.1%
+73.4%
+84.6%
+50.9%
+65.8%
+27.0%
+42.4%
+56.5%
+66.7%
+72.9%
+69.6%
+72.1%
+81.3%
+51.9%
+61.9%
+27.3%
+73.5%
+56.1%
+71.6%
+𝑻 runtime \bm{T_{\text{runtime}}}
+1035
+835
+1014
+834
+1090
+1044
+5656
+1809
+2199.0
+1131.0
+1093
+990
+1008
+638
+1223
+1122
+5476
+1281
+2200.0
+1007.8
+MATH500
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+42.6
+40.0
+43.2
+40.4
+41.8
+42.8
+41.6
+39.8
+42.3
+40.8
+42.6
+40.6
+43.0
+41.2
+41.4
+42.0
+40.0
+40.6
+41.8
+41.1
+𝑬 token \bm{E_{\text{token}}}
+464.6
+410.8
+465.7
+492.2
+479.0
+556.6
+541.4
+588.4
+487.7
+512.0
+489.1
+528.1
+490.0
+559.2
+499.4
+586.7
+534.3
+602.3
+503.2
+569.1
+𝑵 token \bm{N_{\text{token}}}
+618.4
+480.8
+621.0
+549.2
+686.8
+642.0
+1058.8
+874.1
+746.3
+636.5
+662.6
+624.1
+664.2
+664.3
+717.7
+692.9
+1064.9
+792.1
+777.4
+693.4
+𝑬 ratio \bm{E_{\text{ratio}}}
+75.1%
+89.2%
+75.0%
+89.5%
+69.7%
+86.7%
+51.1%
+67.3%
+67.7%
+83.2%
+73.8%
+84.6%
+73.8%
+84.2%
+69.6%
+84.7%
+50.2%
+76.0%
+66.9%
+82.4%
+𝑻 runtime \bm{T_{\text{runtime}}}
+2199
+1062
+2175
+1543
+2096
+1980
+6543
+1938
+3253.3
+1630.8
+2447
+1805
+2423
+1912
+2345
+2074
+2315
+2199
+2382.5
+1997.5
+MBPP
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+39.4
+39.0
+39.4
+40.0
+38.8
+39.4
+37.8
+38.6
+38.8
+39.3
+38.2
+41.8
+38.2
+41.4
+37.8
+39.0
+40.0
+40.4
+38.6
+40.7
+𝑬 token \bm{E_{\text{token}}}
+308.4
+341.6
+308.4
+344.0
+313.0
+342.5
+324.7
+345.0
+313.6
+343.3
+321.8
+345.1
+321.8
+350.2
+325.4
+362.1
+331.5
+350.7
+325.1
+352.0
+𝑵 token \bm{N_{\text{token}}}
+558.3
+605.1
+558.3
+611.6
+604.6
+638.3
+1046.7
+773.5
+692.0
+657.1
+587.1
+556.5
+587.1
+497.7
+621.4
+662.8
+1046.8
+943.6
+710.6
+665.2
+𝑬 ratio \bm{E_{\text{ratio}}}
+55.2%
+56.5%
+55.2%
+56.3%
+51.8%
+53.6%
+31.0%
+44.6%
+48.3%
+52.8%
+54.8%
+62.0%
+54.8%
+70.4%
+52.4%
+54.6%
+31.7%
+37.2%
+48.4%
+56.1%
+𝑻 runtime \bm{T_{\text{runtime}}}
+3518
+2836
+3462
+2169
+3303
+2389
+5674
+2558
+3989.3
+2396.0
+4102
+2824
+4060
+1853
+3907
+2585
+4471
+2501
+4135.0
+2440.8
+HUMANEVAL
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+48.2
+48.8
+48.2
+47.0
+48.2
+45.1
+47.0
+47.6
+47.9
+47.1
+43.9
+47.6
+43.9
+47.0
+43.9
+48.2
+43.9
+49.4
+43.9
+48.1
+𝑬 token \bm{E_{\text{token}}}
+497.5
+618.0
+497.5
+613.0
+497.3
+613.7
+540.0
+638.8
+508.1
+620.9
+519.2
+634.7
+519.2
+654.5
+518.8
+623.6
+528.4
+677.6
+521.4
+647.6
+𝑵 token \bm{N_{\text{token}}}
+769.5
+693.5
+769.5
+698.7
+772.4
+717.8
+1046.9
+927.9
+839.6
+759.5
+806.4
+734.9
+806.4
+743.0
+808.4
+692.2
+1049.4
+951.5
+867.7
+780.4
+𝑬 ratio \bm{E_{\text{ratio}}}
+64.7%
+89.1%
+64.7%
+87.7%
+64.4%
+85.5%
+51.6%
+68.8%
+61.4%
+82.8%
+64.4%
+86.4%
+64.4%
+88.1%
+64.2%
+90.1%
+50.4%
+71.2%
+60.9%
+84.0%
+𝑻 runtime \bm{T_{\text{runtime}}}
+746
+528
+789
+542
+725
+548
+1644
+618
+976.0
+559.0
+786
+590
+730
+593
+705
+623
+798
+606
+754.8
+603.0
+Table 4 : Ablation on ρ high \rho_{\text{high}} and ρ low \rho_{\text{low}} . Ablations are conducted on GSM8k with LLaDA-Instruct-8B, and L init = 64 L_{\text{init}}=64 . The threshold of density ( ρ \rho ) ranging from 0 to 1. We highlight our best-performance Asym setting ([ ρ low = 0.4 , ρ high = 0.8 \rho_{\text{low}}=0.4,\,\rho_{\text{high}}=0.8 ]) in red .
+Metric
+Density Threshold   [ ρ low , ρ high \rho_{\text{low}},\,\rho_{\text{high}} ]
+[0.2, 0.8]
+[0.3, 0.7]
+[0.4, 0.6]
+[0.4, 0.8]
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+81.8
+81.7
+81.7
+84.2
+𝑬 token \bm{E_{\text{token}}}
+198.4
+210.5
+218.4
+252.5
+𝑵 token \bm{N_{\text{token}}}
+231.8
+251.2
+267.5
+361.0
+𝑬 ratio \bm{E_{\text{ratio}}}
+85.6%
+83.8%
+81.6%
+70.0%
+𝑻 runtime \bm{T_{\text{runtime}}}
+645
+722
+845
+823
+4.2 Main Results
+We report the main results in Table  1 and Table  2 , comparing fixed-length baselines, DAEDAL, and our proposed ρ \rho - EOS . The fixed-length baselines are evaluated under six predefined generation lengths ranging from 64 to 2048. Both DAEDAL and ρ \rho - EOS start from the same short initial length, L init = 64 L_{\text{init}}=64 , ensuring a fair comparison.
+Performance of ρ \rho - EOS with an initial length of 64.
+As shown in Table  1 and Table  2 , ρ \rho - EOS achieves performance comparable to DAEDAL and the best-performing fixed-length baselines across most benchmarks. Under MATH500 and MBPP in Table  1 , the performance of ρ \rho - EOS with L init = 64 L_{\text{init}}=64 Asym suppresses both of them, and ρ \rho - EOS consistently demonstrates substantially higher efficiency.
+Under MBPP and HUMANEVAL in Table  2 , the performance of ρ \rho - EOS with L init = 64 L_{\text{init}}=64 Asym suppresses DAEDA, and ρ \rho - EOS consistently outperforms DAEDAL and best-performance baseline on efficiency.
+More importantly, both the effective token ratio ( 𝑬 ratio \bm{E_{\text{ratio}}} ) and evaluation runtime ( 𝑻 runtime \bm{T_{\text{runtime}}} ) significantly outperform DAEDAL and the strongest fixed-length baselines on nearly all tasks.
+By simultaneously performing length adjustment and denoising within a unified diffusion process, ρ \rho - EOS adapts task-dependent generation lengths on the fly, achieving competitive accuracy at a substantially lower computational cost.
+ρ \rho - EOS significantly improves effective token ratio and evaluation speed.
+For best-performance fixed-length baselines, the price for this performance comes at the cost of sharply increased evaluation runtime ( 𝑻 runtime \bm{T_{\text{runtime}}} ) and significantly reduced effective token ratio ( 𝑬 ratio \bm{E_{\text{ratio}}} ).
+In particular, configurations such as (MBPP, 2048), (HUMANEVAL, 2048) in Table  1 , and (GSM8k, 2048) in Table  2 exhibit extremely low 𝑬 ratio \bm{E_{\text{ratio}}} , accompanied by a dramatic increase in 𝑻 runtime \bm{T_{\text{runtime}}} .
+While DAEDAL partially alleviates this inefficiency, ρ \rho - EOS further improves computational efficiency.
+By enabling bidirectional length adjustment, ρ \rho - EOS consistently achieves higher 𝑬 ratio \bm{E_{\text{ratio}}} than both DAEDAL and the best-performing fixed-length baselines at comparable accuracy levels.
+This reduces unnecessary bidirectional attention over excessively long sequences and minimizes wasted computation on redundant padding tokens.
+To provide a more fine-grained view, Figure  4 and Figure  5 visualize the per-sample distribution of total generation lengths ( 𝑵 token \bm{N_{\text{token}}} ) and the corresponding effective token ratio 𝑬 ratio \bm{E_{\text{ratio}}} .
+Across all four benchmarks, a substantial portion of samples generated by ρ \rho - EOS achieve an 𝑬 ratio \bm{E_{\text{ratio}}} close to 100%, approaching the efficiency of autoregressive counterparts.
+Such behavior is rarely observed in DAEDAL or fixed-length baselines, further illustrating the superior efficiency of variable-length denoising with bidirectional control.
+4.3 Robustness and Ablation Studies
+Robustness to the initial length .
+Table  3 demonstrates that ρ \rho - EOS exhibits strong robustness to the choice of the initial generation length. When varying L init L_{\text{init}} from 128 to 1024, ρ \rho - EOS maintains remarkably stable accuracy, while consistently achieving higher effective token ratio and significantly lower runtime compared to DAEDAL across all benchmarks. In contrast, DAEDAL shows a clear sensitivity to the initial length on 𝑬 ratio \bm{E}_{\text{ratio}} and 𝑻 runtime \bm{T}_{\text{runtime}} aspects.
+The robustness of stems from its bidirectional length adjustment mechanism driven by implicit EOS density . Rather than committing to a fixed or unidirectional expansion strategy, ρ \rho - EOS dynamically contracts or expands the sequence based on whether the current length is over- or under-sufficient. As a result, even when initialized with an aggressive or conservative length, the model can rapidly converge toward a task-adaptive length regime. This explains why ρ \rho - EOS consistently achieves competitive or superior accuracy with reduced runtime across all initial length settings.
+Table 5 : Ablation on Expansion Factor Function. Ablations are conducted on GSM8K with LLaDA-Instruct-8B, L init = 64 L_{\text{init}}=64 and [ ρ low = 0.4 , ρ high = 0.6 \rho_{\text{low}}=0.4,\,\rho_{\text{high}}=0.6 ]. 𝑺 ​ 𝒕 ​ 𝒆 ​ 𝒑 \bm{Step} is the average adjustment steps.
+Metric
+Expansion Factor Function E factor ​ ( ⋅ ) \mathrm{E}_{\text{factor}}(\cdot)
+Baseline 256
+E const ​ ( ⋅ ) \mathrm{E}_{\text{const}}(\cdot)
+E linear ​ ( ⋅ ) \mathrm{E}_{\text{linear}}(\cdot)
+E exp ​ ( ⋅ ) \mathrm{E}_{\text{exp}}(\cdot)
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+77.8
+79.8
+80.9
+81.7
+𝑬 token \bm{E_{\text{token}}}
+233.7
+183.4
+208.0
+218.4
+𝑵 token \bm{N_{\text{token}}}
+256
+213.3
+251.0
+267.5
+𝑬 ratio \bm{E_{\text{ratio}}}
+91.3%
+86.0%
+82.9%
+81.6%
+𝑻 runtime \bm{T_{\text{runtime}}}
+860
+589
+757
+845
+𝑺 ​ 𝒕 ​ 𝒆 ​ 𝒑 \bm{Step}
+-
+61.0
+54.8
+52.4
+Table 6 : Comparison on EOS Density ( ρ \rho ) and Confidence for Length Control and Single Stage v.s. Two Stage. Ablations are conducted on GSM8K and MBPP with LLaDA-Instruct-8B, L init = 64 L_{\text{init}}=64 .
+Metric
+GSM8k
+MBPP
+Single Stage
+Two Stage
+Single Stage
+Two Stage
+Confidence
+Density ( ρ \rho )
+Confidence
+Density ( ρ \rho )
+Confidence
+Density ( ρ \rho )
+Confidence
+Density ( ρ \rho )
+𝑨 ​ 𝒄 ​ 𝒄 \bm{Acc}
+73.7
+84.2
+84.6
+84.4
+40.0
+40.6
+38.2
+40.4
+𝑬 token \bm{E_{\text{token}}}
+224.3
+252.2
+246.0
+219.9
+340.7
+335.9
+321.8
+335.3
+𝑵 token \bm{N_{\text{token}}}
+256.6
+361.0
+331.0
+414.9
+546.5
+594.4
+587.1
+602.3
+𝑬 ratio \bm{E_{\text{ratio}}}
+87.4%
+70.0%
+74.5%
+53.0%
+62.3%
+55.5%
+54.8%
+55.7%
+𝑻 runtime \bm{T_{\text{runtime}}}
+888
+823
+1090
+1049
+2560
+2030
+4124
+2030
+Figure 6 : The convergence trend of ρ EOS \rho_{\texttt{EOS}} during denoising: baseline with different fixed-length and ρ \rho - EOS with different initial lengths.
+Ablation on ρ \rho thresholds [ ρ low \rho_{\text{low}} , ρ high \rho_{\text{high}} ] .
+We further investigate the sensitivity of ρ \rho - EOS to the choice of the density thresholds [ ρ low , ρ high ] [\rho_{\text{low}},\rho_{\text{high}}] . As shown in Table  5 , Sym (i.e., symmetrically setting ρ low \rho_{\text{low}} and ρ high \rho_{\text{high}} thresholds at intervals of 0.1) varying the thresholds over a wide range leads to only minor fluctuations in accuracy and runtime, indicating low sensitivity to precise threshold tuning.
+Across different threshold configurations, ρ \rho - EOS consistently maintains stable accuracy while exhibiting predictable trade-offs between effective token ratio and total token count. In particular, wider length-equilibrium regions (e.g., [ 0.2 , 0.8 ] [0.2,0.8] ) favor conservative length adjustment, resulting in higher 𝑬 ratio \bm{E}_{\text{ratio}} but slightly reduced 𝑬 token \bm{E}_{\text{token}} and 𝑻 runtime \bm{T}_{\text{runtime}} . Conversely, narrower or asymmetric settings allow more aggressive adjustment, increasing 𝑬 token \bm{E}_{\text{token}} at the cost of additional denoising steps.
+This robustness suggests that the implicit EOS density provides a reliable and well-calibrated signal of length sufficiency , making ρ \rho - EOS resilient to moderate variations in hyper-parameter choices.
+Moreover, the asymmetric threshold pair [0.4, 0.8] reach a peak performance when L init L_{\text{init}} =64. We attribute this to the fact that the current model starts from a shorter initial length of 64, so a prior, the model tends to become longer, requiring a loose lower bound and a tight upper bound. Of course, we also found in the experiment of longer initial lengths, they do not have this prior knowledge, so they may not need this asymmetric boundary.
+Ablation to the expansion factor function E factor ​ ( ⋅ ) \mathrm{E}_{\text{factor}}(\cdot) .
+Table  5 compares different selection of the expansion factor function E factor ​ ( ⋅ ) \mathrm{E}_{\text{factor}}(\cdot) .
+The constant expansion strategy in DAEDAL, improves over the baseline but remains limited in its responsiveness to large length mismatches. In contrast, the linear expansion function adjusts the expansion magnitude proportionally to the deviation of ρ EOS \rho_{\texttt{EOS}} from the length-equilibrium region, enabling faster correction when the current length is moderately misaligned.
+The exponential expansion function further amplifies this effect. When ρ EOS \rho_{\texttt{EOS}} is extremely low or high, the strategy applies substantially stronger length adjustments, allowing it to rapidly reach a stable denoising regime. As evidenced by the higher accuracy and few average adjustment steps in Table  5 , these results confirm that adapting the adjustment magnitude to the confidence of the length signal is crucial , and that aggressive correction in early stages can significantly accelerate convergence without sacrificing accuracy.
+Comparison on Using Confidence and Density of EOS as Length Control Signal and Single Stage v.s. Two Stage.
+Table  6 compares using EOS confidence versus EOS density ( ρ \rho ) as the length control signal, under both single-stage and two-stage length adjustment strategies. Across both GSM8K and MBPP, ρ \rho - EOS almost consistently outperforms confidence-based control .
+In the single-stage setting, confidence-based signals suffer from instability, leading to suboptimal accuracy and inefficient length adjustment.
+As mentioned in Yang et al.  ( 30 ) , masked dLLMs face EOS Trap during early decoding phase, and the confidence of EOS is significantly higher than that of other non-EOS. Therefore, this may lead to inaccurate length control during the early decoding stage when using EOS confidence
+In contrast, ρ \rho - EOS provides a more global and aggregated estimate of termination likelihood across masked positions, resulting in more reliable adjustment decisions.
+Moreover, the results on two-stage demonstrates that implicit EOS density, ρ \rho , is also applicable as a length control signal for two-stage strategies, further amplifies ρ \rho advantage.
+Overall, these results demonstrate that implicit EOS density is a superior control signal compared to confidence .
+The convergence trend of ρ \rho - EOS .
+Figure  6 visualizes the evolution of the implicit EOS density throughout the denoising process. Across different tasks and initial lengths, we observe that for fixed-length baselines, a short length causes ρ EOS \rho_{\texttt{EOS}} to converge towards 0, while a long length causes ρ EOS \rho_{\texttt{EOS}} to converge towards 1. These two indicate insufficient and excessive masked space, respectively. Only when the length is appropriate, it will converge to a length-equilibrium region.
+In contrast ρ \rho - EOS (red, orange and yellow bar) exhibits a clear convergence pattern: after a small number of denoising steps, the estimated density stabilizes within the length-equilibrium region before final decoding.
+5 Conclusion
+In this work, we propose ρ \rho - EOS , a training-free, single-stage bidirectional variable-length denoising strategy for masked diffusion large language models. By leveraging the implicit EOS density signals during denoising, ρ \rho - EOS continuously assesses length sufficiency and enables both expansion and contraction within a unified inference loop, eliminating the need for multi-stage.
+Extensive experiments on mathematical reasoning and code generation benchmarks show that ρ \rho - EOS achieves performance comparable to, and in several cases surpassing, fixed-length baselines and the two-stage strategies, while substantially improving computational efficiency, yielding higher token utilization and reduced inference latency.
+Beyond that, our analysis reveals that masked dLLMs inherently possess a strong internal estimate of the appropriate response length for a given task. The implicit EOS density provides a reliable signal for exposing and exploiting this latent capability, allowing fixed-length denoising to be seamlessly transformed into a flexible and adaptive generation process.
+Impact Statement
+This paper presents work whose goal is to advance the field of Machine
+Learning. There are many potential societal consequences of our work, none
+which we feel must be specifically highlighted here.
+References
+Achiam et al. (2023)
+J. Achiam, S. Adler, S. Agarwal, L. Ahmad, I. Akkaya, F. L. Aleman, D. Almeida, J. Altenschmidt, S. Altman, S. Anadkat, et al.
+Gpt-4 technical report .
+arXiv preprint arXiv:2303.08774 .
+Cited by: §1 .
+Anthropic (2025a)
+C. 4. Anthropic
+System card: claude opus 4 & claude sonnet 4 .
+External Links: Link
+Cited by: §1 .
+Anthropic (2025b)
+C. 4. Anthropic
+System card: claude sonnet 4.5 .
+External Links: Link
+Cited by: §1 .
+Arriola et al. (2025)
+M. Arriola, A. Gokaslan, J. T. Chiu, Z. Yang, Z. Qi, J. Han, S. S. Sahoo, and V. Kuleshov
+Block diffusion: interpolating between autoregressive and diffusion language models .
+arXiv preprint arXiv:2503.09573 .
+Cited by: §2 .
+Austin et al. (2021a)
+J. Austin, D. D. Johnson, J. Ho, D. Tarlow, and R. Van Den Berg
+Structured denoising diffusion models in discrete state-spaces .
+Advances in neural information processing systems 34 , pp. 17981–17993 .
+Cited by: §2 .
+Austin et al. (2021b)
+J. Austin, A. Odena, M. Nye, M. Bosma, H. Michalewski, D. Dohan, E. Jiang, C. Cai, M. Terry, Q. Le, et al.
+Program synthesis with large language models .
+arXiv preprint arXiv:2108.07732 .
+Cited by: §4.1 .
+Bai et al. (2023)
+J. Bai, S. Bai, Y. Chu, Z. Cui, K. Dang, X. Deng, Y. Fan, W. Ge, Y. Han, F. Huang, et al.
+Qwen technical report .
+arXiv preprint arXiv:2309.16609 .
+Cited by: §1 .
+Brown et al. (2020)
+T. Brown, B. Mann, N. Ryder, M. Subbiah, J. D. Kaplan, P. Dhariwal, A. Neelakantan, P. Shyam, G. Sastry, A. Askell, et al.
+Language models are few-shot learners .
+Advances in neural information processing systems 33 , pp. 1877–1901 .
+Cited by: §1 .
+Chen et al. (2021)
+M. Chen, J. Tworek, H. Jun, Q. Yuan, H. P. D. O. Pinto, J. Kaplan, H. Edwards, Y. Burda, N. Joseph, G. Brockman, et al.
+Evaluating large language models trained on code .
+arXiv preprint arXiv:2107.03374 .
+Cited by: §4.1 .
+Cheng et al. (2025)
+S. Cheng, Y. Bian, D. Liu, L. Zhang, Q. Yao, Z. Tian, W. Wang, Q. Guo, K. Chen, B. Qi, et al.
+Sdar: a synergistic diffusion-autoregression paradigm for scalable sequence generation .
+arXiv preprint arXiv:2510.06303 .
+Cited by: §2 .
+Cobbe et al. (2021)
+K. Cobbe, V. Kosaraju, M. Bavarian, M. Chen, H. Jun, L. Kaiser, M. Plappert, J. Tworek, J. Hilton, R. Nakano, et al.
+Training verifiers to solve math word problems, 2021 .
+URL https://arxiv. org/abs/2110.14168 9 .
+Cited by: §4.1 .
+DeepMind (2025)
+DeepMind
+Gemini diffusion .
+External Links: Link
+Cited by: §1 .
+Gong et al. (2024)
+S. Gong, S. Agarwal, Y. Zhang, J. Ye, L. Zheng, M. Li, C. An, P. Zhao, W. Bi, J. Han, et al.
+Scaling diffusion language models via adaptation from autoregressive models .
+arXiv preprint arXiv:2410.17891 .
+Cited by: §2 .
+Gong et al. (2022)
+S. Gong, M. Li, J. Feng, Z. Wu, and L. Kong
+Diffuseq: sequence to sequence text generation with diffusion models .
+arXiv preprint arXiv:2210.08933 .
+Cited by: §2 .
+Gong et al. (2025)
+S. Gong, R. Zhang, H. Zheng, J. Gu, N. Jaitly, L. Kong, and Y. Zhang
+DiffuCoder: understanding and improving masked diffusion models for code generation .
+arXiv preprint arXiv:2506.20639 .
+Cited by: §2 .
+He et al. (2023)
+Z. He, T. Sun, Q. Tang, K. Wang, X. Huang, and X. Qiu
+Diffusionbert: improving generative masked language models with diffusion models .
+In Proceedings of the 61st annual meeting of the association for computational linguistics (volume 1: Long papers) ,
+pp. 4521–4534 .
+Cited by: §2 .
+Khanna et al. (2025)
+S. Khanna, S. Kharbanda, S. Li, H. Varma, E. Wang, S. Birnbaum, Z. Luo, Y. Miraoui, A. Palrecha, S. Ermon, et al.
+Mercury: ultra-fast language models based on diffusion. .
+arXiv preprint arXiv:2506.17298 .
+Cited by: §1 .
+Kim et al. (2025)
+J. Kim, L. Cheuk-Kit, C. Domingo-Enrich, Y. Du, S. Kakade, T. Ngotiaoco, S. Chen, and M. Albergo
+Any-order flexible length masked diffusion .
+arXiv preprint arXiv:2509.01025 .
+Cited by: §2 .
+Li et al. (2025)
+J. Li, X. Dong, Y. Zang, Y. Cao, J. Wang, and D. Lin
+Beyond fixed: training-free variable-length denoising for diffusion large language models .
+arXiv preprint arXiv:2508.00819 .
+Cited by: §1 ,
+§2 ,
+§2 ,
+§3.4 ,
+§4.1 .
+Lightman et al. (2023)
+H. Lightman, V. Kosaraju, Y. Burda, H. Edwards, B. Baker, T. Lee, J. Leike, J. Schulman, I. Sutskever, and K. Cobbe
+Let’s verify step by step .
+In The Twelfth International Conference on Learning Representations ,
+Cited by: §1 ,
+§4.1 .
+Liu et al. (2025)
+A. Liu, M. He, S. Zeng, S. Zhang, L. Zhang, C. Wu, W. Jia, Y. Liu, X. Zhou, and J. Zhou
+WeDLM: reconciling diffusion language models with standard causal attention for fast inference .
+arXiv preprint arXiv:2512.22737 .
+Cited by: §2 .
+Lou et al. (2023)
+A. Lou, C. Meng, and S. Ermon
+Discrete diffusion modeling by estimating the ratios of the data distribution .
+arXiv preprint arXiv:2310.16834 .
+Cited by: §2 .
+Muennighoff et al. (2025)
+N. Muennighoff, Z. Yang, W. Shi, X. L. Li, L. Fei-Fei, H. Hajishirzi, L. Zettlemoyer, P. Liang, E. Candès, and T. Hashimoto
+S1: simple test-time scaling .
+arXiv preprint arXiv:2501.19393 .
+Cited by: §1 .
+Nie et al. (2025)
+S. Nie, F. Zhu, Z. You, X. Zhang, J. Ou, J. Hu, J. Zhou, Y. Lin, J. Wen, and C. Li
+Large language diffusion models .
+arXiv preprint arXiv:2502.09992 .
+Cited by: §A.1 ,
+§1 ,
+§2 .
+Sahoo et al. (2024)
+S. Sahoo, M. Arriola, Y. Schiff, A. Gokaslan, E. Marroquin, J. Chiu, A. Rush, and V. Kuleshov
+Simple and effective masked diffusion language models .
+Advances in Neural Information Processing Systems 37 , pp. 130136–130184 .
+Cited by: §2 .
+Song et al. (2025)
+Y. Song, Z. Zhang, C. Luo, P. Gao, F. Xia, H. Luo, Z. Li, Y. Yang, H. Yu, X. Qu, et al.
+Seed diffusion: a large-scale diffusion language model with high-speed inference .
+arXiv preprint arXiv:2508.02193 .
+Cited by: §1 .
+Touvron et al. (2023)
+H. Touvron, T. Lavril, G. Izacard, X. Martinet, M. Lachaux, T. Lacroix, B. Rozière, N. Goyal, E. Hambro, F. Azhar, et al.
+Llama: open and efficient foundation language models .
+ArXiv preprint abs/2302.13971 .
+External Links: Link
+Cited by: §1 .
+Wang et al. (2025)
+C. Wang, P. Rashidinejad, D. Su, S. Jiang, S. Wang, S. Zhao, C. Zhou, S. Z. Shen, F. Chen, T. Jaakkola, et al.
+Spg: sandwiched policy gradient for masked diffusion language models .
+arXiv preprint arXiv:2510.09541 .
+Cited by: §2 .
+Wu et al. (2025)
+Z. Wu, L. Zheng, Z. Xie, J. Ye, J. Gao, Y. Feng, Z. Li, V. W., G. Zhou, and L. Kong
+DreamOn: diffusion language models for code infilling beyond fixed-size canvas .
+External Links: Link
+Cited by: §2 .
+Yang et al. (2025a)
+J. Yang, G. Chen, X. Hu, and J. Shao
+Taming masked diffusion language models via consistency trajectory reinforcement learning with fewer decoding step .
+arXiv preprint arXiv:2509.23924 .
+Cited by: §A.2 ,
+§2 ,
+§4.3 .
+Yang et al. (2025b)
+Y. Yang, C. Wang, S. Wang, Z. Wen, B. Qi, H. Xu, and L. Zhang
+Diffusion llm with native variable generation lengths: let [eos] lead the way .
+arXiv preprint arXiv:2510.24605 .
+Cited by: §2 .
+Ye et al. (2025)
+J. Ye, Z. Xie, L. Zheng, J. Gao, Z. Wu, X. Jiang, Z. Li, and L. Kong
+Dream 7b .
+External Links: Link
+Cited by: §2 .
+Zhao et al. (2025)
+S. Zhao, D. Gupta, Q. Zheng, and A. Grover
+D1: scaling reasoning in diffusion large language models via reinforcement learning .
+arXiv preprint arXiv:2504.12216 .
+Cited by: §2 .
+Zheng et al. (2024)
+K. Zheng, Y. Chen, H. Mao, M. Liu, J. Zhu, and Q. Zhang
+Masked diffusion models are secretly time-agnostic masked models and exploit inaccurate categorical sampling .
+arXiv preprint arXiv:2409.02908 .
+Cited by: §2 .
+Zhu et al. (2025a)
+F. Zhu, R. Wang, S. Nie, X. Zhang, C. Wu, J. Hu, J. Zhou, J. Chen, Y. Lin, J. Wen, et al.
+LLaDA 1.5: variance-reduced preference optimization for large language diffusion models .
+arXiv preprint arXiv:2505.19223 .
+Cited by: §2 .
+Zhu et al. (2025b)
+F. Zhu, Z. You, Y. Xing, Z. Huang, L. Liu, Y. Zhuang, G. Lu, K. Wang, X. Wang, L. Wei, et al.
+Llada-moe: a sparse moe diffusion language model .
+arXiv preprint arXiv:2509.24389 .
+Cited by: §2 .
+Appendix A Appendix
+A.1 Why does ρ \rho - EOS work? – Implicit length awareness in masked dLLMs by treating padding EOS as a part of response.
+At the core of ρ \rho - EOS lies a simple but critical hypothesis: masked diffusion language models implicitly estimate how much generation space they need for a given input, even before the sequence is fully denoised.
+Importantly, this behavior is not an emergent artifact of our inference strategy, but is deeply rooted in the training engineering implementation of masked dLLMs.
+In masked diffusion large language models such as LLaDA  ( 24 ) , padding EOS tokens are explicitly treated as part of the response sequence and are randomly masked during training. As a result, the model is repeatedly trained to jointly predict semantic tokens and EOS tokens under partial observation. This training paradigm forces the model to reason not only about what content should be generated, but also where meaningful content should end. Consequently, the prediction of EOS becomes intrinsically coupled with the model’s internal estimate of length sufficiency.
+Crucially, this latent estimate is not exposed as an explicit scalar length prediction. Instead, it manifests implicitly through property of special functional token–the density of EOS over the remaining masked positions.
+From a denoising perspective, when the model assigns high probability mass to EOS at masked locations, it signals that the semantic content is largely complete and that the remaining generation space is redundant.
+Conversely, a consistently low implicit EOS density indicates that the model still requires additional capacity to express the intended response, and is therefore reluctant to terminate.
+Viewed from this angle, ρ \rho - EOS does not introduce an external heuristic for length control. Instead, it reads out and amplifies a signal that the model has already learned to encode during training.
+By monitoring the implicit EOS density and feeding it back into the denoising process, our method aligns inference-time length adaptation with the model’s internal notion of response completeness.
+This close alignment between training and inference is a key reason why ρ \rho - EOS enables stable and effective bidirectional length control without additional supervision or multi-stage procedures.
+In essence, variable-length inference emerges naturally when the inference process respects the semantics of EOS prediction learned by masked diffusion large language models.
+A.2 Why does implicit EOS density ρ \rho outperform EOS confidence for single-stage length control? – A side effect of treating padding EOS as part of the response.
+While treating padding EOS tokens as part of the response endows masked diffusion language models with implicit length awareness, it also introduces a non-trivial side effect that overconfidence on EOS may lead to instability in using it as a single-stage length control signal.
+In particular, as observed in Yang et al.  ( 30 ) , masked dLLMs often exhibit an EOS Trap phenomenon: during early denoising steps, the predicted confidence of EOS is significantly higher than that of non- EOS ones.
+This behavior is a direct consequence of the training paradigm. Since padding EOS tokens may occupy a large fraction of the sequence during training and are randomly masked, the model is frequently optimized to recover EOS under high uncertainty.
+As a result, in early decoding steps—when most positions remain masked and semantic structure has not yet emerged—the model tends to assign disproportionately high probability mass to EOS .
+Importantly, this high EOS confidence does not indicate semantic completeness, but rather reflects the model’s uncertainty and its bias toward the statistically termination token.
+When EOS confidence is directly used as a length control signal, this early-stage overconfidence can prematurely trigger contraction or suppress necessary expansion. Such misaligned length decisions are particularly harmful in a single-stage setting, where length adjustment and semantic denoising are tightly interleaved. This explains the performance degradation observed when EOS confidence is employed as the control signal for single-stage strategy.
+In contrast, the implicit EOS density ρ \rho aggregates EOS mass over all remaining masked positions, providing a global and temporally smoother estimate of length sufficiency. Therefore, implicit density ρ \rho serves as a more robust length control signal than confidence.
+langley00
+Experimental support, please
+view the build logs
+for errors. Generated by
+L
+A
+T
+E
+xml
+.
+Instructions for reporting errors
+We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+methods listed below:
+Click the "Report Issue" (
+) button, located in the page header.
+Tip: You can select the relevant text first, to include it in your report.
+Our team has already identified the following issues . We appreciate your time reviewing and reporting rendering errors we
+may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+all.
+Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion , and welcome developer contributions .
+We gratefully acknowledge support from
+our major funders ,
+member institutions , ,
+and all contributors.
+About
+·
+Help
+·
+Contact
+·
+Subscribe
+·
+Copyright
+·
+Privacy
+·
+Accessibility
+·
+Operational Status (opens in new tab)
+Major funding support from

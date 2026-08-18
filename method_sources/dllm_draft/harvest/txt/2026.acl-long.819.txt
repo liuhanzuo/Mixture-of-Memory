@@ -1,0 +1,1887 @@
+Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 17988–18002
+July 2-7, 2026 ©2026 Association for Computational Linguistics
+Towards Efficient and Effective Diffusion Language Model Inference via
+Semantic-Aware Adaptive Denoising
+Fan LI 1, Yu GU 1*, Zhigang WANG 2*, Fangling LENG 1, Zhenghao LIU 1, Ge YU 1
+1 School of Computer Science and Engineering, Northeastern University
+2 Cyberspace Institute of Advanced Technology, Guangzhou University
+lif13@mails.neu.edu.cn
+{guyu, lengfangling, liuzhenghao, yuge}@mail.neu.edu.cn
+wangzhigang@gzhu.edu.cn
+Abstract
+Diffusion language models (DLMs) have
+emerged as a powerful non-autoregressive alter-
+native to GPT-style sequential generation, but
+suffer from substantial computational overhead
+due to their iterative parallel denoising. Exist-
+ing acceleration works cannot accurately detect
+semantically stabilized tokens and then skip
+computation, leading to sub-optimal speedup
+in practice. This paper presents the first system-
+atic study of convergence dynamics in DLMs.
+Innovative observations include the misalign-
+ment between traditionally used scalar detec-
+tion criterion and the semantic convergence,
+and the post-peak confidence score, that wastes
+denoising computation and degrades inference
+quality. To address these limitations, we pro-
+pose Ada-DLM, a semantic-aware adaptive de-
+noising framework that encodes the trajectory
+of scalar confidence scores into an evolution-
+aware feature vector and then clusters vectors
+proactively to adaptively identify semantically
+converged tokens. Furthermore, we incorpo-
+rate system-level optimizations to maximize
+runtime efficiency.
+Experiments show that
+Ada-DLM consistently outperforms the SOTA
+competitor, achieving up to 2× speedup and
+19% quality improvement. That offers a prac-
+tical path toward efficient high-quality DLM
+deployment.
+1
+Introduction
+Different from the GPT-style autoregressive frame-
+work that generates output tokens sequentially from
+left to right (Grattafiori et al., 2024; Liu et al., 2024;
+Yang et al., 2025), Diffusion Language Models
+(DLMs) adopt a non-autoregressive, parallel de-
+noising paradigm (Austin et al., 2021; Han et al.,
+2023). During inference, DLMs first produce a
+complete set of initial token predictions and then
+iteratively refine them through a multi-step de-
+noising process. Under the global refinement de-
+sign, DLMs are capable of capturing full-sequence
+* Corresponding authors.
+contextual dependencies, which often leads to im-
+proved output coherence and quality.
+However, this performance advantage comes at a
+substantial computational cost. Unlike autoregres-
+sive generation, where computation scales grad-
+ually with sequence length, DLMs must update
+the hidden states of all output tokens at every de-
+noising step. Each step involves expensive full-
+sequence self-attention and feed-forward network
+(FFN) computations, followed by token distribu-
+tion decoding. Consequently, DLM inference is
+significantly more demanding in compute, posing
+a major challenge for practical deployment.
+Recent work, such as dKV-Cache (Ma et al.,
+2025) and Fast-dLLM (Wu et al., 2025), has
+explored mitigating this inefficiency by early-
+stopping computation for converged tokens. dKV-
+Cache identifies these tokens using a mechanism
+originally designed for controlling output display.
+Fast-dLLM, in contrast, employs a pre-defined,
+fixed confidence threshold. However, dKV-Cache’s
+unmasking mechanism is conservatively tuned, pri-
+oritizing user experience over computational effi-
+ciency. The latter, relying on a single scalar thresh-
+old, often cannot capture token-wise semantic con-
+vergence accurately. Consequently, the potential
+speedup is severely limited by the inability to detect
+a sufficient number of converged tokens.
+In this work, we present the first systematic
+investigation into the complex, dynamic conver-
+gence behaviors of tokens during denoising, re-
+vealing a critical limitation in existing acceleration
+approaches. We show both empirically and the-
+oretically that the first-order scalar of confidence
+probability cannot reliably track the underlying se-
+mantic convergence. As a result, even advanced
+methods such as Fast-dLLM fail to timely detect up
+to 43.75% of semantically stabilized tokens, which
+fundamentally caps the achievable speedup. More
+importantly, we identify a previously unreported
+phenomenon. When converged tokens are not de-
+17988
+
+coded promptly, their confidence scores can de-
+cline in subsequent iterations. This not only wastes
+computational resources but also degrades output
+quality, as sub-optimal tokens with post-peak con-
+fidence are selected as the final inference result.
+Inspired by the new observation, we propose
+Ada-DLM, a semantic-aware adaptive denoising
+framework that accelerates inference and boosts its
+quality by proactively identifying converged tokens.
+Unlike prior static-threshold-based passive meth-
+ods, Ada-DLM actively detects semantically stable
+tokens in advance via a novel Rank-Adaptive Infor-
+mation Gain criterion. It encodes each potentially
+stable token as an evolution-aware feature vector
+formed by stacking its confidence scores from re-
+cent steps. These vectors are then clustered via
+a semantics-aware K-means algorithm to separate
+converged from non-converged tokens. A key inno-
+vation lies in our rank-aware centroid initialization.
+Tokens are first ranked by confidence, separated
+into top- and bottom-tier subsets by a binary classi-
+fier based on rank gap. Representative vectors from
+each subset are used as initial centroids. The result-
+ing top-tier cluster corresponds to tokens that have
+semantically stabilized and then are early-stopped.
+2
+Related Work
+Optimization strategies for Diffusion Language
+Models (DLMs) primarily target three dimensions,
+inference steps, memory access, and computation
+redundancy.
+Orthogonal Optimizations: Trajectory & Mem-
+ory.
+Research on trajectory compression min-
+imizes denoising steps T using advanced ODE
+solvers (Lu et al., 2022; Karras et al., 2022; Song
+et al., 2023) or schedulers (Austin et al., 2021;
+Gong et al., 2023; Liu et al., 2025; Wang et al.,
+2025; Jin et al., 2025; Lou et al., 2024). Simul-
+taneously, memory-centric works address Atten-
+tion’s quadratic cost via dynamic KV-caching (Ma
+et al., 2025; Jiang et al., 2025; Nguyen-Tri et al.,
+2025; Hu et al., 2025; Huang et al., 2025; Ma et al.,
+2024). Crucially, these approaches are orthogonal
+to our focus, they reduce temporal resolution or
+IO overhead but leave the per-step spatial compu-
+tation (L × D, dominated by FFNs) unoptimized.
+Ada-DLM can be seamlessly integrated with these
+methods for compound acceleration.
+Token-Level Computation Pruning.
+Directly
+targeting FFN redundancy, methods like Fast-
+dLLM (Wu et al., 2025) and others (Kong et al.,
+2025; Chen et al., 2025; Agrawal et al., 2025) em-
+ploy passive static scalar thresholds to skip tokens.
+However, numerical confidence often lags behind
+semantic convergence (Statistical Stagnation). Un-
+like passive static baselines, Ada-DLM reformu-
+lates pruning as a Semantics-Aware Dynamic Clus-
+tering problem. By analyzing geometric stability
+via Semantics-Aware Clustering, we actively re-
+cover sparse computation opportunities that rigid
+thresholds miss without compromising generation
+quality.
+Concurrent Adaptive Inference for DLMs.
+Re-
+cent concurrent works have actively explored accel-
+erating DLMs via adaptive caching or confidence
+thresholding. While sharing similar motivations,
+these methods often rely on static percentiles, con-
+tiguous left-aligned token freezing, or computation-
+ally expensive backtracking and remasking mech-
+anisms. In contrast, Ada-DLM distinguishes it-
+self by moving beyond instantaneous states. By
+leveraging multi-step temporal evolution trajecto-
+ries, our framework searches globally to dynami-
+cally freeze tokens at any arbitrary position. Fur-
+thermore, the unidirectional state freezing effec-
+tively circumvents the computational overhead in-
+troduced by remasking and statistical stagnation.
+3
+Motivation
+3.1
+Diffusion Inference with Transformer
+Backbone
+Diffusion Language Models (DLMs), such as
+LLaDA (Nie et al., 2025) and Dream-7B (Ye et al.,
+2025), generate text sequences via iterative denois-
+ing in a continuous latent space. Consider a se-
+quence of length L at diffusion step t, denoted as
+Xt ∈RL×D, where D is the hidden dimension.
+The denoiser Mθ is typically implemented as a
+Transformer composed of N stacked layers.
+For the l-th layer and the i-th token, the hid-
+den state update consists of a Self-Attention (Attn)
+module and a Feed-Forward Network (FFN). Cru-
+cially, the computational cost is heavily skewed
+towards the FFN due to the dimension expansion
+(typically 4× or higher) in the intermediate MLP
+17989
+
+Confidence Density Evolution
+Generation Steps
+Token Confidence
+Log(Token Count)
+1.0
+0.0
+0
+10
+20
+30
+40
+50
+Representative Token 
+(a) Confidence Density Evolution
+Token 121: Stagnant < 0.6
+Token 111: Stagnant < 0.6
+Taget Threshold (0.9)
+Relative Decoding Step (Step - BlockStart)
+Confidence Score
+1.0
+0.2
+0
+50
+0.68
+0.56
+Low-Confidence Straggle: Comparison of Token 11 & 121
+(b) Micro-Trajectory Analysis
+Figure 1: The Inefficiency of Static Thresholds. (a) A heatmap shows the distribution of token confidence scores.
+The Stagnation Zone highlights a significant mass of semantically stable tokens that fail to cross the τ = 0.9
+threshold. The green circles mark the two sample tokens analyzed in (b). (b) Trajectories of the representative
+tokens. Token 121 (Blue) exhibits Stubborn Stagnation, remaining numerically low despite stability. Token 111
+(Orange) shows Missed Opportunity with clear information gain (0.08 →0.68) yet is treated identically by the
+static strategy, causing computational waste and miss best unmasked step.
+layers as Eq. 1 and Eq. 2.
+h(l,mid)
+i
+= h(l−1)
+i
++ Attn(h(l−1)
+i
+, H(l−1))
+(1)
+h(l)
+i
+= h(l,mid)
+i
++
+FFN(h(l,mid)
+i
+)
+|
+{z
+}
+Dominant Computation
+(≈2
+3 FLOPs)
+(2)
+where h(l−1)
+i
+∈RD denotes the input state of the
+i-th token, and H(l−1) ∈RL×D represents the full
+sequence states required for the attention mecha-
+nism. The term h(l,mid)
+i
+signifies the intermediate
+state following the attention residual connection.
+While Attention complexity scales quadratically
+with sequence length (O(L2 · D)), FFNs dominate
+the inference cost (O(L·D2)) for typical sequence
+lengths, making them the primary target for accel-
+eration.
+Finally, a projection head maps the final hidden
+state to the vocabulary size V as Eq. 3.
+p(t)
+0,i = softmax
+
+Head(h(N)
+i
+)
+
+∈RV
+(3)
+where p(t)
+0,i represents the predicted probability dis-
+tribution over the vocabulary for the clean token x0
+at step t.
+3.2
+The Bottleneck of Static Acceleration
+To mitigate the computational redundancy in Eq. 2,
+Fast-dLLM (Wu et al., 2025) introduces a Predict-
+then-Skip paradigm. The core hypothesis is that
+if a token’s predicted distribution p(t)
+0,i is suffi-
+ciently confident, its semantic representation is
+Figure 2: Quantifying Failure Modes of Static Thresh-
+olding.
+deemed stable. Formally, a binary computation
+mask Mt,i ∈{0, 1} is determined by a fixed thresh-
+old τ (e.g., 0.9) as Eq. 4.
+Mt,i = I
+
+max(p(t)
+0,i) < τ
+
+(4)
+where I(·) is the indicator function. Here, Mt,i = 1
+indicates that the confidence is below τ, necessi-
+tating further refinement (Active), while Mt,i = 0
+implies high confidence, allowing the block to be
+skipped (Inactive). In the subsequent layer, this
+mask gates the FFN execution as Eq. 5.
+h(l)
+i
+= h(l,mid)
+i
++ Mt,i · FFN(h(l,mid)
+i
+)
+(5)
+However, we argue that relying on a static scalar
+τ creates a misalignment between numerical con-
+fidence and semantic convergence, leading to two
+17990
+
+distinct failure modes, Redundancy (Stagnation).
+Tokens that have converged semantically but fail to
+cross τ (e.g., peaking at 0.85) force the model to
+execute Eq. 5 with Mt,i = 1 unnecessarily. Regret
+(Missed Opportunity). Tokens that transiently peak
+(e.g., 0.88) but are rejected by the rigid τ may suf-
+fer from confidence collapse in later steps, causing
+the optimal decoding window to be missed.
+3.3
+Empirical Analysis: Statistical Stagnation
+The Semantic-Numerical Gap.
+We identify a
+fundamental inefficiency termed Statistical Stagna-
+tion, where tokens lock onto correct targets long
+before crossing the rigid threshold τ. Formally,
+let vt,i denote the predicted token index. We de-
+fine the Stagnation Set as S(t)
+stag = {i | vt,i =
+vt−1,i ∧max(p(t)
+0,i) < τ}. For tokens in S(t)
+stag, the
+static mechanism (Mt,i = 1) forces expensive FFN
+execution solely to push scalar confidence (e.g.,
+0.7 →0.9), yielding zero semantic gain. Our quan-
+titative analysis reveals that approximately 15–20%
+of active computation steps reside within this Stag-
+nation Zone (Figure 1a). As detailed in Figure 2,
+this misalignment is systemic. Micro-trajectory
+analysis further confirms that stubborn tokens of-
+ten remain trapped in low-confidence states or suf-
+fer from post-peak confidence decline, degrading
+parallel decoding into a quasi-serial mode in long-
+context regimes.
+Motivation for Rank-Adaptive Information
+Gain.
+To rectify this, Ada-DLM transitions from
+passive static thresholds to an active, semantics-
+aware approach. We reformulate token selection
+using a Rank-Adaptive Information Gain criterion.
+By encoding tokens into evolution-aware feature
+vectors and applying semantics-aware clustering,
+we effectively target Sstag. This approach actively
+distinguishes semantically stabilized tokens from
+those with True Uncertainty, ensuring resources
+are allocated only to drive meaningful semantic
+evolution.
+4
+Methodology
+This section details Ada-DLM, a mechanism-aware
+inference framework designed to eliminate the Sta-
+tistical Stagnation identified in Section 3.3. Un-
+like existing methods that treat token pruning as a
+static scalar filtering task, we reformulate the par-
+allel decoding process as a Semantics-Aware Dy-
+namic Clustering problem. We propose an active
+pipeline that adapts to the evolving confidence dis-
+tribution of diffusion steps. Specifically, our frame-
+work consists of two stages: (1) Rank-Aware Cen-
+troid Initialization, which acts as a binary classifier
+based on rank gap to isolate high-potential can-
+didates; and (2) Semantics-Aware Adaptive Clus-
+tering, which employs a K-means mechanism to
+accurately separate active tokens from converged
+ones based on evolution-aware feature distances
+rather than absolute scalar values.
+4.1
+Problem Formulation: From Static Scalar
+to Dynamic Clustering
+To strictly formalize the inefficiency of static base-
+lines, we first analyze the decision boundary of
+current state-of-the-art methods. Let xt,i denote
+the i-th token at diffusion step t, and Ct,i be its
+associated confidence score. Static paradigms im-
+plicitly model the decision boundary as a Heaviside
+Step Function, H, parameterized by a fixed scalar
+τ (typically 0.9) as Eq. 4. We argue that this rigid
+formulation is mathematically suboptimal because
+it is distribution-agnostic. In diffusion models, the
+distribution of confidence scores shifts dramatically
+from high-entropy states (at t = N) to low-entropy
+states (at t = 0). A fixed τ fails to adapt to these
+shifts, forcing the model to compute tokens that are
+semantically stabilized relative to the current step’s
+distribution but strictly below τ (i.e., Statistical
+Stagnation).
+To address this, we reframe the selection process
+as finding an optimal partition of tokens into two
+latent clusters, Sactive (Active) and Sfrozen (Frozen).
+Instead of a scalar cut-off, we aim to minimize the
+clustering objective in a feature space F as Eq. 6.
+min
+µ
+X
+z∈{active, frozen}
+X
+xi∈Sz
+||vt,i −µz||2
+(6)
+where vt,i represents the evolution-aware fea-
+ture vector of token i, and µz denotes the dynamic
+centroid of cluster z. By solving this optimiza-
+tion problem, the decision boundary becomes a
+dynamic hyperplane determined by the relative dis-
+tances to the High-Confidence Centroid (µhigh) and
+the Boundary Centroid (µbound).
+Geometric Stability Hypothesis.
+Rather than re-
+lying on absolute numerical saturation, we ground
+our formulation in the concept of Geometric Sta-
+bility. We posit that a token’s convergence status
+17991
+
+Fixed-Threshold
+Ada-DLM 
+Active FFN Computation
+Redundant Compute
+Frozen State Token
+Prefill
+Decode
+Prefill
+Decode
+Statistical Stagnation
+t=N
+t=0
+Computational Flow
+Prefill Token
+Freeze and Locked
+Sorted Based Rank 
+K-means
+Decode
+Unmasked Token
+Boundary Centroid
+High-Confidence Centroid
+Select Token of First
+Figure 3: Schematic Comparison of Computational Flows: Static Rigidity vs. Cluster-Aware Adaptive Inference.
+(Left) Fixed-Threshold Paradigm: Represents SOTA static methods bounded by a rigid scalar τ. The Yellow Blocks
+highlight Statistical Stagnation, where semantically stable tokens are redundantly computed solely because they
+fail to cross the absolute confidence threshold. (Right) Our Proposed Framework (Ada-DLM): We dismantle this
+rigidity via a mechanism-aware two-stage strategy. (1) Rank-Based Sorting: Tokens are prioritized by confidence to
+isolate candidates. (2) Temporal K-Means Clustering: As shown in the zoom-in view, instead of a fixed scalar, we
+employ a dynamic clustering mechanism. Using the highest-confidence token (from the head) and the boundary
+candidate (from the tail) as dynamic centroids, and incorporating temporal consistency (confidence history over 3
+steps), the model adaptively groups tokens into Active (Red Box) or Frozen states. This allows the model to skip
+computation for tokens clustering with the stable centroid, regardless of their absolute values.
+is defined by its relative position within the confi-
+dence distribution’s geometry, rather than its abso-
+lute probability magnitude. Consequently, tokens
+that gravitate towards the high-confidence mode
+of the distribution (i.e., clustering near µhigh) have
+achieved semantic stability, even if their numeri-
+cal values remain unsaturated (e.g., Ci ≈0.7). In
+this state, further refinement steps yield negligible
+semantic shifts. Therefore, an optimal policy π∗
+must decouple absolute confidence from relative
+geometric position, allocating computational bud-
+get only to tokens that exhibit True Uncertainty
+(i.e., deviation from the stable centroid).
+4.2
+Ada-DLM
+We operationalize the theoretical framework estab-
+lished in Section 4.1 into the Ada-DLM algorithm.
+Functioning as a post-hoc decision module, it dy-
+namically determines the Active Set S∗
+t−1 for the
+next denoising step via a three-stage pipeline.
+Mechanism Overview.
+Figure 3 contrasts our
+approach with standard paradigms.
+While
+fixed-threshold policies fall into the Stagna-
+tion Trap (computing semantically stabilized but
+low-confidence tokens), Ada-DLM employs a
+Semantics-Aware Freezing logic. By dynamically
+anchoring tokens to either a high-confidence cen-
+troid or a boundary centroid, our engine issues an
+explicit State Freezing command to semantically
+stabilized tokens, transitioning them into a zero-
+cost state for all subsequent steps.
+4.2.1
+Rank-Aware Centroid Initialization
+To efficiently initialize the dynamic clusters de-
+fined in Eq. 6, we employ a deterministic rank-
+ing strategy acting as a binary classifier. Instead
+of expensive iterative convergence (e.g., Lloyd’s
+algorithm), we leverage the heavy-tailed nature
+of the confidence distribution to identify cluster
+prototypes directly.
+Given the token set Xt at
+step t, we first sort all tokens by their confidence
+scores. Let ρ be the permutation index such that
+Ct,ρ(1) ≥Ct,ρ(2) ≥· · · ≥Ct,ρ(L). We partition
+the sequence into a Top-Tier Subset (Scand) and a
+Bottom-Tier Subset (Sres) based on a pre-estimated
+capacity K as Eq. 7 as Eq. 7.
+Scand = {xρ(i) | i ≤K},
+Sres = {xρ(i) | i > K}
+(7)
+This rank-based separation serves two critical
+functions utilized in the subsequent clustering
+phase. First, it acts as a Binary Classifier based
+on Rank Gap, implying a prior belief that active
+tokens are concentrated in the head of the distri-
+bution (Scand). Second, and most crucially, it pro-
+vides instantaneous Rank-Aware Centroid Initial-
+ization. We deterministically designate the top-
+ranked token (xρ(1)) as the prototype for the High-
+17992
+
+Confidence Centroid (µhigh), and the leading token
+of the bottom-tier subset (xρ(K+1)) as the prototype
+for the Boundary Centroid (µbound). By leveraging
+sorting, we transform the initialization of cluster
+centroids from a random process into a determinis-
+tic, data-driven selection, reducing the initialization
+complexity to O(L log L)
+4.2.2
+Semantics-Aware Adaptive Clustering
+Relying solely on the snapshot confidence Ct,i is
+susceptible to numerical instability (e.g., flashing
+scores), where a converged token transiently drops
+below the threshold due to local noise. To enforce
+the Geometric Stability Hypothesis, we introduce a
+temporal dimension into the feature space to cap-
+ture the recent convergence trajectory.
+Evolution-Aware Feature Construction.
+We
+construct a 3-dimensional evolution-aware feature
+vector vt,i ∈R3 for each token i, formed by stack-
+ing the confidence scores from the current step and
+the two immediate historical steps. Formally, the
+vector is defined as Eq. 8.
+vt,i = [Ct,i, Ct−1,i, Ct−2,i]⊤
+(8)
+where Ct−1,i and Ct−2,i denote the confidence
+scores from the preceding inference steps. Cor-
+respondingly, the centroids µhigh and µbound (ini-
+tialized in Section 4.2.1) are expanded into this 3D
+space by tracking their respective history traces.
+Semantics-Aware Clustering Decision.
+This
+formulation transforms the selection process into
+a robust 3D Clustering Problem. We solve this
+via a single-pass Nearest Centroid Classification,
+effectively implementing the Rank-Adaptive Infor-
+mation Gain criterion. We define the discriminant
+function D(i) as the ratio of Squared Euclidean
+Distances in the feature space as Eq. 9.
+D(i) = ∥vt,i −µhigh∥2
+2
+∥vt,i −µbound∥2
+2
+(9)
+A token is identified as semantically stabilized
+if it lies closer to the High-Confidence Centroid
+(D(i) < 1). Geometrically, this implies that the
+token’s 3-step trajectory aligns with the stable
+mode of the distribution, triggering an explicit State
+Freezing (removing it from Snext). Conversely, to-
+kens satisfying D(i) ≥1 exhibit True Uncertainty
+(clustering with the boundary) and remain Active.
+Crucially, the cardinality of the final active set
+|Snext| is decoupled from the initialization capacity
+K. Unlike static Top-K pruning, our semantics-
+aware mechanism allows the computational budget
+to dynamically expand or contract based on the
+intrinsic distributional geometry, ensuring that the
+selection is driven by data characteristics rather
+than rigid hyperparameters.
+Theoretical Justification of Semantic Evolution.
+To formalize the stability of a token’s semantic
+drift, we introduce a geometric measure based on
+its Squared Euclidean Distance to a local stable
+high-confidence centroid µ ≈[c, c, c]⊤within a
+historical window m = 3. The distance can be rig-
+orously decomposed via the sum-of-squares iden-
+tity as Eq 10.
+D2(vt,i, µ) = 3·( ¯C−c)2+
+2
+X
+k=0
+(Ct−k,i−¯C)2 (10)
+where ¯C is the local average confidence of the to-
+ken within the time window. This decomposition
+reveals the theoretical mechanism of our metric
+in Eq. 10: the first term, 3 · ( ¯C −c)2, measures
+and penalizes the Magnitude Gap from the high-
+confidence target. The second term strictly calcu-
+lates the local variance, penalizing Temporal Fluc-
+tuation (approximating the first-order velocity of
+confidence).
+By optimizing this objective distance, Ada-DLM
+transforms rigid scalar thresholds into an adaptive
+parabolic decision boundary within the 3D feature
+space. It theoretically guarantees that a converged
+token has not only accumulated sufficient proba-
+bility mass but also that its semantic drift rate has
+approached zero, effectively resolving the statisti-
+cal stagnation issue.
+4.2.3
+Hardware-Efficient Realization
+The final execution phase operationalizes the active
+set Snext derived from the semantics-aware cluster-
+ing decision (Eq. 9). To translate the theoretical
+algorithmic sparsity into tangible wall-clock accel-
+eration, we bypass naive boolean masking, which
+often suffers from memory fragmentation and ker-
+nel launch overheads. Instead, we implement a
+hardware-friendly Gather-GEMM-Scatter pipeline.
+First, the Gather operation compacts active tokens
+in Snext into a contiguous tensor via index selec-
+tion, scaling linearly as O(|Snext| · D). Next, the
+GEMM step executes the Feed-Forward Network
+(FFN) layers solely on this compacted batch, restor-
+ing dense matrix multiplication efficiency and fully
+17993
+
+Table 1: Performance on Standard Short-Context Benchmarks. We evaluate generation quality using task-specific
+metrics, Accuracy (Acc) for Reasoning (GSM8K), Pass@1 for Coding (MBPP, HumanEval), and ROUGE-L
+(R-L) for Summarization (CNN/DM). Ada-DLM achieves significant acceleration (up to 8.09×) while maintaining
+performance parity with the vanilla baseline.
+Generation Quality
+Efficiency (Speedup ↑)
+Backbone
+Method
+GSM8K
+CNN/DM
+MBPP
+HEval
+Speed
+GSM
+CNN
+MBPP
+HEval
+Avg.
+(Acc)
+(R-L)
+(Pass@1)
+(Pass@1)
+(TPS)
+Speedup
+Dream-7B
+Vanilla
+75.40
+25.38
+15.00
+14.70
+14.7
+1.00
+1.00
+1.00
+1.00
+1.00
+dKV-Cache
+74.40
+25.30
+14.00
+14.00
+13.0
+0.88
+1.33
+1.03
+1.09
+1.08
+Fast-dLLM
+73.50
+24.14
+14.20
+14.20
+47.9
+3.27
+2.65
+1.16
+0.99
+1.87
+Ours
+73.50
+24.25
+14.80
+14.90
+97.7
+6.67
+5.27
+2.47
+2.04
+3.87
+LLaDA-8B
+Vanilla
+72.60
+16.88
+14.60
+14.30
+16.2
+1.00
+1.00
+1.00
+1.00
+1.00
+dKV-Cache
+72.90
+19.25
+14.70
+14.20
+13.3
+0.82
+1.54
+1.06
+1.15
+1.13
+Fast-dLLM
+72.50
+19.31
+14.30
+14.10
+94.4
+5.82
+3.73
+1.09
+1.40
+2.71
+Ours
+72.50
+21.82
+14.60
+14.40
+131.1
+8.09
+7.13
+2.25
+2.62
+4.65
+0
+10
+20
+30
+40
+50
+60
+Generation Step
+0
+20
+40
+60
+80
+100
+120
+Remaining Masked Tokens
+Stagnation
+Decoding Convergence (Block 0)
+Fixed Threshold = 0.9
+Ours
+(a) MBPP
+0
+10
+20
+30
+40
+50
+60
+70
+80
+Generation Step
+0
+20
+40
+60
+80
+100
+120
+Remaining Masked Tokens
+Stagnation
+Decoding Convergence (Block 0)
+Fixed Threshold = 0.9
+Ours
+(b) CNNDM
+0
+10
+20
+30
+40
+50
+Generation Step
+0
+20
+40
+60
+80
+100
+120
+Remaining Masked Tokens
+Stagnation
+Decoding Convergence (Block 0)
+Fixed Threshold = 0.9
+Ours
+(c) GSM8K
+0
+5
+10
+15
+20
+25
+30
+Generation Step
+0
+20
+40
+60
+80
+100
+120
+Remaining Masked Tokens
+Stagnation
+Decoding Convergence (Block 0)
+Fixed Threshold = 0.9
+Ours
+(d) HUMANEVAL
+Figure 4: Comparison of decoding convergence between the static baseline (Fast-dLLM, red) and our method (blue)
+on four distinct tasks: CNN/DM, GSM8K, MBPP, HumanEval.
+leveraging Tensor Cores for high arithmetic inten-
+sity. Finally, Scatter writes the computed residuals
+back to the full sequence buffer to maintain posi-
+tional consistency for subsequent attention layers.
+Complexity Analysis.
+A critical requirement for
+acceleration is that the decision overhead must be
+strictly less than the computational savings. The
+complexity of our decision module is dominated
+by the Rank-Aware Initialization (Stage 1), i.e.,
+O(L log L). The subsequent feature construction
+and centroid distance calculation (Stage 2) oper-
+ate in O(L · m), which simplifies to O(L) given
+that the evolution-aware window m = 3 is a small
+constant. In contrast, the skipped FFN computa-
+tion scales quadratically with model width, i.e.,
+O(L · D2). Given that modern LLMs operate in
+a regime where D ≫log L (e.g., D = 4096), the
+algorithmic overhead is asymptotically negligible
+(< 0.2% in our profiling). Consequently, the effi-
+ciency gains scale linearly with the sparsity rate,
+robustly translating token reduction into latency
+reduction.
+5
+Experiments
+In this section, we empirically validate Ada-DLM.
+Beyond standard efficiency metrics, we aim to
+verify our core hypothesis, does transitioning
+from passive scalar thresholds to active semantics-
+aware detection effectively identify semantically
+stabilized tokens that prior methods miss? Further-
+more, we investigate whether our Rank-Adaptive
+Information Gain criterion can prevent the gener-
+ation degradation caused by the post-peak confi-
+dence decline phenomenon identified in our Intro-
+duction.
+5.1
+Experimental Setup
+We benchmark Ada-DLM on three backbones,
+LLaDA-8B (Nie et al., 2025), Dream-7B (Ye
+et al., 2025),
+and UltraLLaDA (He et al.,
+2025). Evaluations span diverse domains includ-
+ing GSM8K (Cobbe et al., 2021) (Reasoning),
+MBPP (Chen et al., 2021) and HumanEval (Chen
+et al., 2021) (Coding), CNN/DM (Hermann et al.,
+2015) (Summarization), and the LongBench (Bai
+et al., 2024) suite (L > 4K) for long-context gen-
+eralization. To ensure rigorous comparison, we
+17994
+
+Table 2: Performance on Long-Context Benchmarks (L ≈4K −32K). We evaluate Ada-DLM using the
+UltraLLaDA backbone on the LongBench suite. Compared to dKV-Cache and Fast-dLLM, our method achieves a
+massive leap in efficiency (avg. 41.3× speedup) while maintaining or even enhancing generation quality.
+Generation Quality (ROUGE-L)
+Efficiency (Speedup ↑)
+Backbone
+Method
+GovRep
+MNews
+QMSum
+SAMSum
+Qasper
+SPS
+Gov
+News
+QMS
+SAM
+Qasp
+Avg.
+(s/sample)
+Speedup
+UltraLLaDA
+Vanilla
+22.91
+18.49
+15.89
+12.73
+8.60
+341.55
+1.00
+1.00
+1.00
+1.00
+1.00
+1.00
+dKV-Cache
+23.05
+18.64
+16.03
+14.69
+9.17
+119.00
+2.98
+2.31
+3.21
+3.14
+2.72
+2.87
+Fast-dLLM
+22.79
+16.95
+14.20
+14.58
+9.83
+12.81
+19.66
+8.41
+21.09
+46.30
+37.80
+26.65
+Ours
+22.84
+16.97
+15.38
+17.37
+10.62
+8.26
+28.60
+12.43
+36.47
+73.12
+56.07
+41.34
+(a) Dream-7B
+(b) LLaDA-8B
+(c) UltraLLaDA (Long)
+Figure 5: End-to-End Throughput Comparison. We report Token-Per-Second (TPS) across three backbones. Ada-
+DLM (Red) consistently achieves the highest throughput, surpassing the static method Fast-dLLM (Blue) by a
+significant margin. Notably, on the long-context UltraLLaDA benchmark (c), our method maintains high usability
+(≈23-35 TPS) while the vanilla baseline performance degrades to near zero.
+evaluate against: (1) Vanilla Sampling; (2) dKV-
+Cache (Ma et al., 2025) (Infrastructure-level op-
+timization); and (3) Fast-dLLM (Wu et al., 2025)
+(SOTA passive static thresholding). All methods
+are evaluated on NVIDIA A800 GPUs with unified
+KV-caching. Detailed configurations are provided
+in Appendix A.
+5.2
+Standard Short-Context Evaluation
+We evaluate performance on standard benchmarks
+(Table 1). Ada-DLM demonstrates superior ef-
+ficiency over passive baselines while preserving
+fidelity. Infrastructure optimization yields limited
+speedup (≈1.1×), confirming FFN layers as the
+primary bottleneck. By actively addressing this,
+Ada-DLM achieves substantial acceleration, out-
+performing the SOTA passive static method (Fast-
+dLLM) by an additional 1.55×–2.12×. Absolute
+acceleration averages 3.87× on Dream-7B and
+4.65× on LLaDA-8B.
+Analysis of Active Detection.
+Crucially, rela-
+tive gains over Fast-dLLM are maximized on rea-
+soning tasks (e.g., GSM8K) where confidence
+scores fluctuate significantly. This indicates that
+our Rank-Adaptive Information Gain criterion ef-
+fectively identifies semantically stabilized tokens
+(via evolution-aware feature proximity) that pas-
+sive scalars fail to capture. Convergence analysis
+(Figure 4) further confirms that Ada-DLM induces
+a steeper drop in active tokens. This validates that
+our geometric criterion enables earlier exit for sta-
+ble regions, eliminating the redundancy inherent in
+rigid thresholding.
+Prevention of Post-Peak Decline.
+Regarding
+quality, Ada-DLM maintains statistical parity with
+the full-computation baseline (e.g., 72.5% vs 72.6%
+accuracy on GSM8K). Notably, on open-ended
+tasks like CNN/DM, we observe a slight increase
+in ROUGE-L scores. This empirical evidence sup-
+ports our hypothesis that active detection locks in
+optimal tokens before they suffer from post-peak
+confidence decline, effectively filtering out noisy
+tail-distribution signals that passive methods might
+erroneously retain.
+5.3
+Evaluation on Long-Context Tasks
+We extend our evaluation to the LongBench suite
+using the UltraLLaDA backbone. As sequence
+length expands, the distribution-agnostic nature of
+passive static thresholds becomes a critical bottle-
+neck. While Fast-dLLM provides acceleration, it
+exhibits diminishing returns in highly sparse re-
+gions due to its inability to adapt to shifting confi-
+dence distributions. In contrast, Ada-DLM demon-
+strates superior scalability, achieving a 1.93× rela-
+tive speedup over Fast-dLLM on the sparse SAM-
+17995
+
+Sum dataset.
+Regarding absolute metrics, the unoptimized
+baseline exhibits quadratic latency growth (73×
+speedup on SAMSum); we emphasize this re-
+flects Ada-DLM’s capability to prevent latency col-
+lapse rather than simple linear acceleration. To as-
+sess semantic coherence in long-range dependency
+tasks, we evaluate GovReport. Ada-DLM yields
+a ROUGE-L score of 22.84, statistically compara-
+ble to the full-computation baseline. This confirms
+that even with aggressive semantics-aware active
+skipping, the model retains the critical semantic
+structure required for global context modeling.
+Finally, regarding end-to-end throughput (Fig-
+ure 5), the Vanilla baseline suffers from excessive
+latency in long-context regimes (SPS ≈341s). Ada-
+DLM maintains practical inference speeds (SPS ≈
+8.26s), effectively converting algorithmic sparsity
+into deployment-ready throughput.
+K
+5%
+10%
+15%
+20%
+25%
+Acc
+72.80
+72.66
+72.51
+72.04
+71.55
+Speed
+3.82×
+4.11×
+4.65×
+4.95×
+5.21×
+Table 3: Sensitivity analysis of capacity ratio (K) on
+LLaDA-8B (GSM8K). The default setting (K = 15%)
+represents the Pareto optimal point in the speed-quality
+trade-off space.
+m
+1
+2
+3
+4
+5
+Acc
+71.80
+72.26
+72.50
+72.68
+72.66
+Speed
+5.09×
+4.88×
+4.65×
+4.15×
+3.96×
+Table 4: Sensitivity analysis of history window size (m).
+A window of m = 3 provides the minimum effective
+receptive field to filter out transient noise.
+Metric
+Cosine
+Manhattan
+Sq. Euclidean
+Accuracy
+64.20
+70.34
+72.50
+Speedup
+6.08×
+4.21×
+4.65×
+Table 5: Ablation study on distance metrics. Squared
+Euclidean distance optimally penalizes transient devia-
+tions (temporal fluctuation) without the severe accuracy
+degradation seen in Cosine Similarity.
+Robustness and Scalability.
+To ensure the sta-
+tistical significance of our findings and rule out
+the influence of variance, we rigorously evaluated
+Ada-DLM across 5 random seeds on the reasoning-
+heavy GSM8K dataset. We observed highly sta-
+ble performance (72.50 ± 0.18), confirming that
+our semantics-aware clustering robustly preserves
+generation quality without suffering from the high
+variance often seen in passive thresholding. Fur-
+thermore, detailed hyperparameter sensitivity anal-
+yses confirm that K = 15% (Table 3) and m = 3
+(Table 4) act as the Pareto optimal point, provid-
+ing the minimum effective receptive field to filter
+out transient noise. Ablation on distance metrics
+(Table 5) further validates that Squared Euclidean
+optimally penalizes temporal deviations. Finally,
+Ada-DLM demonstrates remarkable scalability be-
+yond text-only architectures. Preliminary evalua-
+tions on diffusion-based Multimodal Large Lan-
+guage Models (MLLMs), such as LLaDA-V, yield
+up to 5.4× inference speedups with negligible ac-
+curacy loss, demonstrating its immense potential
+for handling heterogeneous token representations.
+Comprehensive memory footprint profiling and de-
+tailed MLLM evaluation results are provided in the
+Appendix.
+6
+Conclusion
+In this work, we identified Statistical Stagnation
+and the associated Post-Peak Confidence Decline
+as structural inefficiencies inherent in passive static
+confidence gating. To address these, we proposed
+Ada-DLM, a mechanism-aware framework that re-
+formulates parallel decoding as a Semantics-Aware
+Dynamic Clustering problem. By leveraging Rank-
+Aware Centroid Initialization and Semantics-Aware
+Clustering, our approach transitions diffusion in-
+ference from a passive filtering paradigm to an
+active detection paradigm.
+This effectively de-
+couples semantic stability from absolute numer-
+ical saturation. Empirical evaluations demonstrate
+that Ada-DLM outperforms state-of-the-art passive
+baselines, achieving relative speedups of 1.55×–
+2.12× while preventing latency collapse in long-
+context regimes. Beyond algorithmic gains, our
+method contributes to sustainable computing by
+significantly reducing the energy footprint of gen-
+erative inference. Future work will focus on devel-
+oping fused CUDA kernels to further optimize the
+Gather-GEMM-Scatter pipeline. Additionally, we
+plan to explore integrating Ada-DLM with linear-
+attention backbones, aiming to achieve end-to-end
+linear scalability for ultra-long sequence genera-
+tion. We plan to extend our step-level clustering
+mechanism to explore layer-by-layer dynamic con-
+vergence for further fine-grained acceleration.
+17996
+
+Limitations
+Currently, Ada-DLM operates as a research pro-
+totype implemented in high-level PyTorch. The
+absence of custom kernel fusion (e.g., integra-
+tion with vLLM (Kwon et al., 2023)) implies that
+our reported throughput represents a conservative
+lower bound on attainable efficiency. Furthermore,
+while our method effectively minimizes FFN redun-
+dancy (O(LD2)), the backbone model’s intrinsic
+quadratic attention complexity (O(L2)) remains a
+computational constraint. Future work will focus
+on integrating Ada-DLM with linear-attention ar-
+chitectures and developing fused CUDA kernels to
+achieve end-to-end linear scalability for ultra-long
+sequences.
+Ethics Statement
+This work aims to accelerate the inference of Diffu-
+sion Language Models (DLMs), thereby reducing
+the computational energy required for deployment.
+By improving the throughput-to-energy ratio, our
+approach aligns with the goals of Green AI and
+sustainable computing.
+However, we acknowledge that accelerating gen-
+erative models may inadvertently facilitate the
+rapid generation of harmful or biased content if
+the underlying backbone models are not properly
+aligned. Since Ada-DLM is a training-free infer-
+ence framework that does not modify the model
+weights, the safety properties and biases of the
+generated text remain inherent to the pre-trained
+backbones (e.g., LLaDA, Dream-7B). We advocate
+for the responsible deployment of such accelerated
+models, accompanied by robust safety guardrails
+and content filtering mechanisms.
+Disclosure on AI Assistance.
+We utilized AI-
+based tools (e.g., ChatGPT) solely for grammatical
+polishing, rephrasing, and improving textual flu-
+ency. All scientific claims, experimental designs,
+and empirical results presented in this paper are the
+original work of the authors and have been manu-
+ally verified.
+Acknowledgements
+This work was supported by the National
+Key
+R&D
+Program
+of
+China
+(Grant
+No.
+2023YFB4503600), the Guangdong S&T Program
+(Grant No.
+2026B0101100002), the National
+Natural Science Foundation of China (Grant No.
+62572108), the Key R&D Program of Shandong
+Province, China (No. 2023CXPT020), and the
+Guangdong Basic and Applied Basic Research
+Foundation (Grant No. 2026A1515010459).
+References
+Sudhanshu Agrawal, Risheek Garrepalli, Raghavv Goel,
+Mingu Lee, Christopher Lott, and Fatih Porikli.
+2025. Spiffy: Multiplying diffusion llm accelera-
+tion via lossless speculative decoding. arXiv preprint
+arXiv:2509.18085.
+Jacob Austin, Daniel D Johnson, Jonathan Ho, Daniel
+Tarlow, and Rianne Van Den Berg. 2021. Structured
+denoising diffusion models in discrete state-spaces.
+Advances in neural information processing systems,
+34:17981–17993.
+Yushi Bai, Xin Lv, Jiajie Zhang, Hongchang Lyu,
+Jiankai Tang, Zhidian Huang, Zhengxiao Du, Xiao
+Liu, Aohan Zeng, Lei Hou, and 1 others. 2024. Long-
+bench: A bilingual, multitask benchmark for long
+context understanding. In Proceedings of the 62nd
+annual meeting of the association for computational
+linguistics (volume 1: Long papers), pages 3119–
+3137.
+Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan,
+Henrique Ponde de Oliveira Pinto, Jared Kaplan,
+Harri Edwards, Yuri Burda, Nicholas Joseph, Greg
+Brockman, Alex Ray, Raul Puri, Gretchen Krueger,
+Michael Petrov, Heidy Khlaaf, Girish Sastry, Pamela
+Mishkin, Brooke Chan, Scott Gray, and 39 others.
+2021. Evaluating large language models trained on
+code. Preprint, arXiv:2107.03374.
+Zigeng Chen, Gongfan Fang, Xinyin Ma, Ruonan
+Yu, and Xinchao Wang. 2025.
+dparallel: Learn-
+able parallel decoding for dllms.
+arXiv preprint
+arXiv:2509.26488.
+Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian,
+Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias
+Plappert, Jerry Tworek, Jacob Hilton, Reiichiro
+Nakano, Christopher Hesse, and John Schulman.
+2021. Training verifiers to solve math word prob-
+lems. arXiv preprint arXiv:2110.14168.
+Patrick Esser, Sumith Kulal, Andreas Blattmann, Rahim
+Entezari, Jonas Müller, Harry Saini, Yam Levi, Do-
+minik Lorenz, Axel Sauer, Frederic Boesel, Dustin
+Podell, Tim Dockhorn, Zion English, and Robin
+Rombach. 2024. Scaling rectified flow transform-
+ers for high-resolution image synthesis. In Proceed-
+ings of the 41st International Conference on Machine
+Learning, ICML’24. JMLR.org.
+Shansan Gong, Mukai Li, Jiangtao Feng, Zhiyong Wu,
+and Lingpeng Kong. 2023. Diffuseq-v2: Bridging
+discrete and continuous text spaces for accelerated
+seq2seq diffusion models. In Findings of the Associ-
+ation for Computational Linguistics: EMNLP 2023,
+pages 9868–9875.
+17997
+
+Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri,
+Abhinav Pandey, Abhishek Kadian, Ahmad Al-
+Dahle, Aiesha Letman, Akhil Mathur, Alan Schelten,
+Alex Vaughan, and 1 others. 2024. The llama 3 herd
+of models. arXiv preprint arXiv:2407.21783.
+Xiaochuang Han, Sachin Kumar, and Yulia Tsvetkov.
+2023. Ssd-lm: Semi-autoregressive simplex-based
+diffusion language model for text generation and
+modular control.
+In Proceedings of the 61st An-
+nual Meeting of the Association for Computational
+Linguistics (Volume 1: Long Papers), pages 11575–
+11596.
+Guangxin He, Shen Nie, Fengqi Zhu, Yuankang Zhao,
+Tianyi Bai, Ran Yan, Jie Fu, Chongxuan Li, and
+Binhang Yuan. 2025. Ultrallada: Scaling the context
+length to 128k for diffusion large language models.
+arXiv preprint arXiv:2510.10481.
+Karl Moritz Hermann, Tomás Kociský, Edward Grefen-
+stette, Lasse Espeholt, Will Kay, Mustafa Suleyman,
+and Phil Blunsom. 2015. Teaching machines to read
+and comprehend. In NIPS, pages 1693–1701.
+Jonathan Ho, Ajay Jain, and Pieter Abbeel. 2020. De-
+noising diffusion probabilistic models. Advances
+in neural information processing systems, 33:6840–
+6851.
+Emiel Hoogeboom, Didrik Nielsen, Priyank Jaini,
+Patrick Forré, and Max Welling. 2021. Argmax flows
+and multinomial diffusion: learning categorical dis-
+tributions. In Proceedings of the 35th International
+Conference on Neural Information Processing Sys-
+tems, NIPS ’21, Red Hook, NY, USA. Curran Asso-
+ciates Inc.
+Zhanqiu Hu, Jian Meng, Yash Akhauri, Mohamed S Ab-
+delfattah, Jae-sun Seo, Zhiru Zhang, and Udit Gupta.
+2025. Accelerating diffusion language model infer-
+ence via efficient kv caching and guided diffusion.
+arXiv preprint arXiv:2505.21467.
+Jianuo Huang, Yaojie Zhang, Yicun Yang, Benhao
+Huang, Biqing Qi, Dongrui Liu, and Linfeng Zhang.
+2025. Mask tokens as prophet: Fine-grained cache
+eviction for efficient dllm inference. arXiv preprint
+arXiv:2510.09309.
+Yuchu Jiang, Yue Cai, Xiangzhong Luo, Jiale Fu, Jiarui
+Wang, Chonghan Liu, and Xu Yang. 2025. d2cache:
+Accelerating diffusion-based llms via dual adaptive
+caching. arXiv preprint arXiv:2509.23094.
+Xiangqi Jin, Yuxuan Wang, Yifeng Gao, Zichen Wen,
+Biqing Qi, Dongrui Liu, and Linfeng Zhang. 2025.
+Thinking inside the mask: In-place prompting in
+diffusion llms. arXiv preprint arXiv:2508.10736.
+Tero Karras, Miika Aittala, Timo Aila, and Samuli
+Laine. 2022.
+Elucidating the design space of
+diffusion-based generative models.
+Advances in
+neural information processing systems, 35:26565–
+26577.
+Fanheng Kong, Jingyuan Zhang, Yahui Liu, Zirui Wu,
+Yu Tian, Guorui Zhou, and 1 others. 2025. Acceler-
+ating diffusion llm inference via local determinism
+propagation. arXiv preprint arXiv:2510.07081.
+Weijie Kong, Qi Tian, Zijian Zhang, Rox Min, Zuozhuo
+Dai, Jin Zhou, Jiangfeng Xiong, Xin Li, Bo Wu,
+Jianwei Zhang, and 1 others. 2024. Hunyuanvideo:
+A systematic framework for large video generative
+models. arXiv preprint arXiv:2412.03603.
+Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying
+Sheng, Lianmin Zheng, Cody Hao Yu, Joseph Gon-
+zalez, Hao Zhang, and Ion Stoica. 2023. Efficient
+memory management for large language model serv-
+ing with pagedattention. In Proceedings of the 29th
+symposium on operating systems principles, pages
+611–626.
+Xiang Lisa Li, John Thickstun, Ishaan Gulrajani, Percy
+Liang, and Tatsunori B. Hashimoto. 2022. Diffusion-
+lm improves controllable text generation. In Pro-
+ceedings of the 36th International Conference on
+Neural Information Processing Systems, NIPS ’22,
+Red Hook, NY, USA. Curran Associates Inc.
+Aixin Liu, Bei Feng, Bing Xue, Bingxuan Wang,
+Bochao Wu, Chengda Lu, Chenggang Zhao, Chengqi
+Deng, Chenyu Zhang, Chong Ruan, and 1 others.
+2024. Deepseek-v3 technical report. arXiv preprint
+arXiv:2412.19437.
+Luping Liu, Yi Ren, Zhijie Lin, and Zhou Zhao. 2022.
+Pseudo numerical methods for diffusion models on
+manifolds. In International Conference on Learning
+Representations.
+Yangzhou Liu, Yue Cao, Hao Li, Gen Luo, Zhe
+Chen, Weiyun Wang, Xiaobo Liang, Biqing Qi, Li-
+jun Wu, Changyao Tian, and 1 others. 2025. Se-
+quential diffusion language models. arXiv preprint
+arXiv:2509.24007.
+Aaron Lou, Chenlin Meng, and Stefano Ermon. 2024.
+Discrete diffusion modeling by estimating the ratios
+of the data distribution. In Proceedings of the 41st In-
+ternational Conference on Machine Learning, pages
+32819–32848.
+Cheng Lu, Yuhao Zhou, Fan Bao, Jianfei Chen, Chongx-
+uan Li, and Jun Zhu. 2022. Dpm-solver: A fast ode
+solver for diffusion probabilistic model sampling in
+around 10 steps. Advances in neural information
+processing systems, 35:5775–5787.
+Xinyin Ma, Gongfan Fang, and Xinchao Wang. 2024.
+Deepcache: Accelerating diffusion models for free.
+In Proceedings of the IEEE/CVF conference on com-
+puter vision and pattern recognition, pages 15762–
+15772.
+Xinyin Ma, Runpeng Yu, Gongfan Fang, and Xinchao
+Wang. 2025. dkv-cache: The cache for diffusion
+language models. arXiv preprint arXiv:2505.15781.
+17998
+
+Quan Nguyen-Tri, Mukul Ranjan, and Zhiqiang Shen.
+2025. Attention is all you need for kv cache in diffu-
+sion llms. arXiv preprint arXiv:2510.14973.
+Shen Nie, Fengqi Zhu, Zebin You, Xiaolu Zhang,
+Jingyang Ou, Jun Hu, Jun Zhou, Yankai Lin, Ji-Rong
+Wen, and Chongxuan Li. 2025. Large language dif-
+fusion models. arXiv preprint arXiv:2502.09992.
+David Rein, Betty Li Hou, Asa Cooper Stickland, Jack-
+son Petty, Richard Yuanzhe Pang, Julien Dirani, Ju-
+lian Michael, and Samuel R Bowman. 2024. Gpqa:
+A graduate-level google-proof q&a benchmark. In
+First Conference on Language Modeling.
+Robin Rombach, Andreas Blattmann, Dominik Lorenz,
+Patrick Esser, and Björn Ommer. 2022.
+High-
+resolution image synthesis with latent diffusion mod-
+els. In Proceedings of the IEEE/CVF conference
+on computer vision and pattern recognition, pages
+10684–10695.
+Jiaming Song, Chenlin Meng, and Stefano Ermon.
+2021a. Denoising diffusion implicit models. In Inter-
+national Conference on Learning Representations.
+Yang Song, Prafulla Dhariwal, Mark Chen, and Ilya
+Sutskever. 2023.
+Consistency models.
+In Inter-
+national Conference on Machine Learning, pages
+32211–32252. PMLR.
+Yang Song, Jascha Sohl-Dickstein, Diederik P Kingma,
+Abhishek Kumar, Stefano Ermon, and Ben Poole.
+2021b. Score-based generative modeling through
+stochastic differential equations. In International
+Conference on Learning Representations.
+Xu Wang, Chenkai Xu, Yijie Jin, Jiachun Jin, Hao
+Zhang, and Zhijie Deng. 2025. Diffusion llms can do
+faster-than-ar inference via discrete diffusion forcing.
+arXiv preprint arXiv:2508.09192.
+Chengyue Wu, Hao Zhang, Shuchen Xue, Zhijian Liu,
+Shizhe Diao, Ligeng Zhu, Ping Luo, Song Han, and
+Enze Xie. 2025. Fast-dllm: Training-free accelera-
+tion of diffusion llm by enabling kv cache and parallel
+decoding. arXiv preprint arXiv:2505.22618.
+Enze Xie, Junsong Chen, Junyu Chen, Han Cai, Haotian
+Tang, Yujun Lin, Zhekai Zhang, Muyang Li, Ligeng
+Zhu, Yao Lu, and 1 others. 2024. Sana: Efficient
+high-resolution image synthesis with linear diffusion
+transformers. arXiv preprint arXiv:2410.10629.
+An Yang, Anfeng Li, Baosong Yang, Beichen Zhang,
+Binyuan Hui,
+Bo Zheng,
+Bowen Yu,
+Chang
+Gao, Chengen Huang, Chenxu Lv, and 1 others.
+2025.
+Qwen3 technical report.
+arXiv preprint
+arXiv:2505.09388.
+Jiacheng Ye, Zhihui Xie, Lin Zheng, Jiahui Gao, Zirui
+Wu, Xin Jiang, Zhenguo Li, and Lingpeng Kong.
+2025. Dream 7b: Diffusion large language models.
+arXiv preprint arXiv:2508.15487.
+A
+Detailed Experimental Setup
+In this section, we provide granular details regard-
+ing the experimental environment, hyperparameter
+configurations, and baseline implementations to
+facilitate reproducibility.
+A.1
+System Environment
+All experiments were conducted on a high-
+performance cluster equipped with NVIDIA A800
+(80GB) GPUs. The software environment includes
+PyTorch 2.1.0 and CUDA 11.8. To simulate a
+realistic streaming inference scenario, all latency
+and throughput benchmarks report end-to-end wall-
+clock time (encompassing both the prefill and de-
+code phases) with a strict batch size of 1.
+A.2
+Hyperparameter Configuration
+For all experiments involving Ada-DLM, we uti-
+lized a consistent set of hyperparameters derived
+from our dynamic clustering formulation:
+• History Window (m):
+Set to 3.
+This
+determines
+the
+dimensionality
+of
+the
+evolution-aware
+feature
+vector
+vt,i
+=
+[Ct,i, Ct−1,i, Ct−2,i]⊤.
+A win-
+dow of 3 steps was empirically found to
+effectively smooth out numerical instability
+(e.g.,
+flashing scores) without incurring
+significant memory overhead.
+• Initialization Capacity (K): Set to approx-
+imately 15% of the sequence length. This
+parameter controls the Rank-Aware Centroid
+Initialization for the High-Confidence and
+Boundary Centroids.
+Note that K serves
+solely as an initialization anchor for the bi-
+nary classifier; the final size of the active set
+is dynamic and decoupled from K.
+• Distance Metric: We employ Squared Eu-
+clidean Distance for the Semantics-Aware
+Clustering Decision. This metric serves as
+a computational proxy for our Rank-Adaptive
+Information Gain criterion, optimized for
+GPU efficiency.
+The total denoising steps T were configured ac-
+cording to the official optimal settings for each
+backbone model, 64 steps for Dream-7B and 100
+steps for LLaDA-8B-Instruct.
+17999
+
+A.3
+Baseline Implementation Details
+To ensure a fair comparison, all baselines were im-
+plemented within the same codebase and runtime
+environment:
+• dKV-Cache: Implemented following the pro-
+tocol in Ma et al. (2025).
+We enabled
+static prompt caching and dynamic decode
+caching. Crucially, this served as the memory
+infrastructure for all methods (including Fast-
+dLLM and Ada-DLM) to isolate the gains
+purely to FFN pruning.
+• Fast-dLLM: Implemented based on Wu et al.
+(2025). We used the recommended passive
+static threshold τstatic = 0.9. Tokens with con-
+fidence C > 0.9 were considered converged
+and skipped in subsequent steps.
+B
+Algorithm Pseudocode
+This section details the implementation of Ada-
+DLM. Algorithm 1 presents the unified inference
+pipeline, integrating the hardware-efficient sparse
+execution with the semantics-aware decision logic.
+C
+Semantic Fidelity on Complex Domains
+While standard benchmarks like GSM8K measure
+rigorous reasoning paths, it is equally important to
+assess whether the accelerated decoding process
+preserves the semantic richness of the generated
+text in highly complex domains. To this end, we
+conduct an additional evaluation on GPQA (Rein
+et al., 2024), a graduate-level dataset characterized
+by domain-specific terminology and complex sen-
+tence structures.
+Instead of treating this solely as a QA task
+(which primarily measures accuracy), we utilize
+ROUGE-1 to quantify the Semantic Fidelity (i.e.,
+the extent to which the accelerated generation re-
+tains the lexical and semantic content of the ground
+truth compared to the vanilla baseline). This metric
+serves as a proxy for measuring information loss
+during token pruning.
+Analysis.
+As shown in Table 6, Ada-DLM
+demonstrates robust semantic stability.
+On the
+Dream-7B backbone, our method achieves a
+ROUGE-1 score of 25.25, statistically compara-
+ble to the Vanilla baseline (25.53). Notably, on the
+LLaDA-8B backbone, Ada-DLM attains a score
+of 16.51, outperforming both the Vanilla baseline
+Algorithm 1 Ada-DLM: Semantics-Aware Adap-
+tive Inference
+Require: Sequence XN, Total steps T, Model Mθ, Capacity
+K, History Window m = 3.
+Ensure: Generated token x0.
+1: Iactive ←{1, . . . , L}
+2: Initialize History Buffer B ∈RL×m with zeros
+3: h ←Embed(XN)
+4: for t = T downto 1 do
+5:
+// Phase 1:
+Sparse Execution (Gather-GEMM-
+Scatter)
+6:
+hactive ←Gather(h, Iactive)
+7:
+Lt, hnew ←Mθ.FFN(hactive)
+8:
+h ←Scatter(hnew, Iactive)
+9:
+// Phase 2: Semantics-Aware Decision Logic
+10:
+Ct ←max(Softmax(Lt))
+▷Snapshot confidence
+11:
+B ←UpdateBuffer(B, Ct)
+▷Update history
+12:
+2.1 Rank-Aware Centroid Initialization (Stage 1)
+13:
+ρ ←Argsort(Ct, descending)
+14:
+µhigh ←B[ρ[1]]; µbound ←B[ρ[K + 1]]
+15:
+2.2 Semantics-Aware Clustering (Stage 2)
+16:
+Inext ←∅
+17:
+for i ∈Iactive do
+18:
+vi ←B[i]
+▷Get evolution-aware feature
+19:
+dhigh ←∥vi −µhigh∥2; dbound ←∥vi −µbound∥2
+20:
+if dhigh ≥dbound then
+21:
+Inext.add(i)
+▷Closer to boundary →Active
+22:
+end if
+23:
+end for
+24:
+// Phase 3: Update & Early Exit
+25:
+Iactive ←Inext
+▷Tokens closer to µhigh are frozen
+26:
+if Iactive = ∅then break
+27:
+end if
+28: end for
+29: return Argmax(Lfinal)
+(16.28) and the passive Fast-dLLM (14.50). This re-
+sult suggests that our Semantics-Aware Clustering
+mechanism is particularly effective at differentiat-
+ing between semantically stabilized cores and nec-
+essary refinements. Unlike passive static threshold-
+ing (Fast-dLLM) which blindly truncates based on
+scalar values (leading to over-pruning), our geomet-
+ric criterion preserves structurally critical tokens
+while filtering out noisy tail-distribution signals
+caused by post-peak confidence decline, thereby
+enhancing lexical precision in complex sequences.
+D
+Comprehensive Memory Footprint
+Analysis
+As discussed in the main text, Ada-DLM introduces
+an evolution-aware feature vector to track the tem-
+poral trajectory of token confidence. To address
+potential concerns regarding the space complexity
+of this mechanism, we theoretically and empirically
+analyzed its memory footprint.
+Theoretically, given an input sequence of length
+L and a constant historical window size m = 3,
+the spatial complexity of the additional tracking
+18000
+
+Table 6: Semantic Fidelity Analysis on GPQA. We report ROUGE-1 scores to evaluate the preservation of semantic
+content. Ada-DLM maintains high semantic overlap with the ground truth, particularly on LLaDA-8B (16.51),
+surpassing both baselines.
+Method
+Dream-7B
+LLaDA-8B
+Avg. Speedup
+Baselines
+Vanilla Sampling
+25.53
+16.28
+1.00×
+dKV-Cache
+25.08
+15.75
+1.10×
+Fast-dLLM
+25.62
+14.50
+2.29×
+Ada-DLM (Ours)
+25.25
+16.51
+4.26×
+vectors strictly converges to an extremely low value
+of O(L).
+Empirically, we measured the KV cache mem-
+ory and peak memory consumption during infer-
+ence across different backbone models and context
+lengths. As shown in Table 7, the additional mem-
+ory required by Ada-DLM’s tracking mechanism
+is negligible (e.g., less than 0.02 MB for 8B mod-
+els with short contexts, and only +0.19 MB even
+when the prompt length scales to 16K in UltraL-
+LaDA). The relative memory increase compared
+to the vanilla and static baseline (Fast-dLLM) is
+strictly below 0.01%, confirming that our signifi-
+cant acceleration does not come at the expense of
+VRAM consumption.
+E
+Extension to Diffusion-Based MLLMs
+To demonstrate the generalizability of our frame-
+work beyond text-only architectures, we conducted
+extensive evaluations on several state-of-the-art
+diffusion-based Multimodal Large Language Mod-
+els (MLLMs), including LLaDA-V (8B), Dimple-
+7B, and MMAda-8B.
+We evaluated the generation quality and accelera-
+tion ratios across three highly complex multimodal
+reasoning benchmarks: MathVista, LLaVA-Bench,
+and MathVerse. For a more rigorous evaluation, we
+additionally included the recently proposed dLLM-
+Cache as a strong concurrent baseline.
+As reported in Table 8, Ada-DLM consistently
+outperforms all baselines, achieving significant ac-
+celeration rates (up to 5.44× on Dimple-7B and
+5.40× on MMAda-8B) while preserving high eval-
+uation scores across all multimodal benchmarks.
+This confirms that our semantic-aware clustering
+approach is highly robust and can effectively man-
+age the heterogeneous token representations inher-
+ent in vision-language tasks.
+F
+Implementation Details of
+Non-Iterative Clustering
+To ensure the decision overhead does not eclipse
+the computational savings, Ada-DLM strictly
+bounds the time complexity of the clustering algo-
+rithm. The standard K-means algorithm is compu-
+tationally expensive, exhibiting a time complexity
+of O(I · K · L) for I iterations.
+Our framework adopts a non-iterative variant
+where the centroids (the high-confidence centroid
+and the boundary centroid) are deterministically
+initialized via the rank-aware sorting mechanism,
+meaning only a single pass of distance calculation
+is required. This drastically reduces the time com-
+plexity to O(L log L). Coupled with the hardware-
+specific Gather-GEMM-Scatter operators, the run-
+time overhead of the non-iterative clustering ac-
+counts for less than 0.2% of the total inference
+cost.
+Furthermore,
+the
+Ada-DLM
+technique
+is
+highly decoupled from the underlying Trans-
+former architecture.
+It is encapsulated as
+a
+set
+of
+modular
+API
+functions—namely,
+rank_aware_init, semantic_clustering, and
+gather_gemm_scatter.
+These high-level func-
+tions respectively enable deterministic prototype
+initialization without iterative overhead, dynamic
+separation of active tokens based on evolution
+trajectories, and hardware-efficient dense execution
+that circumvents memory fragmentation.
+This
+modular design insulates programmers from te-
+dious low-level details, allowing ready integration
+with future diffusion-based architectures.
+18001
+
+Model (Size)
+Avg. Prompt Method
+KV Cache (MB) Peak Memory (MB)
+Dream (7B)
+512
+Vanilla
+0.00
+14950.40
+dKV-Cache
+28.67
+14979.07
+Fast-dLLM
+28.67
+14979.07
+Ada-DLM (Ours)
+28.68 (+0.01)
+14979.08
+LLaDA (8B)
+512
+Vanilla
+0.00
+17059.84
+dKV-Cache
+266.24
+17305.60
+Fast-dLLM
+266.24
+17305.60
+Ada-DLM (Ours)
+266.25 (+0.01)
+17305.61
+LLaDA-V (8B)
+864
+Vanilla
+0.00
+19671.04
+dKV-Cache
+522.24
+20162.56
+Fast-dLLM
+522.24
+20162.56
+Ada-DLM (Ours)
+522.25 (+0.02)
+20162.58
+UltraLLaDA
+16K
+Vanilla
+0.00
+40376.32
+dKV-Cache
+8192.00
+48128.00
+Fast-dLLM
+8192.00
+48128.00
+Ada-DLM (Ours)
+8192.19 (+0.19)
+48128.19
+Table 7: Detailed memory cost comparisons during inference. The extra memory required by Ada-DLM is strictly
+bounded and negligible across all tested context lengths.
+Backbone
+Method
+MathVista
+LLaVA-Bench
+MathVerse
+Avg Speedup
+LLaDA-V
+Vanilla
+59.76 (1.00×) 70.45 (1.00×) 28.54 (1.00×)
+1.00×
+dKV-Cache
+58.91 (1.33×) 70.15 (1.28×) 28.33 (1.42×)
+1.34×
+Fast-dLLM
+57.60 (2.43×) 69.38 (2.42×) 27.91 (2.36×)
+2.40×
+dLLM-Cache 58.21 (4.43×) 69.58 (4.42×) 28.41 (3.36×)
+4.07×
+Ada-DLM
+59.39 (5.01×) 70.13 (4.66×) 28.57 (3.59×)
+4.42×
+Dimple-7B
+Vanilla
+42.17 (1.00×) 64.94 (1.00×) 23.82 (1.00×)
+1.00×
+dKV-Cache
+42.05 (1.45×) 64.53 (0.95×) 23.64 (1.18×)
+1.19×
+Fast-dLLM
+42.00 (2.16×) 63.98 (3.06×) 22.99 (2.99×)
+2.73×
+dLLM-Cache 42.09 (4.43×) 64.37 (5.42×) 23.60 (4.36×)
+4.74×
+Ada-DLM
+42.09 (4.85×) 64.88 (6.13×) 23.71 (5.34×)
+5.44×
+MMAda-8B
+Vanilla
+47.32 (1.00×) 69.78 (1.00×) 25.45 (1.00×)
+1.00×
+dKV-Cache
+47.28 (1.09×) 69.03 (0.88×) 25.11 (1.23×)
+1.06×
+Fast-dLLM
+46.65 (3.15×) 68.56 (2.96×) 24.68 (2.48×)
+2.86×
+dLLM-Cache 47.14 (4.83×) 69.55 (5.36×) 24.91 (4.80×)
+4.99×
+Ada-DLM
+47.20 (5.23×) 69.56 (6.07×) 25.32 (4.92×)
+5.40×
+Table 8: Performance and acceleration comparison on diffusion-based MLLMs. The reported results are in the
+format of “Accuracy (Speedup)”.
+18002

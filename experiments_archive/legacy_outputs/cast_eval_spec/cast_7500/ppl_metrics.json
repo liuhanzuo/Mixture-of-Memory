@@ -1,0 +1,14 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/cast_repro_zero2/hf_final",
+  "seqlen": 4096,
+  "load_seconds": 19.63168454170227,
+  "global_zero_ratio": 0.4805290778312241,
+  "linear_zero_ratio": 0.5,
+  "exact_2of4_tile_ratio": 1.0,
+  "linear_layers": 224,
+  "linear_parameters": 6476005376,
+  "nm_tiles": 1619001344,
+  "wikitext2_ppl": 6.137203734304916,
+  "wikitext2_tokens": 335872,
+  "wikitext2_seconds": 7.67623233795166
+}

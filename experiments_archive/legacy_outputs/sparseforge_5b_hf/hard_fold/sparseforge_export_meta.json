@@ -1,0 +1,28 @@
+{
+  "source_ckpt": "/apdcephfs_wzc1/share_304376610/pighzliu_code/out_llama/models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260413_201320/model_best_lm_eval.pt",
+  "source_iter_num": 17900,
+  "source_best_lm_eval_mean": 57.267250061035156,
+  "source_lm_eval_results": {
+    "hellaswag": 54.4214299940251,
+    "winogrande": 69.6921862667719,
+    "arc_easy": 77.94612794612794,
+    "arc_challenge": 45.30716723549488,
+    "openbookqa": 35.0,
+    "piqa": 76.87704026115343,
+    "race": 41.62679425837321,
+    "mean": 57.2672494231352
+  },
+  "dense_reference": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama2-7b",
+  "dtype": "bfloat16",
+  "mask_variant": "hard",
+  "mask_hardening": "nm_2_4 exact top-2-per-4 (sparse_modeling.py:594-621)",
+  "slorb_variant": "fold",
+  "slorb_note": "SLoRB_Weight @ x_proj folded into W (exact linear algebra; makes the weight dense)",
+  "scope_tensors": 224,
+  "scope_elements": 6476005376,
+  "scope_zero_fraction": 1.6985779599204583e-09,
+  "exact_2of4_violations": 1619001344,
+  "exact_2of4_violations_post_cast": 1619001344,
+  "is_exact_2of4": false,
+  "max_abs_slorb_effective": 0.05922471359372139
+}

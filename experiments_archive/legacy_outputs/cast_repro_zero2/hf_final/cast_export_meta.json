@@ -1,0 +1,12 @@
+{
+  "source_ckpt": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/cast_repro_zero2/final_sparse.pt",
+  "source_step": null,
+  "dense_reference": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama2-7b",
+  "dtype": "bfloat16",
+  "cast_tensors": 224,
+  "cast_elements": 6476005376,
+  "cast_zero_fraction": 0.5,
+  "exact_2of4_violations": 0,
+  "exact_2of4_violations_post_cast": 0,
+  "dropped_buffers": 448
+}

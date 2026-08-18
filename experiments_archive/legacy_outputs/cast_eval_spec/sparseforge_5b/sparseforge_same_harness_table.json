@@ -1,0 +1,1188 @@
+{
+  "generated": "2026-08-11",
+  "task": "#244 -- put SparseForge's 5B headline checkpoint on the CAST-repro harness",
+  "node": ".21 (8x L20A, wzc1)",
+  "harness": {
+    "lm_eval_pip_version": "0.4.8",
+    "git_hash": "b86c479",
+    "dtype": "bfloat16",
+    "add_bos_token": false,
+    "chat_template": null,
+    "num_fewshot": 0,
+    "batch_size": "auto",
+    "seed": 0,
+    "parallelize": true,
+    "note": "byte-identical across all seven rows; only `pretrained` differs"
+  },
+  "ppl_harness": {
+    "script": "baselines/eval_hf_sparse_model.py",
+    "corpus": "data/wikitext/wikitext-2-raw-v1/wiki.test.raw",
+    "target_tokens": 335872,
+    "note": "335,872 = 164x2048 = 82x4096, so 2048 and 4096 score the same token budget"
+  },
+  "source_checkpoint": {
+    "path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/out_llama/models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260413_201320/model_best_lm_eval.pt",
+    "iter_num": 17900,
+    "finalization_done": true,
+    "saved_weights_are_dense": true,
+    "mask_is_continuous": true,
+    "mask_range": [
+      7.958078640513122e-11,
+      1.0
+    ],
+    "hard_projection_used": "nm_2_4 exact top-2-per-4 (sparse_modeling.py:594-621)",
+    "threshold_0p5_would_misproject_tiles": "4300 on a 6-layer sample (full-model 26,726 is MAIN prior measurement, not re-verified in #244)",
+    "slorb_branch": {
+      "active": true,
+      "SLoRB_Weight_elements": 404750336,
+      "x_proj_elements": 443678720,
+      "extra_live_params_vs_pure_2of4": 848429056,
+      "pct_extra_vs_surviving_weights": 26.2,
+      "fro_ratio_vs_masked_weight_range": [
+        0.204,
+        0.469
+      ],
+      "pct_energy_on_pruned_positions": 50.0,
+      "x_proj_trained_away_from_fixed_blocksum": true
+    }
+  },
+  "variant_notes": {
+    "sparseforge_hard_drop": "EXACT 2:4 (verified zero_frac 0.500000000, 0/1,619,001,344 bad tiles, 224 tensors). SLoRB low-rank branch REMOVED. This is the only SparseForge variant that is apples-to-apples with the other four arms.",
+    "sparseforge_hard_fold": "2:4 support + SLoRB folded into W. NOT 2:4 (dense after folding). This is the protocol behind the PUBLISHED SparseForge numbers: outputs/paper_v2/ast7_eval/sparseforge_5b_table2/eval.log shows 'Set hardening_x=0 ... using hard masks' + 'Keeping sparse_forward mode (SLoRB enabled)'. Reproduces the checkpoint's own CAST-7 anchor 57.2672 to +0.0078 pp, which validates this whole export/eval pipeline.",
+    "sparseforge_soft_fold": "continuous mask + SLoRB folded in. NOT 2:4. Ablation showing the mask hardening step itself costs almost nothing once SLoRB is present."
+  },
+  "per_task_plain_acc": {
+    "dense_ref": {
+      "boolq": 77.76758409785933,
+      "rte": 63.1768953068592,
+      "hellaswag": 57.13005377414858,
+      "race": 39.71291866028708,
+      "piqa": 77.85636561479869,
+      "winogrande": 69.29755327545382,
+      "arc_easy": 76.34680134680136,
+      "arc_challenge": 43.1740614334471,
+      "openbookqa": 31.6
+    },
+    "cast_repro_7500": {
+      "boolq": 69.2354740061162,
+      "rte": 74.72924187725631,
+      "hellaswag": 53.92352121091416,
+      "race": 39.52153110047847,
+      "piqa": 76.3329706202394,
+      "winogrande": 66.29834254143645,
+      "arc_easy": 74.07407407407408,
+      "arc_challenge": 41.63822525597269,
+      "openbookqa": 28.799999999999997
+    },
+    "ast_official": {
+      "boolq": 72.90519877675841,
+      "rte": 66.4259927797834,
+      "hellaswag": 54.511053574985056,
+      "race": 39.61722488038277,
+      "piqa": 76.98585418933624,
+      "winogrande": 67.32438831886346,
+      "arc_easy": 73.48484848484848,
+      "arc_challenge": 39.93174061433447,
+      "openbookqa": 28.599999999999998
+    },
+    "wanda": {
+      "boolq": 68.19571865443424,
+      "rte": 53.42960288808665,
+      "hellaswag": 41.29655447122087,
+      "race": 35.406698564593306,
+      "piqa": 70.29379760609358,
+      "winogrande": 62.98342541436463,
+      "arc_easy": 61.06902356902357,
+      "arc_challenge": 29.436860068259385,
+      "openbookqa": 23.0
+    },
+    "sparseforge_hard_drop": {
+      "boolq": 69.32721712538226,
+      "rte": 57.03971119133574,
+      "hellaswag": 49.47221668990241,
+      "race": 36.9377990430622,
+      "piqa": 73.12295973884657,
+      "winogrande": 62.98342541436463,
+      "arc_easy": 72.09595959595958,
+      "arc_challenge": 36.774744027303754,
+      "openbookqa": 28.599999999999998
+    },
+    "sparseforge_soft_fold": {
+      "boolq": 77.73700305810397,
+      "rte": 50.18050541516246,
+      "hellaswag": 54.45130452101174,
+      "race": 41.62679425837321,
+      "piqa": 76.93144722524482,
+      "winogrande": 69.92896606156275,
+      "arc_easy": 78.11447811447812,
+      "arc_challenge": 45.39249146757679,
+      "openbookqa": 35.199999999999996
+    },
+    "sparseforge_hard_fold": {
+      "boolq": 77.79816513761469,
+      "rte": 50.18050541516246,
+      "hellaswag": 54.49113722366062,
+      "race": 41.33971291866029,
+      "piqa": 76.87704026115343,
+      "winogrande": 69.45540647198106,
+      "arc_easy": 78.1986531986532,
+      "arc_challenge": 45.563139931740615,
+      "openbookqa": 35.0
+    }
+  },
+  "per_task_full": {
+    "dense_ref": {
+      "boolq": {
+        "primary_metric": "acc",
+        "n_samples": 3270,
+        "task_version": 2.0,
+        "acc": 0.7776758409785933,
+        "acc_stderr": 0.00727252415797122,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "rte": {
+        "primary_metric": "acc",
+        "n_samples": 277,
+        "task_version": 1.0,
+        "acc": 0.631768953068592,
+        "acc_stderr": 0.02903252442802372,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "hellaswag": {
+        "primary_metric": "acc_norm",
+        "n_samples": 10042,
+        "task_version": 1.0,
+        "acc": 0.5713005377414858,
+        "acc_stderr": 0.004938787067611919,
+        "acc_norm": 0.7597092212706632,
+        "acc_norm_stderr": 0.0042638681610422825
+      },
+      "race": {
+        "primary_metric": "acc",
+        "n_samples": 1045,
+        "task_version": 2.0,
+        "acc": 0.39712918660287083,
+        "acc_stderr": 0.015143553050563242,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "piqa": {
+        "primary_metric": "acc",
+        "n_samples": 1838,
+        "task_version": 1.0,
+        "acc": 0.778563656147987,
+        "acc_stderr": 0.009687616456840284,
+        "acc_norm": 0.7889009793253536,
+        "acc_norm_stderr": 0.009521377378734118
+      },
+      "winogrande": {
+        "primary_metric": "acc",
+        "n_samples": 1267,
+        "task_version": 1.0,
+        "acc": 0.6929755327545383,
+        "acc_stderr": 0.012963688616969423,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "arc_easy": {
+        "primary_metric": "acc_norm",
+        "n_samples": 2376,
+        "task_version": 1.0,
+        "acc": 0.7634680134680135,
+        "acc_stderr": 0.008719840797175834,
+        "acc_norm": 0.7466329966329966,
+        "acc_norm_stderr": 0.008924765424529378
+      },
+      "arc_challenge": {
+        "primary_metric": "acc_norm",
+        "n_samples": 1172,
+        "task_version": 1.0,
+        "acc": 0.431740614334471,
+        "acc_stderr": 0.014474591427196025,
+        "acc_norm": 0.46245733788395904,
+        "acc_norm_stderr": 0.014570144495075503
+      },
+      "openbookqa": {
+        "primary_metric": "acc_norm",
+        "n_samples": 500,
+        "task_version": 1.0,
+        "acc": 0.316,
+        "acc_stderr": 0.020812359515855822,
+        "acc_norm": 0.442,
+        "acc_norm_stderr": 0.022231970696321195
+      }
+    },
+    "cast_repro_7500": {
+      "boolq": {
+        "primary_metric": "acc",
+        "n_samples": 3270,
+        "task_version": 2.0,
+        "acc": 0.692354740061162,
+        "acc_stderr": 0.00807201552786952,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "rte": {
+        "primary_metric": "acc",
+        "n_samples": 277,
+        "task_version": 1.0,
+        "acc": 0.7472924187725631,
+        "acc_stderr": 0.026157719758464693,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "hellaswag": {
+        "primary_metric": "acc_norm",
+        "n_samples": 10042,
+        "task_version": 1.0,
+        "acc": 0.5392352121091416,
+        "acc_stderr": 0.004974395131539498,
+        "acc_norm": 0.7293367855008962,
+        "acc_norm_stderr": 0.004433943894764314
+      },
+      "race": {
+        "primary_metric": "acc",
+        "n_samples": 1045,
+        "task_version": 2.0,
+        "acc": 0.3952153110047847,
+        "acc_stderr": 0.015130978883893894,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "piqa": {
+        "primary_metric": "acc",
+        "n_samples": 1838,
+        "task_version": 1.0,
+        "acc": 0.7633297062023939,
+        "acc_stderr": 0.009916841655042832,
+        "acc_norm": 0.7687704026115343,
+        "acc_norm_stderr": 0.009837063180625381
+      },
+      "winogrande": {
+        "primary_metric": "acc",
+        "n_samples": 1267,
+        "task_version": 1.0,
+        "acc": 0.6629834254143646,
+        "acc_stderr": 0.013284955769395205,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "arc_easy": {
+        "primary_metric": "acc_norm",
+        "n_samples": 2376,
+        "task_version": 1.0,
+        "acc": 0.7407407407407407,
+        "acc_stderr": 0.008992251535805688,
+        "acc_norm": 0.7424242424242424,
+        "acc_norm_stderr": 0.008973187820215046
+      },
+      "arc_challenge": {
+        "primary_metric": "acc_norm",
+        "n_samples": 1172,
+        "task_version": 1.0,
+        "acc": 0.41638225255972694,
+        "acc_stderr": 0.014405618279436053,
+        "acc_norm": 0.45733788395904434,
+        "acc_norm_stderr": 0.014558106543923992
+      },
+      "openbookqa": {
+        "primary_metric": "acc_norm",
+        "n_samples": 500,
+        "task_version": 1.0,
+        "acc": 0.288,
+        "acc_stderr": 0.020271503835075255,
+        "acc_norm": 0.398,
+        "acc_norm_stderr": 0.021912377885779953
+      }
+    },
+    "ast_official": {
+      "boolq": {
+        "primary_metric": "acc",
+        "n_samples": 3270,
+        "task_version": 2.0,
+        "acc": 0.7290519877675841,
+        "acc_stderr": 0.007773467255881116,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "rte": {
+        "primary_metric": "acc",
+        "n_samples": 277,
+        "task_version": 1.0,
+        "acc": 0.6642599277978339,
+        "acc_stderr": 0.028426021205818813,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "hellaswag": {
+        "primary_metric": "acc_norm",
+        "n_samples": 10042,
+        "task_version": 1.0,
+        "acc": 0.5451105357498506,
+        "acc_stderr": 0.004969431900874053,
+        "acc_norm": 0.7271459868552081,
+        "acc_norm_stderr": 0.004445160997618522
+      },
+      "race": {
+        "primary_metric": "acc",
+        "n_samples": 1045,
+        "task_version": 2.0,
+        "acc": 0.39617224880382773,
+        "acc_stderr": 0.015137296245565179,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "piqa": {
+        "primary_metric": "acc",
+        "n_samples": 1838,
+        "task_version": 1.0,
+        "acc": 0.7698585418933623,
+        "acc_stderr": 0.009820832826839678,
+        "acc_norm": 0.779651795429815,
+        "acc_norm_stderr": 0.009670535456853159
+      },
+      "winogrande": {
+        "primary_metric": "acc",
+        "n_samples": 1267,
+        "task_version": 1.0,
+        "acc": 0.6732438831886346,
+        "acc_stderr": 0.01318199730213137,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "arc_easy": {
+        "primary_metric": "acc_norm",
+        "n_samples": 2376,
+        "task_version": 1.0,
+        "acc": 0.7348484848484849,
+        "acc_stderr": 0.009057621139172679,
+        "acc_norm": 0.7138047138047138,
+        "acc_norm_stderr": 0.00927447077462779
+      },
+      "arc_challenge": {
+        "primary_metric": "acc_norm",
+        "n_samples": 1172,
+        "task_version": 1.0,
+        "acc": 0.3993174061433447,
+        "acc_stderr": 0.014312094557946681,
+        "acc_norm": 0.42406143344709896,
+        "acc_norm_stderr": 0.014441889627464344
+      },
+      "openbookqa": {
+        "primary_metric": "acc_norm",
+        "n_samples": 500,
+        "task_version": 1.0,
+        "acc": 0.286,
+        "acc_stderr": 0.020229346329177604,
+        "acc_norm": 0.408,
+        "acc_norm_stderr": 0.022000910893877113
+      }
+    },
+    "wanda": {
+      "boolq": {
+        "primary_metric": "acc",
+        "n_samples": 3270,
+        "task_version": 2.0,
+        "acc": 0.6819571865443425,
+        "acc_stderr": 0.00814542760718586,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "rte": {
+        "primary_metric": "acc",
+        "n_samples": 277,
+        "task_version": 1.0,
+        "acc": 0.5342960288808665,
+        "acc_stderr": 0.03002557981936636,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "hellaswag": {
+        "primary_metric": "acc_norm",
+        "n_samples": 10042,
+        "task_version": 1.0,
+        "acc": 0.4129655447122087,
+        "acc_stderr": 0.004913604782666059,
+        "acc_norm": 0.5513841864170484,
+        "acc_norm_stderr": 0.004963362085275328
+      },
+      "race": {
+        "primary_metric": "acc",
+        "n_samples": 1045,
+        "task_version": 2.0,
+        "acc": 0.35406698564593303,
+        "acc_stderr": 0.01480083471167726,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "piqa": {
+        "primary_metric": "acc",
+        "n_samples": 1838,
+        "task_version": 1.0,
+        "acc": 0.7029379760609358,
+        "acc_stderr": 0.010661725404814675,
+        "acc_norm": 0.7116430903155604,
+        "acc_norm_stderr": 0.010569190399220779
+      },
+      "winogrande": {
+        "primary_metric": "acc",
+        "n_samples": 1267,
+        "task_version": 1.0,
+        "acc": 0.6298342541436464,
+        "acc_stderr": 0.013570454689603929,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "arc_easy": {
+        "primary_metric": "acc_norm",
+        "n_samples": 2376,
+        "task_version": 1.0,
+        "acc": 0.6106902356902357,
+        "acc_stderr": 0.010005212782878208,
+        "acc_norm": 0.5711279461279462,
+        "acc_norm_stderr": 0.01015544065290014
+      },
+      "arc_challenge": {
+        "primary_metric": "acc_norm",
+        "n_samples": 1172,
+        "task_version": 1.0,
+        "acc": 0.29436860068259385,
+        "acc_stderr": 0.013318528460539387,
+        "acc_norm": 0.3174061433447099,
+        "acc_norm_stderr": 0.013602239088038159
+      },
+      "openbookqa": {
+        "primary_metric": "acc_norm",
+        "n_samples": 500,
+        "task_version": 1.0,
+        "acc": 0.23,
+        "acc_stderr": 0.018839050391123182,
+        "acc_norm": 0.358,
+        "acc_norm_stderr": 0.021461434862859133
+      }
+    },
+    "sparseforge_hard_drop": {
+      "boolq": {
+        "primary_metric": "acc",
+        "n_samples": 3270,
+        "task_version": 2.0,
+        "acc": 0.6932721712538227,
+        "acc_stderr": 0.00806530905177175,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "rte": {
+        "primary_metric": "acc",
+        "n_samples": 277,
+        "task_version": 1.0,
+        "acc": 0.5703971119133574,
+        "acc_stderr": 0.02979666882912467,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "hellaswag": {
+        "primary_metric": "acc_norm",
+        "n_samples": 10042,
+        "task_version": 1.0,
+        "acc": 0.4947221668990241,
+        "acc_stderr": 0.004989503417767801,
+        "acc_norm": 0.6580362477594105,
+        "acc_norm_stderr": 0.004733980470799514
+      },
+      "race": {
+        "primary_metric": "acc",
+        "n_samples": 1045,
+        "task_version": 2.0,
+        "acc": 0.369377990430622,
+        "acc_stderr": 0.014937221457864277,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "piqa": {
+        "primary_metric": "acc",
+        "n_samples": 1838,
+        "task_version": 1.0,
+        "acc": 0.7312295973884657,
+        "acc_stderr": 0.01034339294008991,
+        "acc_norm": 0.7388465723612623,
+        "acc_norm_stderr": 0.010248738649935658
+      },
+      "winogrande": {
+        "primary_metric": "acc",
+        "n_samples": 1267,
+        "task_version": 1.0,
+        "acc": 0.6298342541436464,
+        "acc_stderr": 0.013570454689603929,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "arc_easy": {
+        "primary_metric": "acc_norm",
+        "n_samples": 2376,
+        "task_version": 1.0,
+        "acc": 0.7209595959595959,
+        "acc_stderr": 0.009203588704032725,
+        "acc_norm": 0.686026936026936,
+        "acc_norm_stderr": 0.009523245335215693
+      },
+      "arc_challenge": {
+        "primary_metric": "acc_norm",
+        "n_samples": 1172,
+        "task_version": 1.0,
+        "acc": 0.3677474402730375,
+        "acc_stderr": 0.01409099561816849,
+        "acc_norm": 0.38993174061433444,
+        "acc_norm_stderr": 0.014252959848892797
+      },
+      "openbookqa": {
+        "primary_metric": "acc_norm",
+        "n_samples": 500,
+        "task_version": 1.0,
+        "acc": 0.286,
+        "acc_stderr": 0.020229346329177604,
+        "acc_norm": 0.408,
+        "acc_norm_stderr": 0.022000910893877113
+      }
+    },
+    "sparseforge_soft_fold": {
+      "boolq": {
+        "primary_metric": "acc",
+        "n_samples": 3270,
+        "task_version": 2.0,
+        "acc": 0.7773700305810397,
+        "acc_stderr": 0.007276093141006114,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "rte": {
+        "primary_metric": "acc",
+        "n_samples": 277,
+        "task_version": 1.0,
+        "acc": 0.5018050541516246,
+        "acc_stderr": 0.030096267148976653,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "hellaswag": {
+        "primary_metric": "acc_norm",
+        "n_samples": 10042,
+        "task_version": 1.0,
+        "acc": 0.5445130452101175,
+        "acc_stderr": 0.004969968458256084,
+        "acc_norm": 0.7332204740091616,
+        "acc_norm_stderr": 0.0044137228230535
+      },
+      "race": {
+        "primary_metric": "acc",
+        "n_samples": 1045,
+        "task_version": 2.0,
+        "acc": 0.41626794258373206,
+        "acc_stderr": 0.015256081714281491,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "piqa": {
+        "primary_metric": "acc",
+        "n_samples": 1838,
+        "task_version": 1.0,
+        "acc": 0.7693144722524483,
+        "acc_stderr": 0.009828959550983209,
+        "acc_norm": 0.7758433079434167,
+        "acc_norm_stderr": 0.009729897956410029
+      },
+      "winogrande": {
+        "primary_metric": "acc",
+        "n_samples": 1267,
+        "task_version": 1.0,
+        "acc": 0.6992896606156275,
+        "acc_stderr": 0.012888010494704671,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "arc_easy": {
+        "primary_metric": "acc_norm",
+        "n_samples": 2376,
+        "task_version": 1.0,
+        "acc": 0.7811447811447811,
+        "acc_stderr": 0.008484229631251845,
+        "acc_norm": 0.7941919191919192,
+        "acc_norm_stderr": 0.00829587379191862
+      },
+      "arc_challenge": {
+        "primary_metric": "acc_norm",
+        "n_samples": 1172,
+        "task_version": 1.0,
+        "acc": 0.4539249146757679,
+        "acc_stderr": 0.014549221105171829,
+        "acc_norm": 0.4974402730375427,
+        "acc_norm_stderr": 0.014611199329843819
+      },
+      "openbookqa": {
+        "primary_metric": "acc_norm",
+        "n_samples": 500,
+        "task_version": 1.0,
+        "acc": 0.352,
+        "acc_stderr": 0.02138004238594605,
+        "acc_norm": 0.438,
+        "acc_norm_stderr": 0.022210326363977382
+      }
+    },
+    "sparseforge_hard_fold": {
+      "boolq": {
+        "primary_metric": "acc",
+        "n_samples": 3270,
+        "task_version": 2.0,
+        "acc": 0.7779816513761468,
+        "acc_stderr": 0.007268949486939645,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "rte": {
+        "primary_metric": "acc",
+        "n_samples": 277,
+        "task_version": 1.0,
+        "acc": 0.5018050541516246,
+        "acc_stderr": 0.030096267148976653,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "hellaswag": {
+        "primary_metric": "acc_norm",
+        "n_samples": 10042,
+        "task_version": 1.0,
+        "acc": 0.5449113722366062,
+        "acc_stderr": 0.004969611554685557,
+        "acc_norm": 0.734017128062139,
+        "acc_norm_stderr": 0.004409521343139737
+      },
+      "race": {
+        "primary_metric": "acc",
+        "n_samples": 1045,
+        "task_version": 2.0,
+        "acc": 0.4133971291866029,
+        "acc_stderr": 0.015240723036181451,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "piqa": {
+        "primary_metric": "acc",
+        "n_samples": 1838,
+        "task_version": 1.0,
+        "acc": 0.7687704026115343,
+        "acc_stderr": 0.009837063180625381,
+        "acc_norm": 0.7758433079434167,
+        "acc_norm_stderr": 0.009729897956410029
+      },
+      "winogrande": {
+        "primary_metric": "acc",
+        "n_samples": 1267,
+        "task_version": 1.0,
+        "acc": 0.6945540647198106,
+        "acc_stderr": 0.012945038632551933,
+        "acc_norm": null,
+        "acc_norm_stderr": null
+      },
+      "arc_easy": {
+        "primary_metric": "acc_norm",
+        "n_samples": 2376,
+        "task_version": 1.0,
+        "acc": 0.781986531986532,
+        "acc_stderr": 0.00847245930314547,
+        "acc_norm": 0.7941919191919192,
+        "acc_norm_stderr": 0.00829587379191862
+      },
+      "arc_challenge": {
+        "primary_metric": "acc_norm",
+        "n_samples": 1172,
+        "task_version": 1.0,
+        "acc": 0.45563139931740615,
+        "acc_stderr": 0.014553749939306847,
+        "acc_norm": 0.49829351535836175,
+        "acc_norm_stderr": 0.014611305705057077
+      },
+      "openbookqa": {
+        "primary_metric": "acc_norm",
+        "n_samples": 500,
+        "task_version": 1.0,
+        "acc": 0.35,
+        "acc_stderr": 0.021352091786223066,
+        "acc_norm": 0.436,
+        "acc_norm_stderr": 0.022198954641476896
+      }
+    }
+  },
+  "slice_means": {
+    "dense_ref": {
+      "union9": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 9,
+        "mean_primary": 0.632101413926689,
+        "mean_plain_acc": 0.5956247038996169
+      },
+      "cast7": {
+        "tasks": [
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.6113525616132878,
+        "mean_plain_acc": 0.5644539344356237
+      },
+      "ast7": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.6447456975127632,
+        "mean_plain_acc": 0.5978470703350992
+      }
+    },
+    "cast_repro_7500": {
+      "union9": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 9,
+        "mean_primary": 0.6209193903710502,
+        "mean_plain_acc": 0.5828370896516532
+      },
+      "cast7": {
+        "tasks": [
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.5926610506436752,
+        "mean_plain_acc": 0.5436980925758789
+      },
+      "ast7": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.6328184994474676,
+        "mean_plain_acc": 0.5838555413796713
+      }
+    },
+    "ast_official": {
+      "union9": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 9,
+        "mean_primary": 0.6117331915064737,
+        "mean_plain_acc": 0.577540335132547
+      },
+      "cast7": {
+        "tasks": [
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.5874695439989779,
+        "mean_plain_acc": 0.5435073000896435
+      },
+      "ast7": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.6199382761230104,
+        "mean_plain_acc": 0.5759760322136761
+      }
+    },
+    "wanda": {
+      "union9": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 9,
+        "mean_primary": 0.5223345230183809,
+        "mean_plain_acc": 0.4945685347067514
+      },
+      "cast7": {
+        "tasks": [
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.4978224988200314,
+        "mean_plain_acc": 0.4621233709907933
+      },
+      "ast7": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.5205722493512228,
+        "mean_plain_acc": 0.4848731215219848
+      }
+    },
+    "sparseforge_hard_drop": {
+      "union9": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 9,
+        "mean_primary": 0.5706784499478439,
+        "mean_plain_acc": 0.5403933698068413
+      },
+      "cast7": {
+        "tasks": [
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.5532052523376307,
+        "mean_plain_acc": 0.5142672921563417
+      },
+      "ast7": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.5764997802445011,
+        "mean_plain_acc": 0.537561820063212
+      }
+    },
+    "sparseforge_soft_fold": {
+      "union9": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 9,
+        "mean_primary": 0.6252110918247884,
+        "mean_plain_acc": 0.5884033223572377
+      },
+      "cast7": {
+        "tasks": [
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.6211035345272045,
+        "mean_plain_acc": 0.5737792594974963
+      },
+      "ast7": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.6344739159409879,
+        "mean_plain_acc": 0.5871496409112797
+      }
+    },
+    "sparseforge_hard_fold": {
+      "union9": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 9,
+        "mean_primary": 0.624334540517571,
+        "mean_plain_acc": 0.5876708450651403
+      },
+      "cast7": {
+        "tasks": [
+          "hellaswag",
+          "race",
+          "piqa",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.6198891655900526,
+        "mean_plain_acc": 0.5727501285797846
+      },
+      "ast7": {
+        "tasks": [
+          "boolq",
+          "rte",
+          "hellaswag",
+          "winogrande",
+          "arc_easy",
+          "arc_challenge",
+          "openbookqa"
+        ],
+        "n_tasks": 7,
+        "mean_primary": 0.6338347618371432,
+        "mean_plain_acc": 0.5866957248268753
+      }
+    }
+  },
+  "headline": {
+    "dense_ref": {
+      "ast7_plain_acc": 59.78470703350992,
+      "cast7_plain_acc": 56.445393443562374,
+      "union9_plain_acc": 59.56247038996169,
+      "ast7_primary": 64.47456975127632,
+      "union9_primary": 63.210141392668895,
+      "wiki_ppl_2048": 5.563655320068427,
+      "wiki_ppl_4096": 5.200365068503989
+    },
+    "cast_repro_7500": {
+      "ast7_plain_acc": 58.385554137967134,
+      "cast7_plain_acc": 54.36980925758789,
+      "union9_plain_acc": 58.28370896516532,
+      "ast7_primary": 63.28184994474676,
+      "union9_primary": 62.091939037105014,
+      "wiki_ppl_2048": 6.526813191299931,
+      "wiki_ppl_4096": 6.137203734304916
+    },
+    "ast_official": {
+      "ast7_plain_acc": 57.59760322136761,
+      "cast7_plain_acc": 54.350730008964355,
+      "union9_plain_acc": 57.7540335132547,
+      "ast7_primary": 61.99382761230105,
+      "union9_primary": 61.173319150647366,
+      "wiki_ppl_2048": 6.342995328699181,
+      "wiki_ppl_4096": 5.912485323191749
+    },
+    "wanda": {
+      "ast7_plain_acc": 48.487312152198484,
+      "cast7_plain_acc": 46.212337099079335,
+      "union9_plain_acc": 49.456853470675135,
+      "ast7_primary": 52.05722493512228,
+      "union9_primary": 52.23345230183809,
+      "wiki_ppl_2048": 12.474866953552521,
+      "wiki_ppl_4096": 11.773277969994265
+    },
+    "sparseforge_hard_drop": {
+      "ast7_plain_acc": 53.7561820063212,
+      "cast7_plain_acc": 51.42672921563417,
+      "union9_plain_acc": 54.039336980684126,
+      "ast7_primary": 57.64997802445011,
+      "union9_primary": 57.06784499478439,
+      "wiki_ppl_2048": 9.376994601949622,
+      "wiki_ppl_4096": 8.828973941515397
+    },
+    "sparseforge_soft_fold": {
+      "ast7_plain_acc": 58.714964091127975,
+      "cast7_plain_acc": 57.37792594974963,
+      "union9_plain_acc": 58.84033223572377,
+      "ast7_primary": 63.44739159409879,
+      "union9_primary": 62.52110918247884,
+      "wiki_ppl_2048": 6.648588977245516,
+      "wiki_ppl_4096": 6.20914812147734
+    },
+    "sparseforge_hard_fold": {
+      "ast7_plain_acc": 58.66957248268753,
+      "cast7_plain_acc": 57.27501285797846,
+      "union9_plain_acc": 58.76708450651403,
+      "ast7_primary": 63.383476183714315,
+      "union9_primary": 62.433454051757096,
+      "wiki_ppl_2048": 6.651031721997858,
+      "wiki_ppl_4096": 6.211501643544
+    }
+  },
+  "rte_integrality": {
+    "dense_ref": {
+      "n": 277,
+      "acc": 0.631768953068592,
+      "k_float": 175.0,
+      "k_int": 175,
+      "is_integer_k": true
+    },
+    "cast_repro_7500": {
+      "n": 277,
+      "acc": 0.7472924187725631,
+      "k_float": 207.0,
+      "k_int": 207,
+      "is_integer_k": true
+    },
+    "ast_official": {
+      "n": 277,
+      "acc": 0.6642599277978339,
+      "k_float": 184.0,
+      "k_int": 184,
+      "is_integer_k": true
+    },
+    "wanda": {
+      "n": 277,
+      "acc": 0.5342960288808665,
+      "k_float": 148.0,
+      "k_int": 148,
+      "is_integer_k": true
+    },
+    "sparseforge_hard_drop": {
+      "n": 277,
+      "acc": 0.5703971119133574,
+      "k_float": 158.0,
+      "k_int": 158,
+      "is_integer_k": true
+    },
+    "sparseforge_soft_fold": {
+      "n": 277,
+      "acc": 0.5018050541516246,
+      "k_float": 139.0,
+      "k_int": 139,
+      "is_integer_k": true
+    },
+    "sparseforge_hard_fold": {
+      "n": 277,
+      "acc": 0.5018050541516246,
+      "k_float": 139.0,
+      "k_int": 139,
+      "is_integer_k": true
+    }
+  },
+  "wiki_ppl_2048": {
+    "dense_ref": 5.563655320068427,
+    "cast_repro_7500": 6.526813191299931,
+    "wanda": 12.474866953552521,
+    "sparseforge_hard_drop": 9.376994601949622,
+    "sparseforge_soft_fold": 6.648588977245516,
+    "sparseforge_hard_fold": 6.651031721997858,
+    "ast_official": 6.342995328699181
+  },
+  "wiki_ppl_4096": {
+    "sparseforge_hard_drop": 8.828973941515397,
+    "sparseforge_soft_fold": 6.20914812147734,
+    "sparseforge_hard_fold": 6.211501643544,
+    "dense_ref": 5.200365068503989,
+    "ast_official": 5.912485323191749,
+    "cast_repro_7500": 6.137203734304916,
+    "wanda": 11.773277969994265
+  },
+  "ast7_plain_acc_gap_vs_baselines": {
+    "sparseforge_hard_drop": {
+      "dense_ref": -6.0285,
+      "cast_repro_7500": -4.6294,
+      "ast_official": -3.8414,
+      "wanda": 5.2689
+    },
+    "sparseforge_hard_fold": {
+      "dense_ref": -1.1151,
+      "cast_repro_7500": 0.284,
+      "ast_official": 1.072,
+      "wanda": 10.1823
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/paper_v2/staged_diskb_models/proxsparse_models/Llama-2-7b-hf-en_sft_final_400_len4096_batch1_lambda0.25",
+  "seqlen": 2048,
+  "load_seconds": 14.15621042251587,
+  "global_zero_ratio": 0.48052914669014085,
+  "linear_zero_ratio": 0.5000000105003001,
+  "exact_2of4_tile_ratio": 0.9999999579987995,
+  "linear_layers": 224,
+  "linear_parameters": 6476005376,
+  "nm_tiles": 1619001344,
+  "wikitext2_ppl": 9.29985840857538,
+  "wikitext2_tokens": 335872,
+  "wikitext2_seconds": 7.266973972320557
+}

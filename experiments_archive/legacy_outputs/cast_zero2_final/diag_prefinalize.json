@@ -1,0 +1,25 @@
+{
+  "summary": {
+    "modules": 224,
+    "masked_mean_magnitude": 0.0073673,
+    "kept_mean_magnitude": 0.02227884,
+    "ratio_mean": 0.330686,
+    "ratio_median_over_layers": 0.331147,
+    "max_masked_magnitude": 1.06275141,
+    "sparse_weight_ratio": 0.751492,
+    "frac_masked_below_0.0001": 0.031892,
+    "frac_masked_below_0.001": 0.112793,
+    "BROKEN_RUN_ratio_mean": 0.294,
+    "BROKEN_RUN_frac_below_1e-4": 0.215,
+    "verdict": "BAD: looks like the broken run -- AdamS is probably not running"
+  },
+  "by_projection": {
+    "down_proj": 0.33087,
+    "gate_proj": 0.331411,
+    "k_proj": 0.329501,
+    "o_proj": 0.331954,
+    "q_proj": 0.329476,
+    "up_proj": 0.330754,
+    "v_proj": 0.32968
+  }
+}

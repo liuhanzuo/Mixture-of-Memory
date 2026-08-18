@@ -1,0 +1,2177 @@
+Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 12146–12160
+July 2-7, 2026 ©2026 Association for Computational Linguistics
+Focus-dLLM: Accelerating Long-Context Diffusion LLM Inference via
+Conﬁdence-Guided Context Focusing
+Lingkun Long1,3, Yushi Huang2,3, Shihao Bai3, Ruihao Gong1,3,
+Jun Zhang2, Ao Zhou1, Jianlei Yang1*
+1Beihang University, 2Hong Kong University of Science and Technology, 3SenseTime Research
+Email: {longxmas, aozhou, jianlei}@buaa.edu.cn
+Abstract
+Diffusion Large Language Models (dLLMs)
+deliver strong long-context processing capabil-
+ity in a non-autoregressive decoding paradigm.
+However, the considerable computational cost
+of bidirectional full attention limits the infer-
+ence efﬁciency. Although sparse attention is
+promising, existing methods remain ineffective.
+This stems from the need to estimate attention
+importance for tokens yet to be decoded, while
+the unmasked token positions are unknown dur-
+ing diffusion. In this paper, we present Focus-
+dLLM, a novel training-free attention sparsi-
+ﬁcation framework tailored for accurate and
+efﬁcient long-context dLLM inference. Based
+on the ﬁnding that token conﬁdence strongly
+correlates across adjacent steps, we ﬁrst design
+a past conﬁdence-guided indicator to predict
+unmasked regions. Built upon this, we propose
+a sink-aware pruning strategy to accurately es-
+timate and remove redundant attention com-
+putation, while preserving highly inﬂuential
+attention sinks. To further reduce overhead,
+this strategy reuses identiﬁed sink locations
+across layers, leveraging the observed cross-
+layer consistency. Experimental results show
+that our method offers more than 29× lossless
+speedup under 32K context length. The code is
+publicly available at: https://github.com/
+Longxmas/Focus-dLLM.
+1
+Introduction
+Diffusion large language models (dLLMs) (Bie
+et al., 2025; Gong et al., 2025; Arriola et al.,
+2025) have recently emerged as a compelling non-
+autoregressive paradigm for text generation, re-
+placing left-to-right token emission with iterative
+denoising over a ﬁxed-length sequence (Li et al.,
+2022; Gong et al., 2022; Austin et al., 2021; Lou
+et al., 2023; He et al., 2023). By updating mul-
+tiple positions in parallel and leveraging bidirec-
+tional attention, dLLMs offer an appealing path
+*Jianlei Yang is the corresponding author.
+toward higher decoding throughput while retaining
+strong generation quality. Moreover, recent studies
+have substantially extended the context length of
+dLLMs (Liu et al., 2025a; He et al., 2025), demon-
+strating effective long-context extrapolation and
+scaling to long inputs.
+Nevertheless, efﬁcient long-context inference re-
+mains a key obstacle for the dLLM due to its non-
+autoregressive decoding and bidirectional full at-
+tention nature. Prior methods (Wu et al., 2025; Liu
+et al., 2025b; Ma et al., 2025) to address this chal-
+lenge fall into two categories: (i) Approximated KV
+cache and (ii) sparse attention. The former selec-
+tively refreshes KV states by exploiting strong re-
+dundancy between adjacent steps. However, atten-
+tion computation is still costly over the full cached
+context. On the other hand, sparse attention (Tang
+et al., 2024; Xiao et al., 2024a; Xu et al., 2025;
+Yuan et al., 2025) offers a practical solution, but
+it often requires token importance estimation us-
+ing the currently decoded token as a query (Zhang
+et al., 2023; Xiao et al., 2024a). Since the positions
+to be decoded (unmasked) are not known in ad-
+vance for dLLMs, recent works (Song et al., 2025;
+Huang et al., 2025a) leverage inaccurate coarse-
+grained estimation, leading to suboptimal perfor-
+mance and limited efﬁciency. This paper, therefore,
+asks: Can we accurately predict the positions of
+the unmasked tokens and only retain necessary
+computation to achieve more effective long-context
+inference acceleration for dLLMs?
+To tackle this challenge, we ﬁrst make an in-
+depth analysis to investigate the predictability of
+the unmasked tokens. In particular, we discover
+that the conﬁdence scores at the same positions in
+two consecutive steps exhibit a strong positive cor-
+relation, and the positions of currently unknown to-
+kens largely overlap with those that had the highest-
+conﬁdence tokens in the previous step. Thus, un-
+masked positions for the current steps can be in-
+ferred from previous-step conﬁdence. Besides, we
+12146
+
+also analyze the redundancy of attention patterns
+and observe that attention sink (Xiao et al., 2023;
+Ruscio et al., 2025), which contributes signiﬁcantly
+to the attention score in LLMs (Bai et al., 2023;
+Touvron et al., 2023), displays notable cross-layer
+consistency for dLLMs. This phenomenon sug-
+gests sink tokens can be identiﬁed at an intermedi-
+ate depth. Therefore, we can directly reuse them
+without re-identiﬁcation in deeper layers.
+Motivated by the above ﬁndings, we pro-
+pose Focus-dLLM, a training-free sparse attention
+framework with approximated KV cache, to ac-
+celerate long-context dLLM inference. To begin
+with, we introduce a past conﬁdence-guided indi-
+cator that uses conﬁdence scores from step t−1
+to predict the unmasked positions at step t, and
+then window-expands them to preserve semantic
+coherence. Next, we design a sink-aware pruning
+strategy for diffusion decoding: Using the tokens
+within the positions predicted before as queries,
+we select only the most relevant tokens for at-
+tention while retaining step-wise attention sinks.
+Moreover, this approach shares the identiﬁed sink
+tokens across layers to further reduce additional
+overhead. Leveraging these novel techniques, our
+framework computes attention over the predicted
+unmasked queries and the selected necessary key-
+value pairs. As a result, it achieves considerable
+inference speedups (Huang et al., 2025c, 2024; Zhu
+et al., 2026) without compromising performance
+throughout the dynamic decoding process.
+Our contributions are summarized as follows:
+• We analyze diffusion inference dynamics and
+reveal a strong positive correlation of token con-
+ﬁdence across adjacent denoising steps, together
+with dynamic and structured attention patterns in
+dLLMs.
+• We propose Focus-dLLM, a novel training-free
+acceleration framework that consists of a past
+conﬁdence-guided indicator for predicting the
+next unmasked positions with a sink-aware dy-
+namic token pruning strategy for efﬁcient sparse
+attention.
+• Experiments show that Focus-dLLM achieves
+substantial speedups over baselines while pre-
+serving accuracy. For instance, it attains better-
+than-vanilla performance and delivers 2.05×
+speedup over Fast-dLLM for UltraLLaDA at
+32K context length.
+2
+Related Work
+Diffusion large language models. Diffusion large
+language models (dLLMs) (Li et al., 2025; You
+et al., 2025; Chen et al., 2025) have emerged as
+a promising non-autoregressive paradigm that en-
+ables parallel token generation via iterative denois-
+ing. Prior works explore both continuous-space
+diffusion for text (Li et al., 2022; Gong et al., 2022)
+and discrete-token diffusion formulations (Austin
+et al., 2021; Lou et al., 2023; He et al., 2023). Re-
+cent masked diffusion LMs (Nie et al., 2025; Zhu
+et al., 2025; Ye et al., 2025) have been success-
+fully scaled up, demonstrating competitive per-
+formance against autoregressive counterparts at
+billion-parameter scales. Besides, long-context
+capability (Liu et al., 2025a; He et al., 2025) for
+dLLMs has also been explored, which pushes the
+context window up to ≥16K tokens.
+KV cache for dLLMs. Due to bidirectional at-
+tention and token states evolving across denoising
+steps, dLLMs cannot directly reuse standard KV
+cache, motivating a line of caching-based accelera-
+tions (Ma et al., 2025; Huang et al., 2025e). Fast-
+dLLM (Wu et al., 2025) enables approximate KV
+reuse with block-wise strategies, while others (Ma
+et al., 2025; Liu et al., 2025b; Huang et al., 2025a)
+exploit dLLM-speciﬁc redundancy to reduce re-
+peated computation (Huang et al., 2025f). More
+adaptive schemes (Jiang et al., 2025; Nguyen-Tri
+et al., 2025) further reﬁne cache update granular-
+ity and timing. Nevertheless, accurately identify-
+ing which tokens require refresh in the next step
+remains challenging, and long-context inference
+still incurs substantial computation overhead under
+caching mechanisms.
+Sparse attention for dLLMs. Attention sparsiﬁca-
+tion (Zhang et al., 2025b,a,c), orthogonal to the KV
+cache mechanism, has also been explored to accel-
+erate dLLM inference. Sparse-dLLM (Song et al.,
+2025) proposes dynamic cache eviction for diffu-
+sion decoding, but it adopts coarse and suboptimal
+block-level metrics. SparseD (Wang et al., 2025)
+reuses prior sparse patterns, yet it still relies on
+dense attention in early steps, restricting speedups.
+Moreover, these approaches do not account for the
+dynamic attention-sink behavior (Xiao et al., 2023)
+observed in dLLMs (Rulli et al., 2025). In contrast,
+our dynamic KV cache compression scheme adapts
+to step-varying contextual needs while preserving
+attention sinks for more efﬁcient and accurate long-
+context inference.
+12147
+
+3
+Preliminaries
+Diffusion LLM inference. Unlike autoregressive
+models that generate tokens sequentially, dLLMs
+generate text by iteratively denoising a ﬁxed-
+length sequence.
+Let V denote the vocabulary
+and [MASK] ∈V the special mask token. Given
+a prompt p = [p1, . . . , pM], inference initial-
+izes at step 0 a length-L sequence by appending
+N = L −M masks:
+x(T) = [p1, . . . , pM
+|
+{z
+}
+Prompt
+, [MASK], . . . , [MASK]
+|
+{z
+}
+N=L−M
+],
+(1)
+Let M(t) denote the set of masked positions at
+denoising step t, where M(0) = {M + 1, . . . , L}
+at initialization. The decoding process then iterates
+from t = 0 to T −1. In step t, given the current
+sequence x(t), the model fθ produces a conditional
+distribution p(xi | x(t)) for each masked position
+i ∈M(t). Then, a conﬁdence-driven strategy (Nie
+et al., 2025; Ye et al., 2025) computes the predicted
+token ˆx(t)
+i
+and its corresponding conﬁdence score
+c(t)
+i
+for each masked position i:
+ˆx(t)
+i
+= arg max
+v∈V p(xi = v | x(t)),
+c(t)
+i
+= max
+v∈V p(xi = v | x(t)).
+(2)
+Last, this strategy unmasks the highest-conﬁdence
+positions while remasking the rest.
+Approximate KV cache in dLLMs. Bidirectional
+attention makes the KV cache mechanism not ap-
+plicable for dLLMs. To reduce computation costs,
+recent studies (Wu et al., 2025; Liu et al., 2025b;
+Ma et al., 2025) exploit Approximate KV cache,
+which updates KV states for a selected subset of
+tokens while reusing cached states for the rest. For-
+mally, let U(t) be the token indices refreshed at step
+t. The Key state K(t)
+i
+(and similarly V(t)
+i ) is
+K(t)
+i
+=
+(
+fK(x(t))i,
+i ∈U(t)
+(Compute)
+eKi,
+i /∈U(t)
+(Reuse)
+,
+(3)
+where eKi denotes the cached state from the pre-
+vious iteration. fK(x(t))i is the current computed
+Key state, which is also used to update the cache.
+4
+Motivation
+In this section, we investigate the token-conﬁdence
+consistency and attention patterns tailored for
+dLLMs. Both of them inspire the core design of
+our Focus-dLLM.
+0.00
+0.25
+0.50
+0.75
+1.00
+Confidence at t
+1
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Confidence at t
+Remasked at t
+Decoded at t
+0
+15
+30
+45
+60
+75
+90 105 120
+Decoding Step
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Recall Rate
+Avg. Recall: 96.1%
+Step-wise Recall Rate
+Moving Avg. (10 steps)
+Figure 1: Conﬁdence dynamics analysis for LLaDA-
+8B-Instruct (Nie et al., 2025) on GSM8K (Cobbe et al.,
+2021) (L = 76, N = 128, and T = 128). (Left) Conﬁ-
+dence score correlation between adjacent steps. (Right)
+Step-wise recall rates of predicting the unmasked to-
+kens at t using the remasked tokens with top-4 highest
+conﬁdence scores at t −1.
+4.1
+Temporal Consistency of Conﬁdence
+For dLLMs, effectively assessing the redundancy
+of attention computation w.r.t.
+tokens that are
+poised to be unmasked ﬁrst requires locating these
+tokens in advance. To achieve this, we conduct
+a pivotal study related to their conﬁdence score
+c(t)
+i .
+As illustrated in Figure 1 (Left), c(t)
+i
+and
+c(t−1)
+i
+correlate strongly in a positive manner. Also,
+the tokens that are to be decoded (unmasked) at
+t present a similarly high-conﬁdence level in the
+preceding step t −1. To quantitatively explore
+this relationship, we select the top-4 remasked to-
+kens (i.e., [MASK] at t) with the highest conﬁdence
+scores at t −1 and evaluate their overlap with the
+tokens decoded at the subsequent step t. As a result,
+Figure 1 (Right) shows a remarkably high average
+recall (96.1%) across decoding steps. These obser-
+vations support the following key claim:
+The substantial overlap in conﬁdence dis-
+tributions reveals that tokens unmasked at
+t can be reliably located according to the
+conﬁdence of tokens at the prior step t −1.
+4.2
+Spatial Consistency of Attention Sinks
+In this part, we explore the properties and variations
+of attention patterns for dLLMs. Similar to prior
+studies (Song et al., 2025; Rulli et al., 2025), as
+depicted in Figure 2, we also ﬁnd that: (i) Attention
+maps exhibit strong locality, concentrating near the
+diagonal and favoring nearby context. (ii) Atten-
+tion sinks (bright vertical bands), which strongly
+inﬂuence semantic continuity (Xiao et al., 2023;
+Gu et al., 2025), emerge and evolve across denois-
+ing steps. Due to the dynamics of these sinks, it
+is necessary to repeatedly identify their location to
+12148
+
+0
+50
+100
+150
+Query Index
+Layer 9
+Step 0
+Step 64
+Step 127
+0
+50
+100
+150
+Key Index
+0
+50
+100
+150
+Query Index
+Layer 19
+0
+50
+100
+150
+Key Index
+0
+50
+100
+150
+Key Index
+0.05
+0.10
+0.15
+0.20
+Figure 2: Attention patterns across decoding steps and
+layers in LLaDA-8B-Instruct (Nie et al., 2025) (L = 49,
+N = 128, T = 128). More visual results can be found
+in the Appendix.
+preserve them in high-performing sparse attention.
+Despite this, we fortunately discovered a structured
+inter-layer consistency for attention sinks. To be
+speciﬁc, the index of attention sinks across differ-
+ent layers (e.g., Layer 9 vs. Layer 19 in Figure 2)
+typically matches. Therefore, we believe that:
+Attention sinks with strong cross-layer con-
+sistency enable reliable identiﬁcation at a
+certain intermediate depth, and the results
+can be reused for deeper layers to eliminate
+redundant computation.
+5
+Focus-dLLM
+5.1
+Framework Overview
+In this section, we present the inference work-
+ﬂow of Focus-dLLM (Figure 3).
+Following
+Wu et al. (Wu et al., 2025), we adopt the KV
+caching mechanism with the semi-autoregressive
+remasking strategy (Nie et al., 2025) (i.e., non-
+autoregressive unmasking within each block and
+autoregressive block-wise inference from left block
+to right block) for dLLMs.
+For all blocks, Focus-dLLM performs a full
+cache refresh at each block entry step, which is
+commonly adopted in prior works (Wu et al., 2025;
+Song et al., 2025). For the other denoising steps,
+we use our proposed sparse attention pipeline to
+systematically prune redundancy:
+• Section 5.2: Inspired by Section 4.1, we use
+conﬁdence scores from the previous step to
+predict masked positions that are likely to be
+decoded, which provide focused queries for
+redundancy estimation in the latter Key/Value
+pruning. Additionally, guided by the local-
+ity pattern in Section 4.2, we expand these
+positions to local windows to form an active
+Query set and exclude the remaining Query
+tokens to compute the attention.
+• Section 5.3: We accelerate inference via a
+sink-aware sparse attention mechanism. Since
+shallow layers are more sensitive to sparsi-
+ﬁcation (Huang et al., 2025a), we treat the
+initial layers as dense layers with full atten-
+tion. For subsequent sparse layers, we reuse
+the locations of attention sinks identiﬁed at
+the last dense layer. Finally, we apply dy-
+namic block-wise pruning to Key/Value states
+of the prompt to keep the most relevant his-
+tory, while retaining recognized sinks and all
+response tokens to preserve semantic coher-
+ence.
+5.2
+Past Conﬁdence-Guided Indicator
+Motivated by the temporal consistency analysis in
+Section 4.1, we introduce a past conﬁdence-guided
+indicator, which adopts the conﬁdence derived
+from step t −1 to accurately inform the tokens
+that are likely to be unmasked at step t. To be spe-
+ciﬁc, among all positions M(t) that remain in the
+[MASK] state within the current decoding block at
+t, we rank them by their prior conﬁdence scores
+c(t−1)
+j
+and select top-k indices as the candidate set
+Ifocus to predict the future unmasked positions at t:
+Ifocus =
+n
+i | c(t−1)
+i
+∈top-k
+ {c(t−1)
+j
+}j∈M(t)
+o
+,
+(4)
+where k = ⌊ρn(t)⌉. n(t) is the number of tokens
+to be unmasked and ρ is a pre-deﬁned prediction
+expansion factor. By leveraging the candidate set
+Ifocus, we can precisely determine the relevant his-
+tory to prune redundant attention computation in
+the next subsection.
+In addition, as discussed in Section 4.2, the atten-
+tion mechanism in dLLMs exhibits a clear locality
+property, meaning that token representations de-
+pend strongly on nearby semantic context, while
+distant tokens typically contribute little. To lever-
+age this property for computation savings, we pro-
+pose a window expansion strategy that disregards
+the distant tokens and only preserves local windows
+for currently decoded Query tokens (positions in
+Ifocus) for attention computation. The position set
+12149
+
+Identify Attention sinks 
+𝑇𝑜𝑝−𝑁𝑠𝑖𝑛𝑘(𝑆𝑗)
+Sparse Layers 
+Select Top-K Block
+Lookup
+𝑄𝑓𝑜𝑐𝑢𝑠
+Union
+Attention 
+sinks
+𝑰𝑷
+𝐴𝑡𝑡𝑛= 𝑆𝑜𝑓𝑡𝑚𝑎𝑥(𝑄𝑎𝑐𝑡𝑖𝑣𝑒∙𝐾𝑎𝑡𝑡𝑛
+𝑇
+𝑑
+)𝑉𝑎𝑡𝑡𝑛
+Sparse
+Attn
+𝐾𝑎𝑡𝑡𝑛, 𝑉𝑎𝑡𝑡𝑛= 𝑐𝑎𝑡𝐾𝐼𝑝, 𝐾𝑟𝑒𝑠𝑝, 𝑐𝑎𝑡(𝑉𝐼𝑝, 𝑉𝑟𝑒𝑠𝑝)
+Dense Layers 𝟎~𝒍
+𝑄𝑎𝑐𝑡𝑖𝑣𝑒
+𝑉𝑓𝑢𝑙𝑙
+𝐾𝑓𝑢𝑙𝑙
+…
+𝑉𝑓𝑢𝑙𝑙
+𝐾𝑓𝑢𝑙𝑙
+Layer 0
+Layer l
+Layer l 
+𝑆𝑗= 1
+𝐻෍
+ℎ=1
+𝐻
+𝑆𝑜𝑓𝑡𝑚𝑎𝑥𝑗(
+𝑄𝑎𝑐𝑡𝑖𝑣𝑒
+ℎ
+∙𝐾𝑗
+ℎ
+𝑑
+)
+Token Score
+Prompt
+Block 0
+Window size = 3
+Block 1
+t = 0
+t = T - 1
+…
+…
+…
+…
+…
+Response
+Window size = 3
+Confidence 
+..
+Confidence 
+Cached 
+Token
+Decoded 
+Token
+Prompt 
+Token
+MASK 
+Token
+Prompt Block 
+Represent Key
+Decode 
+Token
+Focus
+Token
+Compute
+Cache
+Confidence Rank
+Lighter = Higher Confidence
+Omitted Confidence
+Figure 3: Overview of Focus-dLLM. We predict unmasked positions at the current step using previous conﬁdence
+scores. These positions act as queries to retrieve relevant prompt blocks, where attention is computed over the union
+of these blocks and dynamically identiﬁed attention sinks.
+corresponding to the union of windows is given as:
+Iactive =
+[
+i∈Ifocus
+{l | i −⌊w/2⌋≤l ≤i + ⌊w/2⌋} ,
+(5)
+where w is the window size.
+5.3
+Sink-Aware Sparse Attention
+Performing attention over the entire long-context
+history remains the primary computational bottle-
+neck for inference. To address this, we propose a
+sink-aware sparse attention strategy that selectively
+retains only the most critical history for diffusion
+decoding.
+Dynamic attention sinks identiﬁcation. While
+retaining attention sinks is crucial for preserv-
+ing generation quality (Xiao et al., 2024b; Rulli
+et al., 2025), existing sparse approaches for
+dLLMs (Song et al., 2025) typically overlook this,
+thereby risking the discard of tokens pivotal for
+generation quality (Rulli et al., 2025). Motivated
+by our observation in Section 4.2, we propose to
+explicitly identify and retain them. Crucially, this
+strategy shares the identiﬁed sink tokens across
+layers, avoiding redundant re-calculation at every
+depth.
+Speciﬁcally, we designate the ﬁrst ldense layers
+as dense layers that perform full attention. Due to
+the cross-layer consistency observed in Section 4.2,
+we utilize the attention distribution at the cut-off
+layer ldense as a reliable probe to identify globally
+salient tokens for the subsequent sparse layers. Let
+Iactive denote the active token set obtained from
+Section 5.2. We deﬁne the aggregated query repre-
+sentation over active tokens as QIactive. The impor-
+tance score of each token j is computed as:
+Sj = 1
+H
+H
+X
+h=1
+Softmaxj
+ 
+Qh
+Iactive · Kh
+j
+√
+d
+!
+,
+(6)
+where H denotes the number of attention heads.
+We then select the top-Nsink tokens with the high-
+est scores to form the dynamic attention sink set,
+denoted as Isink = Top- Nsink(Sj).
+Block-wise token pruning. To accelerate infer-
+ence while maximizing GPU efﬁciency, we imple-
+ment block-wise token pruning to reduce compu-
+tational overhead. Speciﬁcally, we partition the
+prompt tokens into contiguous blocks and assign
+each block a lightweight representative key, com-
+puted as the mean of the Key states within the
+block, ¯Kb = Meanj∈Blockb(Kj).
+At timestep t, we estimate the relevance between
+the predicted candidate queries and each prompt
+block by aggregating their attention interactions.
+Concretely, for each block b, we compute a rele-
+12150
+
+Table 1: Performance comparison on LongBench (Bai et al., 2024). Bold indicates the best performance among
+acceleration methods, and underlined indicates the second best.
+Method
+Single-Doc. QA
+Multi-Doc. QA
+Summarization Few-shot Learning
+Synthetic
+Code
+Ave. Score
+Qasper
+MF-en
+HotpotQA
+2WikiMQA
+Musique
+GovReport
+QMSum
+TREC
+TriviaQA
+Lsht
+PRe
+Lcc
+RB-P
+UltraLLaDA (He et al., 2025)
+Vanilla
+19.14
+25.87
+16.27
+18.00
+12.08
+32.83
+22.48 80.00
+91.58
+41.00 96.75 68.23 59.50
+44.90
+Fast-dLLM
+18.34
+29.90
+17.03
+17.11
+13.36
+30.05
+22.89 79.50
+91.03
+42.00 94.75 67.50 58.10
+44.74
+Sparse-dLLM 18.04
+27.26
+20.59
+17.88
+13.67
+29.95
+23.57 76.50
+91.93
+41.50 97.12 67.50 57.72
+44.86
+SparseD
+19.09
+25.87
+15.45
+18.04
+11.92
+32.64
+22.50 79.50
+90.70
+41.50 96.79 68.10 59.02
+44.70
+Focus-dLLM
+17.02
+29.11
+22.47
+21.49
+20.20
+26.75
+21.45 77.00
+90.78
+41.00 95.73 66.72 57.14
+45.14
+Dream-7B-Instruct (Ye et al., 2025)
+Vanilla
+35.58
+40.49
+41.59
+42.10
+23.36
+23.51
+19.66 71.50
+87.34
+15.75 32.50 63.79 62.23
+43.03
+Fast-dLLM
+37.54
+43.24
+35.56
+35.74
+17.97
+21.14
+19.57 70.50
+88.25
+16.75 46.17 62.21 61.11
+42.75
+Sparse-dLLM 37.50
+43.23
+36.83
+34.97
+17.05
+20.60
+20.05 70.00
+88.38
+17.00 46.50 62.80 61.20
+42.78
+SparseD
+37.66
+40.96
+41.39
+41.61
+24.17
+23.51
+19.66 72.50
+86.85
+15.75 36.83 63.86 61.98
+43.59
+Focus-dLLM
+37.38
+41.96
+38.96
+38.56
+18.05
+21.06
+19.26 70.00
+88.76
+17.25 44.25 60.62 60.50
+42.82
+vance score as
+Rb = 1
+H
+H
+X
+h=1
+
+Qh
+Ifocus · ¯Kh
+b
+
+,
+(7)
+where Ifocus denotes the predicted candidate set
+obtained in Section 5.2.
+Based on these relevance scores, we select the
+top C = ⌊α · Ntotal_blocks⌋blocks to form the set of
+relevant blocks, Brelevant = Top -C(Rb). The ﬁnal
+attention index set is constructed as the union of
+dynamically identiﬁed attention sinks and tokens
+within the selected relevant prompt blocks:
+Ip = Isink ∪
+[
+b∈Brelevant
+{ i | i ∈Blockb }.
+(8)
+Using this index set, we perform sparse at-
+tention by gathering keys and values exclusively
+from the selected prompt tokens and the re-
+sponse tokens. Speciﬁcally, for the active queries
+QIactive, the effective Key-Value pairs are formed
+as:
+Kattn
+= concat(KIp, Kresp),
+Vattn
+=
+concat(VIp, Vresp). The resulting sparse attention
+is then computed as:
+Attn = Softmax
+QIactiveK⊤
+attn
+√
+d
+
+Vattn.
+(9)
+6
+Experiments
+6.1
+Experiments Settings
+Models. We evaluate our method on two repre-
+sentative diffusion LLMs: UltraLLaDA (He et al.,
+2025) and Dream-7B-Instruct (Ye et al., 2025).
+Baselines. We compare Focus-dLLM against stan-
+dard native inference (Vanilla) and three dLLM
+acceleration frameworks: Fast-dLLM (Wu et al.,
+2025), SparseD (Wang et al., 2025), and Sparse-
+dLLM (Song et al., 2025).
+Benchmarks. To comprehensively assess long-
+context capabilities, we conduct evaluations on
+LongBench (Bai et al., 2024), a widely adopted
+benchmark speciﬁcally designed for multi-task
+long-context understanding.
+Implementation details. All experiments were
+conducted on NVIDIA H200 GPUs using Open-
+Compass (Contributors, 2023). To ensure a fair
+comparison, all baselines utilize the recommended
+conﬁgurations provided in their ofﬁcial implemen-
+tations. Speciﬁcally, for SparseD, we set skip =
+20%, ratio = 30%, and block_size = 128; for
+Sparse-dLLM, we use retention ratio r = 0.5 and
+kernel size s = 3. For the Focus-dLLM setup,
+we adopt identical hyperparameters for both Ul-
+traLLaDA and Dream: we set prediction expan-
+sion factor ρ = 4, window size w = 8, dense
+layers ldense = 6, and sparsity ratio α = 0.5.
+Additionally, the number of sink tokens is set to
+Nsinks = 0.01 × M, where M denotes the prompt
+length, and prompt block size = 64. Additional de-
+tails for datasets, models, and methods are provided
+in the Appendix A.
+12151
+
+2k
+6k
+10k
+14k
+18k
+22k
+26k
+30k
+Context Length
+0
+20
+40
+60
+80
+100
+Depth Percent
+UltraLLaDA
+Score: 0.856
+2k
+6k
+10k
+14k
+18k
+22k
+26k
+30k
+Context Length
+Focus-dLLM
+Score: 0.839
+2k
+6k
+10k
+14k
+18k
+22k
+26k
+30k
+Context Length
+Fast-dLLM
+Score: 0.777
+2k
+6k
+10k
+14k
+18k
+22k
+26k
+30k
+Context Length
+Sparse-dLLM
+Score: 0.832
+0.0
+0.2
+0.4
+0.6
+0.8
+1.0
+Score
+Figure 4: Niah (Kamradt, 2023) results on UltraLLaDA (He et al., 2025) under long-context settings with a
+maximum context length of 32K across different layer depths.
+8K
+16K
+24K
+28K
+32K
+Context Length
+0
+5
+10
+15
+20
+25
+30
+Throughput (tokens/s)
+9.4×
+18.2×
+24.3×
+27.4×
+29.6×
+Ultra-LLaDA
+Vanilla
+SparseD
+Fast-dLLM
+Sparse-dLLM
+Focus-dLLM
+8K
+16K
+24K
+28K
+32K
+Context Length
+0
+5
+10
+15
+20
+25
+30
+35
+Throughput (tokens/s)
+9.2×
+17.1×
+23.2×
+25.7×
+27.6×
+Dream-7B-Instruct
+Vanilla
+SparseD
+Fast-dLLM
+Sparse-dLLM
+Focus-dLLM
+Figure 5: Efﬁciency evaluation. Comparison of decoding throughput (tokens/s) on UltraLLaDA (He et al., 2025)
+(Left) and Dream-7B-Instruct (Ye et al., 2025) (Right) across varying context lengths. Red numbers indicate the
+speedup ratio of Focus-dLLM relative to the Vanilla baseline.
+6.2
+Main Results
+Accuracy. As presented in Table 1, Focus-dLLM
+demonstrates robust performance across both eval-
+uated diffusion models. On UltraLLaDA (He et al.,
+2025), our method achieves the highest average
+score, outperforming the Vanilla baseline and all
+competing acceleration frameworks. On Dream-
+7B-Instruct (Ye et al., 2025), Focus-dLLM again
+surpasses Spare-dLLM (Song et al., 2025) and Fast-
+dLLM (Wu et al., 2025), performing on par with the
+Vanilla baseline. While its accuracy is marginally
+lower than SparseD (Wang et al., 2025), Focus-
+dLLM offers a compelling advantage in efﬁciency,
+achieving up to a 19.95× speedup at a 32K (with
+1K denoting 1024 tokens) context length (as shown
+in Figure 5). This highlights our method’s superior
+balance between performance and inference speed,
+establishing it as a more practical solution.
+Niah experiments. Figure 4 reports Niah (Kam-
+radt, 2023) results on UltraLLaDA (He et al., 2025)
+under long-context settings with a maximum con-
+text length of 32K. Focus-dLLM achieves overall
+higher scores than Fast-dLLM (Wu et al., 2025)
+and Sparse-dLLM (Song et al., 2025) across layers,
+and attains better accuracy than the vanilla baseline
+at the deepest layer, demonstrating strong needle-
+in-a-haystack retrieval.
+Efﬁciency. We evaluate the scalability of Focus-
+   
+   
+    
+    
+    
+    
+    
+    
+    
+              
+    
+    
+    
+    
+    
+    
+          
+           
+       
+         
+       
+                         
+                     
+1.54× Faster
+Figure 6: Accuracy vs. throughput for UltraLLaDA (He
+et al., 2025) on LongBench (Bai et al., 2024) with 16K.
+dLLM by measuring throughput across context
+lengths from 8K to 32K context length, both the
+generation length and generation steps are ﬁxed
+at 256. As shown in Figure 5, our method consis-
+tently outperforms all baselines, with the speedup
+ratio over Vanilla notably expanding as context
+grows—from 9.4× at 8K context length to 29.6×
+at 32K context length. This trend can be attributed
+to the reduction of redundant attention computation,
+which tends to incur more signiﬁcant overhead as
+sequences lengthen. Consequently, Focus-dLLM
+maintains superior efﬁciency and surpasses exist-
+ing frameworks like Fast-dLLM by up to 2.05× at
+32K context length.
+Accuracy vs. efﬁciency. Figure 6 compares decod-
+ing throughput and LongBench (Bai et al., 2024)
+12152
+
+accuracy across different methods and conﬁgura-
+tions, with throughput measured at a 16K context
+length. Focus-dLLM consistently forms a stronger
+Pareto frontier than prior approaches, achieving
+higher throughput with comparable or better accu-
+racy. Additional experimental details and conﬁgu-
+rations are provided in the Appendix B.
+7
+Ablation Study
+Table 2: Ablation study of Focus-dLLM on UltraL-
+LaDA (He et al., 2025). PCGI denotes Past Conﬁdence-
+Guided Indicator, and SA Sparse Attn represents sink-
+aware sparse attention.
+Method
+Avg. Score
+Throughput
+Fast-dLLM
+44.74
+11.03
++ PCGI
+44.23 -0.51
+11.37 +0.34
++ SA Sparse Attn
+44.84 +0.10
+17.68 +6.65
+Focus-dLLM
+45.14 +0.40
+17.71 +6.68
+Effectiveness of each component. We evaluate the
+impact of the proposed components on LongBench
+average score and 16K context decoding through-
+put. Table 2 presents the ablation results building
+on the Fast-dLLM (Wu et al., 2025) baseline. PCGI
+ﬁlters active queries via our past conﬁdence-guided
+indicator while attending to the full context KV.
+SA Sparse Attn prunes context, while passing the
+entire block as active tokens and identiﬁes redun-
+dancy for pruning using these tokens. Applying
+PCGI alone slightly degrades accuracy, while SA
+Sparse Attn improves accuracy by ﬁltering irrele-
+vant tokens in long contexts and signiﬁcantly in-
+creasing throughput. Combining both components,
+Focus-dLLM achieves further accuracy gains and
+the highest throughput, demonstrating that accurate
+query selection enables more precise and effective
+sparse attention.
+Table 3: Effect of attention sinks on LongBench accu-
+racy for Dream-7B-Instruct (Ye et al., 2025). Incorporat-
+ing attention sinks consistently improves performance
+across tasks.
+Subset
+w/o Attn Sinks
+w/ Attn Sinks
+hotpotqa
+37.17
+38.96+1.79
+2wikimqa
+37.68
+38.56+0.88
+trec
+69.50
+70.00+0.50
+Avg. Score
+41.47
+42.82+1.35
+Table 3 evaluates the effectiveness of attention
+sinks on Dream-7B-Instruct (Ye et al., 2025). In-
+corporating attention sinks leads to a clear improve-
+ment on LongBench (Bai et al., 2024). These re-
+sults suggest that effectively retaining attention
+sinks contributes to the preservation of key con-
+textual information.
+45.00
+44.27
+44.52
+45.14
+45.34
+0.3
+0.4
+0.5
+0.7
+Sparsity Ratio
+42.50
+42.56
+42.73
+42.82
+42.57
+45.00
+44.71
+45.27
+45.29
+45.14
+45.07
+1
+2
+3
+4
+5
+Prediction Expansion Factor
+42.00
+42.18
+42.50
+42.75
+42.82
+42.84
+44.50
+45.00
+45.50
+44.63
+45.54
+45.14
+45.30
+4
+5
+6
+7
+Dense Layer Number
+42.00 41.77
+41.72
+42.82
+42.58
+44.50
+45.00
+45.50
+44.81
+45.42
+45.14
+45.04
+4
+6
+8
+10
+Window Size
+42.50
+42.44
+42.72
+42.82
+42.62
+Avg. Score (%)
+UltraLLaDA
+Dream
+Figure 7: Ablations on hyperparameters of Focus-dLLM
+on LongBench (Bai et al., 2024).
+Ablations on hyperparameters. Figure 7 analyzes
+the impact of key hyperparameters in Focus-dLLM.
+Increasing the sparsity ratio α generally improves
+accuracy, indicating that retaining more relevant
+context beneﬁts long-context reasoning, while the
+drop observed for Dream (Ye et al., 2025) at α=0.7
+suggests that excessive retention may introduce ir-
+relevant context and dilute useful signals. For the
+prediction expansion factor ρ, small values (e.g., 1)
+lead to poor accuracy due to insufﬁcient recall of
+future decoded token positions, whereas larger val-
+ues provide more reliable coverage and steadily im-
+prove performance. Varying the number of dense
+layers ldense results in non-monotonic behavior, im-
+plying that attention sinks are not fully stabilized in
+shallow layers and that sparsiﬁcation sensitivity dif-
+fers across depths. A similar trend is observed for
+the window size w: overly small windows miss nec-
+essary local context, moderate windows improve
+accuracy, and excessively large windows degrade
+performance by introducing unrelated tokens.
+8
+Conclusion
+We analyzed diffusion inference dynamics and in-
+troduced Focus-dLLM, a training-free framework
+for accelerating long-context dLLM inference. By
+leveraging a past conﬁdence-guided indicator for
+query prediction and a sink-aware pruning strat-
+egy to retain critical history, our method effectively
+12153
+
+eliminates redundant computation. Experiments
+demonstrate that Focus-dLLM achieves over 29×
+speedup at 32K context length while maintaining
+superior performance compared to state-of-the-art
+baselines.
+Limitations
+While Focus-dLLM demonstrates high efﬁciency
+in text tasks, its extension to multimodal reasoning
+remains a direction for future exploration. Addi-
+tionally, our current hyperparameters are manually
+conﬁgured, which may not achieve optimal perfor-
+mance across all specialized domains. Developing
+a fully adaptive mechanism for dynamic parame-
+ter adjustment represents a promising avenue to
+further enhance the framework’s versatility and ro-
+bustness.
+Acknowledgments
+This work is supported in part by the Beijing Natu-
+ral Science Foundation (Grant No. L243031), the
+National Key R&D Program of China (Grant No.
+2024YFB4505601), and the National Natural Sci-
+ence Foundation of China (Grant No. 62572036).
+References
+Marianne Arriola, Aaron Gokaslan, Justin T. Chiu, Zhi-
+han Yang, Zhixuan Qi, Jiaqi Han, Subham Sekhar
+Sahoo, and Volodymyr Kuleshov. 2025. Block diffu-
+sion: Interpolating between autoregressive and diffu-
+sion language models. Preprint, arXiv:2503.09573.
+Jacob Austin, Daniel D Johnson, Jonathan Ho, Daniel
+Tarlow, and Rianne Van Den Berg. 2021. Structured
+denoising diffusion models in discrete state-spaces.
+Advances in neural information processing systems,
+34:17981–17993.
+Jinze Bai, Shuai Bai, Yunfei Chu, Zeyu Cui, Kai Dang,
+Xiaodong Deng, Yang Fan, Wenbin Ge, Yu Han, Fei
+Huang, Binyuan Hui, Luo Ji, Mei Li, Junyang Lin,
+Runji Lin, Dayiheng Liu, Gao Liu, Chengqiang Lu,
+Keming Lu, and 29 others. 2023. Qwen technical
+report. Preprint, arXiv:2309.16609.
+Yushi Bai, Xin Lv, Jiajie Zhang, Hongchang Lyu,
+Jiankai Tang, Zhidian Huang, Zhengxiao Du, Xiao
+Liu, Aohan Zeng, Lei Hou, and 1 others. 2024. Long-
+bench: A bilingual, multitask benchmark for long
+context understanding. In Proceedings of the 62nd
+annual meeting of the association for computational
+linguistics (volume 1: Long papers), pages 3119–
+3137.
+Tiwei Bie, Maosong Cao, Kun Chen, Lun Du, Min-
+gliang Gong, Zhuochen Gong, Yanmei Gu, Jiaqi Hu,
+Zenan Huang, Zhenzhong Lan, Chengxi Li, Chongx-
+uan Li, Jianguo Li, Zehuan Li, Huabin Liu, Lin Liu,
+Guoshan Lu, Xiaocheng Lu, Yuxin Ma, and 12 oth-
+ers. 2025. Llada2.0: Scaling up diffusion language
+models to 100b. Preprint, arXiv:2512.15745.
+Sitong Chen, Shen Nie, Jiacheng Sun, Zijin Feng, Zhen-
+guo Li, Ji-Rong Wen, and Chongxuan Li. 2025.
+Masked diffusion models as energy minimization.
+arXiv preprint arXiv:2509.13866.
+Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian,
+Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias
+Plappert, Jerry Tworek, Jacob Hilton, Reiichiro
+Nakano, Christopher Hesse, and John Schulman.
+2021. Training veriﬁers to solve math word prob-
+lems. Preprint, arXiv:2110.14168.
+OpenCompass Contributors. 2023.
+Opencompass:
+A universal evaluation platform for foundation
+models.
+https://github.com/open-compass/
+opencompass.
+Xingtong Ge, Yi Zhang, Yushi Huang, Dailan He, Xia-
+hong Wang, Bingqi Ma, Guanglu Song, Yu Liu, and
+Jun Zhang. 2026. Salt: Self-consistent distribution
+matching with cache-aware training for fast video
+generation. arXiv preprint arXiv:2604.03118.
+Ruihao Gong, Yang Yong, Shiqiao Gu, Yushi Huang,
+Chengtao Lv, Yunchen Zhang, Dacheng Tao, and
+Xianglong Liu. 2024. Llmc: Benchmarking large
+language model quantization with a versatile com-
+pression toolkit. In Proceedings of the 2024 Con-
+ference on Empirical Methods in Natural Language
+Processing: Industry Track, pages 132–152.
+Shansan Gong, Shivam Agarwal, Yizhe Zhang, Ji-
+acheng Ye, Lin Zheng, Mukai Li, Chenxin An, Peilin
+Zhao, Wei Bi, Jiawei Han, Hao Peng, and Lingpeng
+Kong. 2025. Scaling diffusion language models via
+adaptation from autoregressive models.
+Preprint,
+arXiv:2410.17891.
+Shansan Gong, Mukai Li, Jiangtao Feng, Zhiyong Wu,
+and LingPeng Kong. 2022. Diffuseq: Sequence to se-
+quence text generation with diffusion models. arXiv
+preprint arXiv:2210.08933.
+Xiangming Gu, Tianyu Pang, Chao Du, Qian Liu,
+Fengzhuo Zhang, Cunxiao Du, Ye Wang, and
+Min Lin. 2025.
+When attention sink emerges in
+language models: An empirical view.
+Preprint,
+arXiv:2410.10781.
+Guangxin He, Shen Nie, Fengqi Zhu, Yuankang Zhao,
+Tianyi Bai, Ran Yan, Jie Fu, Chongxuan Li, and
+Binhang Yuan. 2025. Ultrallada: Scaling the context
+length to 128k for diffusion large language models.
+Preprint, arXiv:2510.10481.
+Zhengfu He, Tianxiang Sun, Qiong Tang, Kuanning
+Wang, Xuan-Jing Huang, and Xipeng Qiu. 2023. Dif-
+fusionbert: Improving generative masked language
+models with diffusion models. In Proceedings of the
+12154
+
+61st annual meeting of the association for compu-
+tational linguistics (volume 1: Long papers), pages
+4521–4534.
+Jianuo Huang, Yaojie Zhang, Yicun Yang, Benhao
+Huang, Biqing Qi, Dongrui Liu, and Linfeng Zhang.
+2025a.
+Mask tokens as prophet:
+Fine-grained
+cache eviction for efﬁcient dllm inference. Preprint,
+arXiv:2510.09309.
+Yushi Huang, Xingtong Ge, Ruihao Gong, Chengtao
+Lv, and Jun Zhang. 2025b. Linvideo: A post-training
+framework towards o (n) attention in efﬁcient video
+generation. arXiv preprint arXiv:2510.08318.
+Yushi Huang, Ruihao Gong, Jing Liu, Tianlong Chen,
+and Xianglong Liu. 2024. Tfmq-dm: Temporal fea-
+ture maintenance quantization for diffusion models.
+In Proceedings of the IEEE/CVF Conference on Com-
+puter Vision and Pattern Recognition, pages 7362–
+7371.
+Yushi Huang, Ruihao Gong, Jing Liu, Yifu Ding, Cheng-
+tao Lv, Haotong Qin, and Jun Zhang. 2025c. Qvgen:
+Pushing the limit of quantized video generative mod-
+els. arXiv preprint arXiv:2505.11497.
+Yushi Huang, Ruihao Gong, Xianglong Liu, Jing Liu,
+Yuhang Li, Jiwen Lu, and Dacheng Tao. 2025d. Tem-
+poral feature matters: A framework for diffusion
+model quantization. IEEE Transactions on Pattern
+Analysis and Machine Intelligence.
+Yushi Huang, Zining Wang, Ruihao Gong, Jing Liu,
+Xinjie Zhang, Jinyang Guo, Xianglong Liu, and Jun
+Zhang. 2025e. Harmonica: Harmonizing training
+and inference for better feature caching in diffu-
+sion transformer acceleration. In International Con-
+ference on Machine Learning, pages 25835–25858.
+PMLR.
+Yushi Huang, Zining Wang, Zhihang Yuan, Yifu
+Ding, Ruihao Gong, Jinyang Guo, Xianglong Liu,
+and Jun Zhang. 2025f.
+Modes:
+Accelerating
+mixture-of-experts multimodal large language mod-
+els via dynamic expert skipping.
+arXiv preprint
+arXiv:2511.15690.
+Yuchu Jiang, Yue Cai, Xiangzhong Luo, Jiale Fu, Jiarui
+Wang, Chonghan Liu, and Xu Yang. 2025. d2cache:
+Accelerating diffusion-based llms via dual adaptive
+caching. Preprint, arXiv:2509.23094.
+G. Kamradt. 2023. Needle in a haystack - pressure
+testing llms.
+https://github.com/gkamradt/
+LLMTest_NeedleInAHaystack.
+Tianyi Li, Mingda Chen, Bowei Guo, and Zhiqiang
+Shen. 2025. A survey on diffusion language models.
+arXiv preprint arXiv:2508.10875.
+Xiang Li, John Thickstun, Ishaan Gulrajani, Percy S
+Liang, and Tatsunori B Hashimoto. 2022. Diffusion-
+lm improves controllable text generation. Advances
+in neural information processing systems, 35:4328–
+4343.
+Xiaoran Liu, Yuerong Song, Zhigeng Liu, Zengfeng
+Huang, Qipeng Guo, Ziwei He, and Xipeng Qiu.
+2025a. Longllada: Unlocking long context capabili-
+ties in diffusion llms. Preprint, arXiv:2506.14429.
+Zhiyuan Liu, Yicun Yang, Yaojie Zhang, Junjie Chen,
+Chang Zou, Qingyuan Wei, Shaobo Wang, and Lin-
+feng Zhang. 2025b. dllm-cache: Accelerating dif-
+fusion large language models with adaptive caching.
+Preprint, arXiv:2506.06295.
+Lingkun Long, Rubing Yang, Yushi Huang, Desheng
+Hui, Ao Zhou, and Jianlei Yang. 2026. Sliminfer:
+Accelerating long-context llm inference via dynamic
+token pruning. In Proceedings of the AAAI Con-
+ference on Artiﬁcial Intelligence, volume 40, pages
+32284–32292.
+Aaron Lou, Chenlin Meng, and Stefano Ermon.
+2023. Discrete diffusion modeling by estimating
+the ratios of the data distribution. arXiv preprint
+arXiv:2310.16834.
+Chengtao Lv, Yumeng Shi, Yushi Huang, Ruihao Gong,
+Shen Ren, and Wenya Wang. 2026a.
+Light forc-
+ing: Accelerating autoregressive video diffusion via
+sparse attention. arXiv preprint arXiv:2602.04789.
+Chengtao Lv, Bilang Zhang, Yang Yong, Ruihao Gong,
+Yushi Huang, Shiqiao Gu, Jiajun Wu, Yumeng Shi,
+Jinyang Guo, and Wenya Wang. 2026b.
+Llmc+:
+Benchmarking vision-language model compression
+with a plug-and-play toolkit.
+In Proceedings of
+the AAAI Conference on Artiﬁcial Intelligence, vol-
+ume 40, pages 24189–24197.
+Xinyin Ma, Runpeng Yu, Gongfan Fang, and Xinchao
+Wang. 2025. dkv-cache: The cache for diffusion
+language models. Preprint, arXiv:2505.15781.
+Quan Nguyen-Tri, Mukul Ranjan, and Zhiqiang Shen.
+2025. Attention is all you need for kv cache in diffu-
+sion llms. Preprint, arXiv:2510.14973.
+Shen Nie, Fengqi Zhu, Zebin You, Xiaolu Zhang,
+Jingyang Ou, Jun Hu, Jun Zhou, Yankai Lin, Ji-Rong
+Wen, and Chongxuan Li. 2025. Large language dif-
+fusion models. Preprint, arXiv:2502.09992.
+Maximo Eduardo Rulli, Simone Petruzzi, Edoardo
+Michielon, Fabrizio Silvestri, Simone Scardapane,
+and Alessio Devoto. 2025. Attention sinks in diffu-
+sion language models. Preprint, arXiv:2510.15731.
+Valeria Ruscio, Umberto Nanni, and Fabrizio Silvestri.
+2025. What are you sinking? a geometric approach
+on attention sink. Preprint, arXiv:2508.02546.
+Jay Shah, Ganesh Bikshandi, Ying Zhang, Vijay
+Thakkar, Pradeep Ramani, and Tri Dao. 2024.
+Flashattention-3: Fast and accurate attention with
+asynchrony and low-precision. Advances in Neural
+Information Processing Systems, 37:68658–68685.
+12155
+
+Yuerong Song, Xiaoran Liu, Ruixiao Li, Zhigeng
+Liu, Zengfeng Huang, Qipeng Guo, Ziwei He, and
+Xipeng Qiu. 2025. Sparse-dllm: Accelerating dif-
+fusion llms with dynamic cache eviction. Preprint,
+arXiv:2508.02558.
+Jiaming Tang, Yilong Zhao, Kan Zhu, Guangxuan Xiao,
+Baris Kasikci, and Song Han. 2024. Quest: Query-
+aware sparsity for efﬁcient long-context llm inference.
+arXiv preprint arXiv:2406.10774.
+Philippe Tillet, Hsiang-Tsung Kung, and David Cox.
+2019. Triton: an intermediate language and com-
+piler for tiled neural network computations. In Pro-
+ceedings of the 3rd ACM SIGPLAN International
+Workshop on Machine Learning and Programming
+Languages, pages 10–19.
+Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier
+Martinet, Marie-Anne Lachaux, Timothée Lacroix,
+Baptiste Rozière, Naman Goyal, Eric Hambro, Faisal
+Azhar, Aurelien Rodriguez, Armand Joulin, Edouard
+Grave, and Guillaume Lample. 2023. Llama: Open
+and efﬁcient foundation language models. Preprint,
+arXiv:2302.13971.
+Zeqing Wang, Gongfan Fang, Xinyin Ma, Xingyi Yang,
+and Xinchao Wang. 2025. Sparsed: Sparse atten-
+tion for diffusion language models. arXiv preprint
+arXiv:2509.24014.
+Zining Wang, Jinyang Guo, Ruihao Gong, Yang Yong,
+Aishan Liu, Yushi Huang, Jiaheng Liu, and Xiang-
+long Liu. 2024. Ptsbench: A comprehensive post-
+training sparsity benchmark towards algorithms and
+models. In Proceedings of the 32nd ACM Interna-
+tional Conference on Multimedia, pages 5742–5751.
+Chengyue Wu, Hao Zhang, Shuchen Xue, Zhijian Liu,
+Shizhe Diao, Ligeng Zhu, Ping Luo, Song Han, and
+Enze Xie. 2025. Fast-dllm: Training-free accelera-
+tion of diffusion llm by enabling kv cache and parallel
+decoding. Preprint, arXiv:2505.22618.
+Chaojun Xiao, Pengle Zhang, Xu Han, Guangxuan
+Xiao, Yankai Lin, Zhengyan Zhang, Zhiyuan Liu,
+and Maosong Sun. 2024a.
+Inﬂlm: Training-free
+long-context extrapolation for llms with an efﬁcient
+context memory. Advances in Neural Information
+Processing Systems, 37:119638–119661.
+Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song
+Han, and Mike Lewis. 2023. Efﬁcient streaming
+language models with attention sinks. arXiv preprint
+arXiv:2309.17453.
+Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song
+Han, and Mike Lewis. 2024b.
+Efﬁcient stream-
+ing language models with attention sinks. Preprint,
+arXiv:2309.17453.
+Ruyi Xu, Guangxuan Xiao, Haofeng Huang, Junxian
+Guo, and Song Han. 2025. XAttention: Block sparse
+attention with antidiagonal scoring. In Forty-second
+International Conference on Machine Learning.
+Yufei Xue, Yushi Huang, Jiawei Shao, and Jun Zhang.
+2025. Vlmq: Efﬁcient post-training quantization for
+large vision-language models via hessian augmenta-
+tion. arXiv e-prints, pages arXiv–2508.
+Jiacheng Ye, Zhihui Xie, Lin Zheng, Jiahui Gao, Zirui
+Wu, Xin Jiang, Zhenguo Li, and Lingpeng Kong.
+2025. Dream 7b: Diffusion large language models.
+Preprint, arXiv:2508.15487.
+Zebin You, Shen Nie, Xiaolu Zhang, Jun Hu, Jun Zhou,
+Zhiwu Lu, Ji-Rong Wen, and Chongxuan Li. 2025.
+Llada-v: Large language diffusion models with visual
+instruction tuning. arXiv preprint arXiv:2505.16933.
+Jingyang Yuan, Huazuo Gao, Damai Dai, Junyu Luo,
+Liang Zhao, Zhengyan Zhang, Zhenda Xie, Y. X.
+Wei, Lean Wang, Zhiping Xiao, Yuqing Wang,
+Chong Ruan, Ming Zhang, Wenfeng Liang, and
+Wangding Zeng. 2025.
+Native sparse attention:
+Hardware-aligned and natively trainable sparse at-
+tention. Preprint, arXiv:2502.11089.
+Jintao Zhang, Haofeng Huang, Pengle Zhang, Jia Wei,
+Jun Zhu, and Jianfei Chen. 2025a. Sageattention2:
+Efﬁcient attention with thorough outlier smoothing
+and per-thread int4 quantization. In International
+Conference on Machine Learning (ICML).
+Jintao Zhang, Jia Wei, Pengle Zhang, Jun Zhu, and
+Jianfei Chen. 2025b. Sageattention: Accurate 8-bit
+attention for plug-and-play inference acceleration. In
+International Conference on Learning Representa-
+tions (ICLR).
+Jintao Zhang, Chendong Xiang, Haofeng Huang, Jia
+Wei, Haocheng Xi, Jun Zhu, and Jianfei Chen. 2025c.
+Spargeattn: Accurate sparse attention accelerating
+any model inference. In International Conference on
+Machine Learning (ICML).
+Zhenyu Zhang, Ying Sheng, Tianyi Zhou, Tianlong
+Chen, Lianmin Zheng, Ruisi Cai, Zhao Song, Yuan-
+dong Tian, Christopher Ré, Clark Barrett, and 1 oth-
+ers. 2023. H2o: Heavy-hitter oracle for efﬁcient
+generative inference of large language models. Ad-
+vances in Neural Information Processing Systems,
+36:34661–34710.
+Fengqi Zhu, Rongzhen Wang, Shen Nie, Xiaolu Zhang,
+Chunwei Wu, Jun Hu, Jun Zhou, Jianfei Chen,
+Yankai Lin, Ji-Rong Wen, and Chongxuan Li. 2025.
+Llada 1.5: Variance-reduced preference optimiza-
+tion for large language diffusion models. Preprint,
+arXiv:2505.19223.
+Lunjie Zhu, Yushi Huang, Xingtong Ge, Yufei Xue,
+Zhening Liu, Yumeng Zhang, Zehong Lin, and Jun
+Zhang. 2026.
+Flash-vaed: Plug-and-play vae de-
+coders for efﬁcient video generation. arXiv preprint
+arXiv:2602.19161.
+12156
+
+Appendix
+A
+Implementation Details
+A.1
+Details of Focus-dLLM
+This section provides additional details regarding
+the implementation of our Focus-dLLM framework.
+To maximize computational efﬁciency (Wang et al.,
+2024; Lv et al., 2026b; Gong et al., 2024; Huang
+et al., 2025d), our framework leverages special-
+ized GPU kernels for attention computations. The
+core sink-aware sparse attention operator (Lv
+et al., 2026a; Ge et al., 2026), which handles dy-
+namic context pruning, is implemented using Tri-
+ton (Tillet et al., 2019). This allows for ﬁne-grained
+control (Xue et al., 2025) and optimization of mem-
+ory access patterns for sparse matrix operations.
+For dense attention computations—which occur
+in the initial dense layers (l ≤ldense) and during
+full-cache refreshes at block entries—we utilize the
+highly optimized FlashAttention (Shah et al., 2024)
+kernel to accelerate inference.
+Empirical analysis revealed that the ﬁnal lay-
+ers of Dream-7B-Instruct (Ye et al., 2025) exhibit
+high sensitivity to attention sparsiﬁcation. To miti-
+gate potential performance degradation, we desig-
+nate the ﬁnal four transformer layers of this model
+as dense, ensuring they always perform full atten-
+tion (Long et al., 2026). This hybrid strategy pre-
+serves the integrity of critical generation stages,
+achieving a superior trade-off between accuracy
+and efﬁciency.
+Focus-dLLM strictly adhere to the original de-
+coding strategies of both UltraLLaDA (He et al.,
+2025) and Dream-7B-Instruct (Ye et al., 2025). The
+generation process follows the semi-autoregressive
+remasking paradigm, where a transfer scheduler
+dictates which tokens are unmasked at each step
+based on their conﬁdence scores, consistent with
+the methods described in (He et al., 2025) and (Ye
+et al., 2025). The complete inference procedure of
+Focus-dLLM is detailed in Algorithm 1.
+A.2
+Baselines
+In our experiments, we compare Focus-dLLM
+against the vanilla inference of representative dif-
+fusion models and several state-of-the-art accelera-
+tion frameworks.
+Vanilla dLLMs. We use the standard inference im-
+plementations of UltraLLaDA (He et al., 2025) and
+Dream-7B-Instruct (Ye et al., 2025) as our primary
+baselines. UltraLLaDA is developed by ﬁne-tuning
+LLaDA (Nie et al., 2025) for long-context capabili-
+ties, while Dream is adapted from a pre-trained au-
+toregressive model. These representative diffusion
+LLMs perform a full attention computation over
+the entire sequence at each denoising step, without
+any caching or sparsiﬁcation mechanisms (Huang
+et al., 2025b).
+Fast-dLLM. As a strong baseline for approximate
+KV cache methods, Fast-dLLM (Wu et al., 2025)
+introduces a block-wise approximate KV cache
+tailored for the bidirectional attention in dLLMs. It
+reuses cached activations from previously decoded
+blocks to reduce redundant computation.
+Sparse-dLLM. This method (Song et al., 2025) ac-
+celerates dLLM inference by integrating dynamic
+cache eviction with sparse attention principles. It
+leverages the temporal stability of token saliency
+to identify and retain critical KV entries while dy-
+namically evicting unimportant entries from both
+the preﬁx and sufﬁx contexts.
+SparseD. As a pure sparse attention baseline,
+SparseD (Wang et al., 2025) is tailored for the
+unique attention patterns in dLLMs. Its core strat-
+egy involves pre-computing head-speciﬁc sparse
+patterns once and reusing them across subsequent
+denoising steps. To preserve generation quality, it
+applies full attention during the critical early steps
+before switching to the pre-computed sparse pat-
+terns for the remainder of the inference process.
+To ensure a fair comparison, all methods uni-
+formly employ the semi-autoregressive remasking
+strategy, with the block length set to 32 across all
+experiments.
+A.3
+Generation Settings
+Table 4 presents the detailed conﬁgurations for each
+task in the LongBench benchmark. To align with
+the evaluation settings of UltraLLaDA (He et al.,
+2025), we process all input contexts by truncating
+them to a maximum length of 16K tokens using
+the "drop-middle" strategy. For each speciﬁc task,
+the generation length (Gen. Len.) and the genera-
+tion steps (Steps) are conﬁgured as speciﬁed in the
+table.
+B
+Details of Accuracy vs. Efﬁciency
+Experiments
+This section provides the detailed results under-
+pinning our accuracy vs. efﬁciency analysis. Ta-
+ble 5 presents a comprehensive performance com-
+parison on the LongBench (Bai et al., 2024) for
+12157
+
+Algorithm 1 Focus-dLLM Inference Procedure
+Require: Prompt p, Mask token [MASK], Max steps T, Sparse ratio α, Expansion factor ρ, Transfer
+Scheduler S, Dense layers ldense, Window size w.
+Ensure: Generated sequence x(T)
+1: Initialize x(0) ←[p, [MASK]1, . . . , [MASK]N]
+2: Initialize K, V cache as empty; Conﬁdence scores c(0) ←0
+3: for t = 0 to T −1 do
+4:
+▷Determine dynamic prediction token counts
+5:
+n(t) ←Number of tokens to unmask at step t given S
+6:
+k ←⌊ρ · n(t)⌉
+▷Calculate candidate count
+7:
+if IsBlockEntry(t) then
+8:
+Iactive ←{1, . . . , L}
+▷Full refresh at block entry
+9:
+use_sparse ←False
+10:
+else
+11:
+Ifocus ←Select top-k indices based on c(t)
+▷Candidate set
+12:
+Iactive ←S
+i∈Ifocus{i −⌊w/2⌋, . . . , i + ⌊w/2⌋}
+▷Window expansion
+13:
+use_sparse ←True
+14:
+end if
+15:
+▷Layer-wise Forward Pass
+16:
+for layer l = 1 to Llayers do
+17:
+if use_sparse and l > ldense then
+18:
+▷Sparse Attention Mechanism
+19:
+Isink ←IdentifySinks(Layer ldense)
+20:
+Compute Block Relevance Rb using QIfocus and ¯Kb
+21:
+Determine selection size C = ⌊α · Ntotal_blocks⌋
+22:
+Select relevant prompt blocks Brelevant ←Top-C(Rb)
+23:
+Ip ←Isink ∪S
+b∈Brelevant{ i | i ∈Blockb }
+24:
+Kattn ←Concat(KIp, Kresp)
+25:
+Vattn ←Concat(VIp, Vresp)
+26:
+Hl ←Softmax
+
+QIactiveK⊤
+attn
+√
+d
+
+Vattn
+27:
+else
+28:
+▷Full Attention & Cache Update
+29:
+Hl ←FullAttn(QIactive, K, V)
+30:
+Update KV Cache for indices in Iactive
+31:
+end if
+32:
+end for
+33:
+▷Denoising and State Update
+34:
+Update x(t) to x(t+1) and compute new conﬁdence c(t+1)
+35: end for
+36: return x(T)
+UltraLLaDA (He et al., 2025), including various
+conﬁgurations for both baseline methods and our
+own. For Sparse-dLLM (Song et al., 2025), we
+vary the retention ratio r, which determines the
+percentage of KV cache entries preserved. For
+SparseD (Wang et al., 2025), conﬁgurations differ
+in the skip ratio (the initial portion of steps using
+full attention) and the selection ratio r. The conﬁg-
+urations for our method, Focus-dLLM, correspond
+to different settings of the sparsity ratio α , which
+controls the amount of prompt context retained for
+attention computation, while all other hyperparam-
+eters remain consistent with the setup described
+in the main text(section 6.1). As the results con-
+sistently demonstrate, Focus-dLLM establishes a
+better accuracy-efﬁciency trade-off, achieving su-
+perior overall performance compared to prior ac-
+celeration methods.
+12158
+
+Table 4: Detailed information of the datasets in the LongBench benchmark.
+Label
+Eval. Metric
+Avg. Len.
+Gen. Len.
+Steps
+Language
+Sample Num.
+Qasper
+F1
+3,619
+32
+32
+EN
+200
+MultiFieldQA-en
+F1
+4,559
+64
+64
+EN
+150
+HotpotQA
+F1
+9,151
+32
+32
+EN
+200
+2WikiMQA
+F1
+4,887
+32
+32
+EN
+200
+Musique
+F1
+11,214
+32
+32
+EN
+200
+GovReport
+Rouge-L
+8,734
+512
+512
+EN
+200
+QMSum
+Rouge-L
+10,614
+512
+512
+EN
+200
+MultiNews
+Rouge-L
+2,113
+512
+512
+EN
+200
+TREC
+Accuracy
+5,177
+64
+64
+EN
+200
+TriviaQA
+F1
+8,209
+32
+32
+EN
+200
+SAMSum
+Rouge-L
+6,258
+128
+128
+EN
+200
+Lsht
+Accuracy
+22,333
+64
+64
+ZN
+200
+PassageRetrieval
+Accuracy
+9,289
+32
+32
+EN
+200
+Lcc
+Edit Sim
+1,235
+64
+64
+Python/C#/Java
+500
+RepoBench-P
+Edit Sim
+4,206
+64
+64
+Python/Java
+500
+C
+Attention Patterns of dLLM
+To supplement our analysis in Section 4.2, Figure 8
+presents a broader visualization of attention pat-
+terns from LLaDA-8B-Instruct (Nie et al., 2025)
+across various layers and denoising steps. The
+heatmaps clearly illustrate the principles of locality
+(strong diagonals) and the formation of attention
+sinks (bright vertical bands). Most importantly, the
+ﬁgure provides strong visual evidence for the cross-
+layer consistency of these sinks. The locations of
+the prominent vertical bands are remarkably stable
+across different layers (e.g., Layer 9, 19, and 31) at
+any given denoising step. This observed stability
+is the primary motivation behind our method, as
+it validates our strategy of identifying sink loca-
+tions at an intermediate depth and reusing them for
+deeper layers to eliminate redundant computation.
+12159
+
+Table 5: Detailed performance and throughput comparison on LongBench (Bai et al., 2024) for UltraLLaDA (He
+et al., 2025). We report results for baselines and various conﬁgurations of our method, Focus-dLLM.
+Method
+Single-Doc. QA
+Multi-Doc. QA
+Summarization Few-shot Learning
+Synthetic
+Code
+Ave. Score
+Throughput(16K)
+Qasper
+MF-en
+HotpotQA
+2WikiMQA
+Musique
+GovReport
+QMSum
+TREC
+TriviaQA
+LSHT
+PRe
+Lcc
+RB-P
+Vanilla
+19.14
+25.87
+16.27
+18.00
+12.08
+32.83
+22.48 80.00
+91.58
+41.00 96.75 68.23 59.50
+44.90
+1.06
+Fast-dLLM
+18.34
+29.90
+17.03
+17.11
+13.36
+30.05
+22.89 79.50
+91.03
+42.00 94.75 67.50 58.10
+44.74
+11.03
+Sparse-dLLM (r=0.3)
+17.10
+25.82
+20.82
+18.63
+15.35
+27.95
+22.52 71.00
+91.93
+41.50 98.71 67.07 57.18
+44.28
+12.67
+Sparse-dLLM (r=0.4)
+17.99
+27.67
+18.90
+18.55
+13.11
+28.77
+23.01 74.50
+91.43
+42.00 98.17 67.80 57.68
+44.58
+12.34
+Sparse-dLLM (r=0.5)
+18.04
+27.26
+20.59
+17.88
+13.67
+29.95
+23.57 76.50
+91.93
+41.50 97.12 67.50 57.72
+44.86
+11.94
+Sparse-dLLM (r=0.6)
+19.06
+26.94
+20.80
+18.30
+14.31
+30.16
+23.68 77.00
+91.43
+42.50 96.25 67.99 57.44
+45.07
+11.57
+Sparse-dLLM (r=0.7)
+19.03
+27.35
+21.64
+18.04
+13.24
+30.63
+23.38 78.50
+91.43
+41.50 95.42 67.94 57.40
+45.04
+11.19
+SparseD (skip=0.2,r=0.3) 19.09
+25.87
+15.45
+18.04
+11.92
+32.64
+22.50 79.50
+90.70
+41.50 96.79 68.10 59.02
+44.70
+1.38
+SparseD (skip=0.2,r=0.2) 18.85
+25.70
+16.10
+17.14
+11.64
+32.29
+22.52 79.50
+90.70
+41.50 96.67 68.02 58.77
+44.57
+1.44
+SparseD (skip=0.2,r=0.1) 18.06
+25.76
+15.40
+16.64
+11.47
+31.44
+22.60 79.50
+91.05
+41.50 96.84 67.98 58.59
+44.37
+1.51
+SparseD (skip=0.1,r=0.3) 18.89
+24.72
+14.45
+14.65
+10.93
+32.55
+22.93 79.50
+91.70
+41.50 97.12 67.86 59.18
+44.31
+1.44
+SparseD (skip=0.1,r=0.2) 19.34
+24.21
+14.09
+13.84
+10.80
+31.61
+23.12 79.50
+91.53
+42.00 97.88 67.72 59.16
+44.22
+1.52
+Focus-dLLM (α=0.3)
+16.63
+29.57
+23.09
+21.14
+18.59
+26.09
+21.05 69.50
+91.28
+38.00 97.27 66.19 57.07
+44.27
+19.48
+Focus-dLLM (α=0.4)
+16.60
+27.83
+23.81
+21.34
+18.52
+26.85
+21.03 72.00
+90.78
+40.00 97.23 66.55 56.18
+44.52
+19.37
+Focus-dLLM (α=0.5)
+17.02
+29.11
+22.47
+21.49
+20.20
+26.75
+21.45 77.00
+90.78
+41.00 95.73 66.72 57.12
+45.14
+19.30
+Focus-dLLM (α=0.6)
+16.91
+28.20
+22.75
+23.21
+18.94
+26.39
+21.86 76.50
+90.78
+41.50 95.84 66.67 56.75
+45.10
+19.10
+Focus-dLLM (α=0.7)
+17.71
+29.36
+23.61
+22.52
+19.12
+26.97
+21.58 76.50
+90.78
+41.00 96.67 66.85 56.72
+45.34
+19.14
+0
+50
+100
+150
+Query Index
+Layer 9
+Step 0
+Step 32
+Step 64
+Step 127
+0
+50
+100
+150
+Query Index
+Layer 19
+0
+50
+100
+150
+Key Index
+0
+50
+100
+150
+Query Index
+Layer 31
+0
+50
+100
+150
+Key Index
+0
+50
+100
+150
+Key Index
+0
+50
+100
+150
+Key Index
+0.05
+0.10
+0.15
+0.20
+Figure 8: Attention patterns in LLaDA-8B-Instruct (Nie et al., 2025) across various layers and denoising steps.
+The heatmaps demonstrate the emergence of attention sinks (vertical bands) and their strong positional consistency
+across different layers within the same step.
+12160

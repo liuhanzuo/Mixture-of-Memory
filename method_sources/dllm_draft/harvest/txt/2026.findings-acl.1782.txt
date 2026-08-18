@@ -1,0 +1,2282 @@
+Findings of the Association for Computational Linguistics: ACL 2026, pages 35793–35807
+July 2-7, 2026 ©2026 Association for Computational Linguistics
+Fast-Decoding Diffusion Language Models via
+Progress-Aware Confidence Schedules
+Amr Mohamed1,2*, Yang Zhang2, Michalis Vazirgiannis1,2, Guokan Shang1
+1MBZUAI, 2Ecole Polytechnique
+Abstract
+Diffusion large language models (dLLMs) of-
+fer a promising alternative to autoregressive
+models, but their practical utility is severely
+hampered by slow, iterative sampling.
+We
+present SchED, a training-free, model-agnostic
+early-exit algorithm that terminates diffusion
+decoding using a progress-aware confidence
+threshold. We evaluate SchED across multiple
+diffusion model families and a diverse set of
+benchmarks spanning multiple-choice, math,
+long-form QA, and translation. SchED delivers
+substantial acceleration: on instruction-tuned
+models, it achieves approximately 4× speedups
+while retaining baseline performance on aver-
+age. On base models, SchED yields consistent
+speedup gains with 99.1–100% performance
+retention, with up to 2.34× under more ag-
+gressive settings. Under a conservative qual-
+ity–penalized speed metric, SchED consistently
+outperforms prior confidence-based early-exit
+methods, including on long-form generation
+where existing approaches tend to break down.
+An entropy analysis of the model’s token pre-
+dictions reveals that instruction tuning speeds
+up the decay of predictive entropy. By leverag-
+ing inherent confidence stabilization as a signal
+for computational efficiency, SchED provides a
+robust framework for efficient dLLM inference.
+1
+Introduction
+Large Language Models (LLMs) have evolved
+rapidly in recent years, but the dominant decoding
+paradigm remains autoregressive (AR), a process
+that is inherently sequential and constrains oppor-
+tunities for parallel generation and global context
+use (Brown et al., 2020; Yin et al., 2024; Zhang
+et al., 2025b). In response, Diffusion Large Lan-
+guage Models (dLLMs) have emerged as a credible
+alternative to AR decoding, offering compelling
+advantages such as parallel refinement, flexible
+*Correspondence: amr.mohamed@mbzuai.ac.ae
+Model's
+confidence
+Constrained confidence-threshold schedule
+Aggressive confidence-threshold schedule  
+Figure 1: Progress-aware early exit in SchED. Decoding
+terminates when the model’s confidence (blue) inter-
+sects a progress-dependent threshold. The aggressive
+schedule (red) relaxes the threshold rapidly to trigger an
+earlier exit and maximize speedup. Conversely, the con-
+strained schedule (green) maintains a higher threshold
+for a longer duration, ensuring greater output stability
+by delaying the exit point.
+infilling, and bidirectional attention over the par-
+tially generated sequence (Zou et al., 2023). This
+paradigm has matured rapidly, with efforts to train
+powerful base and instruct models from scratch (Ye
+et al., 2025), adapt existing AR checkpoints (Gong
+et al., 2024b; Nie et al., 2025), and push capabilities
+into complex domains like reasoning and planning,
+where they can outperform AR models on certain
+tasks (Phuong et al., 2025; Gong et al., 2024a; Song
+et al., 2025; Pal et al., 2025), and principled scal-
+ing analyses for masked diffusion objectives (Li
+et al., 2024). Collectively, these results position
+dLLMs as a practical family of foundation-model
+architectures with distinct decoding affordances.
+Despite this promise, decoding efficiency re-
+mains a central bottleneck for dLLMs. dLLM gen-
+eration proceeds via a reverse-diffusion chain with
+many refinement steps. In addition, practitioners
+must choose step budgets and transfer schedules a
+35793
+
+priori, often conservatively, to avoid quality loss.
+This leads to unnecessary computation on “easy”
+inputs and, when heuristic decoding parameter
+choices (e.g., step budgets) are too extreme, results
+in unstable behavior across tasks. A growing body
+of work addresses this bottleneck through training-
+free early-commit methods, which exploit the em-
+pirical observation that predictions often stabilize
+well before the final diffusion step (Pengxiang et al.,
+2025). Dynamic policies modulate exploration ver-
+sus acceleration across the chain, using signals like
+historical logits or local determinism to reduce re-
+dundant steps (Wei et al., 2025; Wang et al., 2025b;
+Or-El et al., 2025). Other lines of work focus on
+error correction and refinement, enabling models
+to revise their own outputs by re-masking low-
+confidence tokens (Zhang et al., 2025a; Su et al.,
+2025). Few- and one-step routes also address this
+bottleneck by transferring ideas from continuous
+diffusion via curriculum, consistency distillation,
+or flow matching (Sahoo et al., 2025; Chen et al.,
+2025; Meister et al., 2024). Orthogonal efforts
+reduce per-step latency with caching adapted to
+bidirectional refinement (Yuan et al., 2025b; Wang
+et al., 2025a) and with speculative mechanisms that
+draft and verify tokens in parallel (Sohoni et al.,
+2025; Yuan et al., 2025a). While impactful, these
+approaches often require additional training, intro-
+duce auxiliary models, or rely on complex heuris-
+tics, leaving room for a simple, training-free, and
+architecture-agnostic early-exit principle.
+We frame diffusion decoding as a when-to-stop
+problem and introduce SchED, a training-free,
+model-agnostic early-exit mechanism. SchED ag-
+gregates token-level confidence (top-2 logit mar-
+gins) over the answer region and compares it to a
+smooth, non-increasing threshold defined over nor-
+malized diffusion progress. This progress-aware
+criterion decouples stopping from fixed step bud-
+gets and terminates decoding once predictions have
+stabilized, avoiding the brittleness of discrete phase
+changes. SchED composes with standard transfer
+schedules (single-suffix or block diffusion) and re-
+quires no changes to model training (Nie et al.,
+2025; Ye et al., 2025). Figure 1 illustrates SchED’s
+progress-aware early-exit mechanism, showing
+how aggregated confidence interacts with differ-
+ent threshold schedules to trigger an exit.
+We evaluate SchED across two diffusion LLM
+families (a single-block Dream decoder and a
+block-diffusion LLaDA decoder), each in base and
+instruction-tuned variants, on ten diverse bench-
+marks covering multiple-choice, math, long-form
+QA/summarization, and translation. On instruction-
+tuned models, SchED retains 99.8–100% of base-
+line quality on average, while yielding 3.8–4.0×
+speedups and outperforming recent training-free
+early-exit methods on a conservative quality–
+penalized speed metric; on base models, it delivers
+smaller but consistent gains at near-parity qual-
+ity (Section 5). Together, these results show that
+SchED can substantially reduce diffusion decoding
+costs without sacrificing quality, and that instruc-
+tion tuning lowers the confidence barrier for early
+exit in QA-style tasks, making it particularly effec-
+tive in that regime. This paper makes the following
+contributions:
+1. Training-free, schedule-based early exit.
+We introduce SchED (Schedule-based Early
+Decoding) for diffusion language models,
+which thresholds a full-span logit-margin ag-
+gregate against a smooth, progress-dependent
+schedule (linear, cosine, exponential), en-
+abling stable, architecture-agnostic stopping
+without retraining.
+2. Strong efficiency at near-parity quality. On
+instruction-tuned models, SchED attains av-
+erage speedups of approximately 4× while
+maintaining baseline performance. On base
+models, it delivers consistent acceleration
+across a spectrum of quality–efficiency trade-
+offs. In addition to near-parity averages, we
+observe that SchED can yield more correct
+outputs than vanilla diffusion decoding by ter-
+minating at a point of maximum prediction
+stability, thereby avoiding late-step degrada-
+tion (Appendix D).
+3. Principled quality–speed trade-off metric.
+We introduce Quality–Penalized Speed (QPS)
+(Eq. 16), a conservative metric that jointly
+accounts for acceleration and quality degrada-
+tion by explicitly penalizing accuracy drops.
+Under this metric, SchED consistently out-
+performs prior confidence-based early-exit
+methods on both base and instruction-tuned
+dLLMs (Table 3).
+4. Mechanistic explanation via entropy-based
+analysis. Analyzing entropy trajectories over
+diffusion steps show that instruction tuning
+accelerates confidence stabilization, aligning
+with progress-aware thresholds and enabling
+early exit without quality loss (Fig. 2).
+35794
+
+SchED builds on the vanilla dLLM denoising
+process by enforcing a smooth, progress-dependent
+confidence threshold over the generated span, ex-
+ploiting the bidirectional, parallel strengths of
+dLLMs to achieve end-to-end efficiency without
+further retraining (Zou et al., 2023; Nie et al., 2025;
+Ye et al., 2025; Gong et al., 2024a). Code is pub-
+licly available1.
+2
+Related Work
+Diffusion LLMs.
+Recent work establishes dif-
+fusion language models (dLLMs) as a viable al-
+ternative to autoregressive (AR) models, training
+either from scratch or by adapting AR checkpoints.
+LLaDA trains a bidirectional Transformer with a
+forward masking process and a reverse denoising
+chain, demonstrating strong pretraining and SFT
+performance (Nie et al., 2025). Several lines adapt
+AR models into diffusion ones for fair, scalable
+comparisons across sizes and tasks (Gong et al.,
+2024b), while Dream-7B advances recipe and re-
+finement design and releases base/instruct variants
+(Ye et al., 2025). Architectural advancements have
+also been integrated, with models like LLaDA-
+MoE demonstrating the successful application of
+sparse Mixture-of-Experts to dLLMs, achieving
+competitive performance with significantly reduced
+active parameters (Huang et al., 2025). The ca-
+pabilities of dLLMs are also expanding to long-
+context scenarios; work like UltraLLaDA shows
+that techniques such as Rotary Positional Embed-
+ding (RoPE) scaling can be adapted to extend con-
+text windows to 128K tokens (Wang et al., 2025c).
+Seed Diffusion emphasizes high-throughput infer-
+ence for code models (Song et al., 2025). Moreover,
+formal studies on the scaling laws of masked diffu-
+sion models have further established their viability,
+demonstrating a scaling rate comparable to autore-
+gressive models (Li et al., 2024). Survey and per-
+spective papers summarize the landscape, strengths
+(parallelism, infilling, global context), and open
+questions (Zou et al., 2023).
+Sampling efficiency and early exit.
+A central
+bottleneck for dLLMs is the number of refine-
+ment steps.
+Prophet exploits the empirical ob-
+servation that answers often stabilize well be-
+fore the final step and proposes a training-free
+early-exit rule based on top-2 logit gaps (Pengx-
+iang et al., 2025).
+Complementary dynamic
+1https://github.com/amr-mohamedd/SchED
+policies include SlowFast Sampling, which alter-
+nates exploratory vs. accelerated phases guided by
+certainty/convergence/position principles and can
+combine with caching (Wei et al., 2025); Duo trans-
+fers continuous-diffusion techniques (curriculum
+learning, consistency distillation) to discrete dif-
+fusion to enable few-step sampling (Sahoo et al.,
+2025); and DLM-One studies one-step generation
+via score distillation in continuous spaces (Chen
+et al., 2025). Orthogonal to reducing step counts,
+other efforts focus on reducing per-step latency by
+developing novel caching mechanisms like dKV-
+Cache and d2Cache, which adapt key-value caching
+to the bidirectional nature of dLLMs (Yuan et al.,
+2025b; Wang et al., 2025a). Furthermore, spec-
+ulative decoding has been adapted for the diffu-
+sion framework, using the model’s own predic-
+tions to draft and verify multiple tokens in par-
+allel, as seen in Spiffy and Self Speculative Decod-
+ing (Sohoni et al., 2025; Yuan et al., 2025a). Our
+work also treats decoding as a when-to-stop prob-
+lem, but (unlike Prophet) we introduce a smooth
+confidence schedule that relaxes thresholds over
+progress, yielding stable, training-free early exit
+that is agnostic to architecture and training.
+3
+Methods
+In this section, we formalize discrete diffusion lan-
+guage models and introduce SchED, our schedule-
+based early decoding mechanism. We briefly re-
+view the forward and reverse masking processes
+and the standard training objective, then present
+the confidence aggregation scheme, progress-
+dependent threshold schedules, and early-exit de-
+coding algorithm.
+3.1
+Preliminaries: Discrete Diffusion
+Language Models
+Setup and notation.
+Let V denote the vocabulary
+and [mask] a special placeholder token. Given a
+prompt prefix, generation proceeds over T reverse-
+diffusion steps t ∈{1, . . . , T} on sequences xt ∈
+(V ∪{[mask]})L. At each step, given the current
+noised sequence xt and prompt xprompt, the model
+produces logits
+Lt = fθ(xprompt, xt, t) ∈RL×|V|,
+(1)
+and per-position categorical distributions
+pt,i(· | xprompt, xt) = softmax(Lt,i) ∈∆|V|. (2)
+35795
+
+We write A ⊆{1, . . . , L} for the answer region
+used later for confidence aggregation, and define
+normalized diffusion progress p = t/T.
+Forward (masking) process q.
+We model dis-
+crete diffusion as a progressive masking process
+that corrupts a clean sequence x0 ∈VL over T
+steps. Let βt ∈[0, 1) be a step-dependent masking
+rate and define the per-step transition
+q(xt | xt−1) =
+L
+Y
+i=1
+h
+(1 −βt)δ(xt,i = xt−1,i)
++ βt δ(xt,i = [mask])
+i
+.
+(3)
+Writing ¯αt = Qt
+s=1(1 −βs) for the token sur-
+vival probability after t steps, the t-step marginal
+becomes
+q(xt | x0, t) =
+L
+Y
+i=1
+h
+¯αt δ(xt,i = x0,i)
++ (1 −¯αt) δ(xt,i = [mask])
+i
+.
+(4)
+Reverse (denoising) process pθ.
+Diffusion lan-
+guage models define a learned reverse chain
+that progressively unmasks tokens from xT (fully
+masked) to x0 (fully decoded) by factoring over
+individual positions:
+pθ(xt−1 | xprompt, xt) =
+L
+Y
+i=1
+pθ(xt−1,i | xprompt, xt).
+(5)
+Each per-position term is then parameterized as a
+categorical distribution based on the model’s cur-
+rent output:
+pθ(xt−1,i | xprompt, xt) =
+Cat
+ xt−1,i; pt,i(· | xprompt, xt)
+
+. (6)
+where pt,i(· | xprompt, xt) denotes the model’s cat-
+egorical prediction at position i given the partially
+masked sequence xt and prompt context xprompt
+at timestep t.
+Masked diffusion with partial unmasking (trans-
+fer schedule).
+To control generation granularity,
+only a subset of masked positions are updated
+at each step.
+Let Mt = {i : xt,i = [mask]}
+and let πt(i) ∈{0, 1} indicate whether position
+i is selected for update under a transfer sched-
+ule.
+Given the model’s predictive distribution
+pt,i(· | xprompt, xt) at timestep t, the step operator
+is
+xt−1,i =
+(
+xt,i,
+if i /∈Mt or πt(i) = 0,
+ˆxt,i,
+if i ∈Mt and πt(i) = 1.
+(7)
+where ˆxt,i is obtained either deterministically as
+ˆxt,i = arg max
+v
+pt,i(v | xprompt, xt) ,
+(8)
+or stochastically as
+ˆxt,i ∼Cat(pt,i(· | xprompt, xt)) .
+(9)
+Block-diffusion variants (e.g., LLaDA) choose πt
+over contiguous token blocks, whereas single-block
+variants (e.g., Dream) often select the entire suffix
+or a fixed proportion.
+Training objective.
+Diffusion language models
+are typically trained to invert the forward mask-
+ing process via a masked-token objective over uni-
+formly sampled timesteps:
+L(θ) = Ex0∼DEt∼U{1:T}Ext∼q(·|x0,t)
+"
+−
+X
+i∈Mt
+log pt,i
+ x0,i | xprompt, xt
+
+#
+. (10)
+Here xt is obtained by applying the forward ker-
+nel at timestep t, and pt,i(x0,i | xprompt, xt) is
+shorthand for the model’s predictive probability
+pθ
+ x0,i | xprompt, xt, t
+
+at position i given the par-
+tially noised context. This formulation encourages
+the model to predict the original tokens at masked
+sites given partially noised contexts, aligning pθ
+with the forward corruption kernel q.
+3.2
+SchED: Schedule-based Early Decoding
+We propose SchED, a confidence- and progress-
+aware early–exit algorithm for diffusion decoding.
+At each step, SchED thresholds the model’s aggre-
+gated token confidence against a smooth, nonin-
+creasing function of progress p, i.e., (¯gt ≥τ(p)).
+This design builds on the assumption that per-token
+confidence typically rises as denoising proceeds,
+allowing generation to terminate precisely when
+predictions stabilize rather than at a fixed budget.
+The complete, model-agnostic procedure is sum-
+marized in Algorithm 1.
+SchED tracks how model confidence evolves
+throughout denoising and terminates the process
+once confidence exceeds a progress-dependent
+threshold, preventing redundant refinement after
+predictions have stabilized.
+35796
+
+Algorithm 1 SchED: Schedule-Based Early Decod-
+ing for Diffusion LMs
+Require: Model M; prompt xprompt; gen length Lgen; steps
+T; answer region A; aggregator Agg; threshold schedule
+τ(p); transfer schedule πt.
+Ensure: Completed sequence x
+1: x ←[xprompt; [mask] × Lgen]
+2: for t = 1 to T do
+3:
+Lt ←M(x)
+▷logits
+4:
+gt,i ←L(1)
+t,i −L(2)
+t,i for i ∈A
+5:
+¯gt ←Agg({gt,i : i ∈A})
+6:
+p ←t/T
+7:
+if ¯gt ≥τ(p) then
+8:
+Fill remaining masks with argmax; return x
+9:
+end if
+10:
+Mt ←{i : xi = [mask]}
+11:
+St ←{i ∈Mt : πt(i) = 1}
+12:
+xSt ←arg maxv Lt,St,v
+13: end for
+14: return x
+Confidence measurement.
+Following the work
+of Pengxiang et al. (2025), we quantify model
+confidence using token-level logit margins, which
+capture how decisively the model prefers its top
+prediction over alternatives. A region-level confi-
+dence score is obtained by aggregating top-2 mar-
+gins over the entire answer region A (i.e., the full
+model response span):
+¯gt = Agg
+ { gt,i : i ∈A }
+
+.
+(11)
+We use Agg = mean by default, so that ¯gt =
+1
+|A|
+P
+i∈A gt,i in our experiments. Importantly, gt,i
+uses the current logits at step t for every i ∈A. All
+thresholds (τhigh, τlow) are expressed in logit units.
+Early-exit trigger.
+An early exit is triggered
+when the aggregated confidence surpasses a
+smooth,
+progress-dependent threshold sched-
+ule τ(p):
+¯gt ≥τ(p),
+(12)
+where τ : [0, 1] →R≥0 is a nonincreasing function
+of the generation progress p = t/T. This formu-
+lation ensures that the confidence requirement for
+stopping is highest at the beginning of generation
+and gradually relaxes as denoising proceeds, al-
+lowing the model to terminate decoding once its
+predictions have stabilized.
+Smooth threshold schedules.
+The threshold
+function τ(p) controls when the sampler terminates.
+We parameterize τ using a pair (τhigh, τlow), which
+specify the initial and final confidence thresholds,
+and an optional slope parameter k > 0. We in-
+stantiate the stopping criterion using three distinct
+schedule families, each offering a distinct relax-
+ation profile over the diffusion progress. First, the
+linear schedule provides a constant rate of threshold
+decay, serving as a straightforward interpolation
+between the initial and final confidence bounds:
+τlin(p) = τhigh + (τlow −τhigh) p.
+(13)
+Second, we employ a cosine schedule, which fa-
+cilitates a smooth, sigmoid-like transition by main-
+taining higher thresholds during the critical early
+stages of denoising before accelerating relaxation
+as the process nears completion:
+τcos(p) = τlow + 1
+2(τhigh −τlow)
+ 1 + cos(πp)
+
+.
+(14)
+Finally, we introduce an exponential schedule,
+where the decay trajectory is governed by a cur-
+vature parameter k > 0.
+τexp(p) = τlow + (τhigh −τlow) e−kp.
+(15)
+Each of these families defines a continuous, non-
+increasing trajectory from τhigh at the onset (p = 0)
+to τlow at completion (p = 1). By parameteriz-
+ing the exit logic in this manner, SchED enables
+a nuanced trade-off between early-exit aggressive-
+ness and predictive stability, circumventing the brit-
+tleness associated with fixed budgets or discrete
+heuristic rules.
+4
+Experimental Settings
+We evaluate SchED across a diverse suite of
+multiple-choice and long-form generation tasks,
+assessing its ability to accelerate diffusion decod-
+ing while preserving output quality. Specifically,
+we compare its denoising efficiency against two
+baselines: (i) standard diffusion sampling without
+early exit and (ii) Prophet (Pengxiang et al., 2025).
+Unless otherwise stated, we fix the upper thresh-
+old at (τhigh = 7.5) and, for each schedule family,
+evaluate two lower-threshold settings: a relaxed
+(τlow = 0) and a more conservative (τlow = 2.5),
+yielding a smooth, monotonic relaxation over dif-
+fusion progress in both regimes.
+Models.
+SchED is model-agnostic and can be
+applied to any dLLM without architectural or
+training modifications. To demonstrate its gen-
+erality, we evaluate on two representative dLLM
+families that employ distinct decoding paradigms:
+Dream (Ye et al., 2025), a 7B-parameter model that
+35797
+
+performs full-sequence refinement using a single-
+block decoder, and LLaDA (Nie et al., 2025), an 8B-
+parameter model that adopts a block-diffusion strat-
+egy to denoise contiguous token segments. Each
+model is evaluated in both base and instruction-
+tuned variants, and we apply the low-confidence
+remasking strategy across all models.
+Benchmarks.
+We
+evaluate
+SchED
+on
+GPQA (Rein et al., 2023), GSM8K (Cobbe
+et al., 2021), HellaSwag (Zellers et al., 2019),
+MMLU (Hendrycks et al., 2020), PIQA (Bisk
+et al., 2020), and Winogrande (Sakaguchi et al.,
+2020). For long-form evaluation, we use tasks
+from the LongBench (Bai et al., 2023), specifically
+LongBench–HotpotQA (Yang et al., 2018) and
+LongBench–MultiNews (Fabbri et al., 2019). For
+translation, we use WMT14 En–Fr (Bojar et al.,
+2014) and WMT16 En–De (Bojar et al., 2016).
+Each benchmark includes runs for the baseline,
+Prophet, and the full set of linear, cosine, and
+exponential schedules across both model variants.
+Evaluation
+metrics
+and
+framework.
+For
+multiple-choice (MCQ) benchmarks,
+GPQA,
+HellaSwag, MMLU, PIQA, and Winogrande, we
+report accuracy.
+For GSM8K, we also report
+accuracy based on the generated final answer.
+For HotpotQA, we report token-level F1-score;
+for MultiNews, we report ROUGE (Lin, 2004);
+and for translation (WMT14 En–Fr, WMT16
+En–De), we report CHRF. All evaluations are
+conducted using the Language Model Evaluation
+Harness (Gao et al., 2024). Complete decoding
+hyperparameters (step budgets T, generation
+lengths, shots, and LLaDA block sizes) are
+provided in Appendix A (Table 4); hardware and
+total compute are reported in Appendix B.
+Efficiency metric for quality–speed trade-offs.
+Reporting quality and speedup separately can ob-
+scure Pareto differences between methods.
+To
+jointly capture both aspects, we define the Quality–
+Penalized Speed (QPS) metric:
+QPSγ = speedup ×
+
+score
+baseline score
+γ
+, (16)
+where the exponent γ ≥1 controls how strongly
+quality degradation is penalized. Higher values of
+γ emphasize fidelity over raw acceleration; in our
+experiments, we use γ=4 to provide conservative
+and interpretable efficiency comparisons.
+5
+Results
+Tables 1 and 2 report results for Dream Base and
+Dream Instruct, respectively.
+Dream Base. With conservative smooth sched-
+ules (τhigh, τlow) = (7.5, 2.5), linear, cosine, and
+exp-k=2, we observe steady 1.04–1.14× aver-
+age speedups at near-parity quality, with marginal
+task gains (e.g., WMT14 En–Fr: ∆+0.27)) under
+exp-k=2 (7.5, 2.5). Fast-decaying exponentials
+(large k) with τlow = 2.5 remain close to par-
+ity, but do not increase the mean speed beyond
+≈1.1×; setting τlow = 0 yields 2.34× average
+speed (exp-k=16), with task-specific gains that
+are most pronounced on HotpotQA (∆+7.1); how-
+ever, at an overall quality cost of ≈2%. Prophet
+offers ≈1.07× average speed with near-parity ac-
+curacy, providing limited practical benefits relative
+to smooth schedules.
+Dream Instruct. Under the same conservative
+thresholds, smooth schedules deliver ≈3.8–4.0×
+average speedups at near parity: table averages
+cluster around the baseline (e.g., 58.06–58.22 vs.
+58.20). Notably, the large-k (fast-decaying) ex-
+ponential with (7.5, 2.5) attains 4.48×, while re-
+maining close to parity (57.59, ∆−1%)). Less
+conservative settings with τlow = 0 also preserve
+translation near baseline with 2.3–2.8× speed (e.g.,
+cosine and linear). For the large-k exponential,
+(k=16, τlow=0) delivers the most pronounced
+speedups while remaining near parity on most
+benchmarks; however, it exhibits large degrada-
+tions on HellaSwag and PIQA.
+LLaDA exhibits similar trends to those ob-
+served on Dream: conservative schedules pro-
+vide reliable speedups at near-parity quality on the
+base model; the instruction-tuned variant yields
+higher speedups. Fast-decaying settings risk over-
+commitment that degrades math and long-form.
+While Prophet provides high speedups, it underper-
+forms on long-form generation. Detailed LLaDA
+Base and Instruct results are in Tables 7 and 8; ad-
+ditional schedule ablations for Dream and LLaDA
+appear in Appendix C.
+Efficiency
+results.
+Table
+3
+reports
+Qual-
+ity–Penalized Speed (QPS; γ=4). On Dream Base,
+smooth schedules concentrate in the ≈1.01–1.12
+range,
+reflecting the near-parity averages in
+Table 1 (e.g., 55.02–55.32 vs. baseline 55.31)
+coupled with modest mean speedups (≈1.04–
+1.14×).
+The highest base-model efficiency is
+achieved by the rapidly decaying exponential,
+35798
+
+Method
+GPQA
+Hella
+Swag
+MMLU PIQA
+Wino
+grande GSM8K Hotpot
+QA
+Multi
+News
+WMT14
+En-Fr
+WMT16
+En-De
+Average
+Baseline
+28.57
+(×1.00)
+79.15
+(×1.00)
+73.39
+(×1.00)
+88.68
+(×1.00)
+75.61
+(×1.00)
+77.10
+(×1.00)
+8.67
+(×1.00)
+21.24
+(×1.00)
+52.99
+(×1.00)
+47.70
+(×1.00)
+55.31
+(×1.00)
+Prophet
+28.79
+(×1.13)
+79.15
+(×1.00)
+73.37
+(×1.03)
+88.68
+(×1.20)
+75.61
+(×1.00)
+77.03
+(×1.07)
+8.68
+(×1.03)
+21.21
+(×1.06)
+52.99
+(×1.11)
+47.57
+(×1.06)
+55.31
+(×1.07)
+Cosine (7.5, 0)
+28.12
+(×1.23)
+79.15
+(×1.02)
+73.40
+(×1.09)
+88.57
+(×1.22)
+75.61
+(×1.01)
+76.95
+(×1.20)
+8.74
+(×1.12)
+21.28
+(×1.13)
+52.79
+(×1.23)
+45.64
+(×1.20)
+55.02
+(×1.14)
+Cosine (7.5, 2.5)
+28.79
+(×1.11)
+79.15
+(×1.00)
+73.37
+(×1.02)
+88.68
+(×1.14)
+75.61
+(×1.00)
+77.03
+(×1.07)
+8.68
+(×1.02)
+21.21
+(×1.05)
+52.99
+(×1.10)
+47.64
+(×1.05)
+55.31
+(×1.06)
+Linear (7.5, 0)
+29.02
+(×1.19)
+79.15
+(×1.00)
+73.40
+(×1.06)
+88.57
+(×1.22)
+75.61
+(×1.00)
+76.95
+(×1.13)
+8.66
+(×1.08)
+21.26
+(×1.10)
+52.87
+(×1.18)
+46.43
+(×1.15)
+55.19
+(×1.11)
+Linear (7.5, 2.5)
+28.79
+(×1.10)
+79.15
+(×1.00)
+73.37
+(×1.02)
+88.68
+(×1.03)
+75.61
+(×1.00)
+77.03
+(×1.06)
+8.67
+(×1.02)
+21.21
+(×1.05)
+53.00
+(×1.09)
+47.67
+(×1.04)
+55.32
+(×1.04)
+Exp-k=2 (7.5, 0)
+24.33
+(×1.19)
+79.13
+(×1.00)
+73.50
+(×1.07)
+88.47
+(×1.27)
+75.77
+(×1.00)
+77.63
+(×1.11)
+8.17
+(×1.07)
+20.94
+(×1.10)
+53.16
+(×1.18)
+46.81
+(×1.13)
+54.79
+(×1.11)
+Exp-k=2 (7.5, 2.5)
+24.33
+(×1.10)
+79.13
+(×1.00)
+73.49
+(×1.02)
+88.63
+(×1.06)
+75.77
+(×1.00)
+77.71
+(×1.06)
+8.16
+(×1.03)
+20.88
+(×1.05)
+53.26
+(×1.09)
+47.60
+(×1.04)
+54.90
+(×1.04)
+Exp-k=16 (7.5, 0)
+24.78
+(×2.04)
+77.14
+(×2.50)
+73.05
+(×2.50)
+87.92
+(×2.50)
+72.85
+(×2.50)
+62.77
+(×3.05)
+15.75
+(×2.78)
+21.74
+(×2.75)
+52.87
+(×1.44)
+44.75
+(×1.39)
+53.36
+(×2.34)
+Exp-k=16 (7.5, 2.5)
+23.88
+(×1.14)
+79.13
+(×1.00)
+73.53
+(×1.18)
+88.47
+(×1.36)
+75.77
+(×1.00)
+77.63
+(×1.08)
+8.22
+(×1.07)
+20.92
+(×1.07)
+53.26
+(×1.13)
+47.51
+(×1.07)
+54.83
+(×1.11)
+Table 1: Dream Base: benchmark scores with speedups (×). Two thresholds—conservative (7.5, 2.5) and relaxed
+(7.5, 0). Column best in bold, second-best in italic.
+Exp-k=16, (7.5, 0), with 2.03, driven by a large
+average speedup (2.34×), and average-score drop
+of −1.95. Prophet attains 1.07, consistent with its
+near-baseline averages and limited acceleration.
+On Dream Instruct, QPS values increase sub-
+stantially in line with the larger mean speedups
+observed in Table 2 (≈3.8–4.0× for conserva-
+tive smooth schedules) while maintaining average
+scores close to baseline. The best overall result,
+4.30, is obtained by Exp-k=16, (7.5, 2.5), which
+combines a near-parity average score (57.59) with
+a pronounced 4.48× mean speedup. Other smooth
+schedules lie tightly in the 3.78–3.95 band. Prophet
+lags at 2.91, reflecting weaker average scores and
+failures on long-form despite notable raw speed.
+Overall, SchED consistently yields higher QPS4
+than Prophet; the top settings pair near-parity aver-
+age performance with substantial step reductions,
+which explains their leading efficiency.
+6
+Analysis
+To better understand the differences in speedup
+values between base and instruct models, and the
+variation in speedups across benchmarks, we an-
+alyze how predictive uncertainty evolves over the
+reverse-diffusion chain. We track per-token predic-
+tive entropy on the generated region at each step t.
+Using the per-position distributions pt,i at state xt,
+the mean per-token entropy is
+¯Ht = 1
+|S|
+X
+i∈S
+ 
+−
+X
+v∈V
+pt,i(v | xprompt, xt)
+log pt,i(v | xprompt, xt)
+!
+.
+(17)
+where pt,i(v) denotes the model’s step-t predictive
+distribution at position i, computed from logits Lt,i
+given xprompt and xt (Eq. 6).
+Results are presented in Figure 2. Dream In-
+struct starts the denoising phase with higher en-
+tropy on math-heavy prompts (GPQA and GSM8K)
+and decays more slowly in the earliest steps than
+on MMLU, HotpotQA, and WMT14, yet the tra-
+jectories converge to similarly low final entropies.
+Notably, the instruct curves show a rapid early drop
+followed by nearly uniform per-step decreases, a
+stepwise profile consistent with Dream’s masked
+diffusion decoding, where at each reverse-diffusion
+step the model updates high-confidence tokens
+in parallel and thereby reduces uncertainty in ap-
+proximately regular increments across the chain.
+Dream’s Confidence-Aware Rescheduling of To-
+kens (CART) training further sharpens this behav-
+ior by adaptively rescheduling token-level noise,
+thereby encouraging more confident predictions at
+positions with stronger local context, particularly
+near the prompt. By contrast, Dream Base shows
+more overlapping trajectories across benchmarks
+and higher residual entropy overall, suggesting less
+35799
+
+Method
+GPQA
+Hella
+Swag
+MMLU PIQA
+Wino
+grande GSM8K Hotpot
+QA
+Multi
+News
+WMT14
+En-Fr
+WMT16
+En-De
+Average
+Baseline
+30.36
+(×1.00)
+79.91
+(×1.00)
+80.69
+(×1.00)
+73.02
+(×1.00)
+85.80
+(×1.00)
+74.66
+(×1.00)
+27.51
+(×1.00)
+24.39
+(×1.00)
+55.82
+(×1.00)
+49.85
+(×1.00)
+58.20
+(×1.00)
+Prophet
+28.79
+(×16.45)
+26.69
+(×7.81)
+78.73
+(×1.14)
+72.33
+(×1.01)
+72.58
+(×1.03)
+66.54
+(×1.02)
+27.87
+(×4.51)
+2.77
+(×31.21)
+20.17
+(×23.93)
+15.28
+(×27.87)
+41.18
+(×11.60)
+Cosine (7.5, 0)
+30.58
+(×15.96)
+78.54
+(×2.11)
+80.81
+(×1.56)
+73.06
+(×1.14)
+85.96
+(×1.32)
+74.11
+(×1.61)
+27.46
+(×3.24)
+24.39
+(×6.60)
+55.82
+(×2.39)
+49.86
+(×2.81)
+58.06
+(×3.87)
+Cosine (7.5, 2.5)
+30.58
+(×15.93)
+79.53
+(×2.08)
+80.75
+(×1.43)
+73.08
+(×1.11)
+85.91
+(×1.23)
+74.27
+(×1.28)
+27.47
+(×3.14)
+24.38
+(×6.59)
+55.82
+(×2.34)
+49.85
+(×2.77)
+58.16
+(×3.79)
+Linear (7.5, 0)
+30.58
+(×16.08)
+79.00
+(×2.11)
+80.81
+(×1.56)
+73.14
+(×1.14)
+85.96
+(×1.32)
+74.11
+(×1.49)
+27.48
+(×3.26)
+24.39
+(×3.02)
+55.82
+(×2.38)
+49.86
+(×2.80)
+58.11
+(×3.89)
+Linear (7.5, 2.5)
+30.58
+(×16.01)
+79.76
+(×2.08)
+80.76
+(×1.43)
+73.09
+(×1.10)
+85.85
+(×1.22)
+74.27
+(×1.27)
+27.47
+(×3.17)
+24.38
+(×6.59)
+55.82
+(×2.33)
+49.85
+(×2.76)
+58.16
+(×3.79)
+Exp-k=2 (7.5, 0)
+30.58
+(×16.32)
+79.45
+(×2.14)
+80.77
+(×1.62)
+73.11
+(×1.21)
+86.16
+(×1.54)
+74.35
+(×1.67)
+26.71
+(×3.47)
+24.56
+(×6.66)
+55.76
+(×2.40)
+49.84
+(×2.76)
+58.14
+(×3.97)
+Exp-k=2 (7.5, 2.5)
+30.13
+(×16.18)
+80.21
+(×2.10)
+80.69
+(×1.54)
+73.25
+(×1.11)
+86.24
+(×1.23)
+74.51
+(×1.53)
+26.91
+(×3.23)
+24.60
+(×6.57)
+55.76
+(×2.33)
+49.84
+(×2.71)
+58.21
+(×3.85)
+Exp-k=16 (7.5, 0)
+29.46
+(×18.64)
+32.98
+(×3.73)
+79.31
+(×5.00)
+58.81
+(×2.50)
+84.55
+(×5.00)
+73.80
+(×5.00)
+26.20
+(×5.79)
+23.99
+(×17.38)
+53.53
+(×5.56)
+49.72
+(×3.17)
+51.12
+(×5.44)
+Exp-k=16 (7.5, 2.5)
+30.58
+(×17.16)
+79.68
+(×2.13)
+79.31
+(×2.50)
+72.78
+(×1.55)
+84.49
+(×2.29)
+72.61
+(×2.10)
+26.58
+(×4.33)
+24.26
+(×7.21)
+55.76
+(×2.38)
+49.84
+(×2.74)
+57.59
+(×4.48)
+Table 2: Dream Instruct: benchmark scores with speedups (×). Two thresholds—conservative (7.5, 2.5) and relaxed
+(7.5, 0). Column best in bold, second-best in italic.
+0
+5
+10
+15
+20
+25
+30
+Diffusion step
+0
+1
+2
+3
+4
+5
+6
+7
+Average Entropy
+Dream Base
+0
+5
+10
+15
+20
+25
+30
+Diffusion step
+Dream Instruct
+GPQA
+GSM8K
+HotpotQA
+MMLU
+WMT14 EN–FR
+Figure 2: Mean predictive entropy across diffusion steps for five input types (GPQA, GSM8K, HotpotQA, MMLU,
+WMT14 EN→FR). Curves show per-token entropy (nats/token) averaged over evaluation samples; shaded bands
+denote one standard deviation across samples. Both Dream Base and Dream Instruct exhibit monotonically
+decreasing entropy as denoising progresses.
+decisive posteriors for QA-style inputs. This aligns
+with the smaller speedups obtained by schedule-
+based early exit on Base models (Tables 1–2).
+7
+Discussion
+The robustness of SchED across diverse tasks sug-
+gests that progress-aware scheduling effectively
+captures the non-linear stabilization of dLLM
+posteriors. By framing inference as a dynamic
+stopping-time problem rather than a fixed-budget
+process, we align computation with model conver-
+gence rather than a conservative step horizon.
+Instruction tuning is a primary catalyst for this
+efficiency. Our entropy analysis (Section 6) reveals
+that instruction-tuned models collapse uncertainty
+over the answer span more rapidly than their base
+counterparts. This accelerated decay into sharp pos-
+terior distributions allows SchED to trigger early
+exits earlier in the denoising chain without sac-
+rificing fidelity, explaining the 4× speedup gap
+observed in instruction-tuned variants.
+Two design elements are critical to this stabil-
+ity. First, full-span aggregation over the response
+region prevents premature termination from local-
+ized confidence spikes—a failure mode common
+in prior methods like Prophet. Second, smooth,
+non-increasing schedules dampen transient logit
+fluctuations, providing a continuous control knob
+for the quality–speed trade-off.
+Notably, SchED does not merely trade quality for
+35800
+
+Method
+Dream Base
+Dream Instruct
+Cosine (7.5, 0)
+1.12
+3.83
+Cosine (7.5, 2.5)
+1.06
+3.78
+Linear (7.5, 0)
+1.10
+3.87
+Linear (7.5, 2.5)
+1.04
+3.78
+Exp-k=2 (7.5, 0)
+1.07
+3.95
+Exp-k=2 (7.5, 2.5)
+1.01
+3.85
+Exp-k=16 (7.5, 0)
+2.03↑
+3.24
+Exp-k=16 (7.5, 2.5)
+1.07
+4.30↑
+Prophet
+1.07
+2.91
+Table 3: QPS (γ=4) for all SchED variants and Prophet.
+↑Higher is better.
+speed; it can even outperform vanilla decoding on
+reasoning-intensive inputs. Qualitative cases (Ap-
+pendix D) show that additional refinement steps in
+full-horizon diffusion sometimes introduce “over-
+refinement” errors, such as numerical slips or mal-
+formed code. By halting once the aggregate con-
+fidence stabilizes, SchED preserves high-quality
+intermediate states that full-horizon decoding may
+otherwise corrupt with iterative noise. In these in-
+stances, progress-aware thresholds provide a Pareto
+improvement, simultaneously maximizing through-
+put and correctness.
+8
+Conclusion
+In this work, we introduced SchED, a training-
+free, progress-aware early-exit mechanism that an-
+chors diffusion decoding to sequence-level con-
+fidence stabilization. By formulating inference
+as a when-to-stop problem, SchED achieves up
+to 4× speedups, while maintaining, and occa-
+sionally surpassing, baseline correctness by mit-
+igating late-stage iterative noise. The method is
+model-agnostic, integrating seamlessly with exist-
+ing dLLM architectures without requiring auxiliary
+training or heuristic step budgets. SchED provides
+a robust and principled framework for efficient
+dLLM inference, allowing practitioners to precisely
+match computational effort to model convergence
+and reliably deploy diffusion models under simul-
+taneous accuracy and throughput constraints.
+Limitations
+While SchED provides a training-free mechanism
+for accelerating diffusion decoding, our study has
+some limitations.
+SchED shows an explicit quality–efficiency
+trade-off through the choice of schedule family
+and hyperparameters (τhigh, τlow, k). Conservative
+schedules (e.g., linear or cosine with higher final
+thresholds) yield near-parity quality but moderate
+speedups, whereas more extreme, rapidly decay-
+ing schedules can deliver larger accelerations at the
+cost of marginal average degradation. In our experi-
+ments, this trade-off is resolved by selecting a small
+set of global configurations per model and regime;
+in practice, the “right” schedule is task-dependent.
+Additionally, SchED operates purely at infer-
+ence time and treats the schedule as an external
+control signal. We do not investigate joint training
+of models and schedules, learned aggregation func-
+tions beyond averaging over the answer span, or
+tighter integration with complementary accelera-
+tion techniques, such as speculative or cache-based
+denoising. These directions could further improve
+robustness and efficiency but are left for future
+work.
+References
+Yushi Bai, Xin Lv, Jiajie Jin, Yidong Zhang, Hongbo
+Zhang, Beichen Zheng, Yikai Chen, Jian-Guang
+Qian, Zeyu Chen, Wen-Han Liu, and 1 others.
+2023. LongBench: A bilingual, multitask bench-
+mark for long context understanding. arXiv preprint
+arXiv:2308.14508.
+Yonatan Bisk, Rowan Zellers, Ronan Lebras, Chandra
+Bhagavatula, and Yejin Choi. 2020. PIQA: Reason-
+ing about physical commonsense in natural language.
+In Proceedings of the AAAI Conference on Artificial
+Intelligence, volume 34, pages 7432–7439.
+Ondˇrej Bojar, Christian Buck, Christian Federmann,
+Barry Haddow, Philipp Koehn, Johannes Leveling,
+Christof Monz, Pavel Pecina, Matt Post, Hervé Saint-
+Amand, and 1 others. 2014. Findings of the 2014
+workshop on statistical machine translation. In Pro-
+ceedings of the Ninth Workshop on Statistical Ma-
+chine Translation, pages 12–58.
+Ondˇrej Bojar, Rajen Chatterjee, Christian Federmann,
+Yvette Graham, Barry Haddow, Matthias Huck, An-
+tonio Jimeno Yepes, Philipp Koehn, Varvara Lo-
+gacheva, Christof Monz, and 1 others. 2016. Find-
+ings of the 2016 conference on machine translation
+(wmt16). In Proceedings of the First Conference on
+Machine Translation: Volume 2, Shared Task Papers,
+pages 131–198.
+Tom Brown, Benjamin Mann, Nick Ryder, Melanie
+Subbiah, Jared D Kaplan, Prafulla Dhariwal, Arvind
+Neelakantan, Pranav Shyam, Girish Sastry, Amanda
+Askell, and 1 others. 2020. Language models are
+few-shot learners. Advances in neural information
+processing systems, 33:1877–1901.
+Tianqi Chen, Shujian Zhang, and Mingyuan Zhou. 2025.
+DLM-one: Diffusion language models for one-step
+sequence generation. arXiv [cs.CL].
+35801
+
+Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian,
+Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias
+Plappert, Jerry Tworek, Jacob Hilton, Reiichiro
+Nakano, and 1 others. 2021.
+Training verifiers
+to solve math word problems.
+arXiv preprint
+arXiv:2110.14168.
+Alexander R Fabbri, Greg Durrett, Daniel Farcas, and
+Viv Ng. 2019. Multi-News: A large-scale multi-
+document summarization dataset and abstractive hi-
+erarchical model. arXiv preprint arXiv:1906.01749.
+Leo Gao, Jonathan Tow, Baber Abbasi, Stella Bider-
+man, Sid Black, Anthony DiPofi, Charles Foster,
+Laurence Golding, Jeffrey Hsu, Alain Le Noac’h,
+Haonan Li, Kyle McDonell, Niklas Muennighoff,
+Chris Ociepa, Jason Phang, Laria Reynolds, Hailey
+Schoelkopf, Aviya Skowron, Lintang Sutawika, and
+5 others. 2024. The language model evaluation har-
+ness.
+Chen Gong, Hantian Li, Denny Zhou, and Quoc V Le.
+2024a. Beyond autoregression: Discrete diffusion
+for complex reasoning and planning. arXiv preprint
+arXiv:2410.14157.
+Shansan Gong, Shivam Agarwal, Yizhe Zhang, Jiacheng
+Ye, Lin Zheng, Mukai Li, Chenxin An, Peilin Zhao,
+Wei Bi, Jiawei Han, Hao Peng, and Lingpeng Kong.
+2024b. Scaling diffusion language models via adap-
+tation from autoregressive models. arXiv [cs.CL].
+Dan Hendrycks, Collin Burns, Steven Basart, Andrew
+Critch, Jerry Li, Dawn Ippolito, Jared Kaplan, Jana
+Scheurer, Sandeep Datta, Cameron Foote, and 1 oth-
+ers. 2020. Measuring massive multitask language
+understanding. arXiv preprint arXiv:2009.03300.
+Jun-Jie Huang, Zixuan Li, Han-Ning Wu, Zixun
+Lan, Weizhen Qi, Hangbo Bao, Zewen Chi, Wen-
+Hong Li, Jun-Cheng Chen, Li-Yuan Wang, Wei-
+Nan Zhang, and Ting Liu. 2025.
+Llada-moe: A
+sparse moe diffusion language model. arXiv preprint
+arXiv:2509.24389.
+Xiang Lisa Li, Jack W Rae, Yiding Jiang, Yix-
+iao Li, Hui-Ling Zhen, Grzegorz Górny, Piotr
+Nawrot, Tim GJ Rudner, Jean-Baptiste Lespiau,
+Jonathan Richard Schwarz, Arthur Mensch, Roman
+Ring, Lorenzo Noci, Trevor Cai, Sebastian Borgeaud,
+Jeff Stanway, Charlie Chen, David Ding, Daniel
+Autobiography, and 7 others. 2024.
+Scaling up
+masked diffusion models on text. arXiv preprint
+arXiv:2410.18514.
+Chin-Yew Lin. 2004. ROUGE: A package for auto-
+matic evaluation of summaries. In Text Summariza-
+tion Branches Out, pages 74–81, Barcelona, Spain.
+Association for Computational Linguistics.
+Clara Meister, Ayan Pal, Emma Strubell, Mike Rabbat,
+and Samar Singh. 2024. Fs-dfm: Fast and accurate
+long text generation with few-step diffusion language
+models. arXiv preprint arXiv:2509.20624.
+Shen Nie, Fengqi Zhu, Zebin You, Xiaolu Zhang,
+Jingyang Ou, Jun Hu, Jun Zhou, Yankai Lin, Ji-Rong
+Wen, and Chongxuan Li. 2025. Large language dif-
+fusion models. arXiv [cs.CL].
+Friedrich Or-El, Zheng-Hao Liu, Chen-Lin Zhang,
+Hong-Yi Yuan, and Wei-Qiang Zhang. 2025. Accel-
+erating diffusion llm inference via local determinism
+propagation. arXiv preprint arXiv:2510.07081.
+Ayan Pal, Meet Shah, Emma Strubell, Berkin Gunel,
+Clara Meister, Ameet Pokle, Yilun Zhou, Mike Rab-
+bat, and Samar Singh. 2025. Mercury: Ultra-fast
+language models based on diffusion. arXiv preprint
+arXiv:2506.17298.
+Li Pengxiang, Zhou Yefan, Muhtar Dilxat, Yin Lu, Yan
+Shilin, Shen Li, Liang Yi, Vosoughi Soroush, and Liu
+Shiwei. 2025. Diffusion language models know the
+answer before decoding. arXiv [cs.CL].
+Mary Phuong, Chen Gong, Hantian Li, Denny Zhou,
+and Quoc V Le. 2025. d1: Scaling reasoning in
+diffusion large language models via reinforcement
+learning. arXiv preprint arXiv:2504.12216.
+David Rein, Stas Raichuk, Orion Selesnick, Armel
+Fotso, Jarno Textor, Daniel Lindner, Yafang Du, Tsvi
+August, Dan Gutman, Mor Geva, and 1 others. 2023.
+GPQA: A graduate-level google-proof Q&A bench-
+mark. arXiv preprint arXiv:2311.12022.
+Subham Sekhar Sahoo, Justin Deschenaux, Aaron
+Gokaslan, Guanghan Wang, Justin Chiu, and
+Volodymyr Kuleshov. 2025. The diffusion duality.
+arXiv [cs.LG].
+Keisuke Sakaguchi, Ronan Le Bras, Chandra Bhaga-
+vatula, and Yejin Choi. 2020. WinoGrande: An ad-
+versarial Winograd schema challenge at scale. In
+Proceedings of the AAAI Conference on Artificial
+Intelligence, volume 34, pages 8732–8740.
+Nimit S Sohoni, Chien-Yu Lin, Aniruddha Nrusimha,
+and Christopher Ré. 2025. Spiffy: Multiplying diffu-
+sion llm acceleration via lossless speculative decod-
+ing. arXiv preprint arXiv:2509.18085.
+Yuxuan Song, Zheng Zhang, Cheng Luo, Pengyang Gao,
+Fan Xia, Hao Luo, Zheng Li, Yuehang Yang, Hongli
+Yu, Xingwei Qu, Yuwei Fu, Jing Su, Ge Zhang, Wen-
+hao Huang, Mingxuan Wang, Lin Yan, Xiaoying Jia,
+Jingjing Liu, Wei-Ying Ma, and 3 others. 2025. Seed
+diffusion: A large-scale diffusion language model
+with high-speed inference. arXiv [cs.CL].
+Yixuan Su, Cheng Zhu, Wangchunshu Zhou, Jing Chen,
+and Graham Neubig. 2025. Don’t settle too early:
+Self-reflective remasking for diffusion language mod-
+els. arXiv preprint arXiv:2509.23653.
+Chuhan Wang, Hong-Ning Dai, Yi-Chen Zhang, Chun-
+Wei Tsung, Xin-Hao Li, Wei-Guo Zheng, and Ming-
+Li Song. 2025a. d2cache: Accelerating diffusion-
+based llms via dual adaptive caching. arXiv preprint
+arXiv:2509.23094.
+35802
+
+Chuhan Wang, Yi-Chen Zhang, Xin-Hao Li, Hong-
+Ning Dai, and Ming-Li Song. 2025b. Creditdecod-
+ing: Accelerating parallel decoding in diffusion large
+language models with trace credits. arXiv preprint
+arXiv:2510.06133.
+Ming-Hao Wang, Yun-Zhu Song, Jun-Jie Huang, Zix-
+uan Li, Wen-Hong Li, Jia-Jun Zhang, and Cheng-
+Chung Hsu. 2025c. Ultrallada: Scaling the context
+length to 128k for diffusion large language models.
+arXiv preprint arXiv:2510.10481.
+Qingyan Wei, Yaojie Zhang, Zhiyuan Liu, Dongrui Liu,
+and Linfeng Zhang. 2025. Accelerating diffusion
+large language models with SlowFast sampling: The
+three golden principles. arXiv [cs.CL].
+Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Ben-
+gio, William W Cohen, Ruslan Salakhutdinov, and
+Christopher D Manning. 2018. HotpotQA: A dataset
+for diverse, explainable multi-hop question answer-
+ing. In Proceedings of the 2018 Conference on Em-
+pirical Methods in Natural Language Processing,
+pages 2369–2380.
+Jiacheng Ye, Zhihui Xie, Lin Zheng, Jiahui Gao, Zirui
+Wu, Xin Jiang, Zhenguo Li, and Lingpeng Kong.
+2025. Dream 7B: Diffusion large language models.
+arXiv [cs.CL].
+Shukang Yin, Chaoyou Fu, Sirui Zhao, Ke Li, Xing
+Sun, Tong Xu, and Enhong Chen. 2024. A survey on
+multimodal large language models. National Science
+Review, 11(12):nwae403.
+Hong-Yi Yuan, Zheng-Hao Liu, Chen-Lin Zhang, and
+Wei-Qiang Zhang. 2025a. Self speculative decoding
+for diffusion large language models. arXiv preprint
+arXiv:2510.04147.
+Hongyi Yuan, Zheng-Hao Liu, Chen-Lin Zhang, Xu-
+Ran Wang, Yu-Hong-Vey Wong, and Jia-Wei Liu.
+2025b. dkv-cache: The cache for diffusion language
+models. arXiv preprint arXiv:2505.15781.
+Rowan Zellers, Ari Holtzman, Yonatan Bisk, Ali
+Farhadi, and Yejin Choi. 2019. HellaSwag: Can
+a machine really finish your sentence? In Proceed-
+ings of the 57th Annual Meeting of the Association
+for Computational Linguistics, pages 4791–4800.
+Chen-Lin Zhang, Zheng-Hao Liu, Hong-Yi Yuan,
+and Wei-Qiang Zhang. 2025a.
+Finish first, per-
+fect later: Test-time token-level cross-validation for
+diffusion large language models.
+arXiv preprint
+arXiv:2510.05090.
+Lingzhe Zhang, Liancheng Fang, Chiming Duan,
+Minghua He, Leyi Pan, Pei Xiao, Shiyu Huang, Yun-
+peng Zhai, Xuming Hu, Philip S Yu, and 1 oth-
+ers. 2025b. A survey on parallel text generation:
+From parallel decoding to diffusion language models.
+arXiv preprint arXiv:2508.08712.
+Hao Zou, Zae Myung Kim, and Dongyeop Kang. 2023.
+A survey of diffusion models in natural language
+processing. arXiv [cs.CL].
+35803
+
+A
+Generation Configurations
+Table 4 summarizes the decoding hyperparameters used across benchmarks, as well as the total number of
+instances evaluated for each dataset. For each task we specify the maximum number of reverse-diffusion
+steps T (the step budget over which progress p=t/T is normalized), the generation length (the maximum
+number of tokens in the generated answer region A), the number of in-context examples (shots), and—
+for the block-diffusion variant LLaDA—the block size used by the transfer schedule πt (Dream uses
+single-block/suffix refinement and thus does not require a block-size setting).
+Short multiple-choice (MCQ) tasks are evaluated with compact budgets (T=5) and very short generation
+lengths, whereas math, translation, and long-form tasks employ substantially larger step budgets (256–512)
+and longer generation lengths, making them more sensitive to fast-decaying early-exit schedules. All
+MCQ benchmarks (MMLU, HellaSwag, PIQA, Winogrande) are evaluated in generative mode with full
+decoding of the answer region, not via likelihood/ranking of options; the model must produce the final
+answer tokens in A, and accuracy is computed from the generated outputs. For LLaDA, we use a block
+size of 5 tokens on short MCQ benchmarks and 32 tokens on tasks that require generation lengths of 32
+tokens or more.
+Benchmark
+N. of Samples
+Max Steps T
+Generation Length
+Shots
+LLaDA Block-size
+MMLU (generative)
+14,042
+5
+5
+5
+5
+HellaSwag (generative)
+10,042
+5
+5
+5
+5
+PIQA (generative)
+1,838
+5
+5
+5
+5
+Winogrande (generative)
+1,267
+5
+5
+5
+5
+GPQA
+448
+128
+128
+8
+32
+GSM8K
+1,319
+256
+256
+8
+32
+WMT14 En→Fr
+3,003
+256
+256
+5
+32
+WMT16 En→De
+2,998
+256
+256
+5
+32
+LongBench MultiNews
+200
+512
+512
+0
+32
+LongBench HotpotQA
+200
+32
+32
+0
+32
+Table 4: Decoding hyperparameters and instance counts per benchmark. Generation length denotes the maximum
+number of tokens in the generated answer region A. LLaDA Block applies only to the block-diffusion decoder;
+Dream uses a single-block transfer schedule.
+B
+Hardware and Compute Budget
+All experiments were conducted on 8×AMD MI210, with a total compute allocation of 52 GPU-days.
+35804
+
+Method
+GPQA
+HellaSwag
+MMLU
+PIQA
+Winogrande
+GSM8K
+HotpotQA
+MultiNews
+WMT14 En-Fr WMT16 En-De
+Average
+Baseline
+28.57 (×1.00) 79.15 (×1.00) 73.39 (×1.00) 88.68 (×1.00) 75.61 (×1.00) 77.10 (×1.00)
+8.67 (×1.00)
+21.24 (×1.00)
+52.99 (×1.00)
+47.70 (×1.00)
+55.31 (×1.00)
+Prophet
+28.79 (×1.13) 79.15 (×1.00) 73.37 (×1.03) 88.68 (×1.20) 75.61 (×1.00) 77.03 (×1.07)
+8.68 (×1.03)
+21.21 (×1.06)
+52.99 (×1.11)
+47.57 (×1.06)
+55.31 (×1.07)
+Cosine (7.5, 2.5)
+28.79 (×1.11) 79.15 (×1.00) 73.37 (×1.02) 88.68 (×1.14) 75.61 (×1.00) 77.03 (×1.07)
+8.68 (×1.02)
+21.21 (×1.05)
+52.99 (×1.10)
+47.64 (×1.05)
+55.31 (×1.06)
+Cosine (7.5, 0)
+28.12 (×1.23) 79.15 (×1.02) 73.40 (×1.09) 88.57 (×1.22) 75.61 (×1.01) 76.95 (×1.20)
+8.74 (×1.12)
+21.28 (×1.13)
+52.79 (×1.23)
+45.64 (×1.20)
+55.02 (×1.14)
+Linear (7.5, 2.5)
+28.79 (×1.10) 79.15 (×1.00) 73.37 (×1.02) 88.68 (×1.03) 75.61 (×1.00) 77.03 (×1.06)
+8.67 (×1.02)
+21.21 (×1.05)
+53.00 (×1.09)
+47.67 (×1.04)
+55.32 (×1.04)
+Linear (7.5, 0)
+29.02 (×1.19) 79.15 (×1.00) 73.40 (×1.06) 88.57 (×1.22) 75.61 (×1.00) 76.95 (×1.13)
+8.66 (×1.08)
+21.26 (×1.10)
+52.87 (×1.18)
+46.43 (×1.15)
+55.19 (×1.11)
+Exp-k=2 (7.5, 2.5)
+24.33 (×1.10) 79.13 (×1.00) 73.49 (×1.02) 88.63 (×1.06) 75.77 (×1.00) 77.71 (×1.06)
+8.16 (×1.03)
+20.88 (×1.05)
+53.26 (×1.09)
+47.60 (×1.04)
+54.90 (×1.04)
+Exp-k=2 (7.5, 0)
+24.33 (×1.19) 79.13 (×1.00) 73.50 (×1.07) 88.47 (×1.27) 75.77 (×1.00) 77.63 (×1.11)
+8.17 (×1.07)
+20.94 (×1.10)
+53.16 (×1.18)
+46.81 (×1.13)
+54.79 (×1.11)
+Exp-k=4 (7.5, 2.5)
+23.66 (×1.13) 79.13 (×1.00) 73.49 (×1.06) 88.63 (×1.20) 75.77 (×1.00) 77.63 (×1.07)
+8.16 (×1.05)
+20.90 (×1.06)
+53.24 (×1.12)
+47.51 (×1.05)
+54.81 (×1.07)
+Exp-k=4 (7.5, 0)
+23.44 (×1.33) 79.13 (×1.15) 73.53 (×1.51) 88.47 (×1.62) 75.77 (×1.31) 77.33 (×1.47)
+8.89 (×1.35)
+21.03 (×1.30)
+52.97 (×1.32)
+44.95 (×1.30)
+54.55 (×1.37)
+Exp-k=8 (7.5, 2.5)
+23.66 (×1.14) 79.13 (×1.00) 73.53 (×1.15) 88.52 (×1.29) 75.77 (×1.00) 77.63 (×1.08)
+8.22 (×1.07)
+20.92 (×1.07)
+53.26 (×1.13)
+47.51 (×1.06)
+54.81 (×1.10)
+Exp-k=8 (7.5, 0)
+24.78 (×1.60) 78.99 (×1.56) 73.33 (×2.39) 87.98 (×2.42) 73.56 (×2.39) 72.71 (×2.20) 14.02 (×2.17) 21.57 (×1.91)
+52.91 (×1.40)
+44.78 (×1.37)
+54.46 (×1.94)
+Exp-k=16 (7.5, 2.5) 23.88 (×1.14) 79.13 (×1.00) 73.53 (×1.18) 88.47 (×1.36) 75.77 (×1.00) 79.83 (×2.12)
+8.22 (×1.07)
+20.92 (×1.07)
+53.26 (×1.13)
+47.51 (×1.07)
+54.83 (×1.11)
+Exp-k=16 (7.5, 0)
+24.78 (×2.04) 77.14 (×2.50) 73.05 (×2.50) 87.92 (×2.50) 72.85 (×2.50) 62.77 (×3.05) 15.75 (×2.78) 21.74 (×2.75)
+52.87 (×1.44)
+44.75 (×1.39)
+53.36 (×2.34)
+Table 5: Dream Base. Highest accuracy per column in bold; second-highest in italics. The rightmost column
+reports mean accuracy with mean speedup in parentheses.
+Method
+GPQA
+HellaSwag
+MMLU
+PIQA
+Winogrande
+GSM8K
+HotpotQA
+MultiNews
+WMT14 En-Fr WMT16 En-De
+Average
+Baseline
+30.36 (×1.00)
+79.91 (×1.00) 80.69 (×1.00) 73.02 (×1.00) 85.80 (×1.00) 74.66 (×1.00) 27.51 (×1.00)
+24.39 (×1.00)
+55.82 (×1.00)
+49.85 (×1.00)
+58.20 (×1.00)
+Prophet
+28.79 (×16.45) 26.69 (×7.81) 78.73 (×1.14) 72.33 (×1.01) 72.58 (×1.03) 66.54 (×1.02) 27.87 (×4.51)
+2.77 (×31.21)
+20.17 (×23.93) 15.28 (×27.87) 41.18 (×11.60)
+Cosine (7.5, 2.5)
+30.58 (×15.93) 79.53 (×2.08) 80.75 (×1.43) 73.08 (×1.11) 85.91 (×1.23) 74.27 (×1.28) 27.47 (×3.14)
+24.38 (×6.59)
+55.82(×2.34)
+49.85 (×2.77)
+58.16 (×3.79)
+Cosine (7.5, 0)
+30.58 (×15.96) 78.54 (×2.11) 80.81 (×1.56) 73.06 (×1.14) 85.96 (×1.32) 74.11 (×1.61) 27.46 (×3.24)
+24.39 (×6.60)
+55.82 (×2.39)
+49.86 (×2.81)
+58.06 (×3.87)
+Linear (7.5, 2.5)
+30.58 (×16.01) 79.76 (×2.08) 80.76 (×1.43) 73.09 (×1.10) 85.85 (×1.22) 74.27 (×1.27) 27.47 (×3.17)
+24.38 (×6.59)
+55.82 (×2.33)
+49.85 (×2.76)
+58.16 (×3.79)
+Linear (7.5, 0)
+30.58 (×16.08) 79.00 (×2.11) 80.81 (×1.56) 73.14 (×1.14) 85.96 (×1.32) 74.11 (×1.49) 27.48 (×3.26)
+24.39 (×3.02)
+55.82 (×2.38)
+49.86 (×2.80)
+58.11 (×3.89)
+Exp-k=2 (7.5, 2.5)
+30.13 (×16.18) 80.21 (×2.10) 80.69 (×1.54) 73.25 (×1.11) 86.24 (×1.23) 74.51 (×1.53) 26.91 (×3.23)
+24.60 (×6.57)
+55.76 (×2.33)
+49.84 (×2.71)
+58.21 (×3.85)
+Exp-k=2 (7.5, 0)
+30.58 (×16.32) 79.45 (×2.14) 80.77 (×1.62) 73.11 (×1.21) 86.16 (×1.54) 74.35 (×1.67) 26.71 (×3.47)
+24.56 (×6.66)
+55.76 (×2.40)
+49.84 (×2.76)
+58.14 (×3.97)
+Exp-k=4 (7.5, 2.5)
+30.58 (×16.38) 80.14 (×2.12) 80.78 (×1.70) 73.10 (×1.14) 86.29 (×2.01) 74.27 (×1.49) 26.86 (×3.47)
+24.57 (×6.67)
+55.76 (×2.36)
+49.84 (×2.73)
+58.22 (×3.97)
+Exp-k=4 (7.5, 0)
+30.58 (×16.62) 71.27 (×2.25) 79.31 (×2.50) 70.57 (×1.64) 84.82 (×2.51) 74.66 (×2.54) 26.58 (×4.03)
+24.03 (×5.59)
+55.78 (×2.94)
+49.84 (×2.85)
+56.57 (×4.44)
+Exp-k=8 (7.5, 2.5)
+30.80 (×16.69) 79.83 (×2.12) 79.48 (×2.48) 73.53 (×1.24) 86.13 (×2.37) 73.64 (×1.72) 26.65 (×3.82)
+24.29 (×5.50)
+55.76 (×2.37)
+49.84 (×2.74)
+57.97 (×4.23)
+Exp-k=8 (7.5, 0)
+30.36 (×17.03) 43.67 (×2.94) 79.31 (×4.21) 58.86 (×1.64) 84.55 (×4.76) 74.03 (×4.64) 26.28 (×4.77)
+20.86 (×9.53)
+55.27 (×4.15)
+49.86 (×3.05)
+52.48 (×4.94)
+Exp-k=16 (7.5, 2.5) 30.58 (×17.16) 79.68 (×2.13) 79.31 (×2.50) 72.78 (×1.55) 84.49 (×2.29) 72.61 (×2.10) 26.58 (×4.33)
+24.26 (×7.21)
+55.76 (×2.38)
+49.84 (×2.74)
+57.59 (×4.48)
+Exp-k=16 (7.5, 0)
+29.46 (×18.64) 32.98 (×3.73) 79.31 (×5.00) 58.81 (×2.50) 84.55 (×5.00) 73.80 (×5.00) 26.20 (×5.79) 23.99 (×17.38)
+53.53 (×5.56)
+49.72 (×3.17)
+51.12 (×5.44)
+Table 6: Dream Instruct. Highest accuracy per column in bold; second-highest in italics. The rightmost column
+reports mean accuracy with mean speedup in parentheses.
+C
+Additional SchED Variants and LLaDA Results
+This appendix primarily details the full LLaDA results—both Base and Instruct—under the same evaluation
+protocol and schedule families as the main paper (Tables 7–8). In addition, we report one new set of
+variants for Dream: intermediate–curvature exponential schedules with k∈{4, 8}, each evaluated under
+the conservative threshold (τhigh, τlow) = (7.5, 2.5) and the relaxed (7.5, 0) (Tables 5–6). All other
+schedules (linear, cosine, and exponential with k∈{2, 16}) are already covered in the main text.
+Dream.
+On Dream Instruct, the intermediate exponentials are highly competitive with the best smooth
+schedules. In particular, Exp–k=4 with (7.5, 2.5) attains the highest overall average score 58.22 at an
+average speedup of ×3.97 (Table 6). Exp–k=8 with (7.5, 2.5) matches the PIQA peak (73.53) while
+preserving translation near baseline (WMT14 En–Fr 55.76, WMT16 En–De 49.84) and pushing the mean
+speedup to ×4.23. At the task level, the intermediate schedules frequently sit on or near the column
+bests: e.g., Exp–k=8 (7.5, 2.5) yields the top GPQA (30.80) and shares the PIQA peak, while Exp–k=4
+(7.5, 2.5) is within rounding of the HellaSwag best (80.14 vs. 80.21 for Exp–k=2). As intended, their
+average speedups typically fall between the relaxed k=2 exponential (e.g., 58.14 at ×3.97 for (7.5, 0))
+and the high–curvature k=16 exponential (57.59 at ×4.48 for (7.5, 2.5)).
+On Dream Base (Table 5), the same pattern holds at a smaller scale. Exp–k=8 (7.5, 2.5) reaches the
+best MMLU (73.53) and ties the top WMT14 En–Fr (53.26) while delivering a mean ×1.10 speedup;
+Exp–k=4 (7.5, 2.5) is similarly competitive on WMT14 (53.24) and PIQA (second-best 88.63) with
+×1.07 speed. These sit neatly between the relaxed k=2 exponential (mean ×1.11) and the high–curvature
+k=16 exponential (mean ×1.11 under (7.5, 2.5), or much larger ×2.34 under (7.5, 0) with the expected
+quality trade-off).
+35805
+
+Method
+GPQA
+HellaSwag
+MMLU
+PIQA
+Winogrande
+GSM8K
+HotpotQA
+MultiNews
+WMT14 En-Fr WMT16 En-De
+Average
+Baseline
+26.12 (×1.00)
+86.20 (×1.00) 58.16 (×1.00) 81.72 (×1.00) 77.98 (×1.00) 47.76 (×1.00)
+9.08 (×1.00)
+23.85 (×1.00)
+62.39 (×1.00)
+56.67 (×1.00)
+52.99 (×1.00)
+Prophet
+31.03 (×15.32) 86.17 (×1.24) 58.00 (×1.24) 81.56 (×2.05) 77.98 (×1.25) 16.07 (×7.84) 14.94 (×3.19) 18.83 (×32.48) 49.58 (×17.53) 45.15 (×17.98) 47.93 (×10.01)
+Cosine (7.5, 2.5)
+27.23 (×1.97)
+86.16 (×1.17) 58.00 (×1.24) 81.77 (×2.04) 77.98 (×1.23) 39.12 (×1.97)
+9.78 (×1.60)
+25.00 (×1.80)
+62.41 (×1.87)
+56.68 (×1.87)
+52.41 (×1.68)
+Cosine (7.5, 0)
+27.90 (×2.24)
+86.08 (×1.49) 58.00 (×1.24) 81.50 (×2.12) 77.98 (×1.54) 42.68 (×2.24) 11.12 (×1.88)
+25.23 (×2.07)
+62.41 (×2.10)
+56.66 (×2.10)
+52.96 (×1.90)
+Exp-k=16 (7.5, 2.5)
+30.80 (×4.47)
+85.98 (×1.67) 58.00 (×1.24) 80.30 (×4.69) 77.98 (×1.65) 30.40 (×3.75) 12.93 (×2.84)
+24.77 (×3.38)
+62.19 (×3.09)
+56.40 (×3.04)
+51.98 (×2.98)
+Exp-k=16 (7.5, 0)
+28.79 (×8.67)
+86.01 (×5.00) 58.00 (×1.24) 79.98 (×5.00) 77.66 (×5.00)
+4.93 (×8.58)
+20.98 (×7.13)
+20.74 (×8.55)
+51.15 (×7.93)
+47.03 (×7.79)
+47.53 (×6.49)
+Exp-k=2 (7.5, 2.5)
+26.34 (×2.24)
+86.16 (×1.07) 58.00 (×1.24) 81.56 (×2.12) 77.98 (×1.14) 42.38 (×2.19)
+9.83 (×1.65)
+25.11 (×1.92)
+62.41 (×1.99)
+56.68 (×2.00)
+52.65 (×1.76)
+Exp-k=2 (7.5, 0)
+29.02 (×2.85)
+86.03 (×1.58) 58.00 (×1.24) 81.23 (×2.45) 77.98 (×1.64) 43.52 (×2.75) 11.65 (×2.20)
+25.30 (×2.47)
+62.38 (×2.46)
+56.62 (×2.45)
+53.17 (×2.21)
+Exp-k=4 (7.5, 2.5)
+28.79 (×2.86)
+86.06 (×1.41) 58.00 (×1.24) 81.18 (×2.42) 77.98 (×1.43) 43.75 (×2.73) 11.57 (×2.08)
+25.37 (×2.40)
+62.40 (×2.39)
+56.64 (×2.39)
+53.17 (×2.13)
+Exp-k=4 (7.5, 0)
+27.46 (×4.09)
+85.96 (×2.34) 58.00 (×1.24) 81.28 (×2.48) 78.53 (×3.17) 31.01 (×3.72) 13.59 (×3.17)
+24.72 (×3.52)
+61.82 (×3.37)
+56.08 (×3.33)
+51.85 (×3.05)
+Exp-k=8 (7.5, 2.5)
+28.57 (×3.70)
+86.05 (×1.62) 58.00 (×1.24) 81.28 (×2.95) 77.98 (×1.58) 37.23 (×3.32) 12.50 (×2.57)
+25.10 (×3.00)
+62.30 (×2.81)
+56.53 (×2.80)
+52.55 (×2.55)
+Exp-k=8 (7.5, 0)
+28.35 (×5.94)
+85.95 (×3.37) 58.00 (×1.24) 79.98 (×5.00) 78.69 (×3.99) 17.36 (×5.46) 17.04 (×5.74)
+23.45 (×9.53)
+58.77 (×5.00)
+53.58 (×4.95)
+50.12 (×4.49)
+Linear (7.5, 2.5)
+28.12 (×1.98)
+86.16 (×1.07) 58.00 (×1.24) 81.61 (×2.07) 77.98 (×1.14) 39.12 (×1.96)
+9.68 (×1.53)
+24.98 (×1.76)
+62.41 (×1.85)
+56.68 (×1.85)
+52.47 (×1.65)
+Linear (7.5, 0)
+28.57 (×2.35)
+86.08 (×1.41) 58.00 (×1.24) 81.61 (×2.14) 77.98 (×1.42) 42.84 (×2.32) 11.05 (×1.86)
+25.25 (×2.09)
+62.41 (×2.13)
+56.66 (×2.13)
+53.05 (×1.91)
+Table 7: LLaDA Base with intermediate-curvature exponentials (k ∈{4, 8}) and explicit thresholds. Highest
+accuracy per column in bold; second-highest in italics. The rightmost column reports mean accuracy with mean
+speedup in parentheses.
+Method
+GPQA
+HellaSwag
+MMLU
+PIQA
+Winogrande
+GSM8K
+HotpotQA
+MultiNews
+WMT14 En-Fr WMT16 En-De
+Average
+Baseline
+24.33 (×1.00) 74.28 (×1.00) 63.19 (×1.00) 82.86 (×1.00) 76.72 (×1.00)
+51.93 (×1.00)
+10.65 (×1.00)
+26.79 (×1.00)
+60.80 (×1.00)
+54.26 (×1.00)
+52.28 (×1.00)
+Prophet
+23.44 (×5.97) 74.74 (×1.93) 63.91 (×1.63) 82.70 (×1.81) 76.16 (×1.45) 27.60 (×18.62)
+9.37 (×3.31)
+19.25 (×37.98) 44.32 (×26.05) 45.71 (×15.26) 46.15 (×11.52)
+Cosine (7.5, 2.5)
+24.78 (×1.89) 74.69 (×1.92) 63.86 (×1.64) 82.70 (×1.78) 76.16 (×1.45)
+37.30 (×2.25)
+9.81 (×1.76)
+26.80 (×2.35)
+55.39 (×24.65) 47.93 (×29.64)
+49.74 (×6.83)
+Cosine (7.5, 0)
+25.22 (×2.18) 74.69 (×1.93) 63.86 (×1.64) 82.70 (×1.78) 76.16 (×1.57)
+36.85 (×2.50)
+9.16 (×2.07)
+26.68 (×2.63)
+55.29 (×24.66) 47.87 (×29.65)
+49.74 (×7.06)
+Exp-k=16 (7.5, 2.5) 24.33 (×4.19) 74.63 (×2.22) 63.86 (×1.64) 81.56 (×2.82) 76.09 (×2.10)
+33.59 (×5.74)
+9.18 (×4.10)
+22.37 (×8.57)
+37.47 (×35.10) 33.91 (×37.22) 47.48 (×10.87)
+Exp-k=16 (7.5, 0)
+25.00 (×9.26) 73.51 (×5.00) 63.86 (×1.64) 79.00 (×5.00) 73.80 (×5.00) 27.98 (×11.45)
+7.61 (×9.17)
+16.78 (×17.38) 33.27 (×44.67) 29.45 (×45.10) 45.22 (×20.66)
+Exp-k=2 (7.5, 2.5)
+24.78 (×2.12) 74.69 (×1.92) 63.86 (×1.64) 82.70 (×1.78) 76.16 (×1.46)
+36.92 (×2.60)
+9.63 (×1.92)
+26.48 (×2.91)
+54.83 (×24.76) 47.73 (×29.69)
+49.58 (×7.07)
+Exp-k=2 (7.5, 0)
+24.78 (×2.71) 74.69 (×1.94) 63.86 (×1.64) 82.59 (×2.09) 76.16 (×1.67)
+35.94 (×3.22)
+9.30 (×2.56)
+25.81 (×3.73)
+52.43 (×25.23) 46.36 (×29.89)
+49.19 (×7.52)
+Exp-k=4 (7.5, 2.5)
+24.78 (×2.68) 74.69 (×1.93) 63.86 (×1.64) 82.75 (×2.01) 76.16 (×1.49)
+36.01 (×3.29)
+9.38 (×2.49)
+25.70 (×3.88)
+51.04 (×25.69) 45.61 (×30.10)
+49.30 (×7.56)
+Exp-k=4 (7.5, 0)
+24.55 (×3.92) 75.24 (×2.50) 63.86 (×1.64) 80.47 (×2.51) 74.66 (×2.54)
+33.74 (×4.57)
+9.29 (×3.80)
+24.03 (×5.59)
+45.49 (×27.83) 41.09 (×31.67)
+47.83 (×8.77)
+Exp-k=8 (7.5, 2.5)
+25.22 (×3.44) 74.66 (×2.07) 63.86 (×1.64) 82.15 (×2.37) 76.16 (×1.72)
+34.42 (×4.33)
+9.29 (×3.31)
+24.29 (×5.50)
+44.02 (×28.83) 39.90 (×32.36)
+47.79 (×8.47)
+Exp-k=8 (7.5, 0)
+25.22 (×5.91) 74.65 (×4.21) 63.86 (×1.64) 79.27 (×4.76) 74.03 (×4.64)
+30.33 (×7.03)
+9.14 (×5.74)
+20.86 (×9.53)
+38.49 (×33.37) 34.79 (×36.03) 45.46 (×11.19)
+Linear (7.5, 2.5)
+25.22 (×1.88) 74.69 (×1.92) 63.86 (×1.64) 82.70 (×1.78) 76.16 (×1.45)
+37.38 (×2.31)
+9.99 (×1.74)
+26.73 (×2.42)
+55.36 (×24.66) 47.92 (×29.65)
+49.88 (×6.85)
+Linear (7.5, 0)
+24.78 (×2.27) 74.69 (×1.92) 63.86 (×1.64) 82.70 (×1.78) 76.16 (×1.49)
+36.47 (×2.67)
+9.27 (×2.10)
+26.64 (×3.02)
+54.90 (×24.73) 47.74 (×29.68)
+49.58 (×7.10)
+Table 8: LLaDA Instruct with intermediate-curvature exponentials (k∈{4, 8}) and explicit thresholds. Highest
+accuracy per column in bold; second-highest in italics. The rightmost column reports mean accuracy with mean
+speedup in parentheses.
+LLaDA.
+Results on LLaDA align closely with the Dream trends for both base and instruction-tuned
+variants. For LLaDA Base (Table 7), Exp–k=4 (7.5, 2.5) ties for the highest overall average (53.17)
+while achieving a ×2.13 speedup; moving to Exp–k=8 (7.5, 2.5) increases the speed to ×2.55 with a
+small average dip (52.55), and relaxing to (7.5, 0) further boosts speed (e.g., Winogrande 78.69 at ×3.99)
+at the cost of broader quality drops—mirroring the Dream trade-off. For LLaDA Instruct (Table 8), the
+curvature–speed relationship is monotone while quality degrades gradually with curvature: averages move
+from 49.58 at ×7.07 for Exp–k=2 (7.5, 2.5) to 49.30 at ×7.56 for k=4, 47.79 at ×8.47 for k=8, and
+47.48 at ×10.87 for k=16. In short, the intermediate–curvature exponentials again occupy the expected
+middle ground between the gradual–decay and high–curvature regimes, providing a convenient knob to
+trade a bit more speed for a small, predictable loss in fidelity.
+35806
+
+D
+Qualitative Assessment of SchED
+To complement the aggregate benchmark results, we present representative per-instance examples compar-
+ing vanilla diffusion decoding (fixed horizon) to SchED under an exponential schedule (k=2). Table 9
+reports the realized number of denoising steps and wall-clock latency under identical inference settings,
+alongside the raw model outputs.
+Question
+Vanilla decoding answer (raw)
+SchED answer (raw)
+Base steps
+SchED steps
+Base time (s)
+SchED time (s)
+What is the capital of France?
+The capital of France is Paris. It is a global city known for its
+cultural heritage and serves as the seat of the French executive,
+government, as well as other institutions.
+The capital of France is Paris.
+128
+3
+5.384
+0.130
+Translate: “Hello, my name is John.”
+Bonjour, moi, mon nom est John.
+Bonjour„ mon nom est John..
+128
+3
+5.533
+0.134
+Write a python program to calculate the
+Fibonacci of a given number.
+Here’s a simple Python program to calculate the
+Fibonacci of a given number:
+def fibonacci(n):
+if n <= 0:
+seq = []
+elif n == 1:
+seq = [0]
+else:
+seq = [1,1]
+i =2
+12
+12
+while i<n+1:
+seq += seq[-1]+seq[-2]
+i+=1
+return seq
+12
+printibonacci(12) 12
+def fibonacci(n):
+if n <= 1:
+return n
+else:
+return fibonacci(n-1) + fibonacci(n-2)
+256
+237
+15.284
+14.380
+A bookstore had 360 books in stock. In
+the morning it sold 3/8 of them. How
+many books are left at the end of the
+day? Think step by step.
+3 / 8 of = 3 / 8 * 360 =135. So, the bookstore has
+360 - 135 = 135 books at the end of the day. #### 135.
+The answer is, 360.
+3 sold 3 0 * = 1355.. There left 360 - 135 = 225 books.
+The answer: 225.
+256
+235
+17.071
+16.161
+Write a Python program to find the
+greatest common divisor (GCD) of two
+numbers.
+def gcd(x, y):
+while(y):
+x, y=x % y, x
+num1 = 0
+num2 = 0
+try:
+num1 = int(input("Enter the first number and num2:"))
+print("GCD of: ", num1, " and: ", num2, "are: ",
+gcd(num1, num2)))
+except:
+break
+def gcd(a, b):
+while b:
+a, b = b, a % b
+return a
+256
+238
+17.073
+16.176
+What is the square root of 144?
+$\sqrt{144} = 12$
+The square root of 144 is \boxed{12}
+256
+128
+15.586
+8.006
+Table 9: Qualitative comparison between vanilla diffusion decoding (full horizon) and SchED (exponential schedule,
+k=2). Base steps correspond to the fixed diffusion horizon Tmax, while SchED steps report the realized number of
+denoising steps before early commitment. Beyond large speedups on easy prompts, several examples demonstrate
+strict correctness improvements: vanilla decoding can exhibit late-step degradation (incorrect arithmetic or mal-
+formed code), while SchED preserves a correct intermediate solution at reduced compute.
+The examples from Table 9 illustrate two recurring operating regimes consistent with SchED’s progress-
+aware confidence criterion. First, for short and low-complexity prompts, the aggregated logit-margin
+confidence crosses the schedule threshold within the first few refinement steps (e.g., 3 steps out of 128
+or 256), yielding large latency reductions. In this early-exit regime, minor surface artifacts (e.g., extra
+punctuation) may occasionally appear, while semantic content is typically preserved; such artifacts can
+be reduced by adopting more constrained schedules (e.g., higher τlow or slower decay). Second, for
+prompts that require multi-step reasoning or structured generation (e.g., arithmetic word problems and
+code), SchED often runs close to the full horizon (e.g., 235–238 steps out of 256), reflecting sustained
+uncertainty and avoiding premature termination. Beyond accelerating easy instances, Table 9 also includes
+cases where SchED yields more correct outputs than full-horizon diffusion decoding. In these examples,
+additional refinement steps in vanilla decoding introduce late-stage degradation—e.g., numerical slips,
+contradictions, or syntactic corruption—despite using the full budget. By terminating once confidence
+has stabilized over the full answer span, SchED can preserve a higher-quality intermediate solution. For
+instance, SchED produces the correct arithmetic result for the bookstore problem (225 books remaining)
+where vanilla decoding outputs an incorrect remainder. Similarly, on code-generation prompts, SchED
+yields clean, executable code-implementations, whereas vanilla decoding degenerates into malformed
+programs. These examples illustrate that SchED is not solely a speed–quality trade-off knob: on some
+inputs it provides a Pareto improvement, reducing compute while improving correctness by avoiding
+late-step drift.
+35807

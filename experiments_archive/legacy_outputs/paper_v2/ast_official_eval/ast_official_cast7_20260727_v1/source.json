@@ -1,0 +1,13 @@
+{
+  "model_id": "Yellowtree/LLaMA2-7B_2-by-4_Sparse",
+  "official_ast_commit": "28bd2772548dfe7a47049b11cb8829397eee6ab4",
+  "task_suite": [
+    "hellaswag",
+    "race",
+    "piqa",
+    "winogrande",
+    "arc_easy",
+    "arc_challenge",
+    "openbookqa"
+  ]
+}

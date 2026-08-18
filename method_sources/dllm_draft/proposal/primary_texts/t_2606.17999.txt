@@ -1,0 +1,3680 @@
+ 
+ 
+ 
+ VoidPadding: Let [VOID] Handle Padding in Masked Diffusion Language Models
+so that [EOS] Can Focus on Semantic Termination 
+ 
+ 
+ 
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+ 
+ 
+ Report GitHub Issue 
+ × 
+ 
+
+ 
+ Title: 
+ 
+
+ Content selection saved. Describe the issue below: 
+
+ Description: 
+ 
+ 
+
+ 
+ Submit without GitHub 
+ Submit in GitHub 
+ 
+ 
+ 
+ 
+ arXiv is now an independent nonprofit! 
+ Learn more 
+ × 
+ 
+
+ 
+ 
+ 
+ Back to arXiv 
+ 
+ 
+ 
+ 
+ Why HTML? 
+ 
+ 
+ 
+ 
+ Report Issue 
+ 
+ 
+ 
+ 
+ 
+ 
+ Back to Abstract 
+ 
+ 
+ 
+ 
+ 
+ 
+ Download PDF 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Abstract 
+ 1 Introduction 
+ 2 Preliminary 
+ 
+ 2.1 Masked Diffusion Modeling 
+ 2.2 Instruction-Tuning Data Construction 
+ 
+ 3 Analysis of [EOS] Overflow 
+ 4 Method 
+ 
+ 4.1 VoidPadding 
+ 4.2 VoidExpansion 
+ 
+ 5 Experiments 
+ 
+ 5.1 Fixed-Length Block-Size Robustness 
+ 5.2 Effectiveness of VoidExpansion 
+ 
+ 6 Ablation Studies 
+ 7 Related Work 
+ 8 Conclusion 
+ References 
+ A Training Configurations 
+ 
+ Dataset. 
+ Shared training setup. 
+ Training budgets. 
+ 67% training-budget comparison. 
+ 
+ B Proofs for the [EOS] Overflow Analysis 
+ 
+ Proof of Theorem  . 
+ Proof of Theorem  . 
+ 
+ C Dream Decoding Wrapper 
+ D Fixed-Length Block-Size Sweeps on Instruction-Tuned Models 
+ 
+ D.1 LLaDA-8B-Instruct Fixed-512 Block-Size Sweep 
+ D.2 Dream-7B-Instruct Fixed-512 Block-Length Sweep 
+ 
+ E [EOS] Termination Efficiency 
+ F Fixed-Length Block-Size Sweeps on Base Models 
+ 
+ F.1 LLaDA-8B-Base Fixed-512 Block-Size Sweep 
+ F.2 Dream-7B-Base Fixed-512 Block-Length Sweep 
+ 
+ G Base-Model VoidExpansion Effectiveness and Hyperparameter Robustness 
+ 
+ G.1 LLaDA-8B-Base 
+ G.2 Dream-7B-Base 
+ 
+ H VoidExpansion Hyperparameter Robustness 
+ 
+ H.1 LLaDA-8B-Instruct 
+ 
+ Initial-length robustness. 
+ Window-size robustness. 
+ Block-size robustness. 
+ Threshold robustness. 
+ 
+ H.2 Dream-7B-Instruct 
+ 
+ 
+ 
+ 
+ 
+ 
+ License: CC BY 4.0
+ 
+ 
+arXiv:2606.17999v2 [cs.CL] 22 Jun 2026 
+ 
+ 
+ VoidPadding: Let [VOID] Handle Padding in Masked Diffusion Language Models
+so that [EOS] Can Focus on Semantic Termination 
+ 
+ 
+ Chunyu Liu 
+ 
+ Affiliation:  Tsinghua University {liucy24,fzy24,yks23}@mails.tsinghua.edu.cnlambalex@tsinghua.edu.cn 
+ 
+    
+ Zhengyang Fan 
+ 
+ Affiliation:  Tsinghua University {liucy24,fzy24,yks23}@mails.tsinghua.edu.cnlambalex@tsinghua.edu.cn 
+ 
+    
+ Kaisen Yang 
+ 
+ Affiliation:  Tsinghua University {liucy24,fzy24,yks23}@mails.tsinghua.edu.cnlambalex@tsinghua.edu.cn 
+ 
+    
+ Alex Lamb 
+ 
+ Thanks:  Corresponding author.
+ 
+ Affiliation:  Tsinghua University {liucy24,fzy24,yks23}@mails.tsinghua.edu.cnlambalex@tsinghua.edu.cn 
+ 
+
+ Abstract 
+ 
+ MDLMs generate text by denoising a preallocated masked response canvas, making response-length modeling central to instruction tuning.
+Existing MDLMs often inherit the autoregressive convention of using repeated
+ [EOS] tokens for padding during instruction tuning, giving [EOS] a dual role as both a
+semantic terminator and a padding token. We show that this dual role is a root
+cause of [EOS] overflow under large-block decoding.
+To decouple these roles, we propose VoidPadding, which introduces [VOID] 
+for padding and reserves [EOS] for termination. During inference, the learned [EOS] signal enables early stopping, while the learned
+ [VOID] signal guides adaptive response canvas expansion.
+On Dream-7B-Instruct, VoidPadding improves the block-size-averaged four-task mean across mathematical reasoning and code generation benchmarks by + 17.84 +17.84 points over the original model and + 6.95 +6.95 points over RainbowPadding, while reducing decoding NFE by 55.7% on average.
+Code is available at https://github.com/Haru-LCY/VoidPadding . 
+ 
+ 
+ 
+ 1 Introduction 
+
+ 
+ Masked diffusion language models  4 ; 47 ; 35 ; 34 (MDLMs) offer a promising alternative to autoregressive language models  39 (ARLMs). Whereas ARLMs generate tokens sequentially from left to right, MDLMs use bidirectional attention to denoise the entire sequence in parallel  7 . This bidirectional conditioning, however, makes MDLMs sensitive to the padding tokens introduced in instruction tuning. 
+ 
+ 
+ During instruction tuning  14 , instruction–response pairs are typically processed in batches for efficiency and padded to the
+maximum sequence length within each mini-batch.
+Following a convention inherited from ARLM training, MDLMs often use repeated [EOS] tokens as
+padding  38 . In ARLMs, causal
+masking  ( 46 ) prevents earlier positions from conditioning on
+ [EOS] padding, so [EOS] primarily serves as a
+semantic terminator. In MDLMs, however, [EOS] padding is also included in the
+training target. Thus, [EOS] takes on two
+roles: the semantic terminator role and the padding role. 
+ 
+ 
+ During inference, MDLMs generate on a predefined response canvas whose positions are jointly modeled under bidirectional
+attention  12 .
+The padding role of [EOS] introduced during instruction tuning therefore offers a length signal: high [EOS] confidence
+near the tail indicates that the current canvas may exceed the desired output length  32 ; 53 . However, this signal
+becomes fragile under large-block decoding.
+Once high-confidence tail [EOS] tokens are generated, they become part of the denoising context and can further increase nearby
+ [EOS] probabilities, leading to short effective responses and repeated [EOS] .
+This failure mode is
+known as [EOS] overflow  ( 28 ) . 
+ 
+ 
+ Figure 1: Overview of VoidPadding. VoidPadding decouples termination from padding
+by using [EOS] only for stopping and [VOID] only for padding.
+During inference, [VOID] token generation is banned, decoding stops at the leftmost visible
+ [EOS] , and the canvas may be expanded based on tail [VOID] signals. 
+ 
+ 
+ Based on these insights, we propose VoidPadding , a lightweight
+training–inference co-design that introduces [VOID] as a new padding
+token and reserves [EOS] solely for semantic termination.
+Training sequences are formatted as [prompt] [response] [EOS] [VOID]* ,
+where each example contains a single [EOS] followed by
+ [VOID] padding.
+During inference, [VOID] generation is banned. We introduce
+ [EOS] Termination , which stops decoding once no masks remain before the
+leftmost visible [EOS] .
+This prevents [EOS] overflow and avoids redundant generation after the
+effective response.
+Additionally, we propose an optional inference-time
+ VoidExpansion strategy, which uses the [VOID] 
+length signal to expand insufficient canvases before denoising. 
+ 
+ 
+ Our contributions are: 
+ 
+ 1. 
+ 
+ We systematically analyze the mechanism behind [EOS] overflow and
+show that it stems from the dual use of [EOS] for termination and
+padding during instruction tuning. 
+ 
+ 2. 
+ 
+ We propose VoidPadding, a training–inference co-design that decouples
+the two roles by using [VOID] for padding and reserving
+ [EOS] for termination, enabling [EOS] Termination for
+early stopping and VoidExpansion for adaptive canvas expansion. 
+ 
+ 3. 
+ 
+ Experiments show that VoidPadding prevents [EOS] overflow,
+improves generation quality and decoding efficiency, and remains robust
+across block sizes and canvas lengths. 
+ 
+ 
+ 
+ 
+ 
+ 2 Preliminary 
+
+ 
+ 2.1 Masked Diffusion Modeling 
+
+ 
+ MDLMs generate by denoising discrete
+sequences  ( 44 ; 41 ) .
+Let 𝒱 = { 1 , … , V } \mathcal{V}=\{1,\ldots,V\} be the token vocabulary, 𝖬 ∉ 𝒱 \mathsf{M}\notin\mathcal{V} 
+the mask token, and 𝐳 t ∈ ( 𝒱 ∪ { 𝖬 } ) L \mathbf{z}_{t}\in(\mathcal{V}\cup\{\mathsf{M}\})^{L} the sequence state
+at diffusion step t ∈ { 0 , … , T } t\in\{0,\ldots,T\} , where T T is the total number of denoising steps.
+Here, t = 0 t=0 denotes clean data and t = T t=T the fully masked sequence.
+The masked and visible positions are denoted by ℳ t = { i : z t i = 𝖬 } \mathcal{M}_{t}=\{i:z_{t}^{i}=\mathsf{M}\} and
+ ℳ ¯ t = { 1 , … , L } ∖ ℳ t \bar{\mathcal{M}}_{t}=\{1,\ldots,L\}\setminus\mathcal{M}_{t} , respectively. 
+ 
+ 
+ The forward process gradually corrupts a clean sequence 𝐳 0 ∼ p data \mathbf{z}_{0}\sim p_{\mathrm{data}} by independently masking each position over T T steps.
+At each step, tokens are progressively replaced by 𝖬 \mathsf{M} according to a fixed schedule, so that 𝐳 T \mathbf{z}_{T} is fully masked.
+During training, a timestep t t is sampled and the model predicts the original token at each masked position, yielding the denoising cross-entropy objective
+ ℒ ( θ ) = 𝔼 𝐳 0 , t , 𝐳 t [ ∑ i ∈ ℳ t − log p θ ( z 0 i ∣ 𝐳 t ) ] . \mathcal{L}(\theta)=\mathbb{E}_{\mathbf{z}_{0},t,\mathbf{z}_{t}}\left[\sum_{i\in\mathcal{M}_{t}}-\log p_{\theta}(z_{0}^{i}\mid\mathbf{z}_{t})\right]. 
+This objective trains the denoiser on various masking patterns, enabling
+ p θ p_{\theta} to predict masked tokens from different visible contexts  ( 30 ) . 
+ 
+ 
+ MDLM decoding procedures include block diffusion  ( 3 ) and pure
+diffusion  ( 56 ) .
+Both of them start from a fully masked canvas of length L L with block size B B ,
+where pure diffusion corresponds to B = L B=L .
+At each step, the model uses bidirectional attention to condition on the whole sequence
+and predicts p θ ( ⋅ ∣ 𝐳 t ) p_{\theta}(\cdot\mid\mathbf{z}_{t}) for all i ∈ ℳ t i\in\mathcal{M}_{t} in parallel,
+so one denoising step corresponds to one model forward pass.
+Decoding then proceeds in two steps within the current block.
+First, it selects commitment positions, commonly using
+confidence  9 or negative entropy scores  ( 6 ) .
+Second, it selects tokens for these positions, typically by argmax under
+ p θ p_{\theta} .
+Decoding moves to the next block once the current block is fully committed and terminates
+when all masks have been filled. 
+ 
+ 
+ 
+ 2.2 Instruction-Tuning Data Construction 
+
+ 
+ Instruction tuning (IT) trains pretrained language models on prompt–response pairs,
+improving instruction following and zero-shot generalization  14 .
+For efficient batching, prompt–response sequences are terminated by
+ [EOS] and padded to a common length.
+MDLM IT often follows the ARLM convention of using [EOS] as the padding token.
+Let B = { ( p k , r k ) } k = 1 b B=\{(p_{k},r_{k})\}_{k=1}^{b} be a mini-batch of size b b , where p k p_{k} is the prompt
+of length P k P_{k} and r k r_{k} is the raw response of length ℓ k \ell_{k} .
+Over the IT data distribution, let ℓ \ell denote the raw response length before the
+terminal [EOS] , and define its CDF as F ⁡ ( m ) = Pr ⁡ ( ℓ ≤ m ) F(m)=\Pr(\ell\leq m) .
+After appending one semantic terminator [EOS] , each full sequence is padded with
+ [EOS] to the maximum full-sequence length in the mini-batch, S B = max 1 ≤ k ≤ b ⁡ ( P k + ℓ k + 1 ) S_{B}=\max_{1\leq k\leq b}(P_{k}+\ell_{k}+1) .
+Thus, example k k has padded response y k = r k ⊕ [EOS] ⊕ [EOS] L B , k − ℓ k − 1 y_{k}=r_{k}\oplus\texttt{[EOS]}\oplus\texttt{[EOS]}^{L_{B,k}-\ell_{k}-1} of length L B , k = S B − P k L_{B,k}=S_{B}-P_{k} .
+During IT, both noise and loss are applied only to y k y_{k} . 
+ 
+ 
+ 
+ 
+ 3 Analysis of [EOS] Overflow 
+
+ 
+ [EOS] overflow is a common issue of MDLM inference under large block sizes  ( 28 ) .
+In a typical case, the model produces a very short answer followed by repeated [EOS] tokens, as shown in Figure  3 (a).
+However, [EOS] overflow is not observed in ARLMs, even though both ARLMs and MDLMs use [EOS] as padding tokens during IT.
+This motivates us to ask:
+Why is [EOS] padding safe in ARLMs but fragile in MDLMs? 
+ 
+ 
+ 
+ Observation 1: [EOS] overflow is not caused by limited large-block generation capacity. 
+ 
+ 
+ 
+ We first test whether [EOS] overflow is caused by insufficient large-block generation capacity.
+Specifically, we ban [EOS] commitment in LLaDA-8B-Instruct by setting the [EOS] logit to − ∞ -\infty throughout decoding, and then evaluate on GSM8K  15 with L = B = 512 L=B=512 .
+Although this removes the semantic stopping signal and often causes repeated reasoning traces and answers, it raises the accuracy of the first extracted answer from 28.43% to 70.66%.
+Thus, the model is not inherently unable to generate large blocks. 
+ 
+ 
+ Figure 2: [EOS] as a learned length signal. Initial [EOS] confidence aligns with the [EOS] label ratio of padded data and the raw response-length CDF. 
+ 
+ 
+ 
+ Observation 2: Training with [EOS] padding teaches [EOS] to act as a length signal. 
+ 
+ 
+ 
+ Next, we examine whether [EOS] padding provides an additional signal in MDLM
+training beyond semantic termination.
+Specifically, we train an [EOS] -padding diagnostic model on LLaDA-8B-Base, with
+training details provided in Appendix  A .
+Following Section  2.2 , for each mini-batch
+ B = { ( p k , r k ) } k = 1 b B=\{(p_{k},r_{k})\}_{k=1}^{b} , we construct the padded response
+ y k = r k ⊕ [EOS] ⊕ [EOS] L B , k − ℓ k − 1 , y_{k}=r_{k}\oplus\texttt{[EOS]}\oplus\texttt{[EOS]}^{L_{B,k}-\ell_{k}-1}, 
+where L B , k = S B − P k L_{B,k}=S_{B}-P_{k} and S B = max 1 ≤ k ≤ b ⁡ ( P k + ℓ k + 1 ) S_{B}=\max_{1\leq k\leq b}(P_{k}+\ell_{k}+1) .
+We define response-side positions using a 1-indexed coordinate i ∈ { 1 , … , 1024 } i\in\{1,\dots,1024\} .
+For the padded data distribution, we record the raw response-length CDF F ⁡ ( i − 1 ) = Pr ⁡ ( ℓ ≤ i − 1 ) F(i-1)=\Pr(\ell\leq i-1) defined in Section  2.2 , along with the
+ [EOS] token ratio p i ​ ( e ) p_{i}(e) at response-side position i i .
+For the model distribution, we use the same batch-padded examples, mask the entire padded
+response y k y_{k} while keeping the prompt p k p_{k} visible, and report the initial
+ [EOS] probability q i ​ ( e ) q_{i}(e) from a single forward pass through the diagnostic
+model.
+As shown in Figure  2 , the three curves closely
+align, F ⁡ ( i − 1 ) ≈ p i ​ ( e ) ≈ q i ​ ( e ) F(i-1)\approx p_{i}(e)\approx q_{i}(e) , indicating that [EOS] padding teaches
+the model to associate [EOS] with desirable response length. 
+ 
+ 
+ 
+ Observation 3: Large–block inference converts the [EOS] length signal into overflow. 
+ 
+ 
+ 
+ We analyze a large-block decoding trajectory of LLaDA-8B-Instruct with
+ L = B = 512 L=B=512 . Figure  3 (a) shows a
+two-stage [EOS] overflow pattern. In Stage 1, on the initial fully
+masked canvas, tail positions have very high [EOS] probability and
+ [EOS] is committed in the initial steps. In Stage 2, on a
+canvas with a committed [EOS] suffix, [EOS] commitments move
+leftward: positions before the suffix also take [EOS] as their
+committed token, producing overflow.
+We then formalize this pattern under the idealized version of
+Observation  2 .
+Let i i index response-side positions and let e e denote [EOS] .
+For a training-time EOS-padded target, let Y ¯ i \bar{Y}_{i} be the token at
+position i i , and write p i ​ ( e ) = Pr ⁡ ( Y ¯ i = e ) p_{i}(e)=\Pr(\bar{Y}_{i}=e) . During inference, let
+ q i q_{i} be the model distribution at masked canvas position i i , let
+ y ^ i = arg ⁡ max v ​ q i ​ ( v ) \hat{y}_{i}=\arg\max_{v}q_{i}(v) be its proposed token, and let Y i Y_{i} be the
+token committed at canvas position i i . 
+ 
+ 
+ For Stage 1, on a fully masked response canvas, we idealize
+Observation  2 as 
+ 
+
+ 
+ 
+ q i ​ ( e ) = p i ​ ( e ) = F ⁡ ( i − 1 ) . q_{i}(e)=p_{i}(e)=F(i-1). 
+ 
+ 
+ Since standard MDLM decoding uses argmax token
+proposals (Section  2.1 ), q i ​ ( e ) > 1 / 2 q_{i}(e)>1/2 
+implies y ^ i = e \hat{y}_{i}=e .
+Assume the canvas is long enough that F ⁡ ( L − 1 ) > 1 / 2 F(L-1)>1/2 . On the initial fully
+masked response canvas, we call the suffix of positions with q i ​ ( e ) > 1 / 2 q_{i}(e)>1/2 the
+high-confidence [EOS] tail, and define its beginning as 
+ 
+
+ 
+ 
+ r = min ⁡ { i ∈ { 1 , … , L } : F ⁡ ( i − 1 ) > 1 / 2 } . r=\min\{i\in\{1,\dots,L\}:F(i-1)>1/2\}. 
+ 
+ 
+ 
+ 
+ For Stage 2, let S e = { Y r = ⋯ = Y L = e } S_{e}=\{Y_{r}=\cdots=Y_{L}=e\} denote the committed
+ [EOS] suffix event during inference, and let
+ S ¯ e = { Y ¯ r = ⋯ = Y ¯ L = e } \bar{S}_{e}=\{\bar{Y}_{r}=\cdots=\bar{Y}_{L}=e\} denote the corresponding
+training-time [EOS] padding suffix event.
+We assume that after S e S_{e} occurs, the model’s [EOS] probability for
+earlier positions matches the corresponding training-time [EOS] -padded
+conditional probability: for any i < r i<r , 
+ 
+
+ 
+ 
+ q i ​ ( e ∣ S e ) = p i ​ ( e ∣ S ¯ e ) = Pr ⁡ ( Y ¯ i = e ∣ S ¯ e ) . q_{i}(e\mid S_{e})=p_{i}(e\mid\bar{S}_{e})=\Pr(\bar{Y}_{i}=e\mid\bar{S}_{e}). 
+ 
+ 
+ 
+ 
+ Theorem 1 (Stage 1: initial [EOS] commitments) . 
+ 
+ If the first block reaches the high-confidence [EOS] tail, r ≤ B r\leq B ,
+then every selected position j ∈ { r , … , B } j\in\{r,\dots,B\} is committed as
+ [EOS] , i.e., Y j = e Y_{j}=e . 
+ 
+ 
+ 
+ Theorem 2 (Stage 2: leftward spread of [EOS] commitments) . 
+ 
+ If S e S_{e} has occurred, then for any i < r i<r satisfying
+ 2 ​ F ​ ( i − 1 ) > F ⁡ ( r − 1 ) 2F(i-1)>F(r-1) , selecting position i i in a later denoising step yields
+ Y i = e Y_{i}=e . 
+ 
+ 
+ 
+ Proofs of the theorems are given in
+Appendix  B . 
+ 
+ 
+ We next perform an intervention motivated by
+Theorem  2 : after a position is committed as
+ [EOS] , we set attention scores to that position to − ∞ -\infty , as
+shown in Figure  3 (b).
+Initial [EOS] commitments remain, but the model avoids
+ [EOS] overflow and generates the correct answer. This shows that Stage 2
+is the dominant driver of [EOS] overflow. 
+ 
+ 
+ These observations reveal that [EOS] overflow stems from a
+training–inference role mismatch. In MDLM IT, bidirectional attention exposes
+padding [EOS] tokens as denoising targets, so [EOS] is trained
+as both a semantic terminator and a padding token. During inference, however,
+ [EOS] is expected to serve only as a semantic terminator. In ARLM IT, causal masking hides
+padding [EOS] tokens from earlier positions, so [EOS] remains
+a semantic terminator and overflow does not arise. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ (a) Original model [EOS] overflow 
+ Janet <eos><eos><eos><eos><eos><eos><eos><eos> ... 
+ 
+ 
+ 
+ 
+ 
+ 
+ (b) Masking attention to committed [EOS] Correct generation 
+ Janet’s ducks lay 16 eggs per day. She eats 3 eggs for breakfast every morning, so she has
+ 
+ 16 - 3 = 13 eggs left. She bakes muffins with 4 eggs, so she has 13 - 4 = 9 eggs left. She
+ 
+ sells 9 eggs for $2 each. Therefore, she makes 9 * $2 = $18. #### 18 <eos><eos><eos> ... 
+ 
+ 
+ 
+ Figure 3: Attention intervention on the B = L = 512 B=L=512 [EOS] overflow trajectory. Both cases use the same prompt. Masking
+attention to committed [EOS] tokens avoids [EOS] overflow and recovers the correct answer. 
+ 
+ 
+ 
+ 4 Method 
+
+ 
+ Motivated by this training–inference role mismatch, we propose
+ VoidPadding , which introduces a new [VOID] token as the
+padding token, so that [EOS] serves only as the semantic terminator.
+We further design VoidExpansion for inference, which uses the
+ [VOID] length signal learned during IT to expand an insufficient
+canvas before decoding.
+Together, this training–inference co-design decouples padding from semantic
+termination while preserving the hidden length signal carried by
+ [VOID] tokens.
+Figure  1 provides an overview of the method, with
+details given in the following subsections. 
+ 
+ 
+ 4.1 VoidPadding 
+
+ 
+ Instruction-Tuning Design. VoidPadding follows the IT data construction
+described in Section  2.2 , except that
+padding [EOS] tokens are replaced by [VOID] tokens. Thus, for
+ B = { ( p k , r k ) } k = 1 b B=\{(p_{k},r_{k})\}_{k=1}^{b} and L B , k = S B − P k L_{B,k}=S_{B}-P_{k} , the padded response is 
+ 
+
+ 
+ 
+ y k VOID = r k ⊕ [EOS] ⊕ [VOID] L B , k − ℓ k − 1 . y_{k}^{\mathrm{VOID}}=r_{k}\oplus\texttt{[EOS]}\oplus\texttt{[VOID]}^{L_{B,k}-\ell_{k}-1}. 
+ 
+ 
+ We then follow the standard MDLM training procedure in
+Section  2.1 , with noise injection and loss
+computation performed on y k VOID y_{k}^{\mathrm{VOID}} .
+Notably, we apply standard MDLM masking for non- [EOS] positions.
+The single [EOS] token in each example is always masked, forcing the
+model to predict it as a stable semantic terminator. 
+ 
+ 
+ Inference Design. 
+During inference, [VOID] remains a hidden padding signal and is never
+generated: setting its logit to − ∞ -\infty before token selection prevents the
+high-confidence [VOID] tail from becoming visible output.
+We also propose [EOS] Termination , which stops decoding once
+all positions before the leftmost visible [EOS] are unmasked and then
+discards the rest of the canvas.
+In contrast, VanillaStopping , the standard MDLM stopping rule, stops
+only after all masked positions are decoded
+(Section  2.1 ), causing redundant decoding
+after the semantic endpoint. 
+ 
+ 
+ 
+ 4.2 VoidExpansion 
+
+ 
+ As discussed in Section  2.1 , MDLM decoding
+starts from a pre-defined response canvas with fixed length L L and block size
+ B B . When this canvas is too short, generation quality drops sharply
+(Appendix Figure  8 ).
+Motivated by this short-canvas degradation, VoidExpansion uses the learned
+ [VOID] length signal to expand the canvas to a sufficient, block-aligned length
+ L ^ = n ​ B \hat{L}=nB before decoding. 
+ 
+ 
+ Similar to how IT with [EOS] padding induces a length signal in
+ [EOS] (Observation  2 ), IT with
+ [VOID] padding induces a [VOID] length signal.
+Specifically, sufficient canvases have redundant tails that prefer
+ [VOID] , whereas insufficient canvases retain tail positions that favor
+non- [VOID] tokens.
+We therefore quantify this [VOID] length signal as follows.
+Let p p denote the prompt tokens, 𝖬 \mathsf{M} the mask token, and w w the
+tail-window size.
+At canvas length ℓ \ell , we run one forward pass on
+ p ⊕ 𝖬 ℓ p\oplus\mathsf{M}^{\ell} and define the tail window
+ 𝒯 ⁡ ( ℓ ) \mathcal{T}(\ell) as the last min ⁡ ( w , ℓ ) \min(w,\ell) response-canvas positions,
+indexed by i i : 
+ 
+
+ 
+ 
+ p i void \displaystyle p_{i}^{\mathrm{void}} 
+ = p θ ​ ( x i = [VOID] ∣ p ⊕ 𝖬 ℓ ) , \displaystyle=p_{\theta}(x_{i}=\texttt{[VOID]}\mid p\oplus\mathsf{M}^{\ell}), 
+ 
+ 
+ 
+ p i nonvoid \displaystyle p_{i}^{\mathrm{nonvoid}} 
+ = max a ∈ 𝒱 ∖ { [VOID] } ⁡ p θ ​ ( x i = a ∣ p ⊕ 𝖬 ℓ ) , \displaystyle=\max_{a\in\mathcal{V}\setminus\{\texttt{[VOID]}\}}p_{\theta}(x_{i}=a\mid p\oplus\mathsf{M}^{\ell}), 
+ 
+ 
+ 
+ s nonvoid ​ ( ℓ ) \displaystyle s_{\mathrm{nonvoid}}(\ell) 
+ = | 𝒯 ⁡ ( ℓ ) | − 1 ​ ∑ i ∈ 𝒯 ⁡ ( ℓ ) p i nonvoid , \displaystyle=|\mathcal{T}(\ell)|^{-1}\sum_{i\in\mathcal{T}(\ell)}p_{i}^{\mathrm{nonvoid}}, 
+ 
+ 
+ 
+ s gap ​ ( ℓ ) \displaystyle s_{\mathrm{gap}}(\ell) 
+ = | 𝒯 ⁡ ( ℓ ) | − 1 ​ ∑ i ∈ 𝒯 ⁡ ( ℓ ) ( p i void − p i nonvoid ) . \displaystyle=|\mathcal{T}(\ell)|^{-1}\sum_{i\in\mathcal{T}(\ell)}\left(p_{i}^{\mathrm{void}}-p_{i}^{\mathrm{nonvoid}}\right). 
+ 
+ 
+ Here s nonvoid s_{\mathrm{nonvoid}} measures tail preference for non- [VOID] 
+tokens, while s gap s_{\mathrm{gap}} measures tail preference for [VOID] 
+over the strongest non- [VOID] alternative at each position.
+Thus, high s nonvoid s_{\mathrm{nonvoid}} or low s gap s_{\mathrm{gap}} suggests that
+the current canvas is insufficient. 
+ 
+ 
+ VoidExpansion uses this [VOID] length signal to expand the insufficient
+canvas, as shown in Algorithm  1 .
+It defines a canvas as sufficient when
+ s nonvoid ​ ( L ) ≤ τ nonvoid ​ and ​ s gap ​ ( L ) ≥ τ gap . s_{\mathrm{nonvoid}}(L)\leq\tau_{\mathrm{nonvoid}}\>\text{and}\>s_{\mathrm{gap}}(L)\geq\tau_{\mathrm{gap}}. 
+Starting from the block-aligned initial canvas length L = ⌈ L 0 / B ⌉ ​ B L=\lceil L_{0}/B\rceil B ,
+VoidExpansion checks this criterion at the current L L . If the criterion is not
+met, it expands the canvas by one block and repeats until the criterion is met or
+the maximum length restriction L cap = ⌈ L max / B ⌉ ​ B L_{\mathrm{cap}}=\lceil L_{\max}/B\rceil B is reached. 
+ 
+ 
+ Algorithm 1 VoidExpansion Before Decoding 
+ 
+ 
+ 1: 
+ 
+ 
+ Prompt tokens p p , model f θ f_{\theta} , initial canvas length L 0 L_{0} , maximum length L max L_{\max} , block size B B , tail window w w , thresholds τ nonvoid \tau_{\mathrm{nonvoid}} and τ gap \tau_{\mathrm{gap}} 
+
+ 
+ 
+ 2: 
+ 
+ 
+ Selected generation length L ^ \hat{L} 
+
+ 
+ 
+ 3: 
+ 
+ 
+ L ← ⌈ L 0 / B ⌉ ​ B L\leftarrow\lceil L_{0}/B\rceil B , L cap ← ⌈ L max / B ⌉ ​ B L_{\mathrm{cap}}\leftarrow\lceil L_{\max}/B\rceil B 
+
+ 
+ 
+ 4: 
+ 
+ 
+ while L ≤ L cap L\leq L_{\mathrm{cap}} do 
+
+ 
+ 
+ 5: 
+ 
+ 
+   Construct x = p ⊕ 𝖬 L x=p\oplus\mathsf{M}^{L} 
+
+ 
+ 
+ 6: 
+ 
+ 
+    z ← f θ ​ ( x ) resp z\leftarrow f_{\theta}(x)_{\mathrm{resp}} ⊳ \triangleright logits on response positions
+ 
+ 
+ 
+ 7: 
+ 
+ 
+    𝒯 ⁡ ( L ) ← \mathcal{T}(L)\leftarrow last min ⁡ ( w , L ) \min(w,L) positions of z z 
+
+ 
+ 
+ 8: 
+ 
+ 
+   Compute s nonvoid ​ ( L ) s_{\mathrm{nonvoid}}(L) and s gap ​ ( L ) s_{\mathrm{gap}}(L) on 𝒯 ⁡ ( L ) \mathcal{T}(L) 
+
+ 
+ 
+ 9: 
+ 
+ 
+    if s nonvoid ​ ( L ) ≤ τ nonvoid s_{\mathrm{nonvoid}}(L)\leq\tau_{\mathrm{nonvoid}} and s gap ​ ( L ) ≥ τ gap s_{\mathrm{gap}}(L)\geq\tau_{\mathrm{gap}} then 
+
+ 
+ 
+ 10: 
+ 
+ 
+     return L L 
+
+ 
+ 
+ 11: 
+ 
+ 
+    end if 
+ 
+ 
+ 12: 
+ 
+ 
+    L ← L + B L\leftarrow L+B ⊳ \triangleright append one block before generation
+ 
+ 
+ 
+ 13: 
+ 
+ 
+ end while 
+ 
+ 
+ 14: 
+ 
+ 
+ return L cap L_{\mathrm{cap}} 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 5 Experiments 
+
+ 
+ Setup. 
+Our main experiments use two instruction-tuned MDLMs: LLaDA-8B-Instruct (hereafter LLaDA)  ( 38 ) and Dream-7B-Instruct (hereafter Dream)  ( 56 ) . Quality metrics are accuracy on
+GSM8K  ( 15 ) and MATH500  ( 20 ) ,
+and pass@1 on HumanEval  ( 10 ) and
+MBPP  ( 5 ) .
+The main efficiency metric is the average number of forward
+passes per example (hereafter NFE).
+In all tables, bold marks the best
+result and underline marks the second best within each comparison.
+For Dream, we use a decoding wrapper to enable the same block-wise decoding
+protocol as LLaDA; details are provided in
+Appendix  C . We compare against the original models and
+RainbowPadding  ( 28 ) ,
+which aims to avoid
+ [EOS] overflow by cyclically using 7 distinct padding
+tokens.
+On both LLaDA and Dream, RainbowPadding and VoidPadding use
+LoRA SFT  ( 23 ) on the same 0.5M-example data and identical
+training configurations, except that VoidPadding uses 67% of
+RainbowPadding’s training steps. Detailed training configuration is provided in
+Appendix  A . 
+ 
+ 
+ 5.1 Fixed-Length Block-Size Robustness 
+
+ 
+ We first evaluate fixed-length robustness with generation length L = 512 L=512 and a maximum
+denoising-step budget T = 512 T=512 , while varying the block size B B .
+Table  1 reports
+ B ∈ { 64,128,512 } B\in\{64,128,512\} .
+Complete block-size results are in
+Appendix  D .
+We compare against the original LLaDA and Dream models, as well as RainbowPadding applied to these models. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Task 
+ Method 
+ Block size B B 
+ Mean 
+ 
+ 64 
+ 128 
+ 512 
+ 
+ 
+ 
+ GSM8K 
+ Original 
+ 76.80 
+ 70.96 
+ 28.43 
+ 58.73 
+ 
+ RainbowPadding 
+ 74.53 
+ 73.39 
+ 66.57 
+ 71.50 
+ 
+ VoidPadding 
+ 77.79 
+ 78.39 
+ 78.62 
+ 78.27 
+ 
+ MATH500 
+ Original 
+ 39.60 
+ 37.60 
+ 16.60 
+ 31.27 
+ 
+ RainbowPadding 
+ 33.20 
+ 34.00 
+ 27.80 
+ 31.67 
+ 
+ VoidPadding 
+ 40.60 
+ 41.60 
+ 27.60 
+ 36.60 
+ 
+ HEval 
+ Original 
+ 42.68 
+ 43.90 
+ 44.51 
+ 43.70 
+ 
+ RainbowPadding 
+ 43.90 
+ 43.29 
+ 35.98 
+ 41.06 
+ 
+ VoidPadding 
+ 41.46 
+ 42.07 
+ 41.46 
+ 41.66 
+ 
+ MBPP 
+ Original 
+ 41.48 
+ 39.12 
+ 37.68 
+ 39.43 
+ 
+ RainbowPadding 
+ 42.71 
+ 43.02 
+ 42.51 
+ 42.75 
+ 
+ VoidPadding 
+ 44.66 
+ 44.87 
+ 44.97 
+ 44.83 
+ 
+ Mean over tasks 
+ Original 
+ 50.14 
+ 47.90 
+ 31.81 
+ 43.28 
+ 
+ RainbowPadding 
+ 48.59 
+ 48.43 
+ 43.22 
+ 46.75 
+ 
+ VoidPadding 
+ 51.13 
+ 51.73 
+ 48.16 
+ 50.34 
+ 
+ 
+ 
+ (a) LLaDA 
+ 
+ 
+ 
+ 
+ 
+ 
+ Task 
+ Method 
+ Block length B B 
+ Mean 
+ 
+ 64 
+ 128 
+ 512 
+ 
+ 
+ 
+ GSM8K 
+ Original 
+ 73.39 
+ 33.89 
+ 46.70 
+ 51.33 
+ 
+ RainbowPadding 
+ 79.15 
+ 77.63 
+ 52.16 
+ 69.65 
+ 
+ VoidPadding 
+ 80.44 
+ 80.89 
+ 78.09 
+ 79.81 
+ 
+ MATH500 
+ Original 
+ 43.20 
+ 41.20 
+ 26.00 
+ 36.80 
+ 
+ RainbowPadding 
+ 33.60 
+ 33.40 
+ 31.40 
+ 32.80 
+ 
+ VoidPadding 
+ 44.00 
+ 44.20 
+ 45.20 
+ 44.47 
+ 
+ HEval 
+ Original 
+ 62.80 
+ 60.37 
+ 18.90 
+ 47.36 
+ 
+ RainbowPadding 
+ 62.80 
+ 60.37 
+ 50.00 
+ 57.72 
+ 
+ VoidPadding 
+ 59.76 
+ 59.15 
+ 60.37 
+ 59.76 
+ 
+ MBPP 
+ Original 
+ 41.00 
+ 31.00 
+ 30.00 
+ 34.00 
+ 
+ RainbowPadding 
+ 56.00 
+ 54.80 
+ 47.80 
+ 52.87 
+ 
+ VoidPadding 
+ 57.60 
+ 58.00 
+ 54.80 
+ 56.80 
+ 
+ Mean over tasks 
+ Original 
+ 55.10 
+ 41.62 
+ 30.40 
+ 42.37 
+ 
+ RainbowPadding 
+ 57.89 
+ 56.55 
+ 45.34 
+ 53.26 
+ 
+ VoidPadding 
+ 60.45 
+ 60.56 
+ 59.62 
+ 60.21 
+ 
+ 
+ 
+ (b) Dream 
+ 
+ Table 1: Fixed-length generation robustness experiments on LLaDA and Dream with B ∈ { 64,128,512 } B\in\{64,128,512\} . 
+ 
+ 
+ Accuracy Robustness. 
+Table  1 shows that VoidPadding improves fixed-length robustness across both
+models.
+On LLaDA, [VOID] substantially mitigates large-block [EOS] overflow: the original model drops sharply from
+76.80 at B = 64 B=64 to 28.43 at B = 512 B=512 on GSM8K, while [VOID] remains around 78.
+It gives the strongest mean on three of
+four tasks and remains competitive on HumanEval. Dream shows the same trend: the original model degrades as B B grows, while [VOID] remains stable and attains the best mean score across tasks.
+Across all block sizes, [VOID] attains the highest four-task mean.
+On LLaDA, the block-size-averaged macro mean over four tasks improves by
+ + 7.06 +7.06 points over the original model and + 3.59 +3.59 over Rainbow.
+On Dream, the corresponding block-size-averaged macro means are + 17.84 +17.84 and + 6.95 +6.95 , respectively. 
+ 
+ 
+ 
+ 
+ 
+ 
+ Benchmark 
+ Original/Rainbow 
+ VoidPadding 
+ NFE Reduction 
+ 
+ 
+ 
+ GSM8K 
+ 512.0 
+ 157.3 
+ 69.3% 
+ 
+ MATH500 
+ 512.0 
+ 371.0 
+ 27.5% 
+ 
+ HumanEval 
+ 512.0 
+ 300.7 
+ 41.3% 
+ 
+ MBPP 
+ 512.0 
+ 78.7 
+ 84.6% 
+ 
+ 
+ 
+ Table 2: NFE for Dream variants in Table  1 , averaged over B ∈ { 64,128,512 } B\in\{64,128,512\} . 
+ 
+ 
+ [EOS] Termination Efficiency. 
+Table  2 reports the average NFE of
+Dream variants in Table  1 over
+ B ∈ { 64,128,512 } B\in\{64,128,512\} .
+The original model and RainbowPadding use VanillaStopping, which fills the entire
+512-token canvas. Since each denoising step requires one model forward pass,
+this setting requires 512 NFE under T = 512 T=512 .
+VoidPadding instead uses [EOS] Termination, which reduces NFE by 69.3% on GSM8K, 27.5% on MATH500, 41.3% on
+HumanEval, and 84.6% on MBPP, averaged over B ∈ { 64,128,512 } B\in\{64,128,512\} .
+Appendix  E reports per-block NFE results for
+both LLaDA and Dream. 
+ 
+ 
+ 
+ 5.2 Effectiveness of VoidExpansion 
+
+ 
+ We next evaluate VoidExpansion on a short initial canvas and compare it
+against two inference-only variable-length generation methods:
+ ρ \rho - [EOS]   ( 53 ) and
+ Daedal   ( 32 ) . Both methods adjust the canvas using the
+ [EOS] signal of the original model.
+In the main short-canvas experiment, all methods start from an initial length
+ L 0 = 64 L_{0}=64 . VoidExpansion uses a maximum length
+ L max = 512 L_{\max}=512 , block size B = 32 B=32 , and tail-window size w = 16 w=16 .
+On LLaDA, fixed- L 0 L_{0} decoding baselines are evaluated on both
+the original model and the [VOID] -padding checkpoint.
+We apply ρ \rho - [EOS] and Daedal to the original model, and
+VoidExpansion to the [VOID] -padding checkpoint, comparing
+our [VOID] -based training–inference co-design with
+ [EOS] -based inference-only length selection.
+For fixed- L 0 L_{0} decoding and VoidExpansion, the maximum
+denoising-step budget is T = L 0 T=L_{0} and T = L ^ T=\hat{L} , respectively, where
+ L ^ \hat{L} is the canvas length after VoidExpansion. For ρ \rho - [EOS] and
+ Daedal , we follow their adaptive decoding procedures. In all cases,
+NFE counts only decoding forward passes, while wall-clock time includes both
+canvas selection and decoding. Since the official
+implementations of ρ \rho - [EOS] and Daedal do not support
+Dream, Dream is compared only against fixed- L 0 L_{0} decoding. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Method 
+ Fine-tuned 
+ Expansion Signal 
+ GSM8K 
+ MATH500 
+ HEval 
+ MBPP 
+ Mean 
+ 
+ 
+ 
+ LLaDA fixed-64 
+ No 
+ None 
+ 60.20 
+ 26.80 
+ 29.27 
+ 41.27 
+ 39.38 
+ 
+ VOID fixed-64 
+ Yes 
+ None 
+ 52.84 
+ 26.20 
+ 36.59 
+ 38.81 
+ 38.61 
+ 
+ ρ \rho - [EOS] 
+ No 
+ [EOS] 
+ 73.39 
+ 27.00 
+ 40.24 
+ 41.38 
+ 45.50 
+ 
+ Daedal 
+ No 
+ [EOS] 
+ 79.38 
+ 37.40 
+ 44.51 
+ 41.79 
+ 50.77 
+ 
+ VoidExpansion 
+ Yes 
+ [VOID] 
+ 78.32 
+ 39.60 
+ 42.07 
+ 45.38 
+ 51.34 
+ 
+ 
+ (a) Task quality under a short initial canvas. Mean arithmetically
+averages the four benchmark scores. 
+ 
+ 
+ 
+ 
+ 
+ Method 
+ Mean Acc. ↑ \uparrow 
+ 
+ 
+ GSM8K 
+ NFE/ Wall 
+ 
+ 
+ 
+ MATH 
+ NFE/ Wall 
+ 
+ 
+ 
+ HEval 
+ NFE/ Wall 
+ 
+ 
+ 
+ MBPP 
+ NFE/ Wall 
+ 
+ 
+ 
+ Mean 
+ NFE/ Wall 
+ 
+ 
+ 
+ 
+ Daedal 
+ 50.77 
+ 135.54 / 1.00 × \times 
+ 269.65 / 1.00 × \times 
+ 254.66 / 1.00 × \times 
+ 255.43 / 1.00 × \times 
+ 228.82 / 1.00 × \times 
+ 
+ ρ \rho - [EOS] 
+ 45.50 
+ 92.57 / 1.56 × \times 
+ 104.30 / 3.04 × \times 
+ 191.52 / 1.34 × \times 
+ 170.41 / 1.69 × \times 
+ 139.70 / 1.81 × \times 
+ 
+ VoidExpansion 
+ 51.34 
+ 133.78 / 0.92 × \times 
+ 418.05 / 0.82 × \times 
+ 73.06 / 5.59 × \times 
+ 63.50 / 4.80 × \times 
+ 172.10 / 2.12 × \times 
+ 
+ 
+ (b) Efficiency of adaptive length selection. Each task cell reports NFE /
+wall speedup. Wall speedup is normalized to Daedal . In the Mean
+column, NFE is the arithmetic mean and wall speedup is the geometric mean over
+the four benchmarks. 
+ 
+ Table 3: Short canvas expansion results on LLaDA. VoidExpansion uses τ nonvoid = 0.09 \tau_{\mathrm{nonvoid}}=0.09 ,
+ τ gap = − 0.45 \tau_{\mathrm{gap}}=-0.45 . 
+ 
+ 
+ VoidExpansion preserves quality while improving efficiency. 
+Table  3 shows that
+fixed- L 0 L_{0} decoding reaches only 39.38 mean accuracy for the original LLaDA
+and 38.61 for the [VOID] -padding checkpoint.
+Thus, VoidPadding alone does not improve short-canvas decoding.
+The benefit appears when the learned [VOID] signal is used for
+expansion. The full VoidPadding+VoidExpansion method
+slightly improves over Daedal in mean quality (51.34 vs. 50.77), while
+lowering mean NFE from 228.82 to 172.10 and
+running 2.12 × 2.12\times faster in geometric-mean wall time.
+VoidExpansion also achieves higher quality than
+ ρ \rho - [EOS] on all benchmarks while attaining a larger
+geometric-mean wall-clock speedup. Raw wall-clock results are shown in
+Figure  7 .
+Table  4 shows the same pattern on Dream:
+VoidExpansion achieves the best score on all four benchmarks, improving
+the mean score over fixed- L 0 L_{0} Dream (42.23) and fixed- L 0 L_{0} 
+VoidPadding (39.20) to 60.37. 
+ 
+ 
+ 
+ 
+ 
+ 
+ Method 
+ GSM8K 
+ MATH500 
+ HEval 
+ MBPP 
+ Mean 
+ 
+ 
+ 
+ Dream fixed-64 
+ 53.22 
+ 22.80 
+ 43.90 
+ 49.00 
+ 42.23 
+ 
+ VOID fixed-64 
+ 42.53 
+ 19.00 
+ 42.68 
+ 52.60 
+ 39.20 
+ 
+ VoidExpansion 
+ 79.08 
+ 44.00 
+ 60.98 
+ 57.40 
+ 60.37 
+ 
+ 
+ 
+ Table 4: Short canvas expansion results on Dream. VoidExpansion uses τ nonvoid = 0.15 \tau_{\mathrm{nonvoid}}=0.15 ,
+ τ gap = 0.55 \tau_{\mathrm{gap}}=0.55 . 
+ 
+ 
+ To test large-block robustness, we set L 0 = 256 L_{0}=256 and B = 256 B=256 . We apply
+ ρ \rho - [EOS] and Daedal to the original LLaDA model, and
+compare them with VoidExpansion on the VoidPadding checkpoint.
+Figure  4 shows that Daedal 
+collapses to a 23.46 mean score, including 13.12 on GSM8K and 12.80 on
+MATH500. ρ \rho - [EOS] is more stable but still underperforms
+VoidExpansion on every benchmark, with a 9.10-point lower mean score
+(40.94 vs. 50.04). This confirms that inference-only methods relying on the
+original [EOS] signal remain vulnerable to large-block
+ [EOS] overflow. 
+ 
+ 
+ 0 20 40 60 80 Score GSM8K 61.26 13.12 77.26 HumanEval 35.37 34.76 39.63 MATH500 23.40 12.80 38.60 MBPP 43.74 33.16 44.66 Mean 40.94 23.46 50.04 ρ \rho - [EOS] 
+ 
+ Daedal 
+ 
+ VoidExpansion
+ 
+ 
+ Figure 4: Large-block stress test with L 0 = 256 L_{0}=256 and B = 256 B=256 . Lower scores indicate [EOS] overflow. 
+ 
+ 
+ We further evaluate the effectiveness of VoidPadding and VoidExpansion on
+LLaDA-8B-Base and Dream-7B-Base in
+Appendices  F 
+and  G . 
+ 
+ 
+ 
+ 
+ 6 Ablation Studies 
+
+ 
+ Setup. 
+Our ablation experiments use the same benchmarks and metrics as Section  5 
+and compare the original LLaDA-8B-Instruct model with the RainbowPadding and VoidPadding checkpoints. 
+ 
+ 
+ VoidPadding makes [EOS] Termination effective. 
+Table  5 evaluates [EOS] Termination on a fixed 512 512 -token canvas across different training settings.
+Relative to the VanillaStopping baseline defined in
+Section  4.1 , [EOS] Termination reduces NFE for LLaDA and RainbowPadding but slightly degrades
+accuracy. In
+contrast, with VoidPadding, [EOS] Termination improves
+accuracy while reducing mean NFE by 63.8% across block sizes. This
+improvement indicates that VoidPadding aligns training and
+inference so that [EOS] becomes a reliable semantic terminator for
+early stopping. Per-benchmark NFE results are shown in
+Figure  20 . 
+ 
+ 
+ 
+ 
+ 
+ 
+ Setting 
+ Mean score 
+ Mean NFE reduction 
+ 
+ VanillaStopping 
+ [EOS] Termination 
+ Δ \Delta 
+ 
+ 
+ 
+ LLaDA 
+ 43.28 
+ 43.15 
+ -0.13 
+ 15.3% 
+ 
+ RainbowPadding 
+ 46.75 
+ 46.74 
+ -0.01 
+ 44.7% 
+ 
+ VoidPadding 
+ 40.70 
+ 50.34 
+ +9.64 
+ 63.8% 
+ 
+ 
+ 
+ Table 5: [EOS] Termination ablation on LLaDA. Mean scores and mean NFE are averaged over the four benchmarks and B ∈ { 64,128,512 } B\in\{64,128,512\} . NFE reduction is relative to VanillaStopping. 
+ 
+ 
+ VoidExpansion is robust to hyperparameter choices. 
+Starting from the VoidExpansion setting in
+Table  3 ,
+Table  6 varies one factor at a time and
+keeps the remaining settings fixed. The varied factors include threshold
+pairs, initial lengths L 0 L_{0} , tail window sizes w w , and block sizes B B . Mean quality and
+mean NFE over the four tasks remain stable across these changes, showing
+that the learned [VOID] length signal supports short-canvas expansion
+while preserving both quality and efficiency.
+See Appendix  H for detailed results behind Table  6 . 
+ 
+ 
+ 
+ 
+ 
+ 
+ Factor varied 
+ Values tested 
+ Task-mean quality range 
+ Task-mean NFE range 
+ 
+ 
+ 
+ Thresholds 
+ 16 threshold pairs ( 4 × 4 4{\times}4 ) 
+ 51.16–51.78 
+ 169.39–175.50 
+ 
+ Initial length L 0 L_{0} 
+ 64, 96, 128, 160 
+ 50.83–51.78 
+ 172.10–172.80 
+ 
+ Tail window size w w 
+ 8, 16, 24, 32 
+ 51.40–51.81 
+ 168.65–173.15 
+ 
+ Block size B B 
+ 16, 32, 64 
+ 50.80–51.78 
+ 170.74–172.35 
+ 
+ 
+ 
+ Table 6: Hyperparameter robustness of VoidExpansion. Each row varies one factor from the setting in Table  3 while keeping the others fixed. Quality and NFE are averaged over the four benchmarks. Each range shows the four-benchmark mean quality or NFE obtained across the values of that factor listed in the row. 
+ 
+ 
+ 
+ 7 Related Work 
+
+ 
+ Diffusion Language Models. 
+Diffusion language models (DLMs) can be broadly categorized into continuous DLMs  ( 17 ; 24 ; 27 ; 43 ) , which operate in embedding spaces, and discrete DLMs  ( 22 ; 42 ; 16 ) , which operate over discrete token spaces.
+Masked diffusion language models  ( 21 ; 19 ; 4 ) (MDLMs) are a representative discrete class that iteratively predicts masked tokens.
+Recent large-scale MDLMs, including LLaDA series  38 ; 57 ; 8 ; 7 , Dream series  56 ; 52 , SDAR  12 , TraDo  47 , and WeDLM  34 , show strong complex reasoning and long-text generation abilities.
+Recent work also improves generation quality through better samplers  ( 54 ) . 
+ 
+ 
+ Efficient MDLMs. 
+Although MDLMs support parallel token prediction, inference remains costly because generation usually requires many denoising iterations with full-sequence bidirectional attention. Work on efficient MDLM inference includes sampling methods that reduce denoising steps or finalize more tokens per step  ( 33 ; 26 ; 49 ) , cache-based methods that reuse computation via approximate caching or KV caching  50 ; 25 ; 45 ; 51 ; 36 ; 48 , and training-based distillation for fewer-step generation  ( 37 ; 2 ; 11 ) . 
+ 
+ 
+ Variable-Length Generation. 
+MDLMs often require a preallocated output canvas, wasting computation on over-allocated slots and limiting usability  ( 18 ) . Length allocation methods address this issue  13 . Inference-only methods, including SmartCrop  40 , ρ \rho - [EOS]   53 , and DAEDAL  32 , typically use [EOS] as a length signal, while training-based methods include dLLM-Var  ( 55 ) , which learns reliable [EOS] prediction for block-wise termination, and FlexMDM  ( 29 ) , which decouples length prediction from token prediction. 
+ 
+ 
+ 
+ 8 Conclusion 
+
+ 
+ We show that a root cause of [EOS] overflow in MDLMs is a
+training–inference role mismatch: [EOS] is trained as both padding
+and semantic terminator, but used only for termination at inference.
+VoidPadding instead uses [VOID] as padding tokens and reserves
+ [EOS] for semantic endings, enabling VoidExpansion for canvas
+allocation and [EOS] Termination for early stopping.
+Together, our training–inference co-design improves large-block robustness,
+decoding efficiency, and variable-length generation. 
+ 
+ 
+ 
+ Limitations 
+
+ 
+ Many MDLM training and inference conventions are inherited from ARLMs.
+Our study focuses on one concrete failure mode of this transfer:
+ [EOS] padding, which is largely benign under causal masking, can
+become fragile under bidirectional denoising because padding positions can
+serve as both context and denoising targets.
+Thus, [EOS] overflow should be viewed as one symptom of a broader
+class of ARLM-inherited assumptions that may fail in MDLMs.
+Other choices, including data formatting, special-token semantics, stopping
+rules, and batching strategies, may require similarly MDLM-specific design. 
+ 
+ 
+ Our analysis also suggests that [EOS] overflow is not primarily a model
+capacity failure. Instead, it emerges from the interaction between a learned
+length prior, bidirectional context, and standard large-block sampling rules.
+VoidPadding mitigates the padding–termination mismatch, but the design of
+effective MDLM samplers remains open.
+Future samplers may need to jointly consider token confidence, commitment
+timing, canvas allocation, and stopping decisions under bidirectional denoising. 
+ 
+ 
+ 
+ References 
+
+ 
+ Allal et al. (2024) 
+ L. B. Allal, A. Lozhkov, E. Bakouch, L. von Werra, and T. Wolf 
+ 
+ SmolLM-blazingly fast and remarkably powerful .
+ 
+ Hugging Face Blog 16 .
+ 
+ Cited by: Appendix A .
+ 
+ Amin et al. (2026) 
+ H. Amin, Y. Gao, Y. Souri, S. Som, M. Yin, R. Khanna, and X. Song 
+ 
+ Consistent diffusion language models .
+ 
+ arXiv preprint arXiv:2605.00161 .
+ 
+ Cited by: §7 .
+ 
+ Arriola et al. (2025) 
+ M. Arriola, A. Gokaslan, J. Chiu, Z. Yang, Z. Qi, J. Han, S. Sahoo, and V. Kuleshov 
+ 
+ Block diffusion: interpolating between autoregressive and diffusion language models .
+ 
+ In International Conference on Learning Representations ,
+ 
+ Vol. 2025 , pp. 50726–50753 .
+ 
+ Cited by: §2.1 .
+ 
+ Austin et al. (2021a) 
+ J. Austin, D. D. Johnson, J. Ho, D. Tarlow, and R. Van Den Berg 
+ 
+ Structured denoising diffusion models in discrete state-spaces .
+ 
+ Advances in neural information processing systems 34 , pp. 17981–17993 .
+ 
+ Cited by: §1 ,
+ §7 .
+ 
+ Austin et al. (2021b) 
+ J. Austin, A. Odena, M. Nye, M. Bosma, H. Michalewski, D. Dohan, E. Jiang, C. Cai, M. Terry, Q. Le, et al. 
+ 
+ Program synthesis with large language models .
+ 
+ arXiv preprint arXiv:2108.07732 .
+ 
+ Cited by: §5 .
+ 
+ Ben-Hamu et al. (2026) 
+ H. Ben-Hamu, I. Gat, D. Severo, N. S. Nolte, and B. Karrer 
+ 
+ Accelerated sampling from masked diffusion models via entropy bounded unmasking .
+ 
+ Advances in Neural Information Processing Systems 38 , pp. 55981–56007 .
+ 
+ Cited by: §2.1 .
+ 
+ Bie et al. (2026) 
+ T. Bie, M. Cao, X. Cao, B. Chen, F. Chen, K. Chen, L. Du, D. Feng, H. Feng, M. Gong, et al. 
+ 
+ Llada2. 1: speeding up text diffusion via token editing .
+ 
+ arXiv preprint arXiv:2602.08676 .
+ 
+ Cited by: §1 ,
+ §7 .
+ 
+ Bie et al. (2025) 
+ T. Bie, M. Cao, K. Chen, L. Du, M. Gong, Z. Gong, Y. Gu, J. Hu, Z. Huang, Z. Lan, et al. 
+ 
+ Llada2. 0: scaling up diffusion language models to 100b .
+ 
+ arXiv preprint arXiv:2512.15745 .
+ 
+ Cited by: §7 .
+ 
+ Cai and Li (2026) 
+ C. Cai and G. Li 
+ 
+ Confidence-based decoding is provably efficient for diffusion language models .
+ 
+ arXiv preprint arXiv:2603.22248 .
+ 
+ Cited by: §2.1 .
+ 
+ Chen et al. (2021) 
+ M. Chen, J. Tworek, H. Jun, Q. Yuan, H. P. D. O. Pinto, J. Kaplan, H. Edwards, Y. Burda, N. Joseph, G. Brockman, et al. 
+ 
+ Evaluating large language models trained on code .
+ 
+ arXiv preprint arXiv:2107.03374 .
+ 
+ Cited by: §5 .
+ 
+ Chen et al. (2025) 
+ T. Chen, S. Zhang, and M. Zhou 
+ 
+ Dlm-one: diffusion language models for one-step sequence generation .
+ 
+ arXiv preprint arXiv:2506.00290 .
+ 
+ Cited by: §7 .
+ 
+ Cheng et al. (2025) 
+ S. Cheng, Y. Bian, D. Liu, L. Zhang, Q. Yao, Z. Tian, W. Wang, Q. Guo, K. Chen, B. Qi, et al. 
+ 
+ Sdar: a synergistic diffusion-autoregression paradigm for scalable sequence generation .
+ 
+ arXiv preprint arXiv:2510.06303 .
+ 
+ Cited by: §1 ,
+ §7 .
+ 
+ Cheng et al. (2026) 
+ Z. Cheng, R. Jia, J. Li, G. Yang, M. Guo, and S. Hu 
+ 
+ Improving variable-length generation in diffusion language models via length regularization .
+ 
+ arXiv preprint arXiv:2602.07546 .
+ 
+ Cited by: §7 .
+ 
+ Chung et al. (2024) 
+ H. W. Chung, L. Hou, S. Longpre, B. Zoph, Y. Tay, W. Fedus, Y. Li, X. Wang, M. Dehghani, S. Brahma, et al. 
+ 
+ Scaling instruction-finetuned language models .
+ 
+ Journal of Machine Learning Research 25 ( 70 ), pp. 1–53 .
+ 
+ Cited by: §1 ,
+ §2.2 .
+ 
+ Cobbe et al. (2021) 
+ K. Cobbe, V. Kosaraju, M. Bavarian, M. Chen, H. Jun, L. Kaiser, M. Plappert, J. Tworek, J. Hilton, R. Nakano, et al. 
+ 
+ Training verifiers to solve math word problems .
+ 
+ arXiv preprint arXiv:2110.14168 .
+ 
+ Cited by: §3 ,
+ §5 .
+ 
+ Do et al. (2025) 
+ D. A. Do, L. A. Tuan, W. Buntine, et al. 
+ 
+ Discrete diffusion language model for efficient text summarization .
+ 
+ In Findings of the Association for Computational Linguistics: NAACL 2025 ,
+ 
+ pp. 6278–6290 .
+ 
+ Cited by: §7 .
+ 
+ Guo et al. (2026) 
+ H. Guo, Q. Zhao, Y. Zhao, S. Nie, R. Zhu, Q. Guo, F. Wang, T. Yang, H. Zhao, G. Wei, et al. 
+ 
+ Continuous latent diffusion language model .
+ 
+ arXiv preprint arXiv:2605.06548 .
+ 
+ Cited by: §7 .
+ 
+ Han et al. (2023) 
+ X. Han, S. Kumar, and Y. Tsvetkov 
+ 
+ Ssd-lm: semi-autoregressive simplex-based diffusion language model for text generation and modular control .
+ 
+ In Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) ,
+ 
+ pp. 11575–11596 .
+ 
+ Cited by: §7 .
+ 
+ He et al. (2023) 
+ Z. He, T. Sun, Q. Tang, K. Wang, X. Huang, and X. Qiu 
+ 
+ Diffusionbert: improving generative masked language models with diffusion models .
+ 
+ In Proceedings of the 61st annual meeting of the association for computational linguistics (volume 1: Long papers) ,
+ 
+ pp. 4521–4534 .
+ 
+ Cited by: §7 .
+ 
+ Hendrycks et al. (2021) 
+ D. Hendrycks, C. Burns, S. Kadavath, A. Arora, S. Basart, E. Tang, D. Song, and J. Steinhardt 
+ 
+ Measuring mathematical problem solving with the math dataset .
+ 
+ arXiv preprint arXiv:2103.03874 .
+ 
+ Cited by: §5 .
+ 
+ Hersche et al. (2025) 
+ M. Hersche, S. Moor-Smith, T. Hofmann, and A. Rahimi 
+ 
+ Soft-masked diffusion language models .
+ 
+ arXiv preprint arXiv:2510.17206 .
+ 
+ Cited by: §7 .
+ 
+ Hoogeboom et al. (2021) 
+ E. Hoogeboom, D. Nielsen, P. Jaini, P. Forré, and M. Welling 
+ 
+ Argmax flows and multinomial diffusion: learning categorical distributions .
+ 
+ Advances in neural information processing systems 34 , pp. 12454–12465 .
+ 
+ Cited by: §7 .
+ 
+ Hu et al. (2022) 
+ E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang, W. Chen, et al. 
+ 
+ Lora: low-rank adaptation of large language models. .
+ 
+ Iclr 1 ( 2 ), pp. 3 .
+ 
+ Cited by: Appendix A ,
+ §5 .
+ 
+ Hu et al. (2026) 
+ K. Hu, L. Qiu, Y. Lu, H. Zhao, T. Li, Y. Kim, J. Andreas, and K. He 
+ 
+ ELF: embedded language flows .
+ 
+ arXiv preprint arXiv:2605.10938 .
+ 
+ Cited by: §7 .
+ 
+ Hu et al. (2025) 
+ Z. Hu, J. Meng, Y. Akhauri, M. S. Abdelfattah, J. Seo, Z. Zhang, and U. Gupta 
+ 
+ FlashDLM: accelerating diffusion language model inference via efficient kv caching and guided diffusion .
+ 
+ arXiv preprint arXiv:2505.21467 .
+ 
+ Cited by: §7 .
+ 
+ Israel et al. (2026) 
+ D. Israel, G. Van den Broeck, and A. Grover 
+ 
+ Accelerating diffusion llms via adaptive parallel decoding .
+ 
+ Advances in neural information processing systems 38 , pp. 52870–52888 .
+ 
+ Cited by: §7 .
+ 
+ Jo and Hwang (2026) 
+ J. Jo and S. J. Hwang 
+ 
+ Continuous diffusion model for language modeling .
+ 
+ Advances in Neural Information Processing Systems 38 , pp. 97394–97430 .
+ 
+ Cited by: §7 .
+ 
+ Kim et al. (2025a) 
+ B. Kim, D. Jeon, D. Kim, W. Jeung, and A. No 
+ 
+ Rainbow padding: mitigating early termination in instruction-tuned diffusion llms .
+ 
+ arXiv preprint arXiv:2510.03680 .
+ 
+ Cited by: Appendix A ,
+ §1 ,
+ §3 ,
+ §5 .
+ 
+ Kim et al. (2025b) 
+ J. Kim, L. Cheuk-Kit, C. Domingo-Enrich, Y. Du, S. Kakade, T. Ngotiaoco, S. Chen, and M. Albergo 
+ 
+ Any-order flexible length masked diffusion .
+ 
+ arXiv preprint arXiv:2509.01025 .
+ 
+ Cited by: §7 .
+ 
+ Kim et al. (2025c) 
+ J. Kim, K. Shah, V. Kontonis, S. Kakade, and S. Chen 
+ 
+ Train for the worst, plan for the best: understanding token ordering in masked diffusions .
+ 
+ arXiv preprint arXiv:2502.06768 .
+ 
+ Cited by: §2.1 .
+ 
+ Lambert et al. (2024) 
+ N. Lambert, J. Morrison, V. Pyatkin, S. Huang, H. Ivison, F. Brahman, L. J. V. Miranda, A. Liu, N. Dziri, S. Lyu, et al. 
+ 
+ Tulu 3: pushing frontiers in open language model post-training .
+ 
+ arXiv preprint arXiv:2411.15124 .
+ 
+ Cited by: Appendix A .
+ 
+ Li et al. (2025a) 
+ J. Li, X. Dong, Y. Zang, Y. Cao, J. Wang, and D. Lin 
+ 
+ Beyond fixed: training-free variable-length denoising for diffusion large language models .
+ 
+ arXiv preprint arXiv:2508.00819 .
+ 
+ Cited by: §1 ,
+ §5.2 ,
+ §7 .
+ 
+ Li et al. (2025b) 
+ P. Li, Y. Zhou, D. Muhtar, L. Yin, S. Yan, L. Shen, S. Vosoughi, and S. Liu 
+ 
+ Diffusion language models know the answer before decoding .
+ 
+ arXiv preprint arXiv:2508.19982 .
+ 
+ Cited by: §7 .
+ 
+ Liu et al. (2025) 
+ A. Liu, M. He, S. Zeng, S. Zhang, L. Zhang, C. Wu, W. Jia, Y. Liu, X. Zhou, and J. Zhou 
+ 
+ Wedlm: reconciling diffusion language models with standard causal attention for fast inference .
+ 
+ arXiv preprint arXiv:2512.22737 .
+ 
+ Cited by: §1 ,
+ §7 .
+ 
+ Lou et al. (2023) 
+ A. Lou, C. Meng, and S. Ermon 
+ 
+ Discrete diffusion modeling by estimating the ratios of the data distribution .
+ 
+ arXiv preprint arXiv:2310.16834 .
+ 
+ Cited by: §1 .
+ 
+ Luo et al. (2026) 
+ L. Luo, S. Li, Y. Wen, and T. Zhang 
+ 
+ DSB: dynamic sliding block scheduling for diffusion llms .
+ 
+ arXiv preprint arXiv:2602.05992 .
+ 
+ Cited by: §7 .
+ 
+ Monsefi et al. (2025) 
+ A. K. Monsefi, N. Bhendawade, M. R. Ciosici, D. Culver, Y. Zhang, and I. Belousova 
+ 
+ Fs-dfm: fast and accurate long text generation with few-step diffusion language models .
+ 
+ arXiv preprint arXiv:2509.20624 .
+ 
+ Cited by: §7 .
+ 
+ Nie et al. (2026) 
+ S. Nie, F. Zhu, Z. You, X. Zhang, J. Ou, J. Hu, J. Zhou, Y. Lin, J. Wen, and C. Li 
+ 
+ Large language diffusion models .
+ 
+ Advances in Neural Information Processing Systems 38 , pp. 50608–50646 .
+ 
+ Cited by: Appendix A ,
+ §1 ,
+ §5 ,
+ §7 .
+ 
+ Radford et al. (2018) 
+ A. Radford, K. Narasimhan, T. Salimans, I. Sutskever, et al. 
+ 
+ Improving language understanding by generative pre-training .
+ 
+ Cited by: §1 .
+ 
+ Rossi et al. (2026) 
+ V. Rossi, G. Cirò, D. Beltrame, L. Gandolfi, P. Röttger, and D. Hovy 
+ 
+ Diffusion language models are natively length-aware .
+ 
+ arXiv preprint arXiv:2603.06123 .
+ 
+ Cited by: §7 .
+ 
+ Sahoo et al. (2024) 
+ S. S. Sahoo, M. Arriola, Y. Schiff, A. Gokaslan, E. Marroquin, J. T. Chiu, A. Rush, and V. Kuleshov 
+ 
+ Simple and effective masked diffusion language models .
+ 
+ Advances in Neural Information Processing Systems 37 , pp. 130136–130184 .
+ 
+ Cited by: §2.1 .
+ 
+ Sahoo et al. (2025) 
+ S. S. Sahoo, J. Deschenaux, A. Gokaslan, G. Wang, J. Chiu, and V. Kuleshov 
+ 
+ The diffusion duality .
+ 
+ arXiv preprint arXiv:2506.10892 .
+ 
+ Cited by: §7 .
+ 
+ Shen et al. (2026) 
+ J. Shen, J. Zhao, Z. He, and Z. Lin 
+ 
+ Codar: continuous diffusion language models are more powerful than you think .
+ 
+ arXiv preprint arXiv:2603.02547 .
+ 
+ Cited by: §7 .
+ 
+ Shi et al. (2024) 
+ J. Shi, K. Han, Z. Wang, A. Doucet, and M. K. Titsias 
+ 
+ Simplified and generalized masked diffusion for discrete data .
+ 
+ In Advances in Neural Information Processing Systems ,
+ 
+ Cited by: §2.1 .
+ 
+ Song et al. (2026) 
+ Y. Song, X. Liu, R. Li, Z. Liu, Z. Huang, Q. Guo, Z. He, and X. Qiu 
+ 
+ Sparse-dllm: accelerating diffusion llms with dynamic cache eviction .
+ 
+ In Proceedings of the AAAI Conference on Artificial Intelligence ,
+ 
+ Vol. 40 , pp. 33038–33046 .
+ 
+ Cited by: §7 .
+ 
+ Vaswani et al. (2017) 
+ A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, Ł. Kaiser, and I. Polosukhin 
+ 
+ Attention is all you need .
+ 
+ Advances in neural information processing systems 30 .
+ 
+ Cited by: §1 .
+ 
+ Wang et al. (2025) 
+ Y. Wang, L. Yang, B. Li, Y. Tian, K. Shen, and M. Wang 
+ 
+ Revolutionizing reinforcement learning framework for diffusion large language models .
+ 
+ arXiv preprint arXiv:2509.06949 .
+ 
+ Cited by: §1 ,
+ §7 .
+ 
+ Wei et al. (2025a) 
+ L. Wei, W. Chen, P. Tang, X. Guo, L. Ye, R. Wang, and M. Li 
+ 
+ Orchestrating dual-boundaries: an arithmetic intensity inspired acceleration framework for diffusion language models .
+ 
+ arXiv preprint arXiv:2511.21759 .
+ 
+ Cited by: §7 .
+ 
+ Wei et al. (2025b) 
+ Q. Wei, Y. Zhang, Z. Liu, P. Zeng, Y. Wang, B. Qi, D. Liu, and L. Zhang 
+ 
+ Accelerating diffusion large language models with slowfast sampling: the three golden principles .
+ 
+ arXiv preprint arXiv:2506.10848 .
+ 
+ Cited by: §7 .
+ 
+ Wu et al. (2025) 
+ C. Wu, H. Zhang, S. Xue, Z. Liu, S. Diao, L. Zhu, P. Luo, S. Han, and E. Xie 
+ 
+ Fast-dllm: training-free acceleration of diffusion llm by enabling kv cache and parallel decoding .
+ 
+ arXiv preprint arXiv:2505.22618 .
+ 
+ Cited by: §7 .
+ 
+ Wu et al. (2026a) 
+ T. Wu, X. Sun, Y. Jiao, Y. Li, Y. Chen, Y. Cao, Y. Hu, and Z. Tian 
+ 
+ Dynamic-dllm: dynamic cache-budget and adaptive parallel decoding for training-free acceleration of diffusion llm .
+ 
+ In The Fourteenth International Conference on Learning Representations ,
+ 
+ Cited by: §7 .
+ 
+ Wu et al. (2026b) 
+ Z. Wu, L. Zheng, Z. Xie, J. Ye, J. Gao, S. Gong, Y. Feng, Z. Li, W. Bi, G. Zhou, et al. 
+ 
+ DreamOn: diffusion language models for code infilling beyond fixed-size canvas .
+ 
+ arXiv preprint arXiv:2602.01326 .
+ 
+ Cited by: §7 .
+ 
+ Yang et al. (2026a) 
+ J. Yang, Y. Jiang, and J. Shao 
+ 
+ ρ \rho -EOS: training-free bidirectional variable-length control for masked diffusion llms .
+ 
+ arXiv preprint arXiv:2601.22527 .
+ 
+ Cited by: §1 ,
+ §5.2 ,
+ §7 .
+ 
+ Yang et al. (2026b) 
+ K. Yang, J. Teoh, K. Yang, Y. Zhang, and A. Lamb 
+ 
+ Improving sampling for masked diffusion models via information gain .
+ 
+ arXiv preprint arXiv:2602.18176 .
+ 
+ Cited by: §7 .
+ 
+ Yang et al. (2025) 
+ Y. Yang, C. Wang, S. Wang, Z. Wen, B. Qi, H. Xu, and L. Zhang 
+ 
+ Diffusion llm with native variable generation lengths: let [eos] lead the way .
+ 
+ arXiv preprint arXiv:2510.24605 .
+ 
+ Cited by: §7 .
+ 
+ Ye et al. (2025) 
+ J. Ye, Z. Xie, L. Zheng, J. Gao, Z. Wu, X. Jiang, Z. Li, and L. Kong 
+ 
+ Dream 7b: diffusion large language models .
+ 
+ arXiv preprint arXiv:2508.15487 .
+ 
+ Cited by: Appendix A ,
+ §2.1 ,
+ §5 ,
+ §7 .
+ 
+ Zhu et al. (2025) 
+ F. Zhu, R. Wang, S. Nie, X. Zhang, C. Wu, J. Hu, J. Zhou, J. Chen, Y. Lin, J. Wen, et al. 
+ 
+ Llada 1.5: variance-reduced preference optimization for large language diffusion models .
+ 
+ arXiv preprint arXiv:2505.19223 .
+ 
+ Cited by: §7 .
+ 
+ 
+ 
+ 
+ Appendix A Training Configurations 
+
+ 
+ Dataset. 
+
+ 
+ We use the same 0.5M-example instruction-tuning dataset as the official
+RainbowPadding  ( 28 ) implementation. The data pool combines Tulu3  ( 31 ) 
+and SmolLM2  ( 1 ) . After removing examples longer than 4096
+tokens and multi-turn dialogues, we randomly sample 0.5M examples and use this
+identical data for all models in our experiments. 
+ 
+ 
+ 
+ Shared training setup. 
+
+ 
+ Following the official RainbowPadding training setup, we train LLaDA-8B-Instruct  ( 38 ) and Dream-7B-Instruct  ( 56 ) for the main
+experiments, and use LLaDA-8B-Base and Dream-7B-Base for additional diagnostic
+runs. All models are finetuned with LoRA  ( 23 ) of rank 32 applied
+to all linear layers, without bias terms. We use AdamW with learning rate
+ 5 × 10 − 5 5\times 10^{-5} and global batch size 48. LLaDA models are trained on two
+A800-80GB GPUs with mini-batch size 6 per GPU and 4 gradient-accumulation
+steps; Dream models are trained on three A800-80GB GPUs with mini-batch size 4
+per GPU and 4 gradient-accumulation steps. For both models, one epoch takes approximately
+32–34 A800 GPU hours. 
+ 
+ 
+ 
+ Training budgets. 
+
+ 
+ RainbowPadding follows its official budget: one epoch for LLaDA-8B-Instruct and
+Dream-7B-Instruct, corresponding to 10,417 optimizer updates, and three epochs
+for LLaDA-8B-Base and Dream-7B-Base. All VoidPadding checkpoints use 67% of
+the corresponding RainbowPadding training budget: 7000 optimizer updates for
+LLaDA-8B-Instruct and Dream-7B-Instruct, and two epochs for LLaDA-8B-Base and
+Dream-7B-Base. The [EOS] -padding diagnostic models are trained for two
+epochs on LLaDA-8B-Base and Dream-7B-Base. 
+ 
+ 
+ 
+ 67% training-budget comparison. 
+
+ 
+ Figures  14 and
+ 14 compare Early RainbowPadding and
+VoidPadding under the same training budget. Specifically, Early RainbowPadding
+uses 7000 optimizer updates, matching the VoidPadding training budget and
+corresponding to 67% of the official RainbowPadding budget for both
+LLaDA-8B-Instruct and Dream-7B-Instruct. All other settings are kept identical,
+including the training data, LoRA configuration, optimizer, batch size, fixed
+generation length, and the absence of VoidExpansion, matching the fixed-length
+generation robustness experiments in Table  1 .
+Under this matched setup,
+VoidPadding achieves better accuracy than Early RainbowPadding on
+both models. 
+ 
+ 
+ 
+ 
+ Appendix B Proofs for the [EOS] Overflow Analysis 
+
+ 
+ This appendix proves Theorem  1 and
+Theorem  2 . We use the notation and assumptions
+introduced in Section  3 : e e denotes [EOS] ,
+ F ⁡ ( m ) = Pr ⁡ ( ℓ ≤ m ) F(m)=\Pr(\ell\leq m) , and r = min ⁡ { i : F ⁡ ( i − 1 ) > 1 / 2 } r=\min\{i:F(i-1)>1/2\} . For position i i ,
+ Y ¯ i \bar{Y}_{i} is the training-time padded target token, p i p_{i} is the
+training-time token distribution with p i ​ ( e ) = Pr ⁡ ( Y ¯ i = e ) p_{i}(e)=\Pr(\bar{Y}_{i}=e) , q i q_{i} is
+the inference-time model distribution at a masked canvas position, and
+ q i ​ ( e ) q_{i}(e) is its [EOS] probability. The argmax proposal is
+ y ^ i = arg ⁡ max v ​ q i ​ ( v ) \hat{y}_{i}=\arg\max_{v}q_{i}(v) , and Y i Y_{i} is the committed token. We write
+ S e = { Y r = ⋯ = Y L = e } S_{e}=\{Y_{r}=\cdots=Y_{L}=e\} for the inference-time
+committed [EOS] suffix event and
+ S ¯ e = { Y ¯ r = ⋯ = Y ¯ L = e } \bar{S}_{e}=\{\bar{Y}_{r}=\cdots=\bar{Y}_{L}=e\} for the corresponding
+training-time [EOS] padding suffix event. A selected masked position is filled with its
+argmax proposal.
+We also use the elementary fact that if q i ​ ( e ) > 1 / 2 q_{i}(e)>1/2 , then no other token
+can have probability at least q i ​ ( e ) q_{i}(e) . Thus e e is the unique argmax
+proposal at position i i , and if position i i is selected, then Y i = e Y_{i}=e . 
+ 
+ 
+ Proof of Theorem  1 . 
+
+ 
+ Consider any selected position j ∈ { r , … , B } j\in\{r,\dots,B\} . Since j ≥ r j\geq r and
+ F F is non-decreasing, 
+ 
+
+ 
+ 
+ F ⁡ ( j − 1 ) ≥ F ⁡ ( r − 1 ) > 1 / 2 . F(j-1)\geq F(r-1)>1/2. 
+ 
+ 
+ By the Stage 1 assumption in Section  3 ,
+ q j ​ ( e ) = p j ​ ( e ) = F ⁡ ( j − 1 ) q_{j}(e)=p_{j}(e)=F(j-1) . Hence q j ​ ( e ) > 1 / 2 q_{j}(e)>1/2 , so e e is the unique
+argmax proposal at position j j . Because j j is selected, the committed
+token is 
+ 
+
+ 
+ 
+ Y j = e . Y_{j}=e. 
+ 
+ 
+ The argument applies to every selected j ∈ { r , … , B } j\in\{r,\dots,B\} , proving the
+claim. □ \square 
+ 
+ 
+ 
+ Proof of Theorem  2 . 
+
+ 
+ Assume S e S_{e} has occurred, and consider any selected position i < r i<r 
+satisfying 2 ​ F ​ ( i − 1 ) > F ⁡ ( r − 1 ) 2F(i-1)>F(r-1) . By the Stage 2 assumption, 
+ 
+
+ 
+ 
+ q i ​ ( e ∣ S e ) = Pr ⁡ ( Y ¯ i = e ∣ S ¯ e ) . q_{i}(e\mid S_{e})=\Pr(\bar{Y}_{i}=e\mid\bar{S}_{e}). 
+ 
+ 
+ For this theorem, we use the Stage 2 conditional assumption from
+Section  3 , together with its length-signal form for the
+suffix event S ¯ e \bar{S}_{e} : for i < r i<r , 
+ 
+
+ 
+ 
+ q i ​ ( e ∣ S e ) \displaystyle q_{i}(e\mid S_{e}) 
+ = p i ​ ( e ∣ S ¯ e ) \displaystyle=p_{i}(e\mid\bar{S}_{e}) 
+ 
+ 
+ 
+ 
+ = F ⁡ ( i − 1 ) F ⁡ ( r − 1 ) . \displaystyle=\frac{F(i-1)}{F(r-1)}. 
+ 
+ 
+ The condition 2 ​ F ​ ( i − 1 ) > F ⁡ ( r − 1 ) 2F(i-1)>F(r-1) is exactly 
+ 
+
+ 
+ 
+ F ⁡ ( i − 1 ) F ⁡ ( r − 1 ) > 1 / 2 . \frac{F(i-1)}{F(r-1)}>1/2. 
+ 
+ 
+ Thus q i ​ ( e ∣ S e ) > 1 / 2 q_{i}(e\mid S_{e})>1/2 , so e e is the unique argmax proposal at position
+ i i . Since i i is selected, the decoder commits 
+ 
+
+ 
+ 
+ Y i = e . Y_{i}=e. 
+ 
+ 
+ This proves the claim. □ \square 
+ 
+ 
+ 
+ 
+ Appendix C Dream Decoding Wrapper 
+
+ 
+ Algorithm  2 summarizes the blockwise commit
+wrapper used for Dream evaluations. 
+ 
+ 
+ Algorithm 2 Blockwise Commit Wrapper for Dream Decoding 
+ 
+ 
+ 1: 
+ 
+ 
+ Prompt x 1 : p x_{1:p} , generation length L L , block size B B , total denoising steps T T 
+
+ 
+ 
+ 2: 
+ 
+ 
+ Initialize x p + 1 : p + L ← [ M ] x_{p+1:p+L}\leftarrow[M] 
+
+ 
+ 
+ 3: 
+ 
+ 
+ Split the generation span into K = L / B K=L/B blocks { ℬ k } k = 1 K \{\mathcal{B}_{k}\}_{k=1}^{K} ; set S = T / K S=T/K 
+
+ 
+ 
+ 4: 
+ 
+ 
+ for k = 1 k=1 to K K do 
+
+ 
+ 
+ 5: 
+ 
+ 
+    for s = 1 s=1 to S S do 
+
+ 
+ 
+ 6: 
+ 
+ 
+    Run Dream on the full sequence x x 
+
+ 
+ 
+ 7: 
+ 
+ 
+    Obtain predictions x ^ i \hat{x}_{i} and negative entropy confidence scores c i c_{i} for masked positions
+
+ 
+ 
+ 8: 
+ 
+ 
+     ℰ k ← { i ∈ ℬ k ∣ x i = [ M ] } \mathcal{E}_{k}\leftarrow\{i\in\mathcal{B}_{k}\mid x_{i}=[M]\} 
+
+ 
+ 
+ 9: 
+ 
+ 
+     if ℰ k = ∅ \mathcal{E}_{k}=\emptyset then 
+
+ 
+ 
+ 10: 
+ 
+ 
+       break 
+
+ 
+ 
+ 11: 
+ 
+ 
+     end if 
+ 
+ 
+ 12: 
+ 
+ 
+     C s ← TopK i ∈ ℰ k ⁡ ( c i ) C_{s}\leftarrow\operatorname{TopK}_{i\in\mathcal{E}_{k}}(c_{i}) 
+
+ 
+ 
+ 13: 
+ 
+ 
+     x i ← x ^ i , ∀ i ∈ C s x_{i}\leftarrow\hat{x}_{i},\quad\forall i\in C_{s} 
+
+ 
+ 
+ 14: 
+ 
+ 
+    Keep all positions j ∉ C s j\notin C_{s} unchanged
+
+ 
+ 
+ 15: 
+ 
+ 
+    end for 
+ 
+ 
+ 16: 
+ 
+ 
+ end for 
+ 
+ 
+ 17: 
+ 
+ 
+ return x 1 : p + L x_{1:p+L} 
+
+ 
+ 
+ 
+ 
+ Dream still predicts all masked positions globally at each denoising step, but the
+wrapper restricts the TopK commit candidates to the masked positions inside the current
+block. 
+ 
+ 
+ 
+ Appendix D Fixed-Length Block-Size Sweeps on Instruction-Tuned Models 
+
+ 
+ This section reports the full fixed-length block-size sweeps behind
+Table  1 . The following LLaDA-8B-Instruct and Dream-7B-Instruct sweeps
+follow the same setup: all runs use a fixed generation length of 512 without
+VoidExpansion; we vary the block size over B ∈ { 32 , 64 , 128 , 256 , 512 } B\in\{32,64,128,256,512\} and
+report the mean, best, and worst scores across the sweep. Mean is the arithmetic
+average over the five block sizes, while Best and Worst are the maximum and
+minimum scores over the five block sizes, respectively. Reasoning benchmarks
+report accuracy, and code-generation benchmarks report pass@1. 
+ 
+ 
+ D.1 LLaDA-8B-Instruct Fixed-512 Block-Size Sweep 
+
+ 
+ For LLaDA-8B-Instruct and RainbowPadding experiments in the tables, rows with the [EOS] term.
+label apply [EOS] Termination, while rows without this label follow the
+standard VanillaStopping rule. For VoidPadding, the default row includes
+ [EOS] Termination, and the w/o [EOS] term. row reports the
+ablation without this termination rule. 
+ 
+ 
+ Table  7 reports GSM8K
+accuracy, Table  8 reports
+MATH500 accuracy, Table  9 
+reports HumanEval pass@1, and
+Table  10 reports MBPP pass@1. 
+ 
+ 
+ 
+ D.2 Dream-7B-Instruct Fixed-512 Block-Length Sweep 
+
+ 
+ Figure  12 reports the corresponding
+Dream-7B-Instruct fixed-length block-length sweep under our block-wise Dream
+decoding wrapper. 
+ 
+ 
+ 
+ 
+ Appendix E [EOS] Termination Efficiency 
+
+ 
+ This appendix reports per-block fixed-length NFE/example values for the
+Table  1 settings over B ∈ { 64,128,512 } B\in\{64,128,512\} .
+Figure  5 
+shows the LLaDA-8B-Instruct per-block NFE values, and
+Figure  6 shows the
+Dream-7B-Instruct per-block NFE values behind
+Table  2 . Avg. entries are arithmetic
+averages over benchmarks. 
+ 
+ 
+ 0 120 240 360 480 NFE/example GSM8K 127.9 127.6 128.3 HumanEval 102.8 101.3 96.3 MATH500 418.4 422.4 488.0 MBPP 69.2 69.8 69.4 Avg. 179.6 180.3 195.5 Block size B B : dark 64 64 → \rightarrow light 512 512 
+ 
+ 
+ Figure 5: LLaDA-8B-Instruct VoidPadding NFE/example for B ∈ { 64,128,512 } B\in\{64,128,512\} . Avg. is arithmetic over four benchmarks. 
+ 
+ 
+ 0 120 240 360 480 NFE/example GSM8K 150.2 149.8 172.0 HumanEval 253.6 254.8 393.8 MATH500 363.7 366.4 382.9 MBPP 67.8 69.1 99.1 Avg. 208.8 210.0 262.0 Block size B B : dark 64 64 → \rightarrow light 512 512 
+ 
+ 
+ Figure 6: Dream-7B-Instruct VoidPadding NFE/example for B ∈ { 64,128,512 } B\in\{64,128,512\} . Avg. is arithmetic over four benchmarks. 
+ 
+ 
+ 
+ Appendix F Fixed-Length Block-Size Sweeps on Base Models 
+
+ 
+ The sweep configuration matches
+Section  D : all runs use a fixed
+generation length of 512 without VoidExpansion, and we vary the block size over
+ B ∈ { 32 , 64 , 128 , 256 , 512 } B\in\{32,64,128,256,512\} . The only difference is that these diagnostics
+start from base models and compare [EOS] Padding, RainbowPadding,
+and VoidPadding variants. 
+ 
+ 
+ F.1 LLaDA-8B-Base Fixed-512 Block-Size Sweep 
+
+ 
+ This subsection reports the LLaDA-8B-Base fixed-length block-size sweep. For
+ [EOS] Padding and RainbowPadding, rows with the [EOS] term.
+label apply [EOS] Termination, while rows without this label follow the
+standard VanillaStopping rule. For VoidPadding, the default row includes
+ [EOS] Termination, and the w/o [EOS] term. row reports the
+ablation without this termination rule. GSM8K reports flexible exact match,
+MATH500 reports accuracy, and HumanEval and MBPP report pass@1.
+Table  11 reports GSM8K,
+Table  12 reports MATH500,
+Table  13 reports HumanEval,
+and Table  14 reports MBPP. 
+ 
+ 
+ 
+ F.2 Dream-7B-Base Fixed-512 Block-Length Sweep 
+
+ 
+ Figure  12 reports the corresponding
+Dream-7B-Base fixed-length block-length sweep under the same block-wise Dream
+decoding wrapper. 
+ 
+ 
+ 
+ 
+ Appendix G Base-Model VoidExpansion Effectiveness and Hyperparameter Robustness 
+
+ 
+ Unless otherwise stated, the base-model VoidExpansion sweeps use initial
+length L 0 = 64 L_{0}=64 , tail-window size w = 16 w=16 , block size B = 32 B=32 , and
+maximum length L max = 512 L_{\max}=512 . The fixed-64 baseline denotes decoding from
+a length-64 canvas with VoidExpansion disabled. 
+ 
+ 
+ G.1 LLaDA-8B-Base 
+
+ 
+ The common LLaDA-8B-Base VoidExpansion setting uses L 0 = 64 L_{0}=64 , w = 16 w=16 ,
+ B = 32 B=32 , L max = 512 L_{\max}=512 , and
+ ( τ nonvoid , τ gap ) = ( 0.09 , − 0.45 ) (\tau_{\mathrm{nonvoid}},\tau_{\mathrm{gap}})=(0.09,-0.45) .
+Figure  23 reports the corresponding
+threshold sweep: it keeps L 0 L_{0} , w w , B B , and L max L_{\max} fixed and
+varies τ nonvoid \tau_{\mathrm{nonvoid}} and τ gap \tau_{\mathrm{gap}} . Each panel
+compares against the fixed-64 baseline and reports the benchmark mean as the
+arithmetic average over GSM8K, MATH500, HumanEval, and MBPP.
+Figure  20 reports the
+initial-length ablation: it keeps w w , B B , L max L_{\max} , and the threshold
+pair fixed and varies L 0 L_{0} over 64,128,192 64,128,192 , comparing fixed-length
+decoding with VoidExpansion at the same lengths. Across both sweeps, the
+four-task mean changes by only about two points, and VoidExpansion remains
+consistently stronger than the corresponding fixed-length baselines. 
+ 
+ 
+ 
+ G.2 Dream-7B-Base 
+
+ 
+ The Dream-7B-Base threshold sweep is shown in
+Figure  25 . Its selected
+setting is ( τ nonvoid , τ gap ) = ( 0.12 , 0.65 ) (\tau_{\mathrm{nonvoid}},\tau_{\mathrm{gap}})=(0.12,0.65) , and
+the red ticks again mark the corresponding fixed-64 baseline, i.e., L 0 = 64 L_{0}=64 
+with VoidExpansion disabled. As with LLaDA-8B-Base, the threshold sweep shows
+only modest accuracy variation across settings, while VoidExpansion remains
+consistently stronger than the fixed-64 baseline. 
+ 
+ 
+ 
+ 
+ Appendix H VoidExpansion Hyperparameter Robustness 
+
+ 
+ This appendix reports the complete VoidExpansion sweeps behind the
+hyperparameter summary in Table  6 . We
+first present VoidPadding-finetuned LLaDA-8B-Instruct sweeps
+over initial length ( L 0 ) (L_{0}) , tail-window size w w , block size ( B ) (B) , and threshold pairs.
+We then
+report the corresponding VoidPadding-finetuned Dream-7B-Instruct sweeps over threshold pairs. 
+ 
+ 
+ H.1 LLaDA-8B-Instruct 
+
+ 
+ This subsection provides the full LLaDA-8B-Instruct results summarized in
+Section  6 . All runs use the
+VoidPadding-finetuned LLaDA-8B-Instruct model with maximum generation length
+ L max = 512 L_{\max}=512 . The default expansion setting, matching
+Table  3 , uses initial length L 0 = 64 L_{0}=64 , tail
+window w = 16 w=16 , block size B = 32 B=32 , and
+ ( τ nonvoid , τ gap ) = ( 0.09 , − 0.45 ) (\tau_{\mathrm{nonvoid}},\tau_{\mathrm{gap}})=(0.09,-0.45) . 
+ 
+ 
+ Initial-length robustness. 
+
+ 
+ Figure  20 varies the initial length
+ L 0 ∈ { 64 , 96 , 128 , 160 } L_{0}\in\{64,96,128,160\} while keeping the other expansion hyperparameters fixed, and compares
+no-expansion fixed-length decoding against VoidExpansion at the same initial
+lengths. Figure  20 reports the corresponding
+average decode NFE. 
+ 
+ 
+ 
+ Window-size robustness. 
+
+ 
+ Figure  9 varies the tail-window size
+ w ∈ { 8 , 16 , 24 , 32 } w\in\{8,16,24,32\} while keeping the other settings fixed.
+Figure  10 reports the corresponding decode NFE
+with the same benchmark grouping. These figures provide the full data for the
+tail-window row in
+Table  6 . 
+ 
+ 
+ 
+ Block-size robustness. 
+
+ 
+ Figure  20 varies the block size B ∈ { 16 , 32 , 64 } B\in\{16,32,64\} 
+while keeping the other settings fixed.
+Figure  20 reports the corresponding decode NFE
+with the same benchmark grouping. These figures provide the full data for the
+block-size row in
+Table  6 . 
+ 
+ 
+ 
+ Threshold robustness. 
+
+ 
+ Figure  21 varies
+ τ nonvoid \tau_{\mathrm{nonvoid}} and τ gap \tau_{\mathrm{gap}} around the selected
+setting from Table  3 ,
+ ( τ nonvoid , τ gap ) = ( 0.09 , − 0.45 ) (\tau_{\mathrm{nonvoid}},\tau_{\mathrm{gap}})=(0.09,-0.45) , while keeping
+ L 0 L_{0} , w w , B B , and L max L_{\max} fixed.
+Figure  22 reports the corresponding NFE
+results. These two figures provide the detailed threshold row behind
+Table  6 . 
+ 
+ 
+ 
+ 
+ H.2 Dream-7B-Instruct 
+
+ 
+ Figure  24 reports the
+VoidPadding-finetuned Dream-7B-Instruct + VoidExpansion threshold sweep under
+our block-wise Dream decoding wrapper. The selected setting from
+Table  4 ,
+ ( τ nonvoid , τ gap ) = ( 0.15 , 0.55 ) (\tau_{\mathrm{nonvoid}},\tau_{\mathrm{gap}})=(0.15,0.55) , is marked in
+blue. The red ticks show the fixed-64 baseline, i.e., decoding from a
+length-64 canvas with VoidExpansion disabled, using the same
+VoidPadding-finetuned checkpoint. The scores remain stable across the
+threshold grid, showing that Dream-7B-Instruct is also robust to the
+VoidExpansion threshold choices. 
+ 
+ GSM8K MATH500 HEval MBPP 0 0 0.5 0.5 1 1 1.5 1.5 2 2 2.5 2.5 3 3 3.5 3.5 4 4 4.5 4.5 5 5 ⋅ 10 4 \cdot 10^{4} Total wall time (s) ρ \rho - [EOS] Daedal VoidExpansion 
+ Figure 7: Total wall time on LLaDA-8B-Instruct under the init-64 setting. Bars compare ρ \rho - [EOS] , Daedal , and VoidExpansion. 
+ 
+ 
+ 0 20 40 60 80 Score GSM8K MATH500 HumanEval MBPP Avg. Generation length: dark 64 64 → \rightarrow light 512 512 
+ 
+ 
+ Figure 8: Fixed generation length sensitivity for LLaDA-8B-Instruct with block size B = 32 B=32 and generation length L ∈ { 64,128,160,192,256 , 512 } L\in\{64,128,160,192,256,512\} . Darker orange denotes shorter L L ; Avg. is the arithmetic average over benchmarks. 
+ 
+ 
+ 0 20 40 60 80 Score GSM8K 79.4 78.3 78.5 78.3 MATH500 39.6 39.6 39.8 39.8 HumanEval 42.7 42.7 42.7 41.5 MBPP 45.6 46.5 46.2 46.0 Mean 51.8 51.8 51.8 51.4 Tail window w w : dark 8 8 → \rightarrow light 32 32 
+ 
+ 
+ Figure 9: Window-size accuracy statistics for VoidPadding-finetuned LLaDA-8B-Instruct + VoidExpansion. Bars are grouped by benchmark; within each group, the four bars vary the tail window w ∈ { 8 , 16 , 24 , 32 } w\in\{8,16,24,32\} . Darker blue denotes smaller w w . Labels give the exact score. GSM8K and MATH500 report accuracy, HumanEval and MBPP report pass@1, and Mean is the arithmetic average over the four benchmarks. 
+ 
+ 
+ 0 100 200 300 400 NFE/example GSM8K 130.6 133.8 133.4 135.1 MATH500 418.1 418.1 415.2 410.3 HumanEval 80.3 73.1 68.8 65.3 MBPP 63.7 63.5 63.2 63.9 Avg. 173.2 172.1 170.1 168.7 Tail window w w : dark 8 8 → \rightarrow light 32 32 
+ 
+ 
+ Figure 10: Window-size NFE statistics for VoidPadding-finetuned LLaDA-8B-Instruct + VoidExpansion. Bars are grouped by benchmark; within each group, the four bars vary the tail window w ∈ { 8 , 16 , 24 , 32 } w\in\{8,16,24,32\} . Darker purple denotes smaller w w . Labels report average decode NFE. Avg. is the arithmetic average over the four benchmarks. 
+ 
+ 
+ 
+ 
+ 
+ 
+ Method 
+ Block size B B 
+ Summary 
+ 
+ 32 
+ 64 
+ 128 
+ 256 
+ 512 
+ Mean 
+ Best 
+ Worst 
+ 
+ 
+ 
+ LLaDA-8B-Instruct 
+ 76.72 
+ 76.80 
+ 70.96 
+ 44.96 
+ 28.43 
+ 59.57 
+ 76.80 
+ 28.43 
+ 
+ LLaDA-8B-Instruct + [EOS] term. 
+ 77.71 
+ 76.65 
+ 69.60 
+ 39.95 
+ 28.13 
+ 58.41 
+ 77.71 
+ 28.13 
+ 
+ RainbowPadding 
+ 73.77 
+ 74.53 
+ 73.39 
+ 72.25 
+ 66.57 
+ 72.10 
+ 74.53 
+ 66.57 
+ 
+ RainbowPadding + [EOS] term. 
+ 73.77 
+ 74.53 
+ 73.39 
+ 72.25 
+ 66.57 
+ 72.10 
+ 74.53 
+ 66.57 
+ 
+ VoidPadding w/o [EOS] term. 
+ 57.32 
+ 57.16 
+ 57.24 
+ 55.95 
+ 65.66 
+ 58.67 
+ 65.66 
+ 55.95 
+ 
+ VoidPadding w/o VOID ban 
+ 75.06 
+ 64.67 
+ 14.71 
+ 11.14 
+ 14.40 
+ 36.00 
+ 75.06 
+ 11.14 
+ 
+ VoidPadding 
+ 77.41 
+ 77.79 
+ 78.39 
+ 78.24 
+ 78.62 
+ 78.09 
+ 78.62 
+ 77.41 
+ 
+ 
+ 
+ Table 7: GSM8K block-size sweep for LLaDA-8B-Instruct; cells report accuracy (%). 
+ 
+ 
+ 
+ 
+ 
+ 
+ Method 
+ Block size B B 
+ Summary 
+ 
+ 32 
+ 64 
+ 128 
+ 256 
+ 512 
+ Mean 
+ Best 
+ Worst 
+ 
+ 
+ 
+ LLaDA-8B-Instruct 
+ 39.00 
+ 39.60 
+ 37.60 
+ 30.60 
+ 16.60 
+ 32.68 
+ 39.60 
+ 16.60 
+ 
+ LLaDA-8B-Instruct + [EOS] term. 
+ 39.00 
+ 39.60 
+ 36.80 
+ 30.40 
+ 16.60 
+ 32.48 
+ 39.60 
+ 16.60 
+ 
+ RainbowPadding 
+ 33.20 
+ 33.20 
+ 34.00 
+ 34.00 
+ 27.80 
+ 32.44 
+ 34.00 
+ 27.80 
+ 
+ RainbowPadding + [EOS] term. 
+ 33.20 
+ 33.20 
+ 34.00 
+ 34.00 
+ 27.80 
+ 32.44 
+ 34.00 
+ 27.80 
+ 
+ VoidPadding w/o [EOS] term. 
+ 39.60 
+ 40.60 
+ 41.60 
+ 40.20 
+ 27.60 
+ 37.92 
+ 41.60 
+ 27.60 
+ 
+ VoidPadding w/o VOID ban 
+ 39.60 
+ 39.80 
+ 38.20 
+ 32.20 
+ 14.20 
+ 32.80 
+ 39.80 
+ 14.20 
+ 
+ VoidPadding 
+ 39.60 
+ 40.60 
+ 41.60 
+ 40.00 
+ 27.60 
+ 37.88 
+ 41.60 
+ 27.60 
+ 
+ 
+ 
+ Table 8: MATH500 block-size sweep for LLaDA-8B-Instruct; cells report accuracy (%). 
+ 
+ 
+ 
+ 
+ 
+ 
+ Method 
+ Block size B B 
+ Summary 
+ 
+ 32 
+ 64 
+ 128 
+ 256 
+ 512 
+ Mean 
+ Best 
+ Worst 
+ 
+ pass@1 
+ 
+ 
+ 
+ LLaDA-8B-Instruct 
+ 43.90 
+ 42.68 
+ 43.90 
+ 42.07 
+ 44.51 
+ 43.41 
+ 44.51 
+ 42.07 
+ 
+ LLaDA-8B-Instruct + [EOS] term. 
+ 42.68 
+ 42.68 
+ 43.29 
+ 40.24 
+ 43.90 
+ 42.56 
+ 43.90 
+ 40.24 
+ 
+ RainbowPadding 
+ 45.12 
+ 43.90 
+ 43.29 
+ 43.29 
+ 35.98 
+ 42.32 
+ 45.12 
+ 35.98 
+ 
+ RainbowPadding + [EOS] term. 
+ 45.12 
+ 43.90 
+ 43.29 
+ 43.29 
+ 35.98 
+ 42.32 
+ 45.12 
+ 35.98 
+ 
+ VoidPadding w/o [EOS] term. 
+ 19.51 
+ 20.73 
+ 22.56 
+ 23.78 
+ 20.73 
+ 21.46 
+ 23.78 
+ 19.51 
+ 
+ VoidPadding w/o VOID ban 
+ 29.88 
+ 17.07 
+ 10.37 
+ 6.10 
+ 6.10 
+ 13.90 
+ 29.88 
+ 6.10 
+ 
+ VoidPadding 
+ 42.07 
+ 41.46 
+ 42.07 
+ 42.07 
+ 41.46 
+ 41.83 
+ 42.07 
+ 41.46 
+ 
+ 
+ 
+ Table 9: HumanEval block-size sweep for LLaDA-8B-Instruct, with pass@1 (%). 
+ 
+ 
+ 
+ 
+ 
+ 
+ Method 
+ Block size B B 
+ Summary 
+ 
+ 32 
+ 64 
+ 128 
+ 256 
+ 512 
+ Mean 
+ Best 
+ Worst 
+ 
+ pass@1 
+ 
+ 
+ 
+ LLaDA-8B-Instruct 
+ 42.81 
+ 41.48 
+ 39.12 
+ 33.98 
+ 37.68 
+ 39.01 
+ 42.81 
+ 33.98 
+ 
+ LLaDA-8B-Instruct + [EOS] term. 
+ 43.12 
+ 42.09 
+ 39.73 
+ 35.22 
+ 38.71 
+ 39.77 
+ 43.12 
+ 35.22 
+ 
+ RainbowPadding 
+ 42.51 
+ 42.71 
+ 43.02 
+ 43.12 
+ 42.51 
+ 42.77 
+ 43.12 
+ 42.51 
+ 
+ RainbowPadding + [EOS] term. 
+ 42.40 
+ 42.61 
+ 43.02 
+ 43.12 
+ 42.51 
+ 42.73 
+ 43.12 
+ 42.40 
+ 
+ VoidPadding w/o [EOS] term. 
+ 44.87 
+ 44.66 
+ 44.87 
+ 44.87 
+ 44.97 
+ 44.85 
+ 44.97 
+ 44.66 
+ 
+ VoidPadding w/o VOID ban 
+ 41.27 
+ 25.36 
+ 16.94 
+ 17.66 
+ 17.56 
+ 23.76 
+ 41.27 
+ 16.94 
+ 
+ VoidPadding 
+ 44.87 
+ 44.66 
+ 44.87 
+ 44.87 
+ 44.97 
+ 44.85 
+ 44.97 
+ 44.66 
+ 
+ 
+ 
+ Table 10: MBPP block-size sweep for LLaDA-8B-Instruct, with pass@1 (%). 
+ 
+ 
+ 
+ 
+ 
+ 
+ Method 
+ Block size B B 
+ Summary 
+ 
+ 32 
+ 64 
+ 128 
+ 256 
+ 512 
+ Mean 
+ Best 
+ Worst 
+ 
+ 
+ 
+ LLaDA-8B-Base + [EOS] Padding 
+ 77.41 
+ 58.76 
+ 15.31 
+ 7.88 
+ 11.83 
+ 34.24 
+ 77.41 
+ 7.88 
+ 
+ LLaDA-8B-Base + [EOS] Padding + [EOS] term. 
+ 77.41 
+ 58.76 
+ 15.31 
+ 7.88 
+ 11.83 
+ 34.24 
+ 77.41 
+ 7.88 
+ 
+ RainbowPadding 
+ 76.27 
+ 76.12 
+ 76.12 
+ 75.74 
+ 75.51 
+ 75.95 
+ 76.27 
+ 75.51 
+ 
+ RainbowPadding + [EOS] term. 
+ 75.51 
+ 76.12 
+ 75.66 
+ 75.59 
+ 75.51 
+ 75.68 
+ 76.12 
+ 75.51 
+ 
+ VoidPadding w/o [EOS] term. 
+ 3.11 
+ 3.03 
+ 3.41 
+ 3.26 
+ 2.88 
+ 3.14 
+ 3.41 
+ 2.88 
+ 
+ VoidPadding w/o VOID ban 
+ 75.44 
+ 67.32 
+ 46.85 
+ 42.76 
+ 43.14 
+ 55.10 
+ 75.44 
+ 42.76 
+ 
+ VoidPadding 
+ 75.51 
+ 76.57 
+ 75.82 
+ 75.28 
+ 75.28 
+ 75.69 
+ 76.57 
+ 75.28 
+ 
+ 
+ 
+ Table 11: GSM8K block-size sweep for LLaDA-8B-Base after padding LoRA SFT; cells report accuracy (%). 
+ 
+ 
+ 
+ 
+ 
+ 
+ Method 
+ Block size B B 
+ Summary 
+ 
+ 32 
+ 64 
+ 128 
+ 256 
+ 512 
+ Mean 
+ Best 
+ Worst 
+ 
+ 
+ 
+ LLaDA-8B-Base + [EOS] Padding 
+ 37.80 
+ 36.80 
+ 34.00 
+ 29.40 
+ 20.60 
+ 31.72 
+ 37.80 
+ 20.60 
+ 
+ LLaDA-8B-Base + [EOS] Padding + [EOS] term. 
+ 37.80 
+ 36.80 
+ 34.00 
+ 29.40 
+ 20.60 
+ 31.72 
+ 37.80 
+ 20.60 
+ 
+ RainbowPadding 
+ 34.00 
+ 33.40 
+ 34.80 
+ 35.00 
+ 34.80 
+ 34.40 
+ 35.00 
+ 33.40 
+ 
+ RainbowPadding + [EOS] term. 
+ 35.80 
+ 35.80 
+ 36.00 
+ 36.00 
+ 36.60 
+ 36.04 
+ 36.60 
+ 35.80 
+ 
+ VoidPadding w/o [EOS] term. 
+ 38.40 
+ 40.00 
+ 39.20 
+ 37.40 
+ 34.00 
+ 37.80 
+ 40.00 
+ 34.00 
+ 
+ VoidPadding w/o VOID ban 
+ 38.20 
+ 39.20 
+ 31.00 
+ 23.00 
+ 23.00 
+ 30.88 
+ 39.20 
+ 23.00 
+ 
+ VoidPadding 
+ 38.40 
+ 40.00 
+ 39.20 
+ 37.40 
+ 34.00 
+ 37.80 
+ 40.00 
+ 34.00 
+ 
+ 
+ 
+ Table 12: MATH500 block-size sweep for LLaDA-8B-Base after padding LoRA SFT; cells report accuracy (%). 
+ 
+ 
+ 
+ 
+ 
+ 
+ Method 
+ Block size B B 
+ Summary 
+ 
+ 32 
+ 64 
+ 128 
+ 256 
+ 512 
+ Mean 
+ Best 
+ Worst 
+ 
+ pass@1 
+ 
+ 
+ 
+ LLaDA-8B-Base + [EOS] Padding 
+ 37.20 
+ 26.83 
+ 15.85 
+ 13.41 
+ 12.20 
+ 21.10 
+ 37.20 
+ 12.20 
+ 
+ LLaDA-8B-Base + [EOS] Padding + [EOS] term. 
+ 37.20 
+ 26.83 
+ 15.85 
+ 13.41 
+ 12.20 
+ 21.10 
+ 37.20 
+ 12.20 
+ 
+ RainbowPadding 
+ 38.41 
+ 39.02 
+ 38.41 
+ 38.41 
+ 38.41 
+ 38.53 
+ 39.02 
+ 38.41 
+ 
+ RainbowPadding + [EOS] term. 
+ 37.80 
+ 38.41 
+ 38.41 
+ 38.41 
+ 38.41 
+ 38.29 
+ 38.41 
+ 37.80 
+ 
+ VoidPadding w/o [EOS] term. 
+ 14.63 
+ 17.07 
+ 22.56 
+ 23.17 
+ 8.54 
+ 17.19 
+ 23.17 
+ 8.54 
+ 
+ VoidPadding w/o VOID ban 
+ 35.37 
+ 18.29 
+ 12.80 
+ 14.63 
+ 15.24 
+ 19.27 
+ 35.37 
+ 12.80 
+ 
+ VoidPadding 
+ 37.80 
+ 37.20 
+ 37.80 
+ 38.41 
+ 38.41 
+ 37.92 
+ 38.41 
+ 37.20 
+ 
+ 
+ 
+ Table 13: HumanEval block-size sweep for LLaDA-8B-Base after padding LoRA SFT, with pass@1 (%). 
+ 
+ 
+ 
+ 
+ 
+ 
+ Method 
+ Block size B B 
+ Summary 
+ 
+ 32 
+ 64 
+ 128 
+ 256 
+ 512 
+ Mean 
+ Best 
+ Worst 
+ 
+ pass@1 
+ 
+ 
+ 
+ LLaDA-8B-Base + [EOS] Padding 
+ 43.22 
+ 32.55 
+ 23.72 
+ 23.82 
+ 22.18 
+ 29.10 
+ 43.22 
+ 22.18 
+ 
+ LLaDA-8B-Base + [EOS] Padding + [EOS] term. 
+ 43.22 
+ 32.55 
+ 23.72 
+ 23.82 
+ 22.18 
+ 29.10 
+ 43.22 
+ 22.18 
+ 
+ RainbowPadding 
+ 43.33 
+ 43.53 
+ 43.74 
+ 43.53 
+ 43.94 
+ 43.61 
+ 43.94 
+ 43.33 
+ 
+ RainbowPadding + [EOS] term. 
+ 43.33 
+ 43.53 
+ 43.74 
+ 43.53 
+ 43.94 
+ 43.61 
+ 43.94 
+ 43.33 
+ 
+ VoidPadding w/o [EOS] term. 
+ 44.35 
+ 44.87 
+ 44.66 
+ 44.76 
+ 44.76 
+ 44.68 
+ 44.87 
+ 44.35 
+ 
+ VoidPadding w/o VOID ban 
+ 43.63 
+ 29.98 
+ 21.56 
+ 20.64 
+ 18.38 
+ 26.84 
+ 43.63 
+ 18.38 
+ 
+ VoidPadding 
+ 44.35 
+ 44.87 
+ 44.66 
+ 44.76 
+ 44.76 
+ 44.68 
+ 44.87 
+ 44.35 
+ 
+ 
+ 
+ Table 14: MBPP block-size sweep for LLaDA-8B-Base after padding LoRA SFT, with pass@1 (%). 
+ 
+ 
+ 
+ 
+ 
+ Score 0 20 40 60 80 Original Rainbow VOID 79.9 73.4 33.9 21.5 46.7 79.4 79.2 77.6 59.0 52.2 79.8 80.4 80.9 80.8 78.1 (a) GSM8K Original Rainbow VOID 43.0 43.2 41.2 32.0 26.0 32.8 33.6 33.4 32.8 31.4 42.8 44.0 44.2 46.4 45.2 (b) MATH500 Original Rainbow VOID 59.8 62.8 60.4 24.4 18.9 63.4 62.8 60.4 61.6 50.0 56.7 59.8 59.1 59.1 60.4 (c) HumanEval Original Rainbow VOID 50.0 41.0 31.0 27.0 31.0 56.0 56.0 54.8 50.2 48.4 55.6 57.6 58.0 58.2 56.4 (d) MBPP Original
+   
+ RainbowPadding
+   
+ VoidPadding
+   
+ dark B = 32 B=32 → \rightarrow light B = 512 B=512 
+ 
+ 
+ Figure 11: Dream-7B-Instruct fixed-512 block-length sweep comparing the original model with RainbowPadding and VoidPadding checkpoints. Bars vary B ∈ { 32 , 64 , 128 , 256 , 512 } B\in\{32,64,128,256,512\} , with darker colors denoting smaller blocks. Reasoning tasks report accuracy, and code tasks report pass@1. 
+ 
+ Score 0 20 40 60 80 EOS Padding Rainbow VOID 72.2 59.1 13.0 9.5 7.5 78.2 78.1 77.0 68.3 65.0 76.9 77.3 77.5 77.1 76.6 (a) GSM8K EOS Padding Rainbow VOID 37.0 36.8 27.8 18.2 20.0 33.4 34.0 32.8 32.0 35.4 40.4 41.2 40.8 37.4 32.8 (b) MATH500 EOS Padding Rainbow VOID 52.4 51.8 48.8 31.1 19.5 53.7 53.7 55.5 56.7 57.9 50.0 53.7 53.0 54.3 56.1 (c) HumanEval EOS Padding Rainbow VOID 52.8 37.4 29.0 25.6 26.8 51.6 52.2 51.6 51.4 50.4 54.0 54.8 55.0 55.0 55.2 (d) MBPP EOS Padding
+   
+ RainbowPadding
+   
+ VoidPadding
+   
+ dark B = 32 B=32 → \rightarrow light B = 512 B=512 
+ 
+ 
+ Figure 12: Dream-7B-Base fixed-512 block-length sweep comparing EOS Padding with RainbowPadding and VoidPadding LoRA SFT checkpoints. Bars vary B ∈ { 32 , 64 , 128 , 256 , 512 } B\in\{32,64,128,256,512\} , with darker colors denoting smaller blocks. Reasoning tasks report accuracy, and code tasks report pass@1. 
+ 
+ 
+ 
+ 
+ 0 20 40 60 80 Score GSM8K 64 128 512 75.1 77.8 69.0 78.4 55.3 78.6 MATH500 64 128 512 38.6 40.6 38.4 41.6 21.6 27.6 HumanEval 64 128 512 40.2 41.5 40.2 42.1 35.4 41.5 MBPP 64 128 512 41.2 44.7 39.6 44.9 35.4 45.0 Avg. 64 128 512 48.8 51.1 46.8 51.7 36.9 48.2 Early RainbowPadding
+  
+ VoidPadding
+  
+ dark B = 64 B=64 → \rightarrow light B = 512 B=512 
+ 
+ 
+ Figure 13: Same-step training-budget comparison on LLaDA-8B-Instruct. Bars compare Early RainbowPadding (67% training steps) with VoidPadding at B ∈ { 64,128,512 } B\in\{64,128,512\} ; darker colors denote smaller B B . Avg. is the arithmetic average over benchmarks. 
+ 
+ 0 20 40 60 80 Score GSM8K 64 128 512 80.5 80.4 80.1 80.9 57.6 78.1 MATH500 64 128 512 40.4 44.0 39.6 44.2 39.2 45.2 HumanEval 64 128 512 57.9 59.8 57.9 59.1 52.4 60.4 MBPP 64 128 512 54.2 57.6 53.6 58.0 47.4 56.4 Avg. 64 128 512 58.3 60.5 57.8 60.6 49.2 60.0 Early RainbowPadding
+  
+ VoidPadding
+  
+ dark B = 64 B=64 → \rightarrow light B = 512 B=512 
+ 
+ 
+ Figure 14: Same-step training-budget comparison on Dream-7B-Instruct. Bars compare Early RainbowPadding (67% training steps) with VoidPadding at B ∈ { 64,128,512 } B\in\{64,128,512\} ; darker colors denote smaller B B . Avg. is the arithmetic average over benchmarks. 
+ 
+ 
+ 
+ 
+ 0 20 40 60 80 Score GSM8K 64 128 192 60.1 76.7 73.6 76.9 76.7 77.4 MATH500 64 128 192 27.8 37.0 31.2 37.0 31.0 34.2 HumanEval 64 128 192 34.2 39.6 39.0 39.6 35.4 34.8 MBPP 64 128 192 39.7 44.5 44.4 45.5 43.1 44.3 Avg. 64 128 192 40.4 49.5 47.0 49.7 46.6 47.6 Base fixed
+  
+ Base VoidExpansion
+  
+ dark L 0 = 64 L_{0}=64 → \rightarrow light L 0 = 192 L_{0}=192 
+ 
+ Figure 15: Initial-length ablation for VoidPadding-finetuned LLaDA-8B-Base + VoidExpansion. Bars compare fixed-length decoding with VoidExpansion at L 0 ∈ { 64,128,192 } L_{0}\in\{64,128,192\} ; darker colors denote smaller L 0 L_{0} . 
+ 0 20 40 60 80 Score GSM8K 64 96 128 160 52.8 78.3 68.3 78.3 75.1 78.3 77.0 78.0 MATH500 64 96 128 160 26.2 39.6 29.0 39.6 32.2 39.6 34.8 40.2 HumanEval 64 96 128 160 36.6 42.1 40.2 42.7 39.6 41.5 42.1 39.0 MBPP 64 96 128 160 39.8 46.5 44.5 46.5 45.2 46.2 45.1 46.1 Avg. 64 96 128 160 38.9 51.6 45.5 51.8 48.0 51.4 49.7 50.8 Fixed
+  
+ VoidExpansion
+  
+ dark L 0 = 64 L_{0}=64 → \rightarrow light L 0 = 160 L_{0}=160 
+ 
+ Figure 16: Initial-length ablation for VoidPadding-finetuned LLaDA-8B-Instruct + VoidExpansion. Bars compare fixed-length decoding with VoidExpansion at L 0 ∈ { 64 , 96 , 128 , 160 } L_{0}\in\{64,96,128,160\} ; darker colors denote smaller L 0 L_{0} . 
+ 0 140 280 420 560 NFE/example GSM8K 512.0 378.6 214.1 127.9 HumanEval 512.0 492.4 307.8 100.1 MATH500 512.0 475.1 427.2 443.0 MBPP 512.0 388.9 183.1 69.5 Avg. 512.0 433.8 283.1 185.1 Vanilla stopping
+ 
+ LLaDA+ [EOS] 
+ 
+ Rainbow+ [EOS] 
+ 
+ VoidPadding+ [EOS] 
+ 
+ Figure 17: Fixed-length LLaDA-8B-Instruct NFE with L max = 512 L_{\max}=512 , averaged over B ∈ { 64,128,512 } B\in\{64,128,512\} . Bars compare vanilla stopping with [EOS] -termination variants; Avg. is the arithmetic average over benchmarks. 
+ 0 20 40 60 80 Score GSM8K 16 32 64 56.5 78.6 52.8 78.3 31.4 78.3 MATH500 16 32 64 26.2 39.0 26.2 39.6 23.2 40.6 HumanEval 16 32 64 36.0 42.7 37.2 42.7 29.9 39.6 MBPP 16 32 64 39.6 45.4 39.7 46.5 40.8 44.7 Avg. 16 32 64 39.6 51.4 39.0 51.8 31.3 50.8 Fixed
+  
+ VoidExpansion
+  
+ dark B = 16 B=16 → \rightarrow light B = 64 B=64 
+ 
+ Figure 18: Block-size accuracy statistics for VoidPadding-finetuned LLaDA-8B-Instruct + VoidExpansion. Bars compare fixed-length decoding with VoidExpansion at B ∈ { 16 , 32 , 64 } B\in\{16,32,64\} ; darker colors denote smaller B B . 
+ 
+ 
+ 0 100 200 300 400 NFE/example GSM8K 133.8 133.8 133.8 133.9 MATH500 418.1 418.1 418.1 416.7 HumanEval 73.1 73.5 73.8 76.4 MBPP 63.5 63.5 63.3 64.2 Avg. 172.1 172.2 172.2 172.8 Initial length L 0 L_{0} : dark L 0 = 64 L_{0}=64 → \rightarrow light L 0 = 160 L_{0}=160 
+ 
+ 
+ Figure 19: Initial-length NFE ablation results for VoidPadding-finetuned LLaDA-8B-Instruct + VoidExpansion over L 0 ∈ { 64 , 96 , 128 , 160 } L_{0}\in\{64,96,128,160\} . Avg. is the benchmark mean. 
+ 
+ 
+ 0 100 200 300 400 NFE/example GSM8K 132.4 133.8 132.9 MATH500 415.4 418.1 418.4 HumanEval 71.7 73.1 74.2 MBPP 63.5 63.5 63.9 Avg. 170.7 172.1 172.4 Block size B B : dark B = 16 B=16 → \rightarrow light B = 64 B=64 
+ 
+ 
+ Figure 20: Block-size NFE ablation results for VoidPadding-finetuned LLaDA-8B-Instruct + VoidExpansion over B ∈ { 16 , 32 , 64 } B\in\{16,32,64\} . Avg. is the benchmark mean. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ GSM8K τ nonvoid \tau_{\mathrm{nonvoid}} 0.03 0.06 0.09 0.12 -0.45 -0.40 -0.35 -0.30 τ gap \tau_{\mathrm{gap}} 52 79 fixlen=64 
+ 
+ 
+ 
+ MATH500 τ nonvoid \tau_{\mathrm{nonvoid}} 0.03 0.06 0.09 0.12 -0.45 -0.40 -0.35 -0.30 τ gap \tau_{\mathrm{gap}} 26 40 fixlen=64 
+ 
+ 
+ 
+ HumanEval τ nonvoid \tau_{\mathrm{nonvoid}} 0.03 0.06 0.09 0.12 -0.45 -0.40 -0.35 -0.30 τ gap \tau_{\mathrm{gap}} 37 43 fixlen=64 
+ 
+ 
+ 
+ MBPP τ nonvoid \tau_{\mathrm{nonvoid}} 0.03 0.06 0.09 0.12 -0.45 -0.40 -0.35 -0.30 τ gap \tau_{\mathrm{gap}} 39 47 fixlen=64 
+ 
+ 
+ 
+ Mean τ nonvoid \tau_{\mathrm{nonvoid}} 0.03 0.06 0.09 0.12 -0.45 -0.40 -0.35 -0.30 τ gap \tau_{\mathrm{gap}} 38 52 fixlen=64 
+ 
+ 
+ Figure 21: VoidPadding-finetuned LLaDA-8B-Instruct + VoidExpansion threshold sweep. The sweep uses τ nonvoid ∈ { 0.03 , 0.06 , 0.09 , 0.12 } \tau_{\mathrm{nonvoid}}\in\{0.03,0.06,0.09,0.12\} and τ gap ∈ { − 0.45 , − 0.40 , − 0.35 , − 0.30 } \tau_{\mathrm{gap}}\in\{-0.45,-0.40,-0.35,-0.30\} ; the blue box marks the selected setting from Table  3 , ( τ nonvoid , τ gap ) = ( 0.09 , − 0.45 ) (\tau_{\mathrm{nonvoid}},\tau_{\mathrm{gap}})=(0.09,-0.45) . Cell color reports accuracy for reasoning tasks and pass@1 for code tasks. Red indicates lower scores and green indicates higher scores; the fixlen=64 markers are all red, showing that no-expansion fixed-64 is consistently low. 
+ 
+ 
+
+ Figure 22: VoidPadding-finetuned LLaDA-8B-Instruct + VoidExpansion threshold-sweep average NFE. The sweep uses τ nonvoid ∈ { 0.03 , 0.06 , 0.09 , 0.12 } \tau_{\mathrm{nonvoid}}\in\{0.03,0.06,0.09,0.12\} and τ gap ∈ { − 0.45 , − 0.40 , − 0.35 , − 0.30 } \tau_{\mathrm{gap}}\in\{-0.45,-0.40,-0.35,-0.30\} ; the blue box marks the selected setting from Table  3 , ( τ nonvoid , τ gap ) = ( 0.09 , − 0.45 ) (\tau_{\mathrm{nonvoid}},\tau_{\mathrm{gap}})=(0.09,-0.45) . Cell color reports benchmark-level average decode NFE for the first four panels, and Avg. is the arithmetic average over the four benchmarks. 
+ 
+ 
+ GSM8K τ nonvoid \tau_{\mathrm{nonvoid}} 0.03 0.06 0.09 0.12 -0.45 -0.40 -0.35 -0.30 τ gap \tau_{\mathrm{gap}} 130 135 
+ 
+ 
+ 
+ MATH500 τ nonvoid \tau_{\mathrm{nonvoid}} 0.03 0.06 0.09 0.12 -0.45 -0.40 -0.35 -0.30 τ gap \tau_{\mathrm{gap}} 414 419 
+ 
+ 
+ 
+ HumanEval τ nonvoid \tau_{\mathrm{nonvoid}} 0.03 0.06 0.09 0.12 -0.45 -0.40 -0.35 -0.30 τ gap \tau_{\mathrm{gap}} 65 89 
+ 
+ 
+ 
+ MBPP τ nonvoid \tau_{\mathrm{nonvoid}} 0.03 0.06 0.09 0.12 -0.45 -0.40 -0.35 -0.30 τ gap \tau_{\mathrm{gap}} 63 66 
+ 
+ 
+ 
+ Avg. τ nonvoid \tau_{\mathrm{nonvoid}} 0.03 0.06 0.09 0.12 -0.45 -0.40 -0.35 -0.30 τ gap \tau_{\mathrm{gap}} 169 176 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ GSM8K τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 -0.55 -0.50 -0.45 -0.40 τ gap \tau_{\mathrm{gap}} 60 77 fixlen=64 
+ 
+ 
+ 
+ MATH500 τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 -0.55 -0.50 -0.45 -0.40 τ gap \tau_{\mathrm{gap}} 27 37 fixlen=64 
+ 
+ 
+ 
+ HumanEval τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 -0.55 -0.50 -0.45 -0.40 τ gap \tau_{\mathrm{gap}} 34 40 fixlen=64 
+ 
+ 
+ 
+ MBPP τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 -0.55 -0.50 -0.45 -0.40 τ gap \tau_{\mathrm{gap}} 41 46 fixlen=64 
+ 
+ 
+ 
+ Mean τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 -0.55 -0.50 -0.45 -0.40 τ gap \tau_{\mathrm{gap}} 40 50 fixlen=64 
+ 
+ 
+ Figure 23: VoidPadding-finetuned LLaDA-8B-Base + VoidExpansion threshold sweep. The sweep uses τ nonvoid ∈ { 0.06 , 0.09 , 0.12 , 0.15 } \tau_{\mathrm{nonvoid}}\in\{0.06,0.09,0.12,0.15\} and τ gap ∈ { − 0.55 , − 0.50 , − 0.45 , − 0.40 } \tau_{\mathrm{gap}}\in\{-0.55,-0.50,-0.45,-0.40\} ; the blue box marks the selected setting, ( τ nonvoid , τ gap ) = ( 0.09 , − 0.45 ) (\tau_{\mathrm{nonvoid}},\tau_{\mathrm{gap}})=(0.09,-0.45) . Cell color reports accuracy for reasoning tasks and pass@1 for code tasks. Red indicates lower scores and green indicates higher scores; the fixlen=64 markers are all red, showing that no-expansion fixed-64 is consistently low. 
+ 
+ 
+
+ Figure 24: VoidPadding-finetuned Dream-7B-Instruct + VoidExpansion threshold sweep. The sweep uses τ nonvoid ∈ { 0.06 , 0.09 , 0.12 , 0.15 } \tau_{\mathrm{nonvoid}}\in\{0.06,0.09,0.12,0.15\} and τ gap ∈ { 0.55 , 0.50 , 0.45 , 0.40 } \tau_{\mathrm{gap}}\in\{0.55,0.50,0.45,0.40\} ; the blue box marks the selected setting from Table  4 , ( τ nonvoid , τ gap ) = ( 0.15 , 0.55 ) (\tau_{\mathrm{nonvoid}},\tau_{\mathrm{gap}})=(0.15,0.55) . Cell color reports accuracy for reasoning tasks and pass@1 for code tasks. Red indicates lower scores and green indicates higher scores; the fixlen=64 markers are all red, showing that no-expansion fixed-64 is consistently low. 
+ 
+ 
+ GSM8K τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 0.55 0.50 0.45 0.40 τ gap \tau_{\mathrm{gap}} 42 81 fixlen=64 
+ 
+ 
+ 
+ MATH500 τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 0.55 0.50 0.45 0.40 τ gap \tau_{\mathrm{gap}} 19 45 fixlen=64 
+ 
+ 
+ 
+ HumanEval τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 0.55 0.50 0.45 0.40 τ gap \tau_{\mathrm{gap}} 42 61 fixlen=64 
+ 
+ 
+ 
+ MBPP τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 0.55 0.50 0.45 0.40 τ gap \tau_{\mathrm{gap}} 52 59 fixlen=64 
+ 
+ 
+ 
+ Mean τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 0.55 0.50 0.45 0.40 τ gap \tau_{\mathrm{gap}} 39 61 fixlen=64 
+ 
+ 
+ 
+ 
+
+ Figure 25: VoidPadding-finetuned Dream-7B-Base + VoidExpansion threshold sweep. The sweep uses τ nonvoid ∈ { 0.06 , 0.09 , 0.12 , 0.15 } \tau_{\mathrm{nonvoid}}\in\{0.06,0.09,0.12,0.15\} and τ gap ∈ { 0.70 , 0.65 , 0.60 , 0.55 } \tau_{\mathrm{gap}}\in\{0.70,0.65,0.60,0.55\} . Cell color reports accuracy for reasoning tasks and pass@1 for code tasks. Red indicates lower scores and green indicates higher scores; the fixlen=64 markers are all red, showing that no-expansion fixed-64 is consistently low. 
+ 
+ 
+ GSM8K τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 0.70 0.65 0.60 0.55 τ gap \tau_{\mathrm{gap}} 57 78 fixlen=64 
+ 
+ 
+ 
+ MATH500 τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 0.70 0.65 0.60 0.55 τ gap \tau_{\mathrm{gap}} 25 41 fixlen=64 
+ 
+ 
+ 
+ HumanEval τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 0.70 0.65 0.60 0.55 τ gap \tau_{\mathrm{gap}} 43 52 fixlen=64 
+ 
+ 
+ 
+ MBPP τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 0.70 0.65 0.60 0.55 τ gap \tau_{\mathrm{gap}} 43 56 fixlen=64 
+ 
+ 
+ 
+ Mean τ nonvoid \tau_{\mathrm{nonvoid}} 0.06 0.09 0.12 0.15 0.70 0.65 0.60 0.55 τ gap \tau_{\mathrm{gap}} 42 57 fixlen=64 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ Experimental support, please
+ view the build logs 
+ for errors. Generated by
+ 
+ 
+ L
+ A 
+ T
+ E 
+ 
+ xml 
+ 
+ .
+ 
+ 
+ Instructions for reporting errors 
+ We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+ support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+ methods listed below: 
+ 
+ Click the "Report Issue" ( 
+ 
+ ) button, located in the page header. 
+ 
+ Tip: You can select the relevant text first, to include it in your report. 
+ Our team has already identified the following issues . We appreciate your time reviewing and reporting rendering errors we
+ may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+ should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+ all. 
+ Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion , and welcome developer contributions . 
+ 
+ 
+ 
+ 
+ 
+ We gratefully acknowledge support from
+ our major funders ,
+ member institutions , ,
+ and all contributors.
+ 
+ 
+ About 
+ · 
+ Help 
+ · 
+ Contact 
+ · 
+ Subscribe 
+ · 
+ Copyright 
+ · 
+ Privacy 
+ · 
+ Accessibility 
+ · 
+ Operational Status (opens in new tab) 
+ 
+ 
+
+ 
+ Major funding support from 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

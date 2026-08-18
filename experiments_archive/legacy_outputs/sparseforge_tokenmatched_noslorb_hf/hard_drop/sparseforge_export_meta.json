@@ -1,0 +1,19 @@
+{
+  "source_ckpt": "/apdcephfs_wzc1/share_304376610/pighzliu_code/out_llama_tokenmatched_noslorb/models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260814_124534/model.pt",
+  "source_iter_num": 7501,
+  "source_best_lm_eval_mean": null,
+  "source_lm_eval_results": null,
+  "dense_reference": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama2-7b",
+  "dtype": "bfloat16",
+  "mask_variant": "hard",
+  "mask_hardening": "nm_2_4 exact top-2-per-4 (sparse_modeling.py:594-621)",
+  "slorb_variant": "drop",
+  "slorb_note": "SLoRB_Weight and x_proj discarded -- this REMOVES an active forward-pass branch that was present when the checkpoint's own lm_eval_results were measured",
+  "scope_tensors": 224,
+  "scope_elements": 6476005376,
+  "scope_zero_fraction": 0.5,
+  "exact_2of4_violations": 0,
+  "exact_2of4_violations_post_cast": 0,
+  "is_exact_2of4": true,
+  "max_abs_slorb_effective": null
+}

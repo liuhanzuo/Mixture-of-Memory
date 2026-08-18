@@ -1,0 +1,14 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/sparseforge_tokenmatched_noslorb_hf/hard_drop",
+  "seqlen": 2048,
+  "load_seconds": 4.117895126342773,
+  "global_zero_ratio": 0.48052907797962696,
+  "linear_zero_ratio": 0.5,
+  "exact_2of4_tile_ratio": 1.0,
+  "linear_layers": 224,
+  "linear_parameters": 6476005376,
+  "nm_tiles": 1619001344,
+  "wikitext2_ppl": 7.147421061277703,
+  "wikitext2_tokens": 335872,
+  "wikitext2_seconds": 7.174455881118774
+}

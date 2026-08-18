@@ -1,0 +1,8 @@
+{
+  "format": "materialized-hf-sparse-v1",
+  "dense_model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama2-7b",
+  "mask": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/paper_v2/baseline_masks/sparsegpt_seed0_mask.pt",
+  "pattern": "2:4",
+  "loaded_linear_modules": 225,
+  "pruned_transformer_modules": 224
+}

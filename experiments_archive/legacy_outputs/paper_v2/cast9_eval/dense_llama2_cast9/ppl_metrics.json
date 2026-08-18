@@ -1,0 +1,17 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama2-7b",
+  "seqlen": 2048,
+  "load_seconds": 6.979283332824707,
+  "global_zero_ratio": 1.6509815710364162e-06,
+  "linear_zero_ratio": 1.355001963482002e-06,
+  "exact_2of4_tile_ratio": 0.0,
+  "linear_layers": 224,
+  "linear_parameters": 6476005376,
+  "nm_tiles": 1619001344,
+  "c4_ppl": 7.371377840077349,
+  "c4_tokens": 1048576,
+  "c4_seconds": 21.12505316734314,
+  "wikitext2_ppl": 5.563655320068427,
+  "wikitext2_tokens": 335872,
+  "wikitext2_seconds": 6.478706121444702
+}

@@ -1,0 +1,17 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/paper_v2/materialized_baselines/sparsegpt_seed0",
+  "seqlen": 2048,
+  "load_seconds": 32.83612370491028,
+  "global_zero_ratio": 0.480529205160859,
+  "linear_zero_ratio": 0.5000000713402744,
+  "exact_2of4_tile_ratio": 0.9999997146389027,
+  "linear_layers": 224,
+  "linear_parameters": 6476005376,
+  "nm_tiles": 1619001344,
+  "c4_ppl": 12.229574090720794,
+  "c4_tokens": 1048576,
+  "c4_seconds": 21.002806663513184,
+  "wikitext2_ppl": 10.059488076197022,
+  "wikitext2_tokens": 335872,
+  "wikitext2_seconds": 6.848705530166626
+}

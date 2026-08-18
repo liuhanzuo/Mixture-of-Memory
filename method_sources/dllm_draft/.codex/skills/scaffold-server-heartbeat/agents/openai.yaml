@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scaffold Server Heartbeat"
+  short_description: "Inspect and advance Scaffold-Coder GPU experiments safely"
+  default_prompt: "Inspect the Scaffold-Coder server, safely advance registered work, and report material changes."

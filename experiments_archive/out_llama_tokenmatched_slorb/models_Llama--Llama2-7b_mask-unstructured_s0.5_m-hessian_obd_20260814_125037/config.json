@@ -1,0 +1,15 @@
+{
+  "block_size": 4096,
+  "out_dir": "out_llama_tokenmatched_slorb",
+  "batch_size": 8,
+  "learning_rate": 2e-05,
+  "max_iters": 7500,
+  "weight_decay": 0.1,
+  "beta1": 0.9,
+  "beta2": 0.95,
+  "grad_clip": 1.0,
+  "decay_lr": true,
+  "warmup_iters": 375,
+  "lr_decay_iters": 7125,
+  "min_lr": 2e-06
+}

@@ -1,0 +1,17 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/AST-official-LLaMA2-7B-2of4",
+  "seqlen": 2048,
+  "load_seconds": 6.0872132778167725,
+  "global_zero_ratio": 0.4805290778312241,
+  "linear_zero_ratio": 0.5,
+  "exact_2of4_tile_ratio": 1.0,
+  "linear_layers": 224,
+  "linear_parameters": 6476005376,
+  "nm_tiles": 1619001344,
+  "c4_ppl": 8.194041826692263,
+  "c4_tokens": 1048576,
+  "c4_seconds": 21.051396369934082,
+  "wikitext2_ppl": 6.342995328699181,
+  "wikitext2_tokens": 335872,
+  "wikitext2_seconds": 6.416974067687988
+}

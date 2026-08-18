@@ -1,0 +1,207 @@
+{
+  "ckpt": "out_llama/models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260413_201320/model_best_lm_eval.pt",
+  "iter_num": 17900,
+  "SLoRB_enabled_in_args": true,
+  "SLoRB_k": 16,
+  "SLoRB_init_type": "sum",
+  "trainable_projection": true,
+  "in_scope_W_elements": 6476005376,
+  "SLoRB_Weight_elements": 404750336,
+  "x_proj_elements": 443678720,
+  "SLoRB_Weight_any_nonzero_in_sample": true,
+  "x_proj_all_fixed_blocksum_in_sample": false,
+  "per_layer": [
+    {
+      "layer": "model.model.layers.0.self_attn.q_proj.weight",
+      "W_shape": [
+        4096,
+        4096
+      ],
+      "SLoRB_Weight_shape": [
+        4096,
+        256
+      ],
+      "x_proj_shape": [
+        256,
+        4096
+      ],
+      "SLoRB_Weight_nonzero": 1048576,
+      "SLoRB_Weight_absmax": 0.0184326171875,
+      "x_proj_is_binary01": false,
+      "x_proj_equals_fixed_blocksum": false,
+      "fro_W_masked": 53.685455322265625,
+      "fro_SLoRB_effective": 19.6396541595459,
+      "ratio_SLoRB_over_Wmasked": 0.3658282125326504,
+      "fro_SLoRB_on_pruned_positions": 13.76005744934082,
+      "frac_SLoRB_energy_on_pruned_positions": 0.4908771567612947
+    },
+    {
+      "layer": "model.model.layers.0.self_attn.k_proj.weight",
+      "W_shape": [
+        4096,
+        4096
+      ],
+      "SLoRB_Weight_shape": [
+        4096,
+        256
+      ],
+      "x_proj_shape": [
+        256,
+        4096
+      ],
+      "SLoRB_Weight_nonzero": 1048576,
+      "SLoRB_Weight_absmax": 0.0186767578125,
+      "x_proj_is_binary01": false,
+      "x_proj_equals_fixed_blocksum": false,
+      "fro_W_masked": 59.60050964355469,
+      "fro_SLoRB_effective": 22.399761199951172,
+      "ratio_SLoRB_over_Wmasked": 0.3758317057004147,
+      "fro_SLoRB_on_pruned_positions": 15.66678237915039,
+      "frac_SLoRB_energy_on_pruned_positions": 0.4891846769449728
+    },
+    {
+      "layer": "model.model.layers.0.self_attn.v_proj.weight",
+      "W_shape": [
+        4096,
+        4096
+      ],
+      "SLoRB_Weight_shape": [
+        4096,
+        256
+      ],
+      "x_proj_shape": [
+        256,
+        4096
+      ],
+      "SLoRB_Weight_nonzero": 1048576,
+      "SLoRB_Weight_absmax": 0.0162353515625,
+      "x_proj_is_binary01": false,
+      "x_proj_equals_fixed_blocksum": false,
+      "fro_W_masked": 43.17536163330078,
+      "fro_SLoRB_effective": 14.356180191040039,
+      "ratio_SLoRB_over_Wmasked": 0.33250862640064704,
+      "fro_SLoRB_on_pruned_positions": 10.15546989440918,
+      "frac_SLoRB_energy_on_pruned_positions": 0.5004056961382312
+    },
+    {
+      "layer": "model.model.layers.0.self_attn.o_proj.weight",
+      "W_shape": [
+        4096,
+        4096
+      ],
+      "SLoRB_Weight_shape": [
+        4096,
+        256
+      ],
+      "x_proj_shape": [
+        256,
+        4096
+      ],
+      "SLoRB_Weight_nonzero": 1048576,
+      "SLoRB_Weight_absmax": 0.016357421875,
+      "x_proj_is_binary01": false,
+      "x_proj_equals_fixed_blocksum": false,
+      "fro_W_masked": 29.696109771728516,
+      "fro_SLoRB_effective": 13.941889762878418,
+      "ratio_SLoRB_over_Wmasked": 0.4694853928695895,
+      "fro_SLoRB_on_pruned_positions": 9.862881660461426,
+      "frac_SLoRB_energy_on_pruned_positions": 0.5004542198437193
+    },
+    {
+      "layer": "model.model.layers.0.mlp.gate_proj.weight",
+      "W_shape": [
+        11008,
+        4096
+      ],
+      "SLoRB_Weight_shape": [
+        11008,
+        256
+      ],
+      "x_proj_shape": [
+        256,
+        4096
+      ],
+      "SLoRB_Weight_nonzero": 2818048,
+      "SLoRB_Weight_absmax": 0.017333984375,
+      "x_proj_is_binary01": false,
+      "x_proj_equals_fixed_blocksum": false,
+      "fro_W_masked": 103.44194030761719,
+      "fro_SLoRB_effective": 31.868608474731445,
+      "ratio_SLoRB_over_Wmasked": 0.30808208334027865,
+      "fro_SLoRB_on_pruned_positions": 22.570276260375977,
+      "frac_SLoRB_energy_on_pruned_positions": 0.501588474179427
+    },
+    {
+      "layer": "model.model.layers.0.mlp.up_proj.weight",
+      "W_shape": [
+        11008,
+        4096
+      ],
+      "SLoRB_Weight_shape": [
+        11008,
+        256
+      ],
+      "x_proj_shape": [
+        256,
+        4096
+      ],
+      "SLoRB_Weight_nonzero": 2818048,
+      "SLoRB_Weight_absmax": 0.020263671875,
+      "x_proj_is_binary01": false,
+      "x_proj_equals_fixed_blocksum": false,
+      "fro_W_masked": 101.73103332519531,
+      "fro_SLoRB_effective": 32.30366516113281,
+      "ratio_SLoRB_over_Wmasked": 0.3175399296089947,
+      "fro_SLoRB_on_pruned_positions": 22.881183624267578,
+      "frac_SLoRB_energy_on_pruned_positions": 0.5017107108849617
+    },
+    {
+      "layer": "model.model.layers.0.mlp.down_proj.weight",
+      "W_shape": [
+        4096,
+        11008
+      ],
+      "SLoRB_Weight_shape": [
+        4096,
+        688
+      ],
+      "x_proj_shape": [
+        688,
+        11008
+      ],
+      "SLoRB_Weight_nonzero": 2818048,
+      "SLoRB_Weight_absmax": 0.0198974609375,
+      "x_proj_is_binary01": false,
+      "x_proj_equals_fixed_blocksum": false,
+      "fro_W_masked": 106.12740325927734,
+      "fro_SLoRB_effective": 26.45539093017578,
+      "ratio_SLoRB_over_Wmasked": 0.24927954625953905,
+      "fro_SLoRB_on_pruned_positions": 18.73781967163086,
+      "frac_SLoRB_energy_on_pruned_positions": 0.5016603112141482
+    },
+    {
+      "layer": "model.model.layers.1.self_attn.q_proj.weight",
+      "W_shape": [
+        4096,
+        4096
+      ],
+      "SLoRB_Weight_shape": [
+        4096,
+        256
+      ],
+      "x_proj_shape": [
+        256,
+        4096
+      ],
+      "SLoRB_Weight_nonzero": 1048576,
+      "SLoRB_Weight_absmax": 0.0181884765625,
+      "x_proj_is_binary01": false,
+      "x_proj_equals_fixed_blocksum": false,
+      "fro_W_masked": 101.77066802978516,
+      "fro_SLoRB_effective": 20.76319694519043,
+      "ratio_SLoRB_over_Wmasked": 0.2040194620626218,
+      "fro_SLoRB_on_pruned_positions": 14.646267890930176,
+      "frac_SLoRB_energy_on_pruned_positions": 0.4975829609152008
+    }
+  ]
+}

@@ -1,0 +1,3482 @@
+Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 6853–6876
+July 2-7, 2026 ©2026 Association for Computational Linguistics
+Empirical Analysis of Decoding Biases in Masked Diffusion Models
+Pengcheng Huang1, Tianming Liu2, Zhenghao Liu1*,
+Yukun Yan3, Shuo Wang3, Tong Xiao1, Zulong Chen4, Maosong Sun3
+1School of Computer Science and Engineering, Northeastern University, Shenyang, China
+2Software College, Northeastern University, Shenyang, China
+3Department of Computer Science and Technology, Tsinghua University, Beijing, China
+4Alibaba Group, Hangzhou, China
+Abstract
+Masked Diffusion Models (MDMs) have
+recently
+emerged
+as
+a
+promising
+non-
+autoregressive
+paradigm
+for
+sequence
+generation.
+However, their performance is
+highly sensitive to the choice of decoding
+strategy. In this work, we reveal that preva-
+lent uncertainty-based decoding strategies
+induce two decoding biases in MDMs: rigid
+boundary bias and trivial token bias. These
+biases limit the model’s reasoning ability
+and ultimately degrade generation quality.
+To address these challenges, we propose
+UNmasking
+Calibration
+for
+DecOding
+DEbiasing (UNCODE), a decoding calibration
+framework that regularizes uncertainty-based
+decoding
+by
+incorporating
+two
+comple-
+mentary priors to shape global decoding
+trajectories and promote content informa-
+tiveness.
+Extensive experiments on three
+advanced MDMs across seven reasoning- and
+planning-intensive benchmarks demonstrate
+that
+UNCODE
+consistently
+outperforms
+existing decoding strategies by more than 7%,
+while achieving performance comparable to
+autoregressive models of similar parameter
+scales.
+The code is publicly available at
+https://github.com/NEUIR/Uncode.
+1
+Introduction
+Diffusion Large Language Models (dLLMs) have
+recently emerged as a competitive alternative to
+conventional autoregressive models (ARMs) (Li
+et al., 2025b; Zhu et al., 2025), offering non-
+autoregressive decoding that updates multiple to-
+kens per step and excels at global reasoning
+tasks (Li et al., 2023). Among dLLMs, Masked
+Diffusion Models (MDMs) are particularly appeal-
+ing due to their simple masked-denoising formu-
+lation and strong empirical performance (Khanna
+et al., 2025; Nie et al., 2025b; Ye et al., 2025b).
+Unlike autoregressive models that generate text
+* indicates corresponding author.
+Question: Jill earns $20/hour teaching and $30/hour 
+coaching. What is her weekly salary if she works 35 
+hours teaching and 15 coaching?
+Ground Truth: (20 * 35) + (30 * 15) = $1150 
+A: Rigid Boundary Bias
+Jill makes $20 * 35 = $700 as a teacher. Then, adding 
+her $ 30 coaching pay gives a  total  weekly salary of 
+700 + 30 = $730.
+Confidence:
+B: Trivial Token Bias
+First , for the teacher salary , she earns $20 * 35  =
+total is $3500.
+Confidence:
+C: Ideal Decoding
+First , teaching pays $20 * 35 = $700. Next, coaching 
+pays $30 * 15 = $450. In total, she makes $700 + 450
+= $1150 per week.
+Confidence:
+Decode earlier -> later：
+Decode earlier -> later：
+Decode earlier -> later：
+Boundary-First Decoding
+$3 ,  050 . ; Then, adding the $450 coaching pay , the
+Principled Reasoning 
+Trajectory
+Trivial Token , Force 4-digit 
+Format  (Target: 700)
+Figure 1: Illustration of decoding biases during reason-
+ing. Uncertainty-based decoding prioritizes (A) rigid
+boundaries and (B) trivial tokens, causing systematic
+deviations from optimal problem-solving paths. In con-
+trast, panel (C) presents the ideal unmasking pattern for
+producing coherent logical chains to achieve reliable
+inference.
+strictly left-to-right, MDMs operate through itera-
+tive unmasking (Wu et al., 2025a; Lou et al., 2024).
+This design removes sequential constraints, permit-
+ting tokens to be generated in a flexible order (Kim
+et al., 2025). In practice, however, most existing
+MDMs employ uncertainty-based decoding strate-
+gies (Chang et al., 2022; Nie et al., 2025b), which
+greedily unmask tokens at positions with the lowest
+predictive uncertainty during each step.
+Recent studies indicate that modern language
+models exhibit intrinsic “reasoning trajectories,”
+where the generation follows a logical reason-then-
+answer sequence and model confidence in the cor-
+6853
+
+rect answer progressively increases as intermediate
+steps are generated (Wang and Zhou, 2024). In
+contrast, as illustrated in Figure 1, we identify two
+structural biases in uncertainty-based decoding that
+hinder MDMs from following such trajectories and
+thereby prevent the formation of effective reason-
+ing chains that are essential for complex problem-
+solving. Specifically, we observe: (1) Rigid Bound-
+ary Bias, where the decoding trajectory follows
+a rigid pattern: boundary tokens are consistently
+decoded first, with updates progressively moving
+inward toward the center. This behavior prevents
+the model from adapting its decoding order to task-
+specific structural requirements and can cause an-
+swers to be resolved prematurely without estab-
+lishing sufficient supporting rationale. (2) Trivial
+Token Bias, where high-frequency but semantically
+trivial tokens (e.g., punctuation or structural mark-
+ers) are disproportionately prioritized, hindering
+the formation of critical reasoning steps and ulti-
+mately leading to degraded performance.
+To mitigate these biases, we propose UNmasking
+Calibration for DecOding DEbiasing (UNCODE),
+a decoding calibration framework that calibrates
+uncertainty-based decoding for MDMs. Specifi-
+cally, UNCODE adjusts the raw uncertainty scores
+using two complementary priors.
+The first
+prior, the Positional Trajectory Prior, introduces
+a position-dependent reweighting to discourage
+a rigid boundary-first decoding pattern and allow
+the model to flexibly tailor its trajectory to diverse
+task structures. The second prior, the Semantic In-
+formativeness Prior, modulates uncertainty scores
+based on corpus-level frequency statistics, penal-
+izing high-frequency, semantically uninformative
+tokens to redirect the focus of refinement toward
+tokens that provide more informative content.
+To validate the effectiveness of UNCODE, we
+conduct extensive experiments on three representa-
+tive MDMs across seven diverse benchmarks cover-
+ing a broad range of reasoning and planning tasks.
+The results demonstrate that UNCODE consistently
+improves overall generation performance, achiev-
+ing an average gain of over 7% compared to state-
+of-the-art decoding baselines, while achieving per-
+formance comparable to autoregressive models at a
+similar scale. By mitigating decoding biases, UN-
+CODE overcomes the limitations imposed by rigid
+boundary-first decoding in existing MDMs, en-
+abling more effective construction of reasoning tra-
+jectories and reducing uncertainty in answer predic-
+tion, thereby leading to pronounced improvements.
+Furthermore, our analysis shows that the advan-
+tages of UNCODE can be kept when integrated with
+different efficient sampling frameworks, achieving
+substantial speedups while simultaneously improv-
+ing generation quality.
+2
+Related Work
+Masked Diffusion Models (MDMs) have emerged
+as a promising non-autoregressive alternative for
+text generation (Song et al., 2025; Nie et al., 2025b).
+Unlike autoregressive models that generate se-
+quences in a left-to-right order, MDMs utilize an
+iterative unmasking process, allowing tokens to be
+revealed in a non-sequential and arbitrary manner.
+This flexibility makes the decoding strategy pivotal
+to MDM performance (Garg et al., 2025; Kim et al.,
+2025; Lee et al., 2025), as it directly controls the
+generation order and the effective context available
+at each step. As a result, numerous studies have
+explored how to leverage this flexibility to improve
+MDM performance (Li et al., 2025b).
+Early implementations of MDMs adopted a
+simple uniform sampling approach (Austin et al.,
+2021a), where tokens are randomly selected for
+unmasking at each step. While this strategy aligns
+with the order-agnostic training distribution (Garg
+et al., 2025), its unguided nature often leads to
+suboptimal generation quality (Peng et al., 2025).
+To address this limitation, research has shifted to-
+wards uncertainty-driven heuristics that optimize
+the unmasking process by utilizing the model’s
+intrinsic prediction signals (Kim et al., 2025; Ye
+et al., 2025b; Ben-Hamu et al., 2025). Central
+to these strategies are three key metrics: confi-
+dence (Chang et al., 2022), which prioritizes to-
+kens with the maximum predicted probability; mar-
+gin (Kim et al., 2025), which measures the prob-
+ability gap between the top two candidates; and
+entropy (Ye et al., 2025b), which quantifies overall
+predictive uncertainty. These approaches have been
+shown to improve stability and performance across
+a range of tasks (Ben-Hamu et al., 2025).
+Building upon these foundations, a variety of
+heuristics (Wu et al., 2025a; Li et al., 2025a;
+Yu et al., 2025; Wei et al., 2025; Hong et al.,
+2025; Horvitz et al., 2025; Israel et al., 2025)
+have further refined these frameworks to enable
+adaptive unmasking, achieving notable efficiency
+gains with minimal performance degradation. In
+parallel, semi-autoregressive approaches (Arriola
+et al., 2025; Nie et al., 2025b) incorporate local
+6854
+
+causal dependencies into the unmasking process
+and often improve performance on logical reason-
+ing tasks. Despite these advances, both lines of
+work still rely on uncertainty-based scoring to pri-
+oritize which positions to unmask. While prior
+research mainly optimizes how uncertainty is used
+during decoding, we study systematic biases in-
+duced by this uncertainty-driven prioritization in
+MDMs, and identify two decoding biases inherent
+to uncertainty-based samplers.
+3
+Motivating Analysis: Decoding Biases
+in Masked Diffusion Models
+In this section, we examine two decoding biases
+that arise when uncertainty-based samplers are ap-
+plied to MDMs: Rigid Boundary Bias and Trivial
+Token Bias. Our empirical analyses reveal that
+both biases systematically shape the decoding be-
+havior of MDMs, suppressing the emergence of
+critical content and ultimately undermining the per-
+formance of MDMs across different tasks.
+Rigid Boundary Bias. Recent studies indicate
+that achieving strong performance with MDMs re-
+quires the model to use differentiated decoding
+orders tailored to each task (Kim et al., 2025). Nev-
+ertheless, we observe that uncertainty-based sam-
+plers consistently induce a boundary-first decoding
+pattern, which we refer to as Rigid Boundary Bias.
+To illustrate this phenomenon, we conduct a se-
+ries of controlled experiments, as shown in Figure 2.
+We first visualize LLaDA-8B-Instruct’s unmasking
+dynamics on the GSM8K reasoning benchmark us-
+ing the confidence-based sampler in Figure 2(a).
+Specifically, for each token position and decoding
+step, we track whether the token is unmasked (1
+if unmasked, 0 otherwise) and report the average
+unmasking probability across all instances. The
+results reveal a pronounced pattern: tokens near
+the sequence boundaries are systematically priori-
+tized early, yielding a characteristic “U-shaped” de-
+coding trajectory. Notably, we observe this pattern
+consistently across diverse datasets and uncertainty-
+based decoding strategies (Appendix A.3). As fur-
+ther analyzed in Appendix A.2, this bias stems
+from the premature unmasking of boundary tokens
+(BOS and EOS), where the attention mechanism’s
+local positional bias leads to elevated confidence
+for tokens near the sequence boundaries. This ef-
+fect subsequently causes the unmasking process to
+move from both ends toward the center, resulting
+in a rigid boundary-first decoding pattern.
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Prob.
+(a) Heatmap of unmasking prob-
+abilities.
+GSM8K
+Sudoku
+0
+20
+40
+60
+80
+Accuracy (%)
+48.8
+2.2
+59.1
+23.8
+77.9
+0.0
+Uniform
+Confidence
+Semi-AR
+(b) Accuracy on reasoning vs.
+planning.
+Figure 2: Visualization of the Rigid Boundary Bias and
+its impact on downstream performance. (a) Unmask-
+ing probability for each token position across decoding
+steps on GSM8K, with both sequence length and de-
+coding steps set to 256, where darker blue intensities
+denote higher unmasking probabilities. (b) Accuracy
+comparison of different decoding strategies on GSM8K
+(reasoning) and Sudoku (planning).
+To better understand the impact of rigid bound-
+ary bias, we evaluate several decoding strategies
+on two representative datasets: GSM8K, which re-
+quires strict step-by-step sequential reasoning, and
+4×4 Sudoku, a logic puzzle that benefits from glob-
+ally coordinated planning. As shown in Figure 2(b),
+we compare three distinct strategies: the uniform
+sampler, the greedy confidence-based sampler,
+and the semi-autoregressive (Semi-AR) sampler.
+The results reveal markedly different performance
+across both tasks. On GSM8K, the uncertainty-
+based sampler struggles, achieving only 59.1% ac-
+curacy, substantially lower than the 77.9% attained
+by Semi-AR decoding. Conversely, on Sudoku, the
+uncertainty-based sampler obtains the highest ac-
+curacy, outperforming both Semi-AR and uniform
+decoding. This task-dependent divergence suggests
+that while Semi-AR decoding facilitates sequen-
+tial reasoning by introducing coarse-grained step-
+wise structure, uncertainty-based decoding may be
+advantageous for globally coordinated planning.
+These findings highlight the rigidity inherent in
+uncertainty-based decoding as a key challenge, em-
+phasizing the need for decoding flexibility to fully
+unleash the reasoning capability of MDMs.
+Trivial Token Bias. We further observe that
+uncertainty-based samplers disproportionately pri-
+oritize semantically trivial, high-frequency tokens
+(e.g., \n, <space>, the, ., !) throughout the de-
+coding process. We refer to this phenomenon as
+Trivial Token Bias (Figure 3).
+We first quantify this bias by tracking the pro-
+portion of trivial tokens (definition provided in Ap-
+pendix A.4) unmasked by the standard uncertainty-
+6855
+
+0
+64
+128
+192
+255
+Decoding Step
+0.1
+0.3
+0.5
+0.7
+0.9
+Trivial Token Ratio
+Confidence
+AR Baseline (20%)
+(a) Over selection of trivial to-
+kens.
+0.0
+0.3
+0.5
+0.8
+Value of p
+59
+61
+63
+Accuracy (%)
+59.1
+59.9
+60.6
+63.2
+(b) Impact of trivial token
+suppression.
+Figure 3: Verification of trivial token bias and trivial-
+token suppression efficacy.
+(a) The proportion of
+trivial tokens unmasked at each decoding step under
+the uncertainty-based sampler consistently exceeds the
+AR baseline (Qwen-2.5-7B-Instruct, dashed line). (b)
+GSM8K accuracy improves monotonically with sup-
+pression probability p.
+based (Confidence) sampler as decoding proceeds.
+As illustrated in Figure 3(a), trivial tokens consis-
+tently constitute nearly 40% of the selections in
+MDMs. This significantly exceeds the ∼20% base-
+line observed in ARMs. This striking discrepancy
+raises a key question: Is the over-selection of trivial
+tokens in MDMs necessary for effective problem-
+solving, or is it instead detrimental?
+To investigate the impact of this bias, we conduct
+an intervention experiment on GSM8K by proba-
+bilistically suppressing the unmasking of trivial
+tokens. Specifically, at each decoding step, if the
+sampler selects a trivial token to unmask, we reject
+this choice with probability p and instead re-sample
+from the subset of candidate positions whose pre-
+dictions are non-trivial. As shown in Figure 3(b),
+the performance of MDMs improves monotonically
+as trivial-token selections are suppressed more fre-
+quently, indicating that over-selecting trivial tokens
+is not always necessary and can sometimes hin-
+der reasoning. We hypothesize that trivial tokens
+are prioritized because greedy uncertainty-based
+decoding selects, at each step, the positions with
+the lowest uncertainty globally. Since trivial to-
+kens (e.g., whitespace and punctuation) are typi-
+cally easier to predict than content-bearing tokens,
+they are assigned lower uncertainty scores and are
+consequently unmasked earlier. Although such
+tokens carry little semantic information, reveal-
+ing them early can impose surface-level structural
+commitments (e.g., punctuation and line breaks),
+which may reshape the uncertainty landscape and
+subsequent position-selection dynamics. This re-
+duces flexibility in forming informative interme-
+diate states and can lead to suboptimal reasoning
+trajectories. We provide a case study in Figure 16
+(Appendix A.16) to illustrate this phenomenon.
+4
+Mitigating Decoding Bias with
+Unmasking Calibration
+In this section, we briefly review the essential
+background of Masked Diffusion Models (MDMs)
+(§4.1), and then introduce UNCODE, which ad-
+dresses both the rigid boundary bias and the trivial-
+token bias in MDMs by calibrating the unmasking
+schedule during decoding (§4.2).
+4.1
+Background of Masked Diffusion Models
+This section establishes the formal training objec-
+tive of MDMs and describes the decoding paradigm
+that our method aims to optimize.
+Unlike autoregressive models, which are trained
+via next-token prediction, MDMs learn to recon-
+struct original tokens from partially masked se-
+quences. During training, a sequence x0 is cor-
+rupted by independently masking tokens with a
+masking ratio τ ∼U(0, 1], yielding a partially
+masked sequence xτ. The model pθ is trained to
+reconstruct the masked tokens by minimizing cross-
+entropy loss on the masked positions:
+LMDM = −Eτ,x0,xτ
+"
+1
+τ
+L
+X
+i=1
+1[xi
+τ = M] log pθ(xi
+0 | xτ)
+#
+,
+(1)
+where xi denotes the token at the i-th position,
+M denotes the mask token, and 1[·] is the indica-
+tor function. By sampling τ over a wide range,
+the model learns to handle various partial-context
+conditions, enabling it to predict any masked to-
+ken from an arbitrary set of revealed tokens. This
+order-agnostic training naturally supports iterative,
+any-order decoding strategies at inference time.
+During inference, the decoding process is formu-
+lated as iterative unmasking that gradually recovers
+a sequence from a fully masked state xT to a com-
+plete sequence x0 using a predefined unmasking
+sampler. Specifically, let Mt denote the set of po-
+sitions that remain masked at step t. The sampler
+first assigns an unmasking priority si
+t to all masked
+tokens. A subset It ⊆Mt is then selected for
+unmasking by identifying the K positions within
+Mt that possess the highest priority scores:
+It =
+n
+i ∈Mt | rank(si
+t) ≤K
+o
+.
+(2)
+For each selected position i ∈It, the token xi
+t−1
+is sampled according to the corresponding condi-
+6856
+
+tional probability distribution:
+xi
+t−1 ∼pθ(· | xt, i),
+(3)
+and used to update the sequence, yielding a less-
+masked version, while the remaining positions stay
+masked. This procedure iterates until every posi-
+tion has been unmasked.
+4.2
+Calibrating Decoding Biases in MDMs for
+Effective Inference
+Given the current set of remaining masked po-
+sitions Mt, existing MDMs typically use an
+uncertainty-based sampler by assigning a prior-
+ity score to each masked position and unmasking
+the positions with the highest priority scores. For-
+mally, at each step t, the sampler assigns a priority
+score si
+t to every masked position i ∈Mt using
+a scoring function F(·) (e.g., confidence or nega-
+tive entropy) derived from the model’s predictive
+distribution (Chang et al., 2022; Ye et al., 2025b):
+si
+t = F(pθ(· | xt, i)) ,
+∀i ∈Mt.
+(4)
+However, this uncertainty-driven heuristic induces
+two systematic biases in MDM decoding: rigid
+boundary bias and trivial token bias (Section 3).
+To mitigate these biases, we propose UNCODE,
+a lightweight calibration framework that adjusts
+the unmasking priorities by incorporating both a
+positional trajectory prior and a semantic informa-
+tiveness prior. The calibrated unmasking priority is
+defined as:
+˜si
+t = Pi · Si
+t ·
+F
+ pθ(· | xt, i)
+
+|
+{z
+}
+Raw Uncertainty Score
+,
+(5)
+where Pi and Si
+t are positive scalars that rescale
+the raw uncertainty score. Specifically, Pi is a po-
+sitional trajectory prior designed to mitigate rigid
+boundary-first decoding, while Si
+t is a semantic
+informativeness prior aiming to reduce the domi-
+nance of trivial tokens during inference.
+Positional Trajectory Prior (Pi).
+To mit-
+igate the rigid boundary-first bias observed in
+uncertainty-based decoding, we introduce a posi-
+tional trajectory prior Pi to modulate the spatial
+distribution of unmasking priorities, enabling con-
+sistent improvements across diverse tasks. This
+prior adjusts the unmasking priority of each po-
+sition based on its absolute position, effectively
+reshaping the unmasking order. We instantiate Pi
+as a simple position-dependent decay function:
+Pi = e−λ·i,
+(6)
+where i denotes the token index and λ controls
+the strength of positional regularization. When
+λ →0, the prior becomes uniform, recovering
+uncertainty-driven unmasking and permitting arbi-
+trary generation trajectories. Conversely, larger val-
+ues of λ impose a stronger sequential bias, encour-
+aging more left-to-right decoding. In this way, UN-
+CODE provides explicit control over the trade-off
+between non-autoregressive flexibility and causal
+dependency across diverse tasks.
+Semantic Informativeness Prior (Si
+t).
+The
+uncertainty-based decoding strategy usually pri-
+oritises high-frequency and semantically trivial to-
+kens, thereby squandering valuable reasoning steps.
+To alleviate this effect, we introduce a semantic in-
+formativeness prior that reweights unmasking prior-
+ities based on token-level self-information (Cover,
+1999). Specifically, for each masked position i at
+decoding step t, we consider the model’s greedy
+predicted ˆxi
+t = arg maxv∈V pθ(v | xt, i), where v
+represents a candidate token from the vocabulary
+V. We then assign an informativeness weight based
+on the token’s prior frequency, estimated from a
+large-scale general corpus D′:
+Si
+t = −log pD′(ˆxi
+t).
+(7)
+This prior downweights frequent, low-information
+tokens and correspondingly increases the relative
+priority of semantically informative content, en-
+couraging such tokens to be resolved earlier during
+decoding. To prevent excessively large weights for
+rare tokens, we follow Zhang et al. (2024) and clip
+the informativeness scores at a threshold α, i.e.,
+Si
+t ←min(Si
+t, α).
+5
+Experimental Methodology
+This section describes datasets, baselines, and im-
+plementation details used in our experiments.
+Datasets. We evaluate UNCODE on seven bench-
+marks across four domains, selected to represent di-
+verse structural dependencies: (1) Mathematical
+reasoning.
+To assess step-by-step logical de-
+duction, we use GSM8K (Cobbe et al., 2021)
+and MATH500 (Lightman et al., 2024).
+(2)
+Code
+generation.
+Focusing on strict syntac-
+tic and causal dependencies, we evaluate on Hu-
+manEval (Chen et al., 2021) and MBPP (Austin
+et al., 2021b). (3) Scientific reasoning. To
+test knowledge-intensive reasoning that combines
+parametric knowledge with logical deduction, we
+use GPQA (Rein et al., 2023). (4) Planning. For
+6857
+
+tasks prioritizing global constraint satisfaction, we
+include 4×4 Sudoku (Ye et al., 2025a) and Count-
+down (Nolte et al., 2024). We report pass@1 for
+code generation and accuracy for all other tasks.
+Detailed dataset descriptions and statistics are pro-
+vided in Appendix A.5.
+Baselines. We compare UNCODE against strong
+baselines from two families: (i) autoregressive
+models of comparable parameter scale, and (ii)
+representative decoding strategies for MDMs. To
+ensure a fair comparison, all MDM baselines are
+evaluated on the same backbone model under a
+matched decoding budget. Additional details about
+the baselines are provided in Appendix A.7.
+Autoregressive baselines.
+We include three
+instruction-tuned ARMs of similar size: LLaMA-
+3.1-8B-Instruct (Dubey et al., 2024), Mistral-7B-
+Instruct (Jiang et al., 2023), and Qwen-2.5-7B-
+Instruct (Yang et al., 2024).
+MDM decoding baselines. We further compare
+with several representative MDM decoding strate-
+gies: (1) Uniform (Austin et al., 2021a), which
+selects masked positions uniformly at random.
+(2) Uncertainty-based methods, which greedily
+rank masked positions by predicted uncertainty.
+We evaluate three representative proxies: maxi-
+mum confidence (Chang et al., 2022), negative en-
+tropy (Ye et al., 2025b), and margin (Kim et al.,
+2025). (3) Semi-autoregressive (Semi-AR) de-
+coding (Nie et al., 2025b), which generates the
+sequence block by block. It enforces a global au-
+toregressive order across blocks, while determin-
+ing the unmasking positions within each block ac-
+cording to the MDM’s prediction confidence. (4)
+Adaptive multi-token samplers, which unmask
+multiple tokens per step using uncertainty thresh-
+olds to improve decoding efficiency without signifi-
+cantly compromising generation quality. We evalu-
+ate two representative methods: Entropy-Bounded
+(EB) Sampler (Ben-Hamu et al., 2025) and Fast-
+dLLM (Wu et al., 2025a).
+Implementation Details. We conduct experi-
+ments on three state-of-the-art masked diffusion
+language models: LLaDA-8B-Instruct (Nie et al.,
+2025b), LLaDA-1.5-8B (Zhu et al., 2025), and
+Dream-7B (Ye et al., 2025b). During inference,
+we adopt the same generation length settings as
+in Nie et al. (2025b) and set the number of de-
+noising steps to be equal to the sequence length.
+We also verify the generalization to longer se-
+quences in Appendix A.11. We use prediction
+confidence as the base uncertainty proxy for cal-
+ibration. For the semantic-informativeness prior,
+we estimate token-frequency statistics by fitting
+pD′(·) on a 16GB subset of the C4 corpus (Raf-
+fel et al., 2020), following the protocol of Zhang
+et al. (2024) (see Appendix A.14 for an analysis
+of the calibration-corpus choice). We fix the clip-
+ping threshold to α = 10 across all experiments.
+Regarding the positional-regularization coefficient
+λ, we set λ = 0 for Sudoku to favor globally co-
+ordinated planning, λ = 0.25 for the remaining
+tasks to encourage more progressive decoding, and
+λ = 0.5 for Countdown. More implementation
+details are provided in Appendix A.6.
+6
+Experiment Results
+In this section, we first present the overall perfor-
+mance of UNCODE, followed by ablation results.
+Subsequently, we analyze the decoding dynamics
+of UNCODE and assess its compatibility with effi-
+cient decoding strategies.
+6.1
+Overall Performance
+We present the main results of UNCODE across all
+benchmarks in Table 1.
+Overall, UNCODE consistently outperforms all
+baseline decoding strategies, achieving over a 7%
+average performance improvement. Notably, this
+advantage generalizes well across different back-
+bone models and task categories, with UNCODE
+achieving near-best performance among all base-
+lines across the seven benchmarks. In contrast,
+existing decoding methods exhibit pronounced task
+specialization.
+For example, uncertainty-based
+samplers perform well on planning tasks such as
+Sudoku, outperforming the vanilla uniform decod-
+ing strategy by over 20%, but tend to underper-
+form on reasoning-intensive tasks, including code
+generation and mathematical reasoning. Semi-AR
+methods, which introduce a degree of left-to-right
+constraint on top of confidence-based sampling,
+substantially improve reasoning performance; for
+instance, achieving over 10% average gains on Hu-
+manEval and GSM8K compared to the confidence
+sampler. However, these gains do not transfer to
+planning tasks, where the imposed sequential bias
+becomes restrictive.
+By explicitly controlling the generation order
+and suppressing trivial token selections, UNCODE
+enables MDMs to achieve strong and stable perfor-
+mance across both reasoning and planning tasks.
+On LLaDA-1.5-8B, it even achieves compara-
+6858
+
+Methods & LLMs
+HumanEval
+MBPP
+GSM8K
+MATH500
+GPQA
+Countdown
+Sudoku
+Avg.
+Autoregressive LLMs
+LLaMA-3.1-8B
+53.1
+56.7
+83.9
+23.8
+31.0
+27.0
+0.0
+39.4
+Mistral-7B
+43.9
+37.0
+49.4
+7.2
+28.1
+22.7
+0.0
+26.9
+Qwen-2.5-7B
+78.1
+62.8
+71.9
+64.2
+32.8
+7.7
+0.0
+45.3
+LLaDA-8B-Instruct
+Uniform (2021a)
+15.2
+24.6
+48.8
+15.0
+29.0
+14.4
+2.2
+21.3
+Confidence (2022)
+27.4
+42.4
+59.1
+20.8
+27.9
+34.0
+23.8
+33.6
+Entropy (2025b)
+28.1
+42.2
+60.9
+11.2
+28.4
+33.8
+1.6
+29.4
+Margin (2025)
+32.3
+42.4
+58.3
+19.8
+28.4
+33.9
+26.6
+34.5
+EB-Sampler (2025)
+26.8
+43.3
+61.2
+11.6
+29.5
+34.1
+24.2
+33.0
+Semi-AR† (2025b)
+39.0
+45.2
+77.9
+27.6
+27.7
+32.6
+0.0
+35.7
+Fast-dLLM† (2025a)
+35.4
+44.7
+78.2
+28.4
+28.6
+23.6
+0.0
+34.1
+UNCODE
+42.1
+47.8
+79.2
+34.8
+29.2
+36.3
+29.8
+42.7
+LLaDA-1.5-8B
+Uniform (2021a)
+17.7
+23.0
+52.7
+20.0
+28.1
+15.8
+3.4
+23.0
+Confidence (2022)
+28.1
+43.3
+60.7
+22.8
+28.7
+33.8
+24.8
+34.6
+Entropy (2025b)
+32.9
+44.0
+60.3
+11.2
+26.6
+34.7
+0.2
+30.0
+Margin (2025)
+25.0
+43.3
+57.5
+23.2
+28.4
+31.8
+33.6
+34.7
+EB-Sampler (2025)
+32.9
+43.6
+61.1
+13.4
+26.6
+34.6
+0.2
+30.3
+Semi-AR† (2025b)
+39.6
+46.8
+80.7
+34.2
+26.1
+32.4
+0.0
+37.1
+Fast-dLLM† (2025a)
+37.2
+46.1
+80.8
+31.2
+27.9
+23.6
+0.0
+36.7
+UNCODE
+46.3
+49.9
+82.2
+37.4
+28.8
+35.0
+33.4
+44.7
+Table 1: Experimental results on seven different benchmarks. The best score is highlighted in bold, and the second-
+best is underlined. Following prior practices (Nie et al., 2025b), we use 4-shot settings for GSM8K and MATH500,
+5-shot for GPQA and Sudoku, 0-shot for HumanEval and MBPP, and 3-shot for Countdown. Methods marked with
+† denote samplers using the Semi-AR strategy. Results on Dream-7B are provided in Table 10 (Appendix A.15).
+LLaDA-8B-Instruct
+LLaDA-1.5-8B
+32
+36
+40
+44
+Avg. Performance (%)
+34.9
+35.5
+40.4
+42.0
+42.7
+44.7
+w/o Pos. Prior
+w/o Sem. Prior
+U
+Figure 4: Ablation results of individual modules on
+LLaDA-8B-Instruct and LLaDA-1.5-8B, reporting the
+average performance across all evaluation benchmarks.
+ble overall performance to Qwen-2.5-7B-Instruct.
+These results suggest that decoding-side improve-
+ments alone can better unlock the potential of
+MDMs, enabling performance that is comparable
+to that of autoregressive models.
+6.2
+Ablation Studies
+We conduct ablation studies to verify the effective-
+ness of UNCODE; the results are shown in Figure 4.
+To understand the significance of the positional
+trajectory prior (Pos. Prior), we compare UNCODE
+with models that are solely calibrated with the Se-
+mantic Informativeness Prior. As shown in Fig-
+ure 4, omitting the positional trajectory prior leads
+to a substantial decrease in performance (42.7%
+→34.9% for LLaDA and 44.7% →35.5% for
+LLaDA-1.5, respectively). This demonstrates the
+critical role of flexibly regulating the decoding or-
+der in breaking rigid boundary-first trajectory and
+fully harnessing the potential of MDMs in various
+practical scenarios. To further verify that UNCODE
+genuinely leverages this non-autoregressive flexi-
+bility rather than degenerating into autoregressive-
+like generation, we provide additional compar-
+isons against strict fixed-order baselines in Ap-
+pendix A.10. Complementing the positional adjust-
+ment, we evaluate the importance of the Semantic
+Informativeness Prior (Sem. Prior) by comparing
+UNCODE with a model calibrated exclusively by
+the positional prior. As shown in Figure 4, intro-
+ducing the Sem. Prior further improves average
+performance by 2.3% and 2.7% in LLaDA and
+LLaDA-1.5, respectively. This demonstrates that
+the semantic informativeness prior, by mitigating
+the over-selection of trivial tokens, more effectively
+enhances MDM performance.
+6.3
+Further Analysis: Decoding Dynamics
+and Efficiency of UNCODE
+In this section, we first delve into the internal mech-
+anisms driving the superior performance of UN-
+CODE, and subsequently demonstrate its compati-
+bility with efficient decoding strategies.
+Decoding Dynamics of UNCODE. As illustrated
+6859
+
+Methods
+HumanEval
+MBPP
+GSM8K
+MATH500
+GPQA
+Countdown
+Sudoku
+Avg.
+τ-leaping (2023)
+17.7
+38.9
+55.2
+16.2
+28.9
+32.1
+3.2
+27.5 (2.14x)
++ UNCODE
+22.6
+40.5
+75.4
+30.8
+29.5
+28.4
+25.4
+36.1 (1.99x)
+EB-sampler (2025)
+26.8
+43.3
+61.2
+11.6
+29.5
+34.1
+24.2
+33.0 (2.32x)
++ UNCODE
+41.5
+46.6
+79.3
+35.2
+28.4
+36.2
+25.6
+41.8 (2.28x)
+Fast-dLLM (2025a)
+35.0
+45.9
+77.4
+25.2
+27.8
+24.4
+0.0
+33.9 (4.21x)
++ UNCODE
+36.0
+48.2
+77.8
+29.2
+28.4
+36.3
+0.6
+36.7 (3.99x)
+Table 2: Performance and efficiency analysis of UNCODE with integrated efficient decoding strategies. The last
+column reports the average performance, with the speedup factor relative to vanilla decoding shown in parentheses.
+0
+64
+128
+192
+256
+Decoding Step
+0.0
+0.4
+0.8
+1.2
+1.6
+Answer Entropy
+Confidence
+U
+(a) Distribution of answer to-
+ken entropy.
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+2
+3
+4
+Avg. Pred. Entropy
+Confidence
+U
+(b) Evolution of predictive un-
+certainty.
+Figure 5: Analysis of uncertainty dynamics during de-
+coding. (a) Answer Entropy vs. Decoding Step. While
+the baseline (Confidence, blue) often prematurely un-
+masks answer tokens with high uncertainty, UNCODE
+(red) delays these answer tokens to later steps (bottom-
+right cluster), ensuring they are generated with high
+confidence. (b) UNCODE achieves faster global uncer-
+tainty reduction than the baseline.
+in Figure 5, we conduct experiments to investigate
+the effectiveness of UNCODE in regulating the gen-
+eration dynamics of MDMs.
+To assess whether the model adheres to a logical
+“reasoning-then-answer” generation order, we ex-
+amine answer token dynamics by tracking their un-
+masking steps and predictive entropies. As shown
+in Figure 5(a), the confidence sampler exhibits a
+distinct pattern of premature unmasking, where
+answer tokens appear at early steps despite hav-
+ing high entropy. This suggests the model is at-
+tempting to “guess” the answer without sufficient
+context. This phenomenon is driven by a rigid
+boundary bias, which compels the model to follow
+a “U-shaped” trajectory that forces answer predic-
+tion before the reasoning chain is fully constructed.
+Conversely, UNCODE leverages the positional tra-
+jectory prior to break this constraint, effectively
+deferring answer revelation until the global context
+is established, yielding high-confidence predictions
+grounded in sufficient reasoning.
+We further evaluate the efficiency of global con-
+text construction by tracking the average predictive
+entropy of all remaining masked tokens. As shown
+in Figure 5(b), the confidence sampler maintains
+a consistently higher level of entropy throughout
+the process. This suggests that its tendency to over-
+select trivial tokens causes the model to remain
+uncertain about the global context throughout the
+decoding process. In contrast, UNCODE consis-
+tently achieves lower predictive entropy, validating
+the effectiveness of our Semantic Informativeness
+Prior. By redirecting focus toward semantically
+rich tokens, UNCODE allows the model to rapidly
+establish a robust context, guiding effective reason-
+ing for the subsequent generation.
+Integrating UNCODE with Efficient Decod-
+ing Strategies. Furthermore, we evaluate the po-
+tential of UNCODE to serve as a plug-and-play
+unmasking policy within existing efficient decod-
+ing frameworks, as inference efficiency is a crit-
+ical prerequisite for the practical deployment of
+MDMs (Israel et al., 2025). Our evaluation encom-
+passes three representative paradigms: the deter-
+ministic τ-leaping (Chen et al., 2023), the adaptive
+EB-Sampler (Ben-Hamu et al., 2025), and Fast-
+dLLM (Wu et al., 2025a) (with KV cache optimiza-
+tion). Detailed implementations are provided in
+Appendix A.8. As demonstrated in Table 2, UN-
+CODE seamlessly integrates with these efficient
+decoding frameworks, consistently outperforming
+their native policies across most benchmarks, yield-
+ing an average performance improvement of over
+3%. Crucially, the integrated variants preserve the
+efficiency benefits, achieving inference speeds ex-
+ceeding 2× that of vanilla decoding.
+7
+Conclusion
+In this work, we identify two decoding biases that
+arise when uncertainty-based samplers are applied
+to Masked Diffusion Models (MDMs): rigid bound-
+ary bias and trivial token bias, both of which limit
+the performance potential of MDMs. To address
+these challenges, we propose UNCODE, a decoding
+framework that incorporates a Positional Trajec-
+6860
+
+tory Prior and a Semantic Informativeness Prior
+to mitigate these biases. Extensive experiments
+on three advanced MDMs across diverse bench-
+marks demonstrate that UNCODE consistently out-
+performs existing methods, achieving significant
+improvements in generation quality and compara-
+ble performance to autoregressive models of sim-
+ilar size. Additionally, we demonstrate that UN-
+CODE is compatible with current efficient decoding
+frameworks, enabling high-quality, accelerated in-
+ference without the need for additional training.
+Limitations
+While UNCODE achieves promising results, it intro-
+duces a weight λ for the Positional Trajectory Prior.
+Although a lightweight search over a small set of
+candidates (e.g., four values) proves effective, it
+requires ground-truth labels for validation, which
+limits its applicability in fully unsupervised set-
+tings. To address this, we introduce an automated,
+adaptive strategy in Appendix A.13, eliminating the
+dependency on annotated data. Future work may
+further replace this heuristic with a learned con-
+troller. Next, although UNCODE integrates seam-
+lessly with efficient decoding strategies, computing
+the Positional Trajectory and Semantic Informative-
+ness priors introduces a small per-step overhead.
+However, as detailed in Appendix A.12, our em-
+pirical results indicate that this cost is negligible
+relative to the model’s forward pass, allowing the
+overall inference efficiency to remain comparable
+to standard decoding baselines.
+Acknowledgments
+This work is partly supported by the National Nat-
+ural Science Foundation of China (No. 62576082)
+and the Alibaba Innovative Research Program.
+This work is also supported by the AI9Stars com-
+munity.
+References
+Marianne Arriola, Aaron Gokaslan, Justin T. Chiu, Zhi-
+han Yang, Zhixuan Qi, Jiaqi Han, Subham Sekhar
+Sahoo, and Volodymyr Kuleshov. 2025. Block dif-
+fusion: Interpolating between autoregressive and dif-
+fusion language models. In The Thirteenth Inter-
+national Conference on Learning Representations,
+ICLR 2025, Singapore, April 24-28, 2025.
+Jacob Austin, Daniel D. Johnson, Jonathan Ho, Daniel
+Tarlow, and Rianne van den Berg. 2021a. Structured
+denoising diffusion models in discrete state-spaces.
+In Advances in Neural Information Processing Sys-
+tems 34: Annual Conference on Neural Information
+Processing Systems 2021, NeurIPS 2021, December
+6-14, 2021, virtual, pages 17981–17993.
+Jacob Austin, Augustus Odena, Maxwell I. Nye,
+Maarten Bosma, Henryk Michalewski, David Dohan,
+Ellen Jiang, Carrie J. Cai, Michael Terry, Quoc V.
+Le, and Charles Sutton. 2021b.
+Program synthe-
+sis with large language models.
+ArXiv preprint,
+abs/2108.07732.
+Heli Ben-Hamu, Itai Gat, Daniel Severo, Niklas Nolte,
+and Brian Karrer. 2025. Accelerated sampling from
+masked diffusion models via entropy bounded un-
+masking. ArXiv preprint, abs/2505.24857.
+Huiwen Chang, Han Zhang, Lu Jiang, Ce Liu, and
+William T. Freeman. 2022. Maskgit: Masked gen-
+erative image transformer. In IEEE/CVF Confer-
+ence on Computer Vision and Pattern Recognition,
+CVPR 2022, New Orleans, LA, USA, June 18-24,
+2022, pages 11305–11315. IEEE.
+Charlie Chen, Sebastian Borgeaud, Geoffrey Irving,
+Jean-Baptiste Lespiau, Laurent Sifre, and John
+Jumper. 2023. Accelerating large language model
+decoding with speculative sampling. CoRR.
+Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan,
+Henrique Pondé de Oliveira Pinto, Jared Kaplan,
+and Harri Edwards. 2021.
+Evaluating large lan-
+guage models trained on code.
+ArXiv preprint,
+abs/2107.03374.
+Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian,
+Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias
+Plappert, Jerry Tworek, Jacob Hilton, Reiichiro
+Nakano, Christopher Hesse, and John Schulman.
+2021. Training verifiers to solve math word prob-
+lems. ArXiv preprint, abs/2110.14168.
+Thomas M Cover. 1999. Elements of information theory.
+John Wiley & Sons.
+Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey,
+Abhishek Kadian, Ahmad Al-Dahle, Aiesha Letman,
+and Akhil Mathur. 2024. The llama 3 herd of models.
+CoRR.
+Leo Gao, Jonathan Tow, Baber Abbasi, Stella Bider-
+man, Sid Black, Anthony DiPofi, Charles Foster,
+Laurence Golding, Jeffrey Hsu, Alain Le Noac’h,
+Haonan Li, Kyle McDonell, Niklas Muennighoff,
+Chris Ociepa, Jason Phang, Laria Reynolds, Hailey
+Schoelkopf, Aviya Skowron, Lintang Sutawika, and
+5 others. 2024. The language model evaluation har-
+ness.
+Prateek Garg, Bhavya Kohli, and Sunita Sarawagi.
+2025.
+Masked diffusion models are secretly
+learned-order autoregressive models. ArXiv preprint,
+abs/2511.19152.
+6861
+
+Feng Hong, Geng Yu, Yushi Ye, Haicheng Huang,
+Huangjie Zheng, Ya Zhang, Yanfeng Wang, and
+Jiangchao Yao. 2025. Wide-in, narrow-out: Revok-
+able decoding for efficient and effective dllms. ArXiv
+preprint, abs/2507.18578.
+Zachary Horvitz, Raghav Singhal, Hao Zou, Carles
+Domingo-Enrich, Zhou Yu, Rajesh Ranganath, and
+Kathleen McKeown. 2025. No compute left behind:
+Rethinking reasoning and sampling with masked dif-
+fusion models. ArXiv preprint, abs/2510.19990.
+Daniel Israel, Guy Van den Broeck, and Aditya Grover.
+2025. Accelerating diffusion llms via adaptive paral-
+lel decoding. CoRR.
+Albert Q. Jiang, Alexandre Sablayrolles, Arthur Men-
+sch, Chris Bamford, Devendra Singh Chaplot, Diego
+de Las Casas, Florian Bressand, Gianna Lengyel,
+Guillaume Lample, Lucile Saulnier, Lélio Re-
+nard Lavaud, Marie-Anne Lachaux, Pierre Stock,
+Teven Le Scao, Thibaut Lavril, Thomas Wang, Timo-
+thée Lacroix, and William El Sayed. 2023. Mistral
+7b. CoRR.
+Yuchu Jiang, Yue Cai, Xiangzhong Luo, Jiale Fu, Jiarui
+Wang, Chonghan Liu, and Xu Yang. 2025. d2 cache:
+Accelerating diffusion-based llms via dual adaptive
+caching. ArXiv preprint, abs/2509.23094.
+Samar Khanna, Siddhant Kharbanda, Shufan Li, Harshit
+Varma, Eric Wang, Sawyer Birnbaum, Ziyang Luo,
+Yanis Miraoui, Akash Palrecha, Stefano Ermon, and
+1 others. 2025. Mercury: Ultra-fast language models
+based on diffusion. arXiv preprint arXiv:2506.17298,
+1.
+Jaeyeon Kim, Kulin Shah, Vasilis Kontonis, Sham M.
+Kakade, and Sitan Chen. 2025. Train for the worst,
+plan for the best: Understanding token ordering in
+masked diffusions. CoRR.
+Sanghyun Lee, Seungryong Kim, Jongho Park, and
+Dongmin Park. 2025. Lookahead unmasking elic-
+its accurate decoding in diffusion language models.
+ArXiv preprint, abs/2511.05563.
+Jinsong Li, Xiaoyi Dong, Yuhang Zang, Yuhang
+Cao, Jiaqi Wang, and Dahua Lin. 2025a. Beyond
+fixed: Training-free variable-length denoising for
+diffusion large language models.
+ArXiv preprint,
+abs/2508.00819.
+Tianyi Li, Mingda Chen, Bowei Guo, and Zhiqiang
+Shen. 2025b. A survey on diffusion language models.
+ArXiv preprint, abs/2508.10875.
+Yifan Li, Kun Zhou, Wayne Xin Zhao, and Ji-Rong Wen.
+2023. Diffusion models for non-autoregressive text
+generation: A survey. In Proceedings of the Thirty-
+Second International Joint Conference on Artificial
+Intelligence, IJCAI 2023, 19th-25th August 2023,
+Macao, SAR, China, pages 6692–6701. ijcai.org.
+Hunter Lightman, Vineet Kosaraju, Yuri Burda, Harri-
+son Edwards, Bowen Baker, Teddy Lee, Jan Leike,
+John Schulman, Ilya Sutskever, and Karl Cobbe.
+2024. Let’s verify step by step. In The Twelfth In-
+ternational Conference on Learning Representations,
+ICLR 2024, Vienna, Austria, May 7-11, 2024. Open-
+Review.net.
+Aaron Lou, Chenlin Meng, and Stefano Ermon. 2024.
+Discrete diffusion modeling by estimating the ratios
+of the data distribution. In Forty-first International
+Conference on Machine Learning, ICML 2024, Vi-
+enna, Austria, July 21-27, 2024. OpenReview.net.
+Richard Diehl Martinez, Zébulon Goriely, Andrew
+Caines, Paula Buttery, and Lisa Beinborn. 2024. Mit-
+igating frequency bias and anisotropy in language
+model pre-training with syntactic smoothing. ArXiv
+preprint, abs/2410.11462.
+Shen Nie, Fengqi Zhu, Chao Du, Tianyu Pang, Qian
+Liu, Guangtao Zeng, Min Lin, and Chongxuan Li.
+2025a. Scaling up masked diffusion models on text.
+In The Thirteenth International Conference on Learn-
+ing Representations, ICLR 2025, Singapore, April
+24-28, 2025.
+Shen Nie, Fengqi Zhu, Zebin You, Xiaolu Zhang,
+Jingyang Ou, Jun Hu, Jun Zhou, Yankai Lin, Ji-Rong
+Wen, and Chongxuan Li. 2025b. Large language
+diffusion models.
+Niklas Nolte, Ouail Kitouni, Adina Williams, Mike
+Rabbat, and Mark Ibrahim. 2024. Transformers can
+navigate mazes with multi-step prediction. CoRR.
+Zhangzhi Peng, Zachary Bezemek, Sawan Patel, Jarrid
+Rector-Brooks, Sherwood Yao, Alexander Tong, and
+Pranam Chatterjee. 2025. Path planning for masked
+diffusion model sampling. CoRR.
+Open R1 Project. 2025. Openr1-math-220k: A large an-
+notated dataset for math reasoning. Accessed: 2025-
+11-24.
+Colin Raffel, Noam Shazeer, Adam Roberts, Katherine
+Lee, Sharan Narang, Michael Matena, Yanqi Zhou,
+Wei Li, and Peter J. Liu. 2020. Exploring the limits
+of transfer learning with a unified text-to-text trans-
+former. J. Mach. Learn. Res., 21:140:1–140:67.
+David Rein, Betty Li Hou, Asa Cooper Stickland,
+Jackson Petty, Richard Yuanzhe Pang, Julien Di-
+rani, Julian Michael, and Samuel R. Bowman. 2023.
+GPQA: A graduate-level google-proof q&a bench-
+mark. CoRR.
+Daria Soboleva, Faisal Al-Khateeb, Robert Myers, Ja-
+cob R Steeves, Joel Hestness, and Nolan Dey. 2023.
+SlimPajama: A 627B token cleaned and deduplicated
+version of RedPajama.
+Yuxuan Song, Zheng Zhang, Cheng Luo, Pengyang Gao,
+Fan Xia, Hao Luo, Zheng Li, Yuehang Yang, Hongli
+Yu, Xingwei Qu, and 1 others. 2025. Seed diffusion:
+A large-scale diffusion language model with high-
+speed inference. ArXiv preprint, abs/2508.02193.
+6862
+
+Chenglong Wang, Yang Gan, Hang Zhou, Chi Hu,
+Yongyu Mu, Kai Song, Murun Yang, Bei Li, Chun-
+liang Zhang, Tongran Liu, and 1 others. 2025. Mro:
+Enhancing reasoning in diffusion language mod-
+els via multi-reward optimization. ArXiv preprint,
+abs/2510.21473.
+Xuezhi Wang and Denny Zhou. 2024. Chain-of-thought
+reasoning without prompting. In Advances in Neural
+Information Processing Systems 38: Annual Confer-
+ence on Neural Information Processing Systems 2024,
+NeurIPS 2024, Vancouver, BC, Canada, December
+10 - 15, 2024.
+Qingyan Wei, Yaojie Zhang, Zhiyuan Liu, Dongrui
+Liu, and Linfeng Zhang. 2025. Accelerating diffu-
+sion large language models with slowfast: The three
+golden principles. ArXiv preprint, abs/2506.10848.
+Chengyue Wu, Hao Zhang, Shuchen Xue, Zhijian Liu,
+Shizhe Diao, Ligeng Zhu, Ping Luo, Song Han, and
+Enze Xie. 2025a. Fast-dllm: Training-free accel-
+eration of diffusion llm by enabling kv cache and
+parallel decoding. ArXiv preprint, abs/2505.22618.
+Xinyi Wu, Yifei Wang, Stefanie Jegelka, and Ali Jad-
+babaie. 2025b. On the emergence of position bias in
+transformers. ArXiv preprint, abs/2502.01951.
+An Yang, Baosong Yang, Binyuan Hui, Bo Zheng,
+Bowen Yu, Chang Zhou, Chengpeng Li, and
+Chengyuan Li. 2024. Qwen2 technical report. ArXiv
+preprint, abs/2407.10671.
+Jiacheng Ye, Jiahui Gao, Shansan Gong, Lin Zheng,
+Xin Jiang, Zhenguo Li, and Lingpeng Kong. 2025a.
+Beyond autoregression: Discrete diffusion for com-
+plex reasoning and planning. In The Thirteenth In-
+ternational Conference on Learning Representations,
+ICLR 2025, Singapore, April 24-28, 2025.
+Jiacheng Ye, Zhihui Xie, Lin Zheng, Jiahui Gao, Zirui
+Wu, Xin Jiang, Zhenguo Li, and Lingpeng Kong.
+2025b. Dream 7b: Diffusion large language models.
+arXiv preprint arXiv:2508.15487.
+Runpeng Yu, Xinyin Ma, and Xinchao Wang. 2025.
+Dimple: Discrete diffusion multimodal large lan-
+guage model with parallel decoding. ArXiv preprint,
+abs/2505.16990.
+Weichao Zhang, Ruqing Zhang, Jiafeng Guo, Maarten
+de Rijke, Yixing Fan, and Xueqi Cheng. 2024. Pre-
+training data detection for large language models:
+A divergence-based calibration method. In Proceed-
+ings of the 2024 Conference on Empirical Methods in
+Natural Language Processing, EMNLP 2024, Miami,
+FL, USA, November 12-16, 2024, pages 5263–5274.
+Siyan Zhao, Devaansh Gupta, Qinqing Zheng, and
+Aditya Grover. 2025. d1: Scaling reasoning in diffu-
+sion large language models via reinforcement learn-
+ing. CoRR.
+Fengqi Zhu, Rongzhen Wang, Shen Nie, Xiaolu Zhang,
+Chunwei Wu, Jun Hu, Jun Zhou, Jianfei Chen,
+Yankai Lin, Ji-Rong Wen, and Chongxuan Li. 2025.
+Llada 1.5: Variance-reduced preference optimization
+for large language diffusion models. CoRR.
+Yukun Zhu, Ryan Kiros, Richard S. Zemel, Ruslan
+Salakhutdinov, Raquel Urtasun, Antonio Torralba,
+and Sanja Fidler. 2015. Aligning books and movies:
+Towards story-like visual explanations by watching
+movies and reading books. In 2015 IEEE Interna-
+tional Conference on Computer Vision, ICCV 2015,
+Santiago, Chile, December 7-13, 2015, pages 19–27.
+IEEE Computer Society.
+6863
+
+A
+Appendix
+A.1
+License
+The licenses for the datasets used in this study
+are as follows: HumanEval, MBPP, GSM8K, and
+MATH500 are released under the MIT License;
+GPQA is released under the CC BY 4.0 License;
+and Countdown and Sudoku are released under the
+Apache License 2.0.
+A.2
+In-Depth Examination of the Rigid
+Boundary Bias Phenomenon
+In Section 3, we observe that uncertainty-based
+samplers induce a rigid boundary bias in the decod-
+ing behavior of MDMs. Building on this empiri-
+cal observation, we now examine why uncertainty-
+based decoding, when applied to MDMs, so con-
+sistently gives rise to a boundary-first trajectory.
+Our analysis identifies two interacting factors that
+jointly contribute to this phenomenon: the high pre-
+dictability of boundary tokens and inherent local
+positional biases in the model.
+The first factor arises from the use of fixed train-
+ing templates in MDMs. Training sequences are
+typically augmented with explicit boundary tokens
+such as <bos> and <eos>, which appear at highly
+regular positions and with high frequency through-
+out the training corpus.
+This strong positional
+regularity makes boundary tokens structurally pre-
+dictable, leading the model to assign them high
+confidence during inference. Under uncertainty-
+based decoding, these high-confidence boundary
+positions are therefore selected for unmasking at
+the earliest decoding steps, causing both ends of
+the sequence to be fixed first and resulting in a
+boundary-first decoding pattern.
+Second, once boundary tokens are fixed, inher-
+ent local positional biases in the model’s attention
+mechanism (Wu et al., 2025b; Jiang et al., 2025)
+make it easier for the model to assign higher confi-
+dence to positions near already revealed tokens than
+on those farther away. As a result, the decoding pro-
+cess tends to propagate inward from the confirmed
+boundaries toward the center of the sequence, pro-
+ducing a characteristic “U-shaped” decoding tra-
+jectory. To test this hypothesis, we conduct a con-
+trolled intervention experiment on 100 GSM8K ex-
+amples using confidence-based decoding. Before
+decoding begins, we manually unmask a single to-
+ken at a specified relative position (25% or 75% of
+the sequence length), initializing it as a trivial token
+(e.g., a space). We then run the standard decoding
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(a) “<space>” inserted at
+25% of the sequence length.
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(b) “<space>” inserted at
+75% of the sequence length.
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(c) “the” inserted at 25% of
+the sequence length.
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(d) “the” inserted at 75% of
+the sequence length.
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(e) “.” inserted at 25% of the
+sequence length.
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(f) “.” inserted at 75% of the
+sequence length.
+Figure 6: Unmasking dynamics under anchor insertion.
+A trivial high-frequency token (e.g., space, “the”, or
+“.”) is manually unmasked before decoding at an inter-
+mediate position (25% or 75% of the sequence length).
+The resulting unmasking patterns reveal a strong local
+positional bias, with decoding trajectories propagating
+outward from the inserted anchor.
+procedure and visualize the resulting unmasking
+dynamics. As shown in Figure 6, the artificially in-
+serted token consistently acts as a new anchor in the
+decoding trajectory. During the earliest decoding
+steps, unmasking probabilities peak at anchor po-
+sitions, including the sequence boundaries and the
+inserted token, and subsequently spread to neigh-
+boring positions. The same qualitative behavior is
+observed when other frequent tokens, such as “the”
+or “.”, are used as anchors.
+A.3
+Unmasking Dynamics of
+Uncertainty-Based Samplers Across
+Datasets
+Following our observation of the rigid boundary
+bias on GSM8K using the confidence-based sam-
+pler in Section 3, we now systematically assess
+its pervasiveness across uncertainty-based decod-
+ing in MDMs.
+Specifically, we extend our vi-
+6864
+
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(a) Confidence-based
+Sam-
+pling
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(b) Entropy-based Sampling
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(c) Margin-based Sampling
+50
+60
+70
+80
+90
+Accuracy (%)
+59.1
+50.0
+55.0
+77.9
+Confidence
+Entropy
+Margin
+Semi-AR
+ 
+(d) Performance Comparison
+Figure 7: Consistent boundary-first unmasking patterns
+across various uncertainty metrics. (a-c) Visualization
+of unmasking probability for Confidence, Entropy, and
+Margin samplers on GSM8K. (d) Corresponding perfor-
+mance comparison.
+sualization of unmasking dynamics to all bench-
+marks employed in our main experiments, exam-
+ining three common uncertainty-based sampling
+criteria:
+confidence-based, entropy-based, and
+margin-based samplers. The resulting heatmaps for
+GSM8K (Figure 7), MBPP (Figure 8), HumanEval
+(Figure 9), GPQA (Figure 10), Countdown (Fig-
+ure 11), and Sudoku (Figure 12) consistently ex-
+hibit a boundary-first decoding pattern, regardless
+of the specific uncertainty metric or task domain.
+Furthermore, this uniformity suggests that the
+bias is not an artifact of a specific calculation
+method (e.g., confidence vs. entropy) but rather
+stems from the underlying probability landscape of
+the model itself. Since MDMs are typically trained
+to predict tokens in any order, they tend to exhibit
+high confidence (low entropy/ large margin) for
+syntactically deterministic tokens, such as punc-
+tuation or structural boundaries, while remaining
+uncertain about the semantically dense tokens re-
+quired for reasoning. Consequently, all uncertainty-
+based metrics inevitably prioritize these “easy” to-
+kens, leading to the observed premature unmasking
+of boundary and other easy tokens.
+Beyond the decoding dynamics themselves,
+this bias also has clear performance implications.
+Across reasoning-intensive tasks such as code
+generation and mathematical problem solving,
+uncertainty-based samplers underperform semi-
+0
+32
+64
+96
+128
+Token Index
+0
+32
+64
+96
+128
+Decoding Step
+0
+1
+Unmasking Freq.
+(a) Confidence-based
+Sam-
+pling
+0
+32
+64
+96
+128
+Token Index
+0
+32
+64
+96
+128
+Decoding Step
+0
+1
+Unmasking Freq.
+(b) Entropy-based Sampling
+0
+32
+64
+96
+128
+Token Index
+0
+32
+64
+96
+128
+Decoding Step
+0
+1
+Unmasking Freq.
+(c) Margin-based Sampling
+40
+45
+50
+Accuracy (%)
+42.4
+42.2
+42.4
+45.2
+Confidence
+Entropy
+Margin
+Semi-AR
+ 
+(d) Performance Comparison
+Figure 8: Consistent boundary-first unmasking patterns
+across various uncertainty metrics. (a-c) Visualization
+of unmasking probability for Confidence, Entropy, and
+Margin samplers on MBPP. (d) Corresponding perfor-
+mance comparison.
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(a) Confidence-based
+Sam-
+pling
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(b) Entropy-based Sampling
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(c) Margin-based Sampling
+20
+30
+40
+50
+Accuracy (%)
+27.4
+28.1
+32.3
+39.0
+Confidence
+Entropy
+Margin
+Semi-AR
+ 
+(d) Performance Comparison
+Figure 9: Consistent boundary-first unmasking patterns
+across various uncertainty metrics. (a-c) Visualization
+of unmasking probability for Confidence, Entropy, and
+Margin samplers on HumanEval. (d) Corresponding
+performance comparison.
+autoregressive methods by over 5 points on average.
+In contrast, on globally constrained planning tasks
+such as Countdown and Sudoku, uncertainty-based
+samplers outperform semi-autoregressive decoding,
+where strict left-to-right constraints prove limiting.
+These contrasting behaviors further highlight the
+central role of decoding order in determining MDM
+6865
+
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(a) Confidence-based
+Sam-
+pling
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(b) Entropy-based Sampling
+0
+64
+128
+192
+256
+Token Index
+0
+64
+128
+192
+256
+Decoding Step
+0
+1
+Unmasking Freq.
+(c) Margin-based Sampling
+25
+30
+Accuracy (%)
+27.9
+28.4
+28.4
+27.7
+Confidence
+Entropy
+Margin
+Semi-AR
+ 
+(d) Performance Comparison
+Figure 10: Consistent boundary-first unmasking pat-
+terns across various uncertainty metrics. (a-c) Visualiza-
+tion of unmasking probability for Confidence, Entropy,
+and Margin samplers on GPQA. (d) Corresponding per-
+formance comparison.
+0
+32
+64
+96
+128
+Token Index
+0
+32
+64
+96
+128
+Decoding Step
+0
+1
+Unmasking Freq.
+(a) Confidence-based
+Sam-
+pling
+0
+32
+64
+96
+128
+Token Index
+0
+32
+64
+96
+128
+Decoding Step
+0
+1
+Unmasking Freq.
+(b) Entropy-based Sampling
+0
+32
+64
+96
+128
+Token Index
+0
+32
+64
+96
+128
+Decoding Step
+0
+1
+Unmasking Freq.
+(c) Margin-based Sampling
+30
+35
+Accuracy (%)
+34.0
+33.8
+33.9
+32.6
+Confidence
+Entropy
+Margin
+Semi-AR
+ 
+(d) Performance Comparison
+Figure 11: Consistent boundary-first unmasking pat-
+terns across various uncertainty metrics. (a-c) Visualiza-
+tion of unmasking probability for Confidence, Entropy,
+and Margin samplers on Countdown. (d) Corresponding
+performance comparison.
+performance. At the same time, they reveal a key
+limitation of existing approaches: both uncertainty-
+based samplers and semi-autoregressive methods
+impose a single, fixed decoding trajectory, which
+restricts the ability of MDMs to adapt their gener-
+ation order to the structural demands of different
+tasks.
+0
+32
+64
+96
+128
+Token Index
+0
+32
+64
+96
+128
+Decoding Step
+0
+1
+Unmasking Freq.
+(a) Confidence-based
+Sam-
+pling
+0
+32
+64
+96
+128
+Token Index
+0
+32
+64
+96
+128
+Decoding Step
+0
+1
+Unmasking Freq.
+(b) Entropy-based Sampling
+0
+32
+64
+96
+128
+Token Index
+0
+32
+64
+96
+128
+Decoding Step
+0
+1
+Unmasking Freq.
+(c) Margin-based Sampling
+10
+20
+30
+Accuracy (%)
+23.8
+1.6
+26.6
+0.0
+Confidence
+Entropy
+Margin
+Semi-AR
+ 
+(d) Performance Comparison
+Figure 12: Consistent boundary-first unmasking pat-
+terns across various uncertainty metrics. (a-c) Visualiza-
+tion of unmasking probability for Confidence, Entropy,
+and Margin samplers on Sudoku. (d) Corresponding
+performance comparison.
+A.4
+Definition of Trivial Tokens
+For our analysis, we define trivial tokens as seman-
+tically uninformative, high-frequency tokens that
+appear frequently in the corpus but contribute little
+meaningful content, following the protocol estab-
+lished by Martinez et al. (2024). These tokens pri-
+marily consist of common structural symbols, punc-
+tuation marks, and a small set of function or filler
+words. Notably, although <|endoftext|> appears
+frequently in model outputs, we exclude it from this
+definition, as MDMs typically utilize it as a func-
+tional padding token during instruction tuning (Nie
+et al., 2025b). We intentionally adopt a conser-
+vative definition, restricting our scope to tokens
+that are unambiguously structural or uninforma-
+tive, to avoid conflating triviality with task-relevant
+function words. The complete list of trivial tokens
+used in our study is provided below. Note that this
+definition of “trivial tokens” is solely used for the
+empirical analysis in Section 3 to demonstrate the
+existence of the trivial-token bias in MDMs.
+List of Trivial Tokens
+<SPACE>
+\n
+\t
+.
+,
+?
+!
+:
+;
+\
+" ’ $ is the of a an
+To verify that the observed trivial-token bias is
+a robust phenomenon and is insensitive to the spe-
+6866
+
+cific definition of trivial tokens, we analyze the
+generation behavior under two extreme definitions:
+(1) expanding the list to include all common NLTK
+stopwords, and (2) restricting the list to only whites-
+pace tokens. As shown in Table 3, while the abso-
+lute percentages vary depending on the definition,
+the core conclusion remains robust: MDMs consis-
+tently generate a significantly higher proportion of
+low-information tokens compared to AR models
+across all definitions.
+Definition
+MDM
+AR
+Conservative definition (Ours)
+41.7%
+20.9%
+Expanded w/ NLTK stopwords
+49.0%
+33.7%
+Whitespace-only
+8.9%
+7.2%
+Table 3: Robustness of the trivial-token bias observation
+across different definitions. Values denote the average
+ratio of trivial tokens generated by MDM and AR.
+A.5
+Dataset Descriptions and Statistics
+We evaluate UNCODE on a diverse set of bench-
+marks covering code generation, mathematical rea-
+soning, scientific question answering, and planning
+tasks. Dataset statistics are summarized in Table 4.
+Code Generation. HumanEval (Chen et al.,
+2021) is a widely used benchmark for Python code
+generation, where models are required to complete
+function implementations from natural language
+descriptions and are evaluated using pass@1 based
+on unit tests. MBPP (Mostly Basic Programming
+Problems) (Austin et al., 2021b) evaluates code
+generation on a diverse collection of entry-level
+programming tasks, also assessed using pass@1.
+Mathematical Reasoning.
+GSM8K (Cobbe
+et al., 2021) consists of grade-school-level math
+word problems that require multi-step numer-
+ical reasoning, and performance is measured
+by exact-match accuracy on the final answer.
+MATH500 (Lightman et al., 2024) is a curated
+subset of the MATH dataset containing challenging
+competition-level problems, evaluating advanced
+mathematical reasoning via accuracy.
+Scientific Question Answering. GPQA (Rein
+et al., 2023) is a scientific QA benchmark covering
+biology, physics, and chemistry, designed to test
+domain knowledge and multi-step reasoning, with
+accuracy as the evaluation metric.
+Planning Tasks. Countdown (Nolte et al., 2024)
+is a planning-oriented task where models must con-
+struct a sequence of arithmetic operations to reach
+a target number from a given set of numbers. Su-
+Dataset
+Task Type
+#Test
+Metric
+HumanEval
+Code Generation
+164
+Pass@1
+MBPP
+Code Generation
+427
+Pass@1
+GSM8K
+Math Reasoning
+1,319
+Acc.
+MATH500
+Math Reasoning
+500
+Acc.
+GPQA
+Science QA
+448
+Acc.
+Countdown
+Planning
+1,000
+Acc.
+Sudoku
+Planning
+501
+Acc.
+Table 4: Statistics of evaluation datasets.
+doku (Ye et al., 2025a) evaluates global constraint
+satisfaction by requiring models to complete par-
+tially filled Sudoku grids. Performance on both
+planning tasks is measured by accuracy.
+A.6
+Details of Implementation
+In this subsection, we provide a detailed description
+of our experimental setup (§5) and the implementa-
+tion specifics of our proposed UNCODE.
+All experiments were conducted on four
+NVIDIA A100 GPUs with 80GB of memory.
+To ensure reproducibility, we use a fixed ran-
+dom seed of 42. During inference, the temper-
+ature is set to 0.0 to ensure deterministic gener-
+ation. Following Nie et al. (2025b), we set the
+maximum response length to 256 tokens for Hu-
+manEval, GSM8K, and GPQA; 128 tokens for
+MBPP, Countdown, and Sudoku; and 1024 tokens
+for MATH500. For the positional regularization co-
+efficient λ, we consider a small set of fixed values
+{0, 0.25, 0.5, 1.0} to control the degree of sequen-
+tial bias in decoding. When λ = 0, no positional
+trajectory prior is applied, resulting in fully order-
+agnostic decoding. Empirically, setting λ = 1.0
+yields behavior that closely resembles strictly left-
+to-right decoding. Based on these observations, we
+set λ = 0 for Sudoku to favor globally coordinated
+planning, λ = 0.25 for the remaining tasks to en-
+courage more progressive decoding, and λ = 0.5
+for Countdown. All λ values are fixed across back-
+bone models.
+Evaluation Framework. To ensure a fair and
+rigorous comparison, all baseline methods were
+evaluated using the same evaluation procedures.
+For GSM8K and GPQA, we employed the lm-
+evaluation-harness framework (Gao et al., 2024).
+For other tasks requiring specialized metrics or for-
+mats, we adopted publicly available or officially
+recommended evaluation scripts, following (Nie
+et al., 2025b; Zhao et al., 2025; Wang et al., 2025).
+Prompting Strategies. For GSM8K, GPQA,
+and MATH500, we follow Nie et al. (2025b)
+6867
+
+and use the standard prompts provided in the lm-
+evaluation-harness framework. For Sudoku, we
+follow the evaluation protocol of Zhao et al. (2025)
+and use their corresponding prompt.
+For Hu-
+manEval and MBPP, since Nie et al. (2025b) does
+not release the corresponding prompt templates, we
+adopt the prompt format from Wang et al. (2025).
+The prompt is shown below:
+Prompt for HumanEval and MBPP
+Role: You are a professional Python coding
+assistant
+Task: Complete the following function im-
+plementation strictly and clearly without
+any additional comments or explanations.
+For the Countdown task, we follow Wang et al.
+(2025) and adopt a prompt that explicitly instructs
+the model to construct a sequence of arithmetic
+operations leading to the target number, as shown
+below.
+Prompt for Countdown Task
+For the given numbers, find a sequence of
+arithmetic operations that results in the tar-
+get number. Show your reasoning and con-
+clude with "The answer is: "
+A.7
+Implementation Details of Baselines
+This subsection describes the implementation de-
+tails of the baseline decoding strategies evaluated
+in our experiments.
+Uniform Sampler. This strategy serves as the
+most basic decoding baseline for MDMs. At each
+decoding step, a fixed number of masked positions
+are selected uniformly at random and unmasked.
+Confidence-Based Sampler. Confidence-based
+decoding is one of the most widely used sampling
+strategies for MDMs and is adopted by models
+such as LLaDA (Nie et al., 2025b). At each de-
+coding step t, it assigns an unmasking priority to
+every masked position based on the model’s predic-
+tive confidence, and then selects the positions with
+the highest confidence to unmask. Formally, let
+xt denote the partially revealed sequence at step t.
+For a masked position i, the confidence score is de-
+fined as the maximum probability of the most likely
+token under the model’s predictive distribution:
+si
+conf,t = max
+v∈V pθ(v | xt, i),
+(8)
+where V denotes the vocabulary. The sampler then
+unmasks the position with the largest score. Unless
+otherwise specified, we unmask one position per
+decoding step for this sampler.
+Entropy-Based Sampler. This strategy evalu-
+ates the uncertainty of the entire predictive distribu-
+tion by using entropy as a proxy (Ben-Hamu et al.,
+2025) at each position. A lower entropy indicates a
+more peaked and confident distribution. The score
+is given by the negative entropy of the predictive
+distribution after applying the softmax function:
+sient,t =
+X
+v∈V
+pθ(v|xt, i) log pθ(v|xt, i).
+(9)
+Margin-Based Sampler. This alternative mea-
+sures the model’s uncertainty by computing the
+probability margin between the two most confident
+candidate tokens at each position (Kim et al., 2025).
+A larger margin indicates a more decisive predic-
+tion. The score is defined as:
+si
+margin,t = pθ(v1|xt, i) −pθ(v2|xt, i),
+(10)
+where v1 and v2 denote the two most likely tokens
+for position i according to the model’s predictive
+distribution pθ(· | xt, i).
+EB-Sampler. The Entropy-Bounded Sampler
+(EB-Sampler) (Ben-Hamu et al., 2025) accelerates
+generation by unmasking a variable number of to-
+kens at each step. The number of tokens unmasked
+is controlled by an error-tolerance hyperparameter
+γ, which constrains the total uncertainty to pre-
+serve generation quality. At each iteration, masked
+positions in Mt are ranked by their entropy, and
+the largest subset is selected such that the cumula-
+tive entropy, used as a proxy for joint uncertainty,
+remains bounded as follows:
+X
+i∈Mt
+H(pθ(·|xt, i)) −max H(pθ(·|xt)) ≤γ,
+(11)
+where H(·) denotes the token entropy. This strat-
+egy enables more aggressive parallel decoding
+when predictions are confident. Following Ben-
+Hamu et al. (2025), we set γ = 0.01 for all datasets
+in our experiments.
+Semi-Autoregressive Sampler.
+The semi-
+autoregressive sampler extends the confidence-
+based sampler by introducing a partial left-to-right
+constraint. Specifically, the response is divided into
+multiple contiguous blocks of equal size. Within
+each block, unmasking follows the confidence-
+based sampling strategy, allowing tokens to be re-
+vealed in an order-agnostic manner. Across blocks,
+6868
+
+decoding proceeds sequentially from left to right,
+so that each block is generated conditioned on all
+previously completed blocks. In our experiments,
+we set the number of blocks to 8 for all tasks.
+Fast-dLLM. Fast-dLLM (Wu et al., 2025a)
+builds upon the semi-autoregressive decoding
+paradigm and further introduces a confidence-
+aware parallel decoding scheme together with a
+KV-cache design tailored for MDMs to accelerate
+inference. Unlike samplers that unmask a fixed
+number of tokens at each step, Fast-dLLM dynami-
+cally unmasks all positions whose predictive confi-
+dence exceeds a predefined threshold ϵ. As a result,
+the number of tokens revealed at each decoding
+step is adaptive and varies with the model’s con-
+fidence distribution. Formally, at decoding step
+t, all masked positions i satisfying the following
+condition are selected for unmasking:
+max
+v∈V pθ(v | xt, i) > ϵ,
+(12)
+are unmasked in parallel.
+Following Wu et al.
+(2025a), we set the confidence threshold to ϵ = 0.9
+in all experiments.
+A.8
+Details on Integrating with Efficient
+Decoding Strategies
+In this subsection, we provide implementation de-
+tails for integrating UNCODE with three efficient
+decoding strategies, as discussed in Section 6.3.
+For τ-leaping (Chen et al., 2023), we follow the
+original protocol and unmask a fixed number of to-
+kens (τ) at each decoding step. In our experiments,
+we set τ = 2. The specific positions to unmask are
+selected according to the calibrated score used by
+UNCODE. For the EB-Sampler (Ben-Hamu et al.,
+2025), we replace the entropy-based priority with
+our calibrated score for ranking masked positions
+(Eq. 5), while retaining the original cumulative bud-
+get constraint defined by the error tolerance. We
+set the error tolerance parameter to γ = 0.01 in all
+experiments. For Fast-dLLM (Wu et al., 2025a),
+we apply the unmasking threshold to the calibrated
+score used in our main experiments, rather than to
+the raw predictive confidence, enabling positions
+with high calibrated scores to be unmasked in par-
+allel. We set the threshold to ϵ = 0.6. To further
+accelerate decoding, we adopt the prefix KV cache
+mechanism proposed in Fast-dLLM.
+0.0
+0.25
+0.5
+1.0
+Value of 
+20
+25
+30
+35
+40
+45
+Accuracy (%)
+Sudoku
+Average
+(w/o Sudoku)
+0
+10
+20
+30
+(a) Effect of λ.
+8
+10
+15
+100
+Value of 
+43.5
+44.0
+44.5
+45.0
+45.5
+Accuracy (%)
+Sudoku
+Average
+(w/o Sudoku)
+25
+30
+35
+40
+(b) Effect of α.
+Figure 13: Analysis of decoding behavior under differ-
+ent λ and α settings. We find that λ substantially affects
+the induced decoding trajectory, whereas performance
+remains largely stable across a broad range of α, sug-
+gesting that UNCODE is not sensitive to the clipping
+threshold. To examine task-specific effects, we report
+average results across non-Sudoku datasets (blue) and
+separately for Sudoku (red).
+A.9
+Decoding Behavior under Different
+Positional and Clipping Settings
+In this subsection, we analyze the effect of two
+key hyperparameters in UNCODE on decoding be-
+havior, namely the positional coefficient λ and the
+clipping threshold α. Rather than identifying a
+single optimal setting, this analysis aims to charac-
+terize the decoding behaviors induced by different
+parameter choices. The results are summarized in
+Figure 13.
+Figure 13(a) illustrates that the positional coeffi-
+cient λ governs the degree of sequential inductive
+bias in decoding. For most tasks except Sudoku,
+moderate values (e.g., λ = 0.25) strike a balance
+between order-agnostic generation and progressive
+decoding, leading to strong overall performance.
+In contrast, larger values impose a stronger left-to-
+right constraint, which reduces decoding flexibility
+and can degrade performance on tasks that bene-
+fit from parallel or non-sequential reasoning. For
+globally constrained planning tasks such as Su-
+doku, smaller values of λ are preferable, as they
+avoid prematurely enforcing a sequential decoding
+order. These results suggest that different tasks
+naturally align with different decoding trajectories,
+underscoring the importance of decoding order in
+MDMs, consistent with observations in Kim et al.
+(2025).
+Figure 13(b) examines the effect of the clipping
+threshold α. Performance remains stable across a
+broad range of values, except for extreme settings
+(e.g., α = 100), indicating that UNCODE is robust
+to the choice of α. In our experiments, we fix α to
+10 for simplicity and consistency across tasks.
+6869
+
+Method
+HumanEval
+MBPP
+GSM8K
+Math500
+GPQA
+Countdown
+Sudoku
+Avg.
+Confidence
+27.4
+42.4
+59.1
+20.8
+27.9
+34.0
+23.8
+33.6
+L-2-R + Sem. Prior
+40.2
+45.2
+78.2
+32.8
+27.9
+35.7
+0.0
+37.1
+Semi-AR + Sem. Prior
+40.2
+44.7
+78.8
+33.2
+27.5
+32.8
+0.0
+36.7
+UNCODE
+42.1
+47.8
+79.2
+34.8
+29.2
+36.3
+29.8
+42.7
+Table 5: Comparison of UNCODE against fixed-order baselines augmented with the semantic prior.
+A.10
+Validation of Non-Autoregressive
+Flexibility in UNCODE
+To further isolate the performance contribution of
+the Positional Trajectory Prior and verify whether
+UNCODE leverages the flexibility of MDMs, we
+compare it against strict fixed-order baselines aug-
+mented with the semantic informativeness prior.
+Specifically, we evaluate a pure left-to-right strat-
+egy (L-2-R + Sem. Prior) and a block-wise left-to-
+right strategy (Semi-AR + Sem. Prior), reporting
+the results across all seven benchmarks on LLaDA-
+8B-Instruct.
+As detailed in Table 5, UNCODE significantly
+outperforms both fixed-order baselines (L-2-R +
+Sem. and Semi-AR + Sem.) by 5.6% and 6.0%,
+respectively. This confirms that the dynamic de-
+coding trajectory of the Positional Trajectory Prior
+enables UNCODE to leverage non-autoregressive
+flexibility of MDMs, which is essential for superior
+performance.
+A.11
+Long-Sequence Generalization
+To evaluate whether the proposed method general-
+izes to longer sequences, we extend the maximum
+generation length to 512 while keeping all other
+settings unchanged. Table 6 summarizes the results
+on LLaDA-8B-Instruct.
+As shown in Table 6, UNCODE exhibits robust
+performance when the generation length is ex-
+tended, achieving an average score of 42.6%. This
+indicates that the proposed priors effectively guide
+the MDM to leverage the expanded generation ca-
+pacity, preserving a substantial performance advan-
+tage over the baselines.
+A.12
+Inference Overhead Analysis
+To assess the computational efficiency of UN-
+CODE, we provide quantitative latency measure-
+ments comparing our approach against the standard
+confidence-based sampler. As shown in Table 7, in-
+troducing both the Positional Trajectory Prior and
+the Semantic Informativeness Prior yields only a
+negligible per-step overhead.
+0.0
+0.25
+0.5
+1.0
+Value of 
+2.2
+2.3
+2.4
+2.5
+Pred Entropy
+Pred Entropy
+Performance
+Pearson r=-0.99
+60
+65
+70
+75
+80
+Performance
+(a) GSM8K.
+0.0
+0.25
+0.5
+1.0
+Value of 
+1.6
+1.8
+2.0
+2.2
+Pred Entropy
+Pred Entropy
+Performance
+Pearson r=-0.99
+10
+20
+30
+40
+Performance
+(b) HumanEval.
+Figure 14: Correlation analysis between Mean Predic-
+tive Entropy and task performance across varying λ
+values. The blue curve denotes mean predictive entropy
+(left axis), while the red curve indicates performance
+(right axis) on (a) GSM8K and (b) HumanEval. The
+strong negative correlation (r ≈−0.99) empirically val-
+idates that lower mean predictive entropy serves as a
+reliable indicator of higher reasoning quality.
+A.13
+Adaptive λ Selection via Mean
+Predictive Entropy Minimization
+In this subsection, we propose an adaptive strategy
+for selecting the positional coefficient λ. We first
+define the mean predictive entropy and show that
+it correlates well with generation quality across
+different λ settings. We then leverage entropy min-
+imization to select λ automatically, without requir-
+ing manual tuning or ground-truth labels.
+Definition of Mean Predictive Entropy. For an
+individual data instance, we define the sequence-
+level predictive entropy as the average entropy of
+the predictive distributions over all masked tokens
+at each decoding step. Specifically, for each de-
+coding step t, we compute the entropy Ht(i) for
+each masked token i ∈Mt, where Mt is the set of
+masked positions at step t, and Ht(i) denotes the
+entropy of the predictive distribution for token i at
+step t. The sequence-level predictive entropy for a
+given instance is then computed by averaging the
+entropies across all decoding steps t:
+Hseq = 1
+T
+T
+X
+t=1
+1
+|Mt|
+X
+i∈Mt
+Ht(i),
+(13)
+where T is the total number of decoding steps, and
+|Mt| is the number of masked positions at step t.
+6870
+
+Method
+HumanEval
+MBPP
+GSM8K
+Math500
+GPQA
+Countdown
+Sudoku
+Avg.
+Confidence
+18.9
+40.5
+58.2
+24.0
+27.2
+22.8
+0.0
+27.4
+Semi-AR
+37.8
+39.1
+75.4
+33.2
+26.8
+27.3
+0.0
+34.2
+Fast-dLLM
+38.4
+40.3
+75.7
+34.2
+26.8
+33.8
+0.0
+35.6
+UNCODE
+43.3
+48.2
+79.9
+34.4
+30.4
+35.7
+26.0
+42.6
+Table 6: Performance under an extended maximum generation length of 512.
+Method
+MBPP
+Math500
+Confidence
+1.03
+48.88
+UNCODE
+1.04
+49.08
+Table 7: Latency comparison (seconds per iteration) on
+LLaDA-8B-Instruct with 4×A100 GPUs.
+Next, to compute the mean predictive entropy
+at the dataset level, we extend this definition to
+the entire dataset. Let Dcal = {x1, . . . , xN} be
+the calibration subset of N instances. The mean
+predictive entropy is then defined as the average of
+the sequence-level predictive entropies across all
+instances in the calibration set:
+¯
+H = 1
+N
+N
+X
+j=1
+H(j)
+seq,
+(14)
+where H(j)
+seq is the sequence-level predictive entropy
+for the j-th instance. The resulting ¯H serves as
+a proxy for the overall generation quality, which
+is used for selecting the guidance weight λ in the
+subsequent strategy.
+Empirical Validation of the Minimum En-
+tropy Principle. To assess whether mean predic-
+tive entropy is a reliable proxy for output quality,
+we perform a correlation analysis on a calibration
+subset of 100 instances randomly sampled from
+GSM8K and HumanEval, as shown in Figure 14.
+For each candidate λ ∈Λ = {λ1, . . . , λK}, we
+decode the entire subset and compute: (i) the mean
+predictive entropy ¯H(λ), and (ii) the correspond-
+ing task metric (Accuracy for GSM8K, pass@1
+for HumanEval). We then compute the Pearson
+correlation coefficient (r) between the mean pre-
+dictive entropy and task performance across the
+K candidate λ values. As shown in Figure 14(a)
+for GSM8K and Figure 14(b) for HumanEval, we
+observe a strong negative correlation, indicating
+that lower mean entropy corresponds to better task
+performance. This finding motivates entropy mini-
+mization as a label-free criterion for selecting λ.
+Adaptive Selection via Entropy Minimization.
+Based on the observation above, we select the
+guidance weight λ by minimizing the mean pre-
+dictive entropy on a small calibration set.
+Let
+Dcal = {x1, . . . , xN} denote a small subset of
+validation inputs and Λ = {λ1, . . . , λK} be the
+candidate set. For each λ ∈Λ, we decode Dcal
+to obtain outputs {y(j)
+λ }N
+j=1. We then compute the
+mean predictive entropy:
+¯
+H(λ) = 1
+N
+N
+X
+j=1
+Hseq(y(j)
+λ ),
+(15)
+where Hseq(y) denotes the average predictive en-
+tropy of a decoded sequence. Finally, we select the
+entropy-minimizing weight:
+λ∗= arg min
+λ∈Λ
+¯
+H(λ).
+(16)
+By selecting λ via entropy minimization on a small
+calibration subset, this strategy avoids manual tun-
+ing and does not require ground-truth labels during
+selection.
+Robustness Under Limited Calibration Data.
+We further evaluate the robustness of the adaptive
+strategy under limited calibration data. Specifically,
+we randomly sample only 10 instances to form a
+calibration set and compute the mean predictive en-
+tropy for each candidate λ, alongside the model’s
+corresponding performance. As shown in Table 9,
+even when relying on merely 10 instances to es-
+timate the mean predictive entropy, our adaptive
+strategy consistently selects the optimal λ. This
+demonstrates that entropy minimization remains
+effective even with highly limited unlabeled cali-
+bration data.
+A.14
+Impact of Calibration Corpus
+In this subsection, we investigate the impact of
+the calibration corpus D′ on UNCODE through a
+series of controlled ablation studies. Specifically,
+we examine two key dimensions: (1) the source of
+the calibration corpus, and (2) the corpus size. The
+results are summarized in Table 8.
+We first assess the robustness of UNCODE across
+varied calibration corpora. Specifically, we com-
+pare the default C4 (16GB) against two alterna-
+tives: (i) a domain-specific mixture of BookCorpu-
+sOpen and OpenR1-Math-220K (denoted as Book
+6871
+
+Calibration Corpus
+HumanEval
+MBPP
+GSM8K
+MATH500
+GPQA
+Countdown
+Sudoku
+Avg.
+LLaDA-Instruct-8B
+Book & Code (2015; 2025)
+42.1
+47.3
+79.2
+35.0
+27.9
+36.3
+24.4
+41.7
+SlimPajama (2023)
+40.9
+47.1
+79.1
+35.2
+28.4
+36.3
+30.8
+42.5
+C4 (16 GB) (2020)
+42.1
+47.8
+79.2
+34.8
+29.2
+36.3
+29.8
+42.7
+C4 (50 GB) (2020)
+42.2
+47.8
+79.2
+36.0
+29.0
+36.3
+30.0
+42.9
+C4 (200 GB) (2020)
+42.9
+47.8
+79.2
+36.2
+29.0
+36.3
+30.0
+43.1
+C4 (400 GB) (2020)
+42.9
+47.8
+79.2
+36.2
+29.0
+36.3
+30.0
+43.1
+Table 8: Evaluation of UNCODE across various calibration corpora. ‘Book & Code’ refers to a combination of
+BookCorpusOpen and OpenR1-Math-220K datasets. C4 (x GB) denotes a sampled subset of the C4 dataset, where
+x represents the size of the subset in gigabytes.
+λ
+HumanEval
+MBPP
+GSM8K
+Math500
+GPQA
+Countdown
+Sudoku
+Avg.
+0.00
+7.93 (2.397)
+33.5 (1.538)
+59.7 (2.565)
+4.0 (2.482)
+29.0 (3.852)
+34.0 (2.532)
+29.8 (1.288)
+28.28
+0.25
+42.1 (1.465)
+47.8 (0.495)
+79.2 (2.014)
+34.8 (1.187)
+29.2 (3.821)
+34.7 (1.641)
+0.2 (2.366)
+38.29
+0.50
+41.5 (1.556)
+47.8 (0.497)
+78.9 (2.017)
+34.0 (1.318)
+28.8 (3.871)
+36.3 (1.529)
+0.0 (2.791)
+38.19
+1.00
+40.2 (1.575)
+45.4 (0.543)
+77.7 (2.041)
+34.4 (1.266)
+28.4 (3.895)
+35.7 (1.506)
+0.0 (2.474)
+37.93
+Table 9: Adaptive λ selection with only 10 unlabeled calibration instances. Values in parentheses are mean predictive
+entropy measured on the 10-instance calibration subset.
+Methods & LLMs
+HumanEval
+MBPP
+GSM8K
+MATH500
+GPQA
+Countdown
+Sudoku
+Avg.
+Autoregressive LLMs
+LLaMA-3.1-8B-Instruct
+53.1
+56.7
+83.9
+23.8
+31.0
+27.0
+0.0
+39.4
+Mistral-7B-Instruct
+43.9
+37.0
+49.4
+7.2
+28.1
+22.7
+0.0
+26.9
+Qwen-2.5-7B-Instruct
+78.1
+62.8
+71.9
+64.2
+32.8
+7.7
+0.0
+45.3
+LLaDA-8B-Instruct
+Uniform (2021a)
+15.2
+24.6
+48.8
+15.0
+29.0
+14.4
+2.2
+21.3
+Confidence (2022)
+27.4
+42.4
+59.1
+20.8
+27.9
+34.0
+23.8
+33.6
+Entropy (2025b)
+28.1
+42.2
+60.9
+11.2
+28.4
+33.8
+1.6
+29.4
+Margin (2025)
+32.3
+42.4
+58.3
+19.8
+28.4
+33.9
+26.6
+34.5
+EB-Sampler (2025)
+26.8
+43.3
+61.2
+11.6
+29.5
+34.1
+24.2
+33.0
+Semi-AR† (2025b)
+39.0
+45.2
+77.9
+27.6
+27.7
+32.6
+0.0
+35.7
+Fast-dLLM† (2025a)
+35.4
+44.7
+78.2
+28.4
+28.6
+23.6
+0.0
+34.1
+UNCODE
+42.1
+47.8
+79.2
+34.8
+29.2
+36.3
+29.8
+42.7
+LLaDA-1.5-8B
+Uniform (2021a)
+17.7
+23.0
+52.7
+20.0
+28.1
+15.8
+3.4
+23.0
+Confidence (2022)
+28.1
+43.3
+60.7
+22.8
+28.7
+33.8
+24.8
+34.6
+Entropy (2025b)
+32.9
+44.0
+60.3
+11.2
+26.6
+34.7
+0.2
+30.0
+Margin (2025)
+25.0
+43.3
+57.5
+23.2
+28.4
+31.8
+33.6
+34.7
+EB-Sampler (2025)
+32.9
+43.6
+61.1
+13.4
+26.6
+34.6
+0.2
+30.3
+Semi-AR† (2025b)
+39.6
+46.8
+80.7
+34.2
+26.1
+32.4
+0.0
+37.1
+Fast-dLLM† (2025a)
+37.2
+46.1
+80.8
+31.2
+27.9
+23.6
+0.0
+36.7
+UNCODE
+46.3
+49.9
+82.2
+37.4
+28.8
+35.0
+33.4
+44.7
+Dream-v0-Instruct-7B
+Uniform (2021a)
+17.7
+31.9
+31.5
+17.0
+32.8
+4.1
+0.2
+19.3
+Confidence (2022)
+27.4
+41.5
+45.4
+20.8
+35.3
+19.8
+0.0
+27.2
+Entropy (2025b)
+26.2
+42.4
+36.8
+17.0
+33.5
+19.0
+0.0
+25.0
+Margin (2025)
+28.1
+41.7
+48.3
+22.0
+35.7
+19.0
+0.0
+27.8
+EB-Sampler (2025)
+26.8
+43.6
+37.5
+17.4
+33.3
+18.6
+0.0
+25.3
+Fast-dLLM (2025a)
+12.8
+23.9
+46.1
+19.2
+34.4
+11.6
+0.0
+21.1
+UNCODE
+57.9
+56.4
+76.4
+37.8
+33.9
+18.4
+0.0
+40.1
+Table 10: Experimental results on seven different benchmarks. The best score is highlighted in bold, and the
+second-best is underlined. Following prior practices (Nie et al., 2025b), we use 4-shot settings for GSM8K and
+MATH500, 5-shot for GPQA and Sudoku, 0-shot for HumanEval and MBPP, and 3-shot for Countdown. Methods
+marked with † denote samplers using the Semi-AR strategy. All settings follow prior works (Nie et al., 2025b; Zhao
+et al., 2025; Wang et al., 2025) for fair comparison.
+6872
+
+& Code), and (ii) SlimPajama (Soboleva et al.,
+2023). Across these settings, we observe compa-
+rable average performance. These results indicate
+that UNCODE is generally robust to the selection
+of calibration sources.
+Next, we investigate the impact of corpus size
+on performance stability. We sample three larger
+subsets from C4, sized 50GB, 200GB, and 400GB.
+We observe that while increasing the corpus size
+initially improves accuracy, the performance gains
+saturate beyond the 200GB scale. We hypothesize
+that the estimated token distribution converges once
+the corpus reaches a sufficient size; consequently,
+further enlarging the dataset provides marginal ben-
+efit for the calibration signal. Overall, we observe
+that UNCODE benefits from improved calibration,
+but does not exhibit strong sensitivity to the specific
+calibration corpus used.
+A.15
+Results on Dream
+To further evaluate the generalization capability of
+our approach, we apply UNCODE to Dream-v0-
+Instruct-7B (Ye et al., 2025b), a state-of-the-art
+MDM developed independently of the LLaDA se-
+ries (Nie et al., 2025a). As shown in Table 10, UN-
+CODE consistently achieves the best performance
+across all evaluated tasks, with an average score
+of 40.1%. This represents a substantial improve-
+ment over the strongest uncertainty-based base-
+line, margin-based sampling, which reaches 27.8%.
+In particular, UNCODE achieves 57.9% on Hu-
+manEval and 76.4% on GSM8K, demonstrating
+strong performance in both code generation and
+mathematical reasoning tasks.
+These results indicate that UNCODE is not lim-
+ited to a specific model family, but instead ad-
+dresses a broader limitation inherent to masked
+diffusion models. Across different architectures,
+we consistently observe a tendency for uncertainty-
+based decoding to prioritize boundary tokens early
+in the decoding process and to favor semantically
+trivial tokens. This behavior suggests a system-
+atic bias in how unmasking priorities are assigned,
+rather than an artifact of a particular model or im-
+plementation. By incorporating both positional
+awareness and semantic awareness into the sam-
+pling process, UNCODE mitigates these biases and
+enables the model to allocate its generation capac-
+ity more effectively. As a result, the decoding pro-
+cess is better aligned with the underlying reasoning
+or planning structure of the task, leading to more
+coherent and logically ordered outputs.
+A.16
+Case Study
+In this subsection, we present three case studies,
+as shown in Figure 15, Figure 16, and Figure 17,
+drawn from the GSM8K (mathematical reasoning)
+and HumanEval (code generation) benchmarks.
+The first two cases are from GSM8K, and the third
+is from HumanEval. These case studies compare
+the baseline confidence-based sampling strategy
+with our proposed UNCODE approach.
+As shown in Table 15, due to rigid boundary
+bias, the confidence sampler prematurely commits
+to a final answer of 2975 at an early stage, before
+computing the correct total number of classes and
+students. Once this premature decision is made,
+subsequent tokens are forced to justify the incor-
+rect conclusion rather than revising it, resulting in
+a fluent yet numerically incorrect solution. In con-
+trast, UNCODE incorporates the Positional Trajec-
+tory Prior, which delays emitting the final answer
+and first completes the intermediate computations
+(e.g., 25 weekday classes, 8 Saturday classes, 33
+total classes, 495 students, and the resulting rev-
+enue). The decoding trajectory allocates more steps
+to these intermediate reasoning tokens, allowing
+for a coherent, step-by-step derivation that leads to
+the correct answer of 7425.
+As illustrated in Table 16, due to the trivial token
+bias, the confidence sampler decodes trivial tokens
+at critical steps (e.g., the comma is decoded at step
+121, at position 76, instead of the 7 at position 75),
+thereby locking the reasoning space. This leads to
+errors, such as the comma being used as a thou-
+sand separator, causing invalid representations like
+0,700. Consequently, the model fails to predict 700,
+ultimately resulting in a calculation error. In con-
+trast, UNCODE effectively suppresses the selection
+of trivial tokens, enabling the model to arrive at the
+correct solution.
+For the HumanEval benchmark, as shown in Ta-
+ble 17, the baseline’s rigid boundary bias often
+leads to premature sequence termination and in-
+complete code, resulting in a significant waste of
+the generation budget. In contrast, UNCODE mit-
+igates this issue by incorporating position-aware
+weighting and content-aware confidence calibra-
+tion, which introduce an inductive bias toward se-
+quential reasoning. As a result, UNCODE ensures
+that complete and correct code is generated before
+sequence termination.
+These case studies demonstrate that explicit tra-
+jectory control and trivial token suppression are
+6873
+
+Confidence
+(Baseline)
+Uɴᴄᴏᴅᴇ
+(Ours)
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Case1: Mathematical Reasoning (GSM8K)
+Judy teaches 5 dance classes, every day, on the weekdays and 8 classes on Saturday. If each class has 15
+students and she charges $15.00 per student, how much money does she make in 1 week?
+Question 
+Ground 
+Truth 
+7,425
+Judy teaches 5 dance classes every day on weekdays, so in one week, she teaches 5 * 5 = 25 classes . 
+Each class has 15 students, so in one week, she teaches 25 * 15 = 375 students . She teaches 5 dance 
+classes every day, so in one week, she teaches 5 * 15 = 75 students . Additionally, she teaches 8 classes on 
+Saturday. Each class has 15 students , so on Saturday, she teaches 8 * 15 = 120 students . In total, in one 
+week, she teaches 75 + 120 = 195 students . Since she charges $15.00 per student, she makes 195 * 15 = 
+$2975.00 in 1 week. #### 2,975   <|eot_id|> <|endoftext|>
+Judy teaches 5 dance classes every day on weekdays, for a total of 5 days * 5 classes/day = 25 classes . On 
+Saturday, she teaches 8 classes . So in one week, she teaches a total of 25 + 8 = 33 classes . Each class has 
+15 students, so she teaches 33 * 15 = 495 students . She charges $15 per student, so she makes 495 * 15 = 
+$7425.00 in one week. #### 7,425   <|eot_id|> <|endoftext|>
+Figure 15: A case study on the GSM8K dataset illustrating how the generation order impacts mathematical reasoning.
+The baseline’s premature commitment to an incorrect answer highlights a critical failure mode, whereas UNCODE’s
+coherent process leads to the correct solution. The generation timing is color-coded as follows: Early Stage ,
+Middle Stage , and Late Stage .
+critical for complex problem solving. By mitigat-
+ing both the rigid boundary bias and the trivial
+token bias, UNCODE enables the model to produce
+outputs that are more coherent, accurate, and com-
+plete.
+6874
+
+Confidence
+(Baseline)
+Uɴᴄᴏᴅᴇ
+(Ours)
+ 
+  
+Case 2: Mathematical Reasoning (GSM8K)
+Jill gets paid $20 per hour to teach and $30 to be a cheerleading coach. If she works 50 weeks a year, 35 
+hours a week as a teacher and 15 hours a week as a coach, what's her annual salary?
+Question 
+Ground 
+Truth 
+57,500
+To calculate Jill’s annual salary, we need to break down her earnings into two parts: her earnings as a 
+teacher and her earnings as a cheerleading coach.
+1. Earnings as a teacher:
+    - Hourly rate: $20
+    - Hours per week: 35
+    - Weekly earnings as a teacher: $20/hour * 35 hours/week = $700/week
+2. Earnings as a cheerleading coach:
+    - Hourly rate: $30
+    - Hours per week: 15
+    - Weekly earnings as a cheerleading coach: $30/hour * 15 hours/week = \$450/week
+3. Total weekly earnings:
+    - Total weekly earnings: $700/week + $450/week = $1,150/week
+4. Total annual earnings:
+    - Number of weeks per year: 50
+    - Total annual earnings: $1,150/week * 50 weeks/year = $57,500/year
+Therefore, Jill’s annual salary is $57,500.
+Step  Pos.  Token    Confidence   
+Cur token   121    76         ,              0.79   
+Candidate   121    74        $              0.63
+Candidate   121    75        7              0.42
+1. Weekly earnings from teaching:
+    - Jill earns $20 per hour and works 35 hours a week.
+    - Weekly earnings from teaching = $20/hour * 35 hours/week = $ 3 , 050
+2. Weekly earnings from coaching:
+    - Jill earns $30 per hour and works 15 hours a week.
+    - Weekly earnings from coaching = $30/hour * 15 hours/week = $450
+3. Total weekly earnings:
+    - Total weekly earnings = Teaching earnings + Coaching earnings
+    - Total weekly earnings = $3,050 + $450 = $3,500
+4. Annual earnings:
+    - There are 50 weeks in a year.
+    - Annual earnings = $3,500/week * 50 weeks/year = $175,000
+Therefore, Jill's annual salary is $175,000.
+Figure 16: A case study on the GSM8K dataset illustrating how the trivial token bias impacts mathematical reasoning.
+The baseline decodes trivial tokens at critical steps (e.g., the comma is decoded at step 121, at position 76, instead
+of the 7 at position 75), locking the reasoning space (e.g., the comma, used as a thousand separator, causes failure as
+0,700 is invalid), and leading to incorrect predictions. In contrast, UNCODE suppresses the selection of trivial tokens,
+resulting in the correct solution. The generation timing is color-coded as follows: Early Stage and Middle Stage .
+6875
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Case 3: Code Generation (HumanEval)
+Implement the body of the Python function ‘has_close_elements’. The function should take a list of floats 
+and a threshold, and return ‘True’ if any two distinct elements in the list are closer than the threshold, and 
+‘False’ otherwise.
+Task 
+Confidence
+(Baseline)
+Uɴᴄᴏᴅᴇ
+(Ours)
+Token Allocation: Code (~52 tokens) vs. Prematurely Generated EOS (~204 tokens)
+Token Allocation: Code (~178 tokens) vs. EOS Generated After Reasoning (~78 tokens)
+ 
+ 
+```python
+def has_close_elements(numbers: List[float], threshold: float) -> bool:
+      for num in numbers:
+           for other in numbers:
+                 if abs(num - other)  <  threshold:
+                       return True
+      return False
+```    <|endoftext|> <|endoftext|> ... (many EOS tokens)
+```python
+from typing import List
+def has_close_elements(numbers: List[float], threshold: float) -> bool:
+      """ (A rigorous docstring with examples is generated here) """
+      for i in range(len(numbers)):
+            for j in range(i + 1, len(numbers)):
+                  if abs(numbers[i] - numbers[j])  <  threshold:
+                        return True
+      return False
+```     <|endoftext|> <|endoftext|>
+Figure 17: Case study on the HumanEval dataset for code generation. The baseline method exhibits catastrophic
+failure due to the premature generation of trivial tokens, whereas UNCODE, through explicit trajectory control,
+produces robust and complete code. The generation timing is color-coded as follows: Early Stage , Middle Stage ,
+and Late Stage .
+6876

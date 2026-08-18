@@ -1,0 +1,147 @@
+{
+ "generated": "2026-08-11",
+ "source_table": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/cast_eval_spec_union9/union9_four_arm_table.json",
+ "convention": "plain acc (both source papers' headline convention); mixed acc_norm map is internal-only",
+ "ast_ckpt_identity": {
+  "path": "models/AST-official-LLaMA2-7B-2of4",
+  "n_tensors": 291,
+  "slorb_lora_tensors": 0,
+  "total_size_bytes": 13476831232,
+  "implied_params_bf16_B": 6.738415616,
+  "verdict": "AST-NAIVE (no SLoRB, dense param count). Correct anchors: AST-7 57.68 (T2 Sparse row), Wiki PPL 5.82 (T3 AST-Naive col).",
+  "doc_bugs": [
+   "SPEC.md:164 and appendix.tex:324 anchor this Naive ckpt to Boosted numbers 58.62 / 5.69",
+   "SPEC.md:160 mislabels 55.91 as AST-7 while :159 lists the CAST seven"
+  ]
+ },
+ "q1_cast7_matched": {
+  "ours_plain_acc": 54.369809257587896,
+  "se": 0.5005795051017959,
+  "paper_55_91_recomputed": 55.9057,
+  "delta_pp": -1.535890742412107,
+  "z": -3.0682253803015254,
+  "n_negative_per_task_deltas": 7,
+  "sign_test_p": 0.015625,
+  "mains_invalid_mixed_delta_pp": 3.3604050643675194,
+  "verdict": "WORSE. -1.54 pp, z=-3.07, all 7 tasks negative. Fully unexplained residual."
+ },
+ "q2_ast7": {
+  "ours_plain_acc": 57.597603221367606,
+  "se": 0.5998348046915724,
+  "vs_naive_57_69": -0.09529677863239527,
+  "vs_boosted_58_61": -1.0080967786323924,
+  "vs_spec_57_94": -0.3423967786323914,
+  "verdict": "reproduces its OWN (Naive) row to -0.095 pp; the -1.02 pp vs 58.62 is an anchor error"
+ },
+ "q3_offset": {
+  "ppl_axis": {
+   "ours_4096": 5.912485323191749,
+   "ours_2048": 6.342995328699181,
+   "archived_6_3430_seqlen": 2048,
+   "naive_anchor": 5.82,
+   "boosted_anchor": 5.69,
+   "residual_vs_naive_at_4096_pct": 1.5890949002018702,
+   "verdict": "the '+11% harness tax' = wrong anchor column (5.69 Boosted vs 5.82 Naive) + wrong seqlen (2048 vs mandated 4096). Corrected residual +1.59%."
+  },
+  "accuracy_axis": {
+   "dense_vs_AST_T2_dense_pp": -0.0038929664900919647,
+   "ast_ckpt_vs_AST_T2_naive_pp": -0.09529677863239527,
+   "verdict": "NO accuracy-side offset exists. Two independent anchors within 0.1 pp. Offset explains PPL ONLY; cannot excuse the CAST-7 shortfall."
+  }
+ },
+ "q4_degeneracy": {
+  "boolq": {
+   "n": 3270,
+   "gold_true": 2033,
+   "gold_false": 1237,
+   "majority_class_floor_pct": 62.1713,
+   "arms": {
+    "dense_ref": {
+     "acc": 77.7676,
+     "bal_acc": 73.7796,
+     "pred_maj_frac_pct": 72.2,
+     "mcnemar_p_vs_const": 1.38e-67,
+     "verdict": "above floor"
+    },
+    "cast_7500": {
+     "acc": 69.2355,
+     "bal_acc": 60.0176,
+     "pred_maj_frac_pct": 90.3,
+     "recall_minority_pct": 22.15,
+     "mcnemar_p_vs_const": 2.61e-42,
+     "verdict": "above floor but STRONGLY SKEWED"
+    },
+    "wanda": {
+     "acc": 68.1957,
+     "bal_acc": 59.6087,
+     "pred_maj_frac_pct": 87.6,
+     "recall_minority_pct": 24.33,
+     "mcnemar_p_vs_const": 2.64e-23,
+     "verdict": "above floor but STRONGLY SKEWED"
+    },
+    "ast_official": {
+     "acc": 72.9052,
+     "bal_acc": 65.9126,
+     "pred_maj_frac_pct": 82.6,
+     "recall_minority_pct": 37.19,
+     "mcnemar_p_vs_const": 2.95e-52,
+     "verdict": "above floor"
+    }
+   }
+  },
+  "rte": {
+   "n": 277,
+   "gold_entail": 146,
+   "gold_not": 131,
+   "majority_class_floor_pct": 52.7076,
+   "arms": {
+    "dense_ref": {
+     "acc": 63.1769,
+     "bal_acc": 61.853,
+     "mcnemar_p_vs_const": 0.000636,
+     "verdict": "above floor"
+    },
+    "cast_7500": {
+     "acc": 74.7292,
+     "bal_acc": 74.302,
+     "mcnemar_p_vs_const": 7.12e-09,
+     "verdict": "above floor but +11.55 pp ABOVE ITS OWN DENSE TEACHER - anomalous"
+    },
+    "wanda": {
+     "acc": 53.4296,
+     "bal_acc": 50.7634,
+     "pred_entail_frac_pct": 99.3,
+     "recall_minority_pct": 1.53,
+     "mcnemar_b_c": "2/0",
+     "mcnemar_p_vs_const": 0.5,
+     "binom_p": 0.429,
+     "verdict": "COLLAPSED: near-constant always-entail predictor, AT the majority floor, NOT SCORING"
+    },
+    "ast_official": {
+     "acc": 66.426,
+     "bal_acc": 66.2292,
+     "mcnemar_p_vs_const": 0.000905,
+     "verdict": "above floor"
+    }
+   }
+  }
+ },
+ "q6_boolq_exclusion_effect_pp": {
+  "dense_ref": {
+   "ast7": -2.9971461773915635
+  },
+  "cast_7500": {
+   "ast7": -1.8083199780248407
+  },
+  "wanda": {
+   "ast7": -3.2847344170392887
+  },
+  "ast_official": {
+   "ast7": -2.5512659258984556
+  }
+ },
+ "rte_carries_entire_cast_vs_ast_gap": {
+  "union9_gap_pp": 0.9186,
+  "gap_dropping_rte_pp": -0.0045
+ }
+}

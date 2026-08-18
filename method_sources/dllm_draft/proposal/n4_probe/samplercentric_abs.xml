@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/Lzbm/Ius9pE/Htv5cx5NBVigSkk</id>
+  <title>arXiv Query: search_query=&amp;id_list=2602.19619&amp;start=0&amp;max_results=10</title>
+  <updated>2026-08-16T03:43:20Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=10&amp;id_list=2602.19619" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>10</opensearch:itemsPerPage>
+  <opensearch:totalResults>1</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2602.19619v2</id>
+    <title>Is Your Diffusion Sampler Actually Correct? A Sampler-Centric Evaluation of Discrete Diffusion Language Models</title>
+    <updated>2026-05-27T22:15:27Z</updated>
+    <link href="https://arxiv.org/abs/2602.19619v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2602.19619v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Discrete diffusion language models (dLLMs) provide a fast and flexible alternative to autoregressive models (ARMs) via iterative denoising with parallel updates. However, their evaluation is challenging: existing metrics conflate denoiser approximation error with sampler-induced error from the sampling dynamics, a problem that does not arise for ARMs whose autoregressive sampling exactly reflects the learned probability model. We introduce a sampler-centric oracle framework that replaces learned denoisers with an exact Hidden Markov Model posterior derived from a ground-truth Markov chain, isolating sampler-induced error in a controlled setting. We show that few-step discrete diffusion samplers are not distributionally correct even under an oracle denoiser, with transition-level mismatch that vanishes only as the number of steps approaches the sequence length. Moreover, improvements in negative log-likelihood (NLL), generative perplexity (GenPPL), or MAUVE do not imply correct sampling. Code is available at https://luhantang.github.io/dllm_sampler</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2026-02-23T09:06:13Z</published>
+    <arxiv:comment>30 pages, 10 figures</arxiv:comment>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Luhan Tang</name>
+    </author>
+    <author>
+      <name>Longxuan Yu</name>
+    </author>
+    <author>
+      <name>Shaorong Zhang</name>
+    </author>
+    <author>
+      <name>Greg Ver Steeg</name>
+    </author>
+  </entry>
+</feed>

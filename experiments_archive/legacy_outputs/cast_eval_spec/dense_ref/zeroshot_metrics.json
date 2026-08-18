@@ -1,0 +1,107 @@
+{
+  "model": "llama2-7b-dense",
+  "harness_version": "b86c479",
+  "lm_eval_pip_version": "0.4.8",
+  "n_fewshot": {
+    "hellaswag": 0,
+    "race": 0,
+    "piqa": 0,
+    "winogrande": 0,
+    "arc_easy": 0,
+    "arc_challenge": 0,
+    "openbookqa": 0
+  },
+  "batch_size": "auto",
+  "add_bos_token": false,
+  "chat_template": null,
+  "dtype": "bfloat16",
+  "tasks": [
+    "hellaswag",
+    "race",
+    "piqa",
+    "winogrande",
+    "arc_easy",
+    "arc_challenge",
+    "openbookqa"
+  ],
+  "primary_metric_per_task": {
+    "hellaswag": "acc_norm",
+    "arc_easy": "acc_norm",
+    "arc_challenge": "acc_norm",
+    "openbookqa": "acc_norm",
+    "piqa": "acc",
+    "winogrande": "acc",
+    "race": "acc"
+  },
+  "per_task": {
+    "hellaswag": {
+      "primary_metric": "acc_norm",
+      "n_samples": 10042,
+      "task_version": 1.0,
+      "acc": 0.5713005377414858,
+      "acc_stderr": 0.004938787067611919,
+      "acc_norm": 0.7597092212706632,
+      "acc_norm_stderr": 0.0042638681610422825
+    },
+    "race": {
+      "primary_metric": "acc",
+      "n_samples": 1045,
+      "task_version": 2.0,
+      "acc": 0.39712918660287083,
+      "acc_stderr": 0.015143553050563242,
+      "acc_norm": null,
+      "acc_norm_stderr": null
+    },
+    "piqa": {
+      "primary_metric": "acc",
+      "n_samples": 1838,
+      "task_version": 1.0,
+      "acc": 0.778563656147987,
+      "acc_stderr": 0.009687616456840284,
+      "acc_norm": 0.7889009793253536,
+      "acc_norm_stderr": 0.009521377378734118
+    },
+    "winogrande": {
+      "primary_metric": "acc",
+      "n_samples": 1267,
+      "task_version": 1.0,
+      "acc": 0.6929755327545383,
+      "acc_stderr": 0.012963688616969423,
+      "acc_norm": null,
+      "acc_norm_stderr": null
+    },
+    "arc_easy": {
+      "primary_metric": "acc_norm",
+      "n_samples": 2376,
+      "task_version": 1.0,
+      "acc": 0.7634680134680135,
+      "acc_stderr": 0.008719840797175834,
+      "acc_norm": 0.7466329966329966,
+      "acc_norm_stderr": 0.008924765424529378
+    },
+    "arc_challenge": {
+      "primary_metric": "acc_norm",
+      "n_samples": 1172,
+      "task_version": 1.0,
+      "acc": 0.431740614334471,
+      "acc_stderr": 0.014474591427196025,
+      "acc_norm": 0.46245733788395904,
+      "acc_norm_stderr": 0.014570144495075503
+    },
+    "openbookqa": {
+      "primary_metric": "acc_norm",
+      "n_samples": 500,
+      "task_version": 1.0,
+      "acc": 0.316,
+      "acc_stderr": 0.020812359515855822,
+      "acc_norm": 0.442,
+      "acc_norm_stderr": 0.022231970696321195
+    }
+  },
+  "zeroshot_avg_primary": 0.6113525616132878,
+  "zeroshot_avg_acc": 0.5644539344356237,
+  "zeroshot_avg_acc_norm": null,
+  "source_results_json": "results_2026-08-11T07-12-47.605472.json",
+  "source_model_args": "pretrained=/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama2-7b,dtype=bfloat16,parallelize=True,trust_remote_code=True,add_bos_token=False,trust_remote_code=True",
+  "note": "primary_metric follows the standard sparsity-literature convention: acc_norm for hellaswag/arc_easy/arc_challenge/openbookqa, acc for piqa/winogrande/race. zeroshot_avg_primary is the mean of the per-task primary metrics; the other two averages are provided for transparency."
+}

@@ -1,0 +1,96 @@
+{
+  "b12_rung": "Dctl",
+  "operator": "svd",
+  "coefficients": "svd",
+  "coarsen_map": {
+    "q_proj": 1,
+    "k_proj": 1,
+    "v_proj": 1,
+    "o_proj": 1,
+    "gate_proj": 1,
+    "up_proj": 1,
+    "down_proj": 8
+  },
+  "density_two_matmul_deployment_pct": 55.03549526392487,
+  "live_branch_params": 326098944,
+  "psi_density_points_given_back": 0.6156433227801581,
+  "union9_mean_primary_pp": 60.871853639523316,
+  "loss_vs_R0_pp": 1.5616463604766864,
+  "tau_pp": 1.79,
+  "pass_bar": 60.6435,
+  "qualifies_for_rank_claim": "control",
+  "verdict": "CONTROL ARM -- compare to rung P, do not read as a ladder verdict",
+  "per_task": {
+    "boolq": {
+      "n_scored": 3270,
+      "expected_n": 3270,
+      "metric": "acc",
+      "value": 0.6431192660550459
+    },
+    "rte": {
+      "n_scored": 277,
+      "expected_n": 277,
+      "metric": "acc",
+      "value": 0.6462093862815884
+    },
+    "hellaswag": {
+      "n_scored": 10042,
+      "expected_n": 10042,
+      "metric": "acc_norm",
+      "value": 0.7153953395737901
+    },
+    "race": {
+      "n_scored": 1045,
+      "expected_n": 1045,
+      "metric": "acc",
+      "value": 0.4076555023923445
+    },
+    "piqa": {
+      "n_scored": 1838,
+      "expected_n": 1838,
+      "metric": "acc",
+      "value": 0.7627856365614799
+    },
+    "winogrande": {
+      "n_scored": 1267,
+      "expected_n": 1267,
+      "metric": "acc",
+      "value": 0.6621941594317285
+    },
+    "arc_easy": {
+      "n_scored": 2376,
+      "expected_n": 2376,
+      "metric": "acc_norm",
+      "value": 0.7706228956228957
+    },
+    "arc_challenge": {
+      "n_scored": 1172,
+      "expected_n": 1172,
+      "metric": "acc_norm",
+      "value": 0.4564846416382253
+    },
+    "openbookqa": {
+      "n_scored": 500,
+      "expected_n": 500,
+      "metric": "acc_norm",
+      "value": 0.414
+    }
+  },
+  "n_scored_assertion": "PASSED -- all 9 tasks, per-task n_scored == expected",
+  "compute_caps": "10.0",
+  "gpus": "0,1,2,3",
+  "verify_2of4_pre_rc": 2,
+  "is_dense_on_disk": true,
+  "harness": "lm_eval 0.4.8, --model hf, dtype=bfloat16, parallelize=True, add_bos_token=False, --batch_size auto, --num_fewshot 0, --seed 0",
+  "comparable_only_to": "cells measured on compute_cap 10.0 (sm_100/B200)",
+  "anchors_on_disk": {
+    "R0_hard_fold_DENSE": 62.4335,
+    "R1_hard_drop_2of4": 57.0678
+  },
+  "must_not_claim": [
+    "That this is a training-time rank ablation. It is post-hoc surgery on a checkpoint trained with SLoRB_k=16 and cannot bound what training with a larger k would give.",
+    "Any placement of this rung in a 2:4 column -- it is FOLDED and dense on disk.",
+    "Pareto superiority over CAST-repro pure 2:4, which scores 62.0919 at density EXACTLY 50.0% (below every rung). Unreachable by construction.",
+    "Any reading of this row without stating n=1 and that tau is 33.4% of the entire R0-R1 window (5.3657 pp)."
+  ]
+}

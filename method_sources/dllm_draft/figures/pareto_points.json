@@ -1,0 +1,228 @@
+{
+  "heplus": {
+    "points": [
+      {
+        "label": "scaffold Tiny",
+        "cost": 2734.109756097561,
+        "quality": 0.0,
+        "family": "scaffold",
+        "nfe": 14.646341463414634,
+        "cost_coverage": "164/164",
+        "frontier": true
+      },
+      {
+        "label": "scaffold Small",
+        "cost": 9729.09756097561,
+        "quality": 0.043,
+        "family": "scaffold",
+        "nfe": 47.140243902439025,
+        "cost_coverage": "164/164",
+        "frontier": true
+      },
+      {
+        "label": "Dream nfe16",
+        "cost": 10963.512195121952,
+        "quality": 0.0,
+        "family": "vanilla",
+        "nfe": 16.0,
+        "frontier": false
+      },
+      {
+        "label": "scaffold Medium",
+        "cost": 13980.036585365853,
+        "quality": 0.177,
+        "family": "scaffold",
+        "nfe": 64.09146341463415,
+        "cost_coverage": "164/164",
+        "frontier": true
+      },
+      {
+        "label": "Dream nfe32",
+        "cost": 21927.024390243903,
+        "quality": 0.0,
+        "family": "vanilla",
+        "nfe": 32.0,
+        "frontier": false
+      },
+      {
+        "label": "scaffold Large",
+        "cost": 34659.37804878049,
+        "quality": 0.177,
+        "family": "scaffold",
+        "nfe": 104.42073170731707,
+        "cost_coverage": "164/164",
+        "frontier": false
+      },
+      {
+        "label": "Dream nfe64",
+        "cost": 43854.04878048781,
+        "quality": 0.018,
+        "family": "vanilla",
+        "nfe": 64.0,
+        "frontier": false
+      },
+      {
+        "label": "plain-SFT nfe64",
+        "cost": 43854.04878048781,
+        "quality": 0.0,
+        "family": "plain-SFT",
+        "nfe": 64.0,
+        "frontier": false
+      },
+      {
+        "label": "Dream nfe128",
+        "cost": 87708.09756097561,
+        "quality": 0.14,
+        "family": "vanilla",
+        "nfe": 128.0,
+        "frontier": false
+      },
+      {
+        "label": "plain-SFT nfe128",
+        "cost": 87708.09756097561,
+        "quality": 0.0488,
+        "family": "plain-SFT",
+        "nfe": 128.0,
+        "frontier": false
+      },
+      {
+        "label": "Dream nfe256",
+        "cost": 175416.19512195123,
+        "quality": 0.555,
+        "family": "vanilla",
+        "nfe": 256.0,
+        "frontier": true
+      },
+      {
+        "label": "Dream nfe512",
+        "cost": 350832.39024390245,
+        "quality": 0.707,
+        "family": "vanilla",
+        "nfe": 512.0,
+        "frontier": true
+      },
+      {
+        "label": "plain-SFT nfe512",
+        "cost": 350832.39024390245,
+        "quality": 0.2195,
+        "family": "plain-SFT",
+        "nfe": 512.0,
+        "frontier": false
+      },
+      {
+        "label": "Dream nfe1024",
+        "cost": 701664.7804878049,
+        "quality": 0.707,
+        "family": "vanilla",
+        "nfe": 1024.0,
+        "frontier": false
+      }
+    ],
+    "step_cost": 685.219512195122
+  },
+  "mbppplus": {
+    "points": [
+      {
+        "label": "scaffold Tiny",
+        "cost": 3590.2195767195767,
+        "quality": 0.0,
+        "family": "scaffold",
+        "nfe": 31.849206349206348,
+        "cost_coverage": "378/378",
+        "frontier": true
+      },
+      {
+        "label": "scaffold Small",
+        "cost": 4684.798941798942,
+        "quality": 0.156,
+        "family": "scaffold",
+        "nfe": 40.735449735449734,
+        "cost_coverage": "378/378",
+        "frontier": true
+      },
+      {
+        "label": "scaffold Medium",
+        "cost": 7080.071428571428,
+        "quality": 0.354,
+        "family": "scaffold",
+        "nfe": 56.74867724867725,
+        "cost_coverage": "378/378",
+        "frontier": true
+      },
+      {
+        "label": "Dream nfe16",
+        "cost": 9656.084656084657,
+        "quality": 0.0,
+        "family": "vanilla",
+        "nfe": 16.0,
+        "frontier": false
+      },
+      {
+        "label": "Dream nfe32",
+        "cost": 19312.169312169313,
+        "quality": 0.008,
+        "family": "vanilla",
+        "nfe": 32.0,
+        "frontier": false
+      },
+      {
+        "label": "scaffold Large",
+        "cost": 21587.95238095238,
+        "quality": 0.325,
+        "family": "scaffold",
+        "nfe": 90.46031746031746,
+        "cost_coverage": "378/378",
+        "frontier": false
+      },
+      {
+        "label": "Dream nfe64",
+        "cost": 38624.33862433863,
+        "quality": 0.029,
+        "family": "vanilla",
+        "nfe": 64.0,
+        "frontier": false
+      },
+      {
+        "label": "Dream nfe128",
+        "cost": 77248.67724867725,
+        "quality": 0.233,
+        "family": "vanilla",
+        "nfe": 128.0,
+        "frontier": false
+      },
+      {
+        "label": "Dream nfe256",
+        "cost": 154497.3544973545,
+        "quality": 0.545,
+        "family": "vanilla",
+        "nfe": 256.0,
+        "frontier": true
+      },
+      {
+        "label": "Dream nfe512",
+        "cost": 308994.708994709,
+        "quality": 0.68,
+        "family": "vanilla",
+        "nfe": 512.0,
+        "frontier": true
+      },
+      {
+        "label": "plain-SFT nfe512",
+        "cost": 308994.708994709,
+        "quality": 0.2434,
+        "family": "plain-SFT",
+        "nfe": 512.0,
+        "frontier": false
+      },
+      {
+        "label": "Dream nfe1024",
+        "cost": 617989.417989418,
+        "quality": 0.68,
+        "family": "vanilla",
+        "nfe": 1024.0,
+        "frontier": false
+      }
+    ],
+    "step_cost": 603.505291005291
+  }
+}

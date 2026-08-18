@@ -1,0 +1,1245 @@
+ 
+ TAD: Temporal-Aware Trajectory Self-Distillation for Fast and Accurate Diffusion LLM 
+ Report GitHub Issue 
+ × 
+ Title: 
+ Content selection saved. Describe the issue below: 
+ Description: 
+ Submit without GitHub 
+ Submit in GitHub 
+ arXiv is now an independent nonprofit! 
+ Learn more 
+ × 
+ Back to arXiv 
+ Why HTML? 
+ Report Issue 
+ Back to Abstract 
+ Download PDF 
+ Abstract 
+ 1 Introduction 
+ 2 Preliminaries 
+ 3 Method 
+ 3.1 Motivation 
+ 3.2 Trajectory Collection via Privileged Information 
+ 3.3 Temporal-Aware Self-Distillation 
+ 4 Experiment 
+ 4.1 Experimental Details 
+ 4.2 Main Results 
+ 4.3 Ablation Study 
+ 5 Related Work 
+ 5.1 Diffusion Large Language Models 
+ 5.2 Inference Acceleration for dLLMs 
+ 6 Limitations 
+ 7 Conclusion 
+ References 
+ A Proof of Theoretical Analysis 
+ A.1 Equivalence of Joint KL Divergence and Expected Cross-Entropy 
+ Notation. 
+ Remark. 
+ B Algorithm 
+ C More Implementation Details 
+ C.1 Training Details 
+ Sequence Length. 
+ C.2 Evaluation Details 
+ C.2.1 Evaluation Metrics 
+ C.2.2 Evaluation Configurations 
+ D More Experiment Results 
+ D.1 Impact of Privileged Information on Trajectory Collection 
+ D.2 Throughput Analysis 
+ License: arXiv.org perpetual non-exclusive license
+arXiv:2605.09536v1 [cs.CL] 10 May 2026 
+ TAD: Temporal-Aware Trajectory Self-Distillation for Fast and Accurate Diffusion LLM 
+ Haoyang Zhou 
+ Li Kong 
+ Shijie Ren 
+ Xiting Wang 
+ Shuang Liang 
+ Guowei Wang 
+ Zhenxuan Pan 
+ Abstract 
+ Diffusion large language models (dLLMs) offer a promising paradigm for parallel text generation, but in practice they face an accuracy-parallelism trade-off, where increasing tokens per forward (TPF) often degrades generation quality. Existing acceleration methods often gain speed at the cost of accuracy. To address this limitation, we propose TAD, a Temporal-Aware trajectory self-Distillation framework. During data construction, we condition a teacher model on both the prompt and the ground-truth response to generate decoding trajectories, recording the intermediate masked states throughout the process. Based on how many decoding steps remain before each masked token is revealed, we partition masked positions into near and distant subsets. For near tokens, we train the student with a hard cross-entropy loss using the teacher trajectory tokens as labels, encouraging confident predictions for tokens that are about to be decoded. For distant tokens, we apply a soft KL divergence loss between the teacher and student token distributions, providing softer supervision and preserving future planning knowledge. This temporal-aware partition naturally gives rise to two deployment configurations: a Quality model that prioritizes accuracy and a Speed model that favors more aggressive acceleration. Experiments show that TAD consistently improves the accuracy-parallelism trade-off. On LLaDA, it raises average accuracy from 46.2% to 51.6% with the Quality model and average AUP from 46.2 to 257.1 with the Speed model. Our code is available at: https://github.com/BHmingyang/TAD . 
+ 1 Gaoling School of Artificial Intelligence, Renmin University of China 
+ 2 Ant Group 
+ * Corresponding author 
+ 1 Introduction 
+ Diffusion large language models (dLLMs)  2 ; 27 ; 33 ; 36 ; 30 have recently emerged as a promising alternative to Autoregressive (AR) language models. Unlike AR models that generate tokens strictly from left to right, dLLMs inherently support bidirectional attention and parallel generation of multiple tokens. Despite this theoretical potential, achieving high parallelism in practice remains a challenge  19 . In each forward pass, dLLMs predict masked tokens independently, ignoring the sequential dependencies of natural language  42 . This mismatch leads to a substantial decline in generation quality when decoding multiple tokens simultaneously. To preserve robust performance, existing open-source dLLMs  30 ; 47 often apply conservative decoding schedules requiring hundreds of denoising steps, which exposes a critical gap between potential parallelism and realized throughput. 
+ Figure 1 : TAD achieves competitive accuracy on math and code benchmarks, significantly improving the Accuracy under Parallelism (AUP)  32 compared to baselines like d3LLM  32 and dParallel  8 . 
+ To narrow this gap, recent studies have explored both training-free  14 ; 42 ; 44 ; 29 and training-based methods  8 ; 48 ; 32 ; 39 for few-step parallel decoding. Training-free methods offer plug-and-play acceleration, but their effectiveness is bounded by the capacity of the base model and often suffer quality degradation under aggressive decoding  24 . Training-based methods can push parallelism further by finetuning the model for fast decoding, typically through trajectory distillation, as in dParallel  8 and d3LLM  32 . However, these gains often come at the cost of generation quality due to two key limitations. First, standard trajectory collection conditions solely on the prompt, meaning the quality of the generated trajectories is strictly upper-bounded by the base model’s inherent reasoning capacity. This self-generation bottleneck prevents the model from learning knowledge beyond its current limits. Second, existing methods do not fully use the temporal information of decoding: they either apply the cross-entropy loss to all masked tokens  32 , which can force early decisions on inherently uncertain positions, or ignore supervision on distant tokens  8 , which removes useful signals about future content. 
+ Motivated by these limitations, we propose TAD, a Temporal-Aware trajectory self-Distillation framework for dLLMs. To improve trajectory quality, we adapt the privileged-information strategy  51 ; 17 ; 35 to dLLMs in which the teacher and student share the same backbone, while the teacher receives the ground-truth response as additional privileged information. This design enables the teacher to generate high-quality decoding trajectories, from which we extract the intermediate masked states for subsequent training. To better utilize the temporal structure of decoding, we partition masked positions by how many decoding steps remain before they are revealed. We apply cross-entropy to near tokens using teacher trajectory tokens as labels, encouraging confident predictions for tokens that will be decoded soon. For distant tokens, we use a KL divergence objective to align the student with the teacher distribution, providing a smoothed learning signal that avoids overfitting. This temporal-aware design yields two flexible deployment configurations: a Quality model that prioritizes accuracy and a Speed model that favors more aggressive acceleration. 
+ We evaluate TAD on math and code generation tasks using LLaDA  30 and Dream  47 . Comprehensive experiments show that our approach effectively improves the accuracy-parallelism trade-off. For instance, when applied to LLaDA (Fig.  1 ), TAD-LLaDA-Speed achieves a 6 × 6\times speedup while improving the accuracy from 38% to 42% on HumanEval  7 . Furthermore, across all evaluated tasks, TAD achieves the best average accuracy under parallelism (AUP) scores. 
+ Our main contributions are as follows: 
+ • 
+ We adapt the privileged-information strategy to dLLMs by leveraging ground-truth as privileged information to generate high-quality trajectories for distillation. 
+ • 
+ We propose a temporal-aware trajectory self-distillation framework to partition masked positions based on their decoding steps, applying cross-entropy to near tokens to maximize throughput and soft KL divergence to distant tokens to preserve sequence dependencies. 
+ • 
+ We conduct extensive experiments and show that TAD improves the accuracy-parallelism trade-off, surpassing the average accuracy of the base models while achieving the highest Accuracy Under Parallelism (AUP) scores. 
+ 2 Preliminaries 
+ Masked Diffusion Language Models (MDLMs). 
+MDLMs  2 ; 36 ; 30 formulate text generation as a probabilistic process comprising forward corruption and reverse denoising. Given a clean token sequence 𝐱 𝟎 = ( x 0 1 , … , x 0 L ) \mathbf{x_{0}}=(x_{0}^{1},\ldots,x_{0}^{L}) , the forward process constructs intermediate states by replacing tokens with the special token [MASK] . For a corruption level t ∼ 𝒰 ⁡ ( 0 , 1 ) t\sim\mathcal{U}(0,1) , the sequence 𝐱 t \mathbf{x}_{t} is partially masked with each position being masked with probability t t . The conditional distribution for 𝐱 t \mathbf{x}_{t} is: 
+ q ⁡ ( 𝐱 t ∣ 𝐱 0 ) = ∏ i = 1 L q ⁡ ( x t i ∣ x 0 i ) , where  ​ q ​ ( x t i ∣ x 0 i ) = { 1 − t , if  ​ x t i = x 0 i t , if  ​ x t i = [MASK] . q(\mathbf{x}_{t}\mid\mathbf{x}_{0})=\prod_{i=1}^{L}q(x_{t}^{i}\mid x_{0}^{i}),\quad\text{where }q(x_{t}^{i}\mid x_{0}^{i})=\begin{cases}1-t,&\text{if }x_{t}^{i}=x_{0}^{i}\\
+t,&\text{if }x_{t}^{i}=\texttt{[MASK]}\end{cases}. 
+ (1) 
+ The reverse denoising process reconstructs the clean sequence by employing a parameterized model p θ p_{\theta} that estimates the conditional distribution of the masked tokens given 𝐱 t \mathbf{x}_{t} . This enables the parallel prediction of all masked positions: 
+ p θ ( 𝐱 0 ∣ 𝐱 t ) = ∏ i : x t i = [MASK] p θ ( x 0 i ∣ 𝐱 t ) . p_{\theta}(\mathbf{x}_{0}\mid\mathbf{x}_{t})=\prod_{i:x_{t}^{i}=\texttt{[MASK]}}p_{\theta}(x_{0}^{i}\mid\mathbf{x}_{t}). 
+ (2) 
+ The model is optimized by minimizing the negative log-likelihood over these masked tokens  30 : 
+ ℒ ( θ ) = − 𝔼 t ∼ 𝒰 ( 0 , 1 ) , 𝐱 0 ∼ p data , 𝐱 t ∼ q ( ⋅ ∣ 𝐱 0 , t ) [ 1 t ∑ i 𝟏 [ x t i = [MASK] ] log p θ ( x 0 i ∣ 𝐱 t ) ] . \mathcal{L}(\theta)=-\mathbb{E}_{t\sim\mathcal{U}(0,1),\;\mathbf{x}_{0}\sim p_{\text{data}},\;\mathbf{x}_{t}\sim q(\cdot\mid\mathbf{x}_{0},t)}\left[\frac{1}{t}\sum_{i}\mathbf{1}[x_{t}^{i}=\texttt{[MASK]}]\log p_{\theta}(x_{0}^{i}\mid\mathbf{x}_{t})\right]. 
+ (3) 
+ Here, 𝟏 ​ [ ⋅ ] \mathbf{1}[\cdot] denotes the indicator function, which ensures the loss is computed only for masked tokens. 
+ The Factorization Gap in Parallel Decoding. 
+Parallel decoding relies on the independence assumption in Equation  2 . However, the true posterior distribution rarely factorizes. Let ℳ ⁡ ( 𝐱 t ) \mathcal{M}(\mathbf{x}_{t}) denote the set of K K masked positions and 𝐱 0 ℳ \mathbf{x}_{0}^{\mathcal{M}} denote the corresponding clean tokens. Using the chain rule of probability for an arbitrary decoding order ( m 1 , … , m K ) (m_{1},\ldots,m_{K}) , the true joint distribution is: 
+ p ∗ ​ ( 𝐱 0 ℳ ∣ 𝐱 t ) = ∏ k = 1 K p ∗ ​ ( x 0 m k ∣ 𝐱 t , x 0 m 1 , … , x 0 m k − 1 ) . p^{\ast}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t})=\prod_{k=1}^{K}p^{\ast}(x_{0}^{m_{k}}\mid\mathbf{x}_{t},x_{0}^{m_{1}},\ldots,x_{0}^{m_{k-1}}). 
+ (4) 
+ This equation captures the sequential dependencies among tokens. Since the training objective in Equation  3 optimizes each position individually, the resulting model ignores these dependencies. This mismatch can be formulated as the factorization gap 19 : 
+ Δ gap ( 𝐱 t ) = D KL ( p ∗ ( 𝐱 0 ℳ ∣ 𝐱 t ) ∥ ∏ i ∈ ℳ p ∗ ( x 0 i ∣ 𝐱 t ) ) . \Delta_{\text{gap}}(\mathbf{x}_{t})\;=\;D_{\text{KL}}\!\left(p^{\ast}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t})\;\Big\|\;\prod_{i\in\mathcal{M}}p^{\ast}(x_{0}^{i}\mid\mathbf{x}_{t})\right). 
+ (5) 
+ While the gap is manageable when predicting only a few tokens, it expands significantly during aggressive parallel decoding and causes a severe drop in generation quality  42 ; 19 . 
+ 3 Method 
+ In this section, we present the Temporal Aware Self-Distillation (TAD) framework. We begin in Section 3.1 by introducing our motivation. Section 3.2 details a trajectory collection mechanism that utilizes ground-truth as privileged information to sample high-quality intermediate states. Finally, Section 3.3 introduces our temporal-aware distillation strategy in detail. 
+ Figure 2 : Overview of the TAD framework. The pipeline consists of two primary phases. Left (Trajectory Collection via Privileged Information): A teacher model ( θ T \theta_{T} ), conditioned on the prompt q q and ground-truth sequence a a , decodes exactly one token per step. Right (Temporal-Aware Self-Distillation): The masked positions are spatially partitioned into a near subset (N) and a distant subset (D) based on a predefined window δ \delta . The student model ( θ S \theta_{S} ) is optimized using a hard cross-entropy objective on the near tokens to maximize parallel decoding throughput, and a soft KL divergence objective on the distant tokens to align with the teacher distribution. 
+ 3.1 Motivation 
+ The factorization gap in Eq.  5 represents a fundamental limitation of parallel decoding in dLLMs. Even a perfect marginal learner still incurs Δ gap ​ ( 𝐱 t ) > 0 \Delta_{\text{gap}}(\mathbf{x}_{t})>0 whenever the masked set contains contextually dependent tokens  19 . To reduce this gap, a factorized model should internalize the dependency structure into its marginals by learning from the joint distribution (Eq.  4 ). We therefore consider a teacher model that performs token-by-token (TBT) decoding through a strict remasking strategy, which constructs a sequential joint distribution along a specific decoding path: 
+ p θ T T ​ B ​ T ​ ( 𝐱 0 ℳ ∣ 𝐱 t , q ) = ∏ k = 1 K p θ T ​ ( x 0 m k ∣ 𝐱 t , x 0 m 1 , … , x 0 m k − 1 , q ) , p_{\theta_{T}}^{TBT}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t},q)=\prod_{k=1}^{K}p_{\theta_{T}}(x_{0}^{m_{k}}\mid\mathbf{x}_{t},x_{0}^{m_{1}},\ldots,x_{0}^{m_{k-1}},q), 
+ (6) 
+ where m k m_{k} denotes the position index of the token unmasked at the k k -th decoding step. Our objective is to align the student distribution p θ S ​ ( 𝐱 0 ℳ ∣ 𝐱 t , q ) p_{\theta_{S}}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t},q) with this sequential distribution by minimizing their expected divergence over a set of trajectories τ \tau : 
+ min θ S 𝔼 𝐱 t ∼ τ [ D KL ( p θ T T ​ B ​ T ( 𝐱 0 ℳ ∣ 𝐱 t , q ) ∥ p θ S ( 𝐱 0 ℳ ∣ 𝐱 t , q ) ) ] . \min_{\theta_{S}}\mathbb{E}_{\mathbf{x}_{t}\sim\tau}\left[D_{\text{KL}}\left(p_{\theta_{T}}^{TBT}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t},q)\parallel p_{\theta_{S}}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t},q)\right)\right]. 
+ (7) 
+ As formally proved in Appendix A.1 , this joint divergence mathematically simplifies to the expected sum of token-wise cross-entropies along the decoding trajectory: 
+ min θ S 𝔼 𝐱 t ∼ τ ∑ k = 1 K 𝔼 x < k ∼ p θ T T ​ B ​ T [ − ∑ x 0 m k p θ T ( x 0 m k ∣ 𝐱 t , x < k , q ) log p θ S ( x 0 m k ∣ 𝐱 t , q ) ] . \min_{\theta_{S}}\mathbb{E}_{\mathbf{x}_{t}\sim\tau}\sum_{k=1}^{K}\mathbb{E}_{x_{<k}\sim p_{\theta_{T}}^{TBT}}\left[-\sum_{x_{0}^{m_{k}}}p_{\theta_{T}}(x_{0}^{m_{k}}\mid\mathbf{x}_{t},x_{<k},q)\log p_{\theta_{S}}(x_{0}^{m_{k}}\mid\mathbf{x}_{t},q)\right]. 
+ (8) 
+ However, translating this theoretical objective into an effective training framework still faces two challenges. First, standard TBT decoding conditioned solely on the prompt q q is strictly upper-bounded by the base model’s reasoning capabilities. Constrained by this boundary, the model lacks the capacity to reliably explore correct paths in complex tasks. Second, the conditional targets in Equation  8 are often highly peaked (Fig.  3(a) ), as the teacher relies on the preceding context x < k x_{<k} . Imposing these deterministic labels across all masked positions forces the student model to guess distant tokens before establishing the necessary local context, which may cause overfitting. The TAD framework addresses these challenges through privileged information guidance and temporal partitioning (Fig.  2 ). 
+ (a) Teacher’s per-step confidence on collected data. 
+ (b) Student confidence on collected data. 
+ Figure 3 : 
+ (a) The average per-step confidence reaches 0.93 for the LLaDA teacher and 0.88 for the Dream, confirming that the conditional targets in
+Equation  8 are highly peaked.
+ (b) The selection of the spatial partition window δ \delta is guided by the student’s confidence decay on the teacher’s predicted tokens. We derive two configurations based on this decay curve: δ q ​ u ​ a ​ l ​ i ​ t ​ y \delta_{quality} is set at the relative step where the student’s confidence drops to 0.5, and δ s ​ p ​ e ​ e ​ d \delta_{speed} is set where the confidence degrades to 0.2.
+ 3.2 Trajectory Collection via Privileged Information 
+ Inspired by recent self-distillation work  51 , we introduce a data collection mechanism guided by privileged information to address the trajectory quality challenge identified in Section  3.1 . Instead of relying solely on the prompt q q , we provide the teacher model with the ground-truth sequence a a as privileged information. To obtain the intermediate states of these trajectories for student optimization, we constrain the teacher to perform a discrete token-by-token rollout over T T decoding steps. Let 𝐱 s \mathbf{x}_{s} denote the intermediate masked state at decoding step s s , where s ∈ { 1 , 2 , … , T } s\in\{1,2,\ldots,T\} . The initial step consists entirely of the prompt and mask tokens. At each step s s , the teacher computes the conditional probability p θ T ​ ( x 0 i ∣ 𝐱 s , q , a ) p_{\theta_{T}}(x_{0}^{i}\mid\mathbf{x}_{s},q,a) for all currently masked positions i ∈ ℳ ⁡ ( 𝐱 s ) i\in\mathcal{M}(\mathbf{x}_{s}) . To capture the sequential dependencies, we employ a strict remasking strategy that unmasks one token per step. We select the target position m s m_{s} by identifying the token with the highest confidence: 
+ m s = arg ​ max i ∈ ℳ ⁡ ( 𝐱 s ) ⁡ max v ​ p θ T ​ ( x 0 i = v ∣ 𝐱 s , q , a ) , m_{s}=\operatorname*{arg\,max}_{i\in\mathcal{M}(\mathbf{x}_{s})}\max_{v}p_{\theta_{T}}(x_{0}^{i}=v\mid\mathbf{x}_{s},q,a), 
+ (9) 
+ where v v represents a token from the vocabulary. After selecting m s m_{s} and determining its corresponding token x ^ m s = arg ⁡ max v ​ p θ T ​ ( x 0 m s = v ∣ 𝐱 s , q , a ) \hat{x}^{m_{s}}=\arg\max_{v}p_{\theta_{T}}(x_{0}^{m_{s}}=v\mid\mathbf{x}_{s},q,a) , we transition to the subsequent state 𝐱 s + 1 \mathbf{x}_{s+1} by replacing the mask at m s m_{s} with x ^ m s \hat{x}^{m_{s}} . 
+ We record the intermediate states and the selected tokens produced throughout this sequential procedure to construct the training trajectory τ priv = { ( 𝐱 s , m s , x ^ m s ) } s = 1 T \tau_{\text{priv}}=\{(\mathbf{x}_{s},m_{s},\hat{x}^{m_{s}})\}_{s=1}^{T} . By capturing the step-by-step token decisions guided by the ground truth, this process directly supplies the reliable conditional targets for the subsequent temporal-aware distillation phase. 
+ 3.3 Temporal-Aware Self-Distillation 
+ With the trajectories τ priv \tau_{\text{priv}} collected, we implement a temporal-aware self-distillation strategy to address the optimization instability. This approach approximates the theoretical objective of conditional probability while preventing the student model from memorizing uncertain predictions. At each trajectory step s ∈ { 1 , 2 , … , T } s\in\{1,2,\ldots,T\} , we partition the currently masked positions ℳ ⁡ ( 𝐱 s ) \mathcal{M}(\mathbf{x}_{s}) into a near subset ℳ n ​ e ​ a ​ r \mathcal{M}_{near} and a distant subset ℳ d ​ i ​ s ​ t ​ a ​ n ​ t \mathcal{M}_{distant} by how many decoding steps remain before they are revealed. This partition relies on a predefined look-ahead window δ \delta . We define a binary mask indicator b s ( i ) ∈ { 0 , 1 } b_{s}^{(i)}\in\{0,1\} for each token position i i , where 1 1 represents a masked state. For any step exceeding the maximum decoding length ( s + δ > T s+\delta>T ), we naturally define b s + δ ( i ) = 0 b_{s+\delta}^{(i)}=0 because the entire sequence is fully unmasked by the final step. This predefined horizon strictly divides the sequence into two mutually exclusive target subsets: 
+ ℳ n ​ e ​ a ​ r \displaystyle\mathcal{M}_{near} 
+ = { i ∣ b s ( i ) = 1 ∧ b s + δ ( i ) = 0 } , \displaystyle=\{i\mid b_{s}^{(i)}=1\land b_{s+\delta}^{(i)}=0\}, 
+ (10) 
+ ℳ d ​ i ​ s ​ t ​ a ​ n ​ t \displaystyle\mathcal{M}_{distant} 
+ = { i ∣ b s ( i ) = 1 ∧ b s + δ ( i ) = 1 } . \displaystyle=\{i\mid b_{s}^{(i)}=1\land b_{s+\delta}^{(i)}=1\}. 
+ (11) 
+ The subset ℳ n ​ e ​ a ​ r \mathcal{M}_{near} contains tokens about to be decoded within the temporal window, whereas ℳ d ​ i ​ s ​ t ​ a ​ n ​ t \mathcal{M}_{distant} contains tokens remaining masked within δ \delta steps. 
+ For the near subset, we approximate the highly peaked conditional probabilities of the teacher using hard labels. Applying a cross-entropy loss with the exact tokens selected by the teacher anchors the student model to a valid decoding path. This objective drives the student to achieve high certainty on near tokens, which maximizes parallel decoding throughput. The near loss is formulated as: 
+ ℒ n ​ e ​ a ​ r = − 𝔼 𝐱 s ∼ τ priv ​ [ ∑ i ∈ ℳ n ​ e ​ a ​ r log ⁡ p θ S ​ ( x ^ 0 i ∣ 𝐱 s , q ) ] , \mathcal{L}_{near}=-\mathbb{E}_{\mathbf{x}_{s}\sim\tau_{\text{priv}}}\left[\sum_{i\in\mathcal{M}_{near}}\log p_{\theta_{S}}(\hat{x}_{0}^{i}\mid\mathbf{x}_{s},q)\right], 
+ (12) 
+ where x ^ 0 i \hat{x}_{0}^{i} denotes the reference token from the collected teacher trajectory. 
+ For the distant subset, we relax the strict trajectory-dependent target to prevent the student from overfitting. We utilize the single-step factorized output of the teacher p θ T ​ ( x 0 j ∣ 𝐱 s , q , a ) p_{\theta_{T}}(x_{0}^{j}\mid\mathbf{x}_{s},q,a) at each position j j as a soft proxy. We enforce alignment by calculating the Kullback-Leibler divergence between this proxy and the prediction of the student. This soft constraint provides a smoothed learning signal without forcing deterministic predictions on uncertain tokens. The distant loss is defined as: 
+ ℒ d ​ i ​ s ​ t ​ a ​ n ​ t = 𝔼 𝐱 s ∼ τ priv [ ∑ j ∈ ℳ d ​ i ​ s ​ t ​ a ​ n ​ t D KL ( p θ T ( x 0 j ∣ 𝐱 s , q , a ) ∥ p θ S ( x 0 j ∣ 𝐱 s , q ) ) ] . \mathcal{L}_{distant}=\mathbb{E}_{\mathbf{x}_{s}\sim\tau_{\text{priv}}}\left[\sum_{j\in\mathcal{M}_{distant}}D_{\text{KL}}\left(p_{\theta_{T}}(x_{0}^{j}\mid\mathbf{x}_{s},q,a)\parallel p_{\theta_{S}}(x_{0}^{j}\mid\mathbf{x}_{s},q)\right)\right]. 
+ (13) 
+ The final objective of the TAD framework is a weighted combination of these two components: 
+ ℒ T ​ A ​ D = ℒ n ​ e ​ a ​ r + λ ​ ℒ d ​ i ​ s ​ t ​ a ​ n ​ t , \mathcal{L}_{TAD}=\mathcal{L}_{near}+\lambda\mathcal{L}_{distant}, 
+ (14) 
+ where λ \lambda constitutes a balancing hyperparameter. This formulation adapts the optimization objective to the temporal dynamics of parallel generation, ensuring high parallelism through near-term certainty and robust generation quality through long-term dependency preservation. 
+ The Choice of the Temporal Partition Window δ \delta . 
+The temporal partition window δ \delta dictates the boundary between near subset and distant subset. To determine an appropriate value for δ \delta , we analyze how the student model’s predictive confidence on the reference tokens from the collected trajectories decays relative to the decoding steps, as illustrated in Figure  3(b) . The student exhibits high confidence for tokens that are immediately adjacent in the decoding steps, but this certainty degrades as the temporal distance increases. Guided by this empirical decay curve, we derive two operational configurations for the TAD framework. We establish a Quality Mode by setting δ q ​ u ​ a ​ l ​ i ​ t ​ y \delta_{quality} to the relative step where the inherent confidence of the student drops to 0.5, ensuring that hard labels are only applied where the model retains moderate natural certainty. Alternatively, we establish a Speed Mode by extending the window to δ s ​ p ​ e ​ e ​ d \delta_{speed} , corresponding to the point where confidence degrades to 0.2, aggressively expanding the near subset to maximize parallel throughput at a slight cost to accuracy. 
+ 4 Experiment 
+ 4.1 Experimental Details 
+ Training Dataset. As a trajectory-distillation method, we use prompts and ground-truth answers from public datasets, and let the model generate its own responses to construct the training data. For LLaDA-8B-Instruct  30 , we sample prompts and ground-truth answers from the training splits of GSM8K  10 , PRM12K  23 and a subset of KodCode  45 . We generate target trajectories with a sequence length of 256 and a block length of 32. We adopt a low-confidence remasking strategy, in which the model generates only one token at each step. We record the intermediate state at every decoding step. We then filter out a number of incorrect trajectories, most of which are caused by formatting errors, and obtain approximately 26k training samples. For Dream-7B-Instruct  47 , we use the same trajectory collection strategy and obtain approximately 22k training samples. 
+ Training Details. In all experiments, we fine-tune the models using LoRA  15 with a rank of r = 128 r=128 and a scaling factor of α = 128 \alpha=128 . We configure the spatial partition window δ \delta according to the selected operational mode and the base architecture. Specifically, for the Quality model, we set δ = 8 \delta=8 for LLaDA and δ = 6 \delta=6 for Dream. For the Speed model, we set δ = 20 \delta=20 and δ = 12 \delta=12 for LLaDA and Dream, respectively. All training processes are executed on 8 NVIDIA DGX H200 GPUs. Additional configuration details are available in the Appendix C . 
+ Evaluation Details. We evaluate our model on four widely used benchmarks: GSM8K  10 , MATH  13 , HumanEval  7 , and MBPP  3 . Following prior work  32 , we apply a 4-shot setting for MATH and a 3-shot setting for LLaDA on MBPP, while using a 0-shot setting for the remaining evaluations. For inference, we set the generation length to 256 and the block length to 32, adopt entropy-based dynamic decoding with a threshold of 0.5, and employ a multi-block decoding strategy consistent with D2F  39 and d3LLM  32 . We report accuracy, tokens per forward (TPF), and the Accuracy Under Parallelism (AUP) score  32 to provide a comprehensive measurement of model performance and acceleration. 
+ Baselines. Our baselines fall into three categories: (1)The original dLLMs, LLaDA-Insturct  30 and Dream-Instruct  47 ; (2)Training-free methods: Fast-dLLM  42 ; (3)Training-based methods, including Fast-dLLM-v2  41 , D2F  39 , dParallel  8 and d3LLM  32 . For a fair and consistent comparison, we directly report the baseline results disclosed in the d3LLM paper  32 . 
+ Table 1 : Comparison of TAD-LLaDA with other LLaDA-based models. The best results among acceleration methods are highlighted in bold and the second best are underlined . 
+ GSM8K-CoT 
+ MATH 
+ MBPP 
+ HumanEval 
+ Average 
+ Method 
+ Acc ↑ \uparrow 
+ TPF ↑ \uparrow 
+ AUP ↑ \uparrow 
+ Acc ↑ \uparrow 
+ TPF ↑ \uparrow 
+ AUP ↑ \uparrow 
+ Acc ↑ \uparrow 
+ TPF ↑ \uparrow 
+ AUP ↑ \uparrow 
+ Acc ↑ \uparrow 
+ TPF ↑ \uparrow 
+ AUP ↑ \uparrow 
+ Acc ↑ \uparrow 
+ TPF ↑ \uparrow 
+ AUP ↑ \uparrow 
+ LLaDA 
+ 72.6 
+ 1.00 
+ 72.6 
+ 32.2 
+ 1.00 
+ 32.2 
+ 41.7 
+ 1.00 
+ 41.7 
+ 38.3 
+ 1.00 
+ 38.3 
+ 46.2 
+ 1.00 
+ 46.2 
+ Fast-dLLM 
+ 74.7 
+ 2.77 
+ 182.6 
+ 30.8 
+ 1.97 
+ 45.7 
+ 38.6 
+ 2.13 
+ 56.6 
+ 37.8 
+ 2.56 
+ 54.0 
+ 45.5 
+ 2.36 
+ 84.7 
+ D2F 
+ 73.2 
+ 2.88 
+ 189.2 
+ 28.7 
+ 2.38 
+ 47.2 
+ 38.0 
+ 1.94 
+ 53.0 
+ 36.6 
+ 2.69 
+ 62.0 
+ 44.1 
+ 2.47 
+ 87.9 
+ dParallel 
+ 72.6 
+ 5.14 
+ 308.7 
+ 30.2 
+ 3.17 
+ 61.3 
+ 40.0 
+ 2.35 
+ 60.5 
+ 39.0 
+ 4.93 
+ 83.7 
+ 45.5 
+ 3.90 
+ 128.6 
+ d3LLM 
+ 73.1 
+ 9.11 
+ 539.2 
+ 30.4 
+ 5.74 
+ 100.1 
+ 40.6 
+ 4.21 
+ 88.4 
+ 39.6 
+ 5.95 
+ 96.6 
+ 45.9 
+ 6.25 
+ 206.1 
+ TAD-Q 
+ 79.9 
+ 6.32 
+ 503.8 
+ 42.7 
+ 4.49 
+ 190.4 
+ 41.6 
+ 3.38 
+ 89.3 
+ 42.1 
+ 6.11 
+ 117.4 
+ 51.6 
+ 5.08 
+ 225.2 
+ TAD-S 
+ 78.8 
+ 8.47 
+ 649.0 
+ 40.4 
+ 5.17 
+ 191.0 
+ 40.6 
+ 3.42 
+ 80.3 
+ 39.6 
+ 5.96 
+ 108.0 
+ 49.9 
+ 5.76 
+ 257.1 
+ Table 2 : Comparison of TAD-Dream with other Dream-based models. The best results among acceleration methods are highlighted in bold and the second best are underlined . 
+ GSM8K-CoT 
+ MATH 
+ MBPP 
+ HumanEval 
+ Average 
+ Method 
+ Acc ↑ \uparrow 
+ TPF ↑ \uparrow 
+ AUP ↑ \uparrow 
+ Acc ↑ \uparrow 
+ TPF ↑ \uparrow 
+ AUP ↑ \uparrow 
+ Acc ↑ \uparrow 
+ TPF ↑ \uparrow 
+ AUP ↑ \uparrow 
+ Acc ↑ \uparrow 
+ TPF ↑ \uparrow 
+ AUP ↑ \uparrow 
+ Acc ↑ \uparrow 
+ TPF ↑ \uparrow 
+ AUP ↑ \uparrow 
+ Dream 
+ 83.9 
+ 1.00 
+ 83.9 
+ 39.6 
+ 1.00 
+ 39.6 
+ 57.2 
+ 1.00 
+ 57.2 
+ 55.2 
+ 1.00 
+ 55.2 
+ 59.0 
+ 1.00 
+ 59.0 
+ Fast-dLLM 
+ 79.0 
+ 1.44 
+ 116.5 
+ 38.3 
+ 1.78 
+ 55.2 
+ 53.2 
+ 1.20 
+ 63.6 
+ 54.3 
+ 1.33 
+ 63.5 
+ 56.2 
+ 1.44 
+ 74.7 
+ Fast-dLLM-v2 
+ 77.5 
+ 2.21 
+ 156.0 
+ 48.7 
+ 2.61 
+ 126.7 
+ 50.1 
+ 2.04 
+ 81.9 
+ 61.7 
+ 2.58 
+ 128.9 
+ 59.5 
+ 2.36 
+ 123.4 
+ dParallel 
+ 82.1 
+ 3.02 
+ 245.7 
+ 38.7 
+ 2.94 
+ 77.9 
+ 55.4 
+ 2.24 
+ 108.0 
+ 54.3 
+ 2.57 
+ 98.8 
+ 57.6 
+ 2.69 
+ 132.6 
+ d3LLM 
+ 81.4 
+ 4.94 
+ 391.3 
+ 38.2 
+ 3.92 
+ 97.5 
+ 55.6 
+ 2.96 
+ 141.4 
+ 57.1 
+ 3.20 
+ 129.5 
+ 58.1 
+ 3.76 
+ 189.9 
+ TAD-Q 
+ 81.4 
+ 3.26 
+ 255.6 
+ 42.8 
+ 3.96 
+ 144.2 
+ 56.8 
+ 2.32 
+ 122.8 
+ 64.1 
+ 2.35 
+ 134.3 
+ 61.3 
+ 2.97 
+ 164.2 
+ TAD-S 
+ 81.0 
+ 4.59 
+ 359.5 
+ 41.3 
+ 5.30 
+ 161.3 
+ 53.8 
+ 2.38 
+ 112.9 
+ 62.2 
+ 2.90 
+ 147.5 
+ 59.6 
+ 3.79 
+ 195.3 
+ 4.2 Main Results 
+ Results on LLaDA Model. 
+Table 1 demonstrates that the TAD framework successfully improve the accuracy-parallelism trade-off across two flexible configurations. Across all benchmarks, the Quality model (TAD-Q) achieves the highest average accuracy of 51.6%, substantially outperforming the 46.2% baseline average. On the complex MATH dataset where baselines typically degrade, TAD-Q improves accuracy to 42.7% while decoding 4.49 tokens per forward (TPF). The Speed model (TAD-S) attains the highest average AUP score of 257.1. On GSM8K-CoT, TAD-S reaches 8.47 TPF with 78.8% accuracy, achieving a better trade-off compared to d3LLM  32 and dParallel  8 . Both models also enhance code generation, with TAD-Q surpassing the baseline HumanEval accuracy while decoding approximately 6 tokens per forward. These results confirm the effectiveness of our trajectory collection mechanism and temporal-aware distillation framework. 
+ Results on Dream Model. 
+Applying TAD to the Dream architecture (Table 2 ) confirms its strong generalization. TAD-Q achieves the highest average accuracy of 61.3%, peaking at 64.1% on HumanEval to significantly outperform the original model. On MATH, TAD-Q maintains a strong 42.8% accuracy while TAD-S achieves the peak AUP score of 161.3 at 5.30 TPF. Both configurations avoid the severe performance drops on GSM8K-CoT and MBPP typical of training-free methods. Although baselines like d3LLM occasionally exhibit marginally higher raw throughput, TAD-S delivers the highest average AUP score of 195.3. These results confirm that our TAD framework improves the accuracy-parallelism trade-off. 
+ Table 3 : Ablation study on the distillation objectives. ‘Hard CE’ refers to cross-entropy with reference tokens from trajectories, and ‘Soft KL’ refers to KL divergence with teacher distributions. 
+ Objectives 
+ MATH 
+ HumanEval 
+ Near 
+ Distant 
+ TPF ↑ \uparrow 
+ Acc ↑ \uparrow 
+ AUP ↑ \uparrow 
+ TPF ↑ \uparrow 
+ Acc ↑ \uparrow 
+ AUP ↑ \uparrow 
+ Hard CE 
+ Hard CE 
+ 4.34 
+ 40.3 
+ 159.1 
+ 5.37 
+ 32.9 
+ 72.1 
+ Soft KL 
+ Soft KL 
+ 2.08 
+ 41.4 
+ 90.0 
+ 2.90 
+ 35.4 
+ 55.4 
+ Hard CE 
+ None 
+ 5.12 
+ 34.8 
+ 142.9 
+ 6.47 
+ 39.6 
+ 110.7 
+ Hard CE 
+ Soft KL 
+ 4.49 
+ 42.7 
+ 190.4 
+ 6.11 
+ 42.1 
+ 117.4 
+ Table 4 : Ablation on data collection methods and distillation strategies. We report the average Accuracy, TPF, and AUP score across the four evaluated benchmarks. 
+ Data Source and Training Strategy 
+ Acc (%) 
+ TPF 
+ AUP 
+ Standard SFT (Ground Truth + Random Mask) 
+ 46.2 
+ 3.24 
+ 105.8 
+ Trajectory (with privileged information) + Random Mask 
+ 47.9 
+ 4.26 
+ 152.8 
+ Trajectory (w/o privileged information) + TAD Distillation 
+ 47.9 
+ 5.03 
+ 187.1 
+ Trajectory (with privileged information) + TAD Distillation (Ours) 
+ 51.6 
+ 5.08 
+ 225.2 
+ 4.3 Ablation Study 
+ We conduct ablation studies on the LLaDA-8B architecture to validate the design choices within the TAD framework. 
+ Effect of Decoupled Distillation Objectives. 
+Table 3 evaluates the individual objective components using a fixed window of δ = 8 \delta=8 . Applying hard cross-entropy globally forces early confidence on distant tokens, lowering HumanEval accuracy to 32.9%. Conversely, global soft KL divergence lacks deterministic targets to anchor the generation path, resulting in over-smoothed predictions and minimal acceleration (2.08 TPF on MATH). Restricting hard cross-entropy solely to the near subset accelerates generation but reduces MATH accuracy to 34.8%, demonstrating the necessity of distant supervision. Combining near-term hard targets with distant soft supervision optimally resolves this problem, yielding the highest accuracy and AUP scores across both benchmarks. 
+ Impact of Privileged Information-Guided Trajectories. 
+Table 4 evaluates four training paradigms to confirm the necessity of privileged information. Standard supervised fine-tuning with random masking ignores sequential dependencies and yields the lowest performance. Applying random masking to the final text of the privileged information-guided trajectory improves accuracy but still omits natural state transitions. Distilling from valid trajectories generated without privileged information increases TPF but limits accuracy. In contrast, distilling from trajectories generated with privileged ground-truth context achieves the highest average accuracy (51.6%) and optimal AUP score (225.2), confirming that these paths provide essential high-quality targets. 
+ Sensitivity to the Spatial Partition Window ( δ \delta ). 
+Table 6 presents average performance under varying window sizes. A conservative window ( δ = 4 \delta=4 ) yields the highest accuracy (52.1%) but restricts decoding speed. Expanding δ \delta to 20 provides deterministic supervision to a larger sequence portion, accelerating generation to 5.76 TPF and achieving the peak AUP score (257.1) with only a minor accuracy decline. However, an extreme window ( δ = 256 \delta=256 ) mimics global cross-entropy, compelling the model to predict distant tokens without sufficient context and severely degrading performance. These observations justify our dual-model strategy, assigning a moderate window for robust reasoning (Quality model) and a larger window for maximized throughput (Speed model). 
+ Table 5 : Average performance across four benchmarks under varying partition window sizes ( δ \delta ). 
+ δ \delta 
+ Acc (%) 
+ TPF 
+ AUP 
+ δ = 4 \delta=4 
+ 52.1 
+ 4.33 
+ 190.3 
+ δ = 8 \delta=8 
+ 51.6 
+ 5.08 
+ 225.2 
+ δ = 12 \delta=12 
+ 49.9 
+ 4.64 
+ 196.4 
+ δ = 16 \delta=16 
+ 48.9 
+ 5.57 
+ 229.2 
+ δ = 20 \delta=20 
+ 49.9 
+ 5.76 
+ 257.1 
+ δ = 24 \delta=24 
+ 48.9 
+ 5.78 
+ 237.1 
+ δ = 256 ​ ( Global CE ) \delta=256~(\text{Global CE}) 
+ 46.3 
+ 5.10 
+ 208.4 
+ Table 6 : Average performance across four benchmarks under varying KL weights ( λ \lambda ). 
+ λ \lambda 
+ Acc (%) 
+ TPF 
+ AUP 
+ λ = 0.0 \lambda=0.0 
+ 47.2 
+ 5.35 
+ 192.1 
+ λ = 0.5 \lambda=0.5 
+ 51.1 
+ 4.90 
+ 215.9 
+ λ = 1.0 \lambda=1.0 
+ 51.6 
+ 5.08 
+ 225.2 
+ λ = 1.5 \lambda=1.5 
+ 50.5 
+ 4.89 
+ 207.5 
+ λ = 2.0 \lambda=2.0 
+ 50.4 
+ 4.74 
+ 199.5 
+ Sensitivity to the weight of ℒ d ​ i ​ s ​ t ​ a ​ n ​ t \mathcal{L}_{distant} ( λ \lambda ). 
+Table 6 evaluates the balance between near cross-entropy and distant Kullback-Leibler divergence. Removing distant supervision ( λ = 0 \lambda=0 ) maximizes speed (5.35 TPF) but causes the lowest average accuracy (47.2%), confirming that omitting distant dependencies damages generation quality. Integrating the distant constraint at λ = 1.0 \lambda=1.0 restores reasoning capabilities, achieving the optimal average accuracy (51.6%) and AUP score (225.2). Increasing the weight further ( λ ≥ 1.5 \lambda\geq 1.5 ) overemphasizes the soft objective, reducing the impact of near-term certainty forcing and subsequently decreasing. 
+ 5 Related Work 
+ 5.1 Diffusion Large Language Models 
+ Recent research has extended diffusion modeling from continuous domains  11 to discrete text generation  2 ; 33 ; 27 ; 36 . Unlike traditional autoregressive models that rely on left-to-right sequential generation  1 ; 12 ; 46 , Diffusion Large Language Models (dLLMs) feature bidirectional context attention and parallel decoding capabilities  21 . Recent models, including the LLaDA series  30 ; 53 ; 6 ; 5 , Dream  47 , and SDAR  9 , achieve performance competitive with leading autoregressive models across various benchmarks. They also demonstrate advantages in reverse reasoning tasks that require global planning  30 . Beyond these developments, the research community has increasingly focused on enhancing reasoning capabilities  50 ; 40 ; 37 ; 31 ; 25 , building agent systems  52 ; 49 , and accelerating inference  24 for dLLMs. In this paper, we focus on further accelerating dLLM inference by increasing the parallelism of these models. 
+ 5.2 Inference Acceleration for dLLMs 
+ The inference speed of dLLMs is primarily hindered by the incompatibility of traditional KV caching with bidirectional attention and the severe quality degradation during highly parallel decoding  42 . To alleviate the caching bottleneck, recent studies  26 ; 28 ; 18 ; 42 exploit the temporal consistency of KV states across decoding iterations to develop approximate caching mechanisms, significantly reducing redundant computations. To enhance parallelism, current approaches are categorized into training-free  42 ; 14 ; 44 ; 34 ; 43 ; 38 and training-based  8 ; 39 ; 20 ; 32 ; 48 ; 22 ; 4 ; 16 methods. Training-free strategies accelerate inference by dynamically adapting decoding schedules, but their effectiveness is bounded by the capacity of the model. Alternatively, training-based methods finetune the model for parallel generation. While they achieve higher throughput, this acceleration typically comes at the expense of generation quality. Building upon the training-based paradigm, our work improves this trade-off through a privileged-information strategy to acquire high-quality trajectories and a temporal-aware distillation framework. 
+ 6 Limitations 
+ As a training-based method, TAD mainly has three limitations. First, the framework depends on high-quality ground-truth responses to generate trajectory, which restricts its applicability in unsupervised settings. Second, the token-by-token rollout during trajectory collection introduces overhead prior to distillation. Third, the partition window δ \delta 
+requires empirical tuning across architectures. We leave dynamic window sizing and data-efficient trajectory generation for future work. 
+ 7 Conclusion 
+ We present TAD, a temporal-aware trajectory self-distillation framework that improves the accuracy-parallelism trade-off. The framework collects high-quality trajectories via a teacher conditioned on privileged information and partitions masked positions by their decoding steps, applying cross-entropy to near tokens for throughput and KL divergence loss to distant tokens for dependency preservation. Experiments on mathematical reasoning and code generation confirm that this design improves both accuracy and decoding speed, offering a practical path toward deploying efficient dLLMs. 
+ References 
+ [1] 
+ J. Achiam, S. Adler, S. Agarwal, L. Ahmad, I. Akkaya, F. L. Aleman, D. Almeida, J. Altenschmidt, S. Altman, S. Anadkat, et al. (2023) 
+ Gpt-4 technical report .
+ arXiv preprint arXiv:2303.08774 .
+ Cited by: §5.1 .
+ [2] 
+ J. Austin, D. D. Johnson, J. Ho, D. Tarlow, and R. Van Den Berg (2021) 
+ Structured denoising diffusion models in discrete state-spaces .
+ Advances in neural information processing systems 34 , pp. 17981–17993 .
+ Cited by: §1 ,
+ §2 ,
+ §5.1 .
+ [3] 
+ J. Austin, A. Odena, M. Nye, M. Bosma, H. Michalewski, D. Dohan, E. Jiang, C. Cai, M. Terry, Q. Le, et al. (2021) 
+ Program synthesis with large language models .
+ arXiv preprint arXiv:2108.07732 .
+ Cited by: §4.1 .
+ [4] 
+ W. Bao, Z. Chen, D. Xu, and Y. Shang (2025) 
+ Learning to parallel: accelerating diffusion large language models via learnable parallel decoding .
+ arXiv preprint arXiv:2509.25188 .
+ Cited by: §5.2 .
+ [5] 
+ T. Bie, M. Cao, X. Cao, B. Chen, F. Chen, K. Chen, L. Du, D. Feng, H. Feng, M. Gong, et al. (2026) 
+ Llada2. 1: speeding up text diffusion via token editing .
+ arXiv preprint arXiv:2602.08676 .
+ Cited by: §5.1 .
+ [6] 
+ T. Bie, M. Cao, K. Chen, L. Du, M. Gong, Z. Gong, Y. Gu, J. Hu, Z. Huang, Z. Lan, et al. (2025) 
+ Llada2. 0: scaling up diffusion language models to 100b .
+ arXiv preprint arXiv:2512.15745 .
+ Cited by: §5.1 .
+ [7] 
+ M. Chen, J. Tworek, H. Jun, Q. Yuan, H. P. D. O. Pinto, J. Kaplan, H. Edwards, Y. Burda, N. Joseph, G. Brockman, et al. (2021) 
+ Evaluating large language models trained on code .
+ arXiv preprint arXiv:2107.03374 .
+ Cited by: §1 ,
+ §4.1 .
+ [8] 
+ Z. Chen, G. Fang, X. Ma, R. Yu, and X. Wang (2025) 
+ Dparallel: learnable parallel decoding for dllms .
+ arXiv preprint arXiv:2509.26488 .
+ Cited by: Figure 1 ,
+ Figure 1 ,
+ §1 ,
+ §4.1 ,
+ §4.2 ,
+ §5.2 .
+ [9] 
+ S. Cheng, Y. Bian, D. Liu, L. Zhang, Q. Yao, Z. Tian, W. Wang, Q. Guo, K. Chen, B. Qi, and B. Zhou (2025) 
+ Sdar: a synergistic diffusion-autoregression paradigm for scalable sequence generation .
+ arXiv preprint arXiv:2510.06303 .
+ Cited by: §5.1 .
+ [10] 
+ K. Cobbe, V. Kosaraju, M. Bavarian, M. Chen, H. Jun, L. Kaiser, M. Plappert, J. Tworek, J. Hilton, R. Nakano, C. Hesse, and J. Schulman (2021) 
+ Training verifiers to solve math word problems .
+ arXiv preprint arXiv:2110.14168 .
+ Cited by: §4.1 ,
+ §4.1 .
+ [11] 
+ F. Croitoru, V. Hondru, R. T. Ionescu, and M. Shah (2023) 
+ Diffusion models in vision: a survey .
+ IEEE transactions on pattern analysis and machine intelligence 45 ( 9 ), pp. 10850–10869 .
+ Cited by: §5.1 .
+ [12] 
+ D. Guo, D. Yang, H. Zhang, J. Song, P. Wang, Q. Zhu, R. Xu, R. Zhang, S. Ma, X. Bi, et al. (2025) 
+ Deepseek-r1: incentivizing reasoning capability in llms via reinforcement learning .
+ arXiv preprint arXiv:2501.12948 .
+ Cited by: §5.1 .
+ [13] 
+ D. Hendrycks, C. Burns, S. Kadavath, A. Arora, S. Basart, E. Tang, D. Song, and J. Steinhardt (2021) 
+ Measuring mathematical problem solving with the math dataset .
+ arXiv preprint arXiv:2103.03874 .
+ Cited by: §4.1 .
+ [14] 
+ F. Hong, G. Yu, Y. Ye, H. Huang, H. Zheng, Y. Zhang, Y. Wang, and J. Yao (2025) 
+ Wide-in, narrow-out: revokable decoding for efficient and effective dllms .
+ arXiv preprint arXiv:2507.18578 .
+ Cited by: §1 ,
+ §5.2 .
+ [15] 
+ E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang, W. Chen, et al. (2022) 
+ Lora: low-rank adaptation of large language models. .
+ Iclr 1 ( 2 ), pp. 3 .
+ Cited by: §4.1 .
+ [16] 
+ Y. Hu, Y. Jin, P. Liu, K. Yu, and Z. Deng (2026) 
+ LightningRL: breaking the accuracy-parallelism trade-off of block-wise dllms via reinforcement learning .
+ arXiv preprint arXiv:2603.13319 .
+ Cited by: §5.2 .
+ [17] 
+ J. Hübotter, F. Lübeck, L. Behric, A. Baumann, M. Bagatella, D. Marta, I. Hakimi, I. Shenfeld, T. K. Buening, C. Guestrin, et al. (2026) 
+ Reinforcement learning via self-distillation .
+ arXiv preprint arXiv:2601.20802 .
+ Cited by: §1 .
+ [18] 
+ Y. Jiang, Y. Cai, X. Luo, J. Fu, J. Wang, C. Liu, and X. Yang (2025) 
+ D 2 {}^{2} cache: accelerating diffusion-based llms via dual adaptive caching .
+ arXiv preprint arXiv:2509.23094 .
+ Cited by: §5.2 .
+ [19] 
+ W. Kang, K. Galim, S. Oh, M. Lee, Y. Zeng, S. Zhang, C. Hooper, Y. Hu, H. I. Koo, N. I. Cho, et al. (2025) 
+ Parallelbench: understanding the trade-offs of parallel decoding in diffusion llms .
+ arXiv preprint arXiv:2510.04767 .
+ Cited by: §1 ,
+ §2 ,
+ §2 ,
+ §3.1 .
+ [20] 
+ M. Kim, C. Xu, C. Hooper, H. Singh, B. Athiwaratkun, C. Zhang, K. Keutzer, and A. Gholami (2025) 
+ CDLM: consistency diffusion language models for faster sampling .
+ arXiv preprint arXiv:2511.19269 .
+ Cited by: §5.2 .
+ [21] 
+ T. Li, M. Chen, B. Guo, and Z. Shen (2025) 
+ A survey on diffusion language models .
+ arXiv preprint arXiv:2508.10875 .
+ Cited by: §5.1 .
+ [22] 
+ Y. Liang, Z. Wang, H. Chen, X. Sun, J. Wu, X. Yu, J. Liu, E. Barsoum, Z. Liu, and N. K. Jha (2026) 
+ CD4LM: consistency distillation and adaptive decoding for diffusion language models .
+ arXiv preprint arXiv:2601.02236 .
+ Cited by: §5.2 .
+ [23] 
+ H. Lightman, V. Kosaraju, Y. Burda, H. Edwards, B. Baker, T. Lee, J. Leike, J. Schulman, I. Sutskever, and K. Cobbe (2023) 
+ Let’s verify step by step .
+ In The twelfth international conference on learning representations ,
+ Cited by: §4.1 .
+ [24] 
+ H. Lin, X. Jia, S. Liu, S. Xia, W. Huang, H. Xu, J. Li, Y. Xiao, X. Xing, Z. Guo, et al. (2026) 
+ Efficient diffusion language models: a comprehensive survey .
+ Authorea Preprints .
+ Cited by: §1 ,
+ §5.1 .
+ [25] 
+ J. Liu, X. Wang, Y. Zhong, D. Lian, and Y. Yang (2026) 
+ Efficient and stable reinforcement learning for diffusion language models .
+ arXiv preprint arXiv:2602.08905 .
+ Cited by: §5.1 .
+ [26] 
+ Z. Liu, Y. Yang, Y. Zhang, J. Chen, C. Zou, Q. Wei, S. Wang, and L. Zhang (2025) 
+ Dllm-cache: accelerating diffusion large language models with adaptive caching .
+ arXiv preprint arXiv:2506.06295 .
+ Cited by: §5.2 .
+ [27] 
+ A. Lou, C. Meng, and S. Ermon (2024) 
+ Discrete diffusion modeling by estimating the ratios of the data distribution .
+ In Proceedings of the 41st International Conference on Machine Learning ,
+ pp. 32819–32848 .
+ Cited by: §1 ,
+ §5.1 .
+ [28] 
+ X. Ma, R. Yu, G. Fang, and X. Wang (2025) 
+ Dkv-cache: the cache for diffusion language models .
+ arXiv preprint arXiv:2505.15781 .
+ Cited by: §5.2 .
+ [29] 
+ A. Mohamed, Y. Zhang, M. Vazirgiannis, and G. Shang (2025) 
+ Fast-decoding diffusion language models via progress-aware confidence schedules .
+ arXiv preprint arXiv:2512.02892 .
+ Cited by: §1 .
+ [30] 
+ S. Nie, F. Zhu, Z. You, X. Zhang, J. Ou, J. Hu, J. Zhou, Y. Lin, J. Wen, and C. Li (2025) 
+ Large language diffusion models .
+ arXiv preprint arXiv:2502.09992 .
+ Cited by: §1 ,
+ §1 ,
+ §2 ,
+ §2 ,
+ §4.1 ,
+ §4.1 ,
+ §5.1 .
+ [31] 
+ J. Ou, J. Han, M. Xu, S. Xu, J. Xie, S. Ermon, Y. Wu, and C. Li (2025) 
+ Principled rl for diffusion llms emerges from a sequence-level perspective .
+ arXiv preprint arXiv:2512.03759 .
+ Cited by: §5.1 .
+ [32] 
+ Y. Qian, J. Su, L. Hu, P. Zhang, Z. Deng, P. Zhao, and H. Zhang (2026) 
+ D3LLM: ultra-fast diffusion llm using pseudo-trajectory distillation .
+ arXiv preprint arXiv:2601.07568 .
+ Cited by: §C.2.1 ,
+ §D.2 ,
+ Figure 1 ,
+ Figure 1 ,
+ §1 ,
+ §4.1 ,
+ §4.1 ,
+ §4.2 ,
+ §5.2 .
+ [33] 
+ S. S. Sahoo, M. Arriola, Y. Schiff, A. Gokaslan, E. Marroquin, J. T. Chiu, A. Rush, and V. Kuleshov (2024) 
+ Simple and effective masked diffusion language models .
+ Advances in Neural Information Processing Systems 37 , pp. 130136–130184 .
+ Cited by: §1 ,
+ §5.1 .
+ [34] 
+ J. Shen, G. Sarkar, Y. Ro, S. N. Sridhar, Z. Wang, A. Akella, and S. Kundu (2025) 
+ Improving the throughput of diffusion-based large language models via a training-free confidence-aware calibration .
+ arXiv preprint arXiv:2512.07173 .
+ Cited by: §5.2 .
+ [35] 
+ I. Shenfeld, M. Damani, J. Hübotter, and P. Agrawal (2026) 
+ Self-distillation enables continual learning .
+ arXiv preprint arXiv:2601.19897 .
+ Cited by: §1 .
+ [36] 
+ J. Shi, K. Han, Z. Wang, A. Doucet, and M. Titsias (2024) 
+ Simplified and generalized masked diffusion for discrete data .
+ Advances in neural information processing systems 37 , pp. 103131–103167 .
+ Cited by: §1 ,
+ §2 ,
+ §5.1 .
+ [37] 
+ X. Tang, R. Dolga, S. Yoon, and I. Bogunovic (2025) 
+ Wd1: weighted policy optimization for reasoning in diffusion language models .
+ arXiv preprint arXiv:2507.08838 .
+ Cited by: §5.1 .
+ [38] 
+ K. Wang, Z. Jiang, H. Feng, W. Zhao, L. Liu, J. Li, Z. Lan, and W. Lin (2025) 
+ Creditdecoding: accelerating parallel decoding in diffusion large language models with trace credits .
+ arXiv preprint arXiv:2510.06133 .
+ Cited by: §5.2 .
+ [39] 
+ X. Wang, C. Xu, Y. Jin, J. Jin, H. Zhang, and Z. Deng (2025) 
+ Diffusion llms can do faster-than-ar inference via discrete diffusion forcing .
+ arXiv preprint arXiv:2508.09192 .
+ Cited by: §1 ,
+ §4.1 ,
+ §4.1 ,
+ §5.2 .
+ [40] 
+ Y. Wang, L. Yang, B. Li, Y. Tian, K. Shen, and M. Wang (2025) 
+ Revolutionizing reinforcement learning framework for diffusion large language models .
+ arXiv preprint arXiv:2509.06949 .
+ Cited by: §5.1 .
+ [41] 
+ C. Wu, H. Zhang, S. Xue, S. Diao, Y. Fu, Z. Liu, P. Molchanov, P. Luo, S. Han, and E. Xie (2025) 
+ Fast-dllm v2: efficient block-diffusion llm .
+ arXiv preprint arXiv:2509.26328 .
+ Cited by: §4.1 .
+ [42] 
+ C. Wu, H. Zhang, S. Xue, Z. Liu, S. Diao, L. Zhu, P. Luo, S. Han, and E. Xie (2025) 
+ Fast-dllm: training-free acceleration of diffusion llm by enabling kv cache and parallel decoding .
+ arXiv preprint arXiv:2505.22618 .
+ Cited by: §1 ,
+ §1 ,
+ §2 ,
+ §4.1 ,
+ §5.2 .
+ [43] 
+ S. Wu and J. Zhang (2025) 
+ Free draft-and-verification: toward lossless parallel decoding for diffusion large language models .
+ arXiv preprint arXiv:2510.00294 .
+ Cited by: §5.2 .
+ [44] 
+ C. Xu, Y. Jin, J. Li, Y. Tu, G. Long, D. Tu, M. Song, H. Si, T. Hou, J. Yan, et al. (2025) 
+ Lopa: scaling dllm inference via lookahead parallel decoding .
+ arXiv preprint arXiv:2512.16229 .
+ Cited by: §1 ,
+ §5.2 .
+ [45] 
+ Z. Xu, Y. Liu, Y. Yin, M. Zhou, and R. Poovendran (2025) 
+ Kodcode: a diverse, challenging, and verifiable synthetic dataset for coding .
+ In Findings of the Association for Computational Linguistics: ACL 2025 ,
+ pp. 6980–7008 .
+ Cited by: §4.1 .
+ [46] 
+ A. Yang, A. Li, B. Yang, B. Zhang, B. Hui, B. Zheng, B. Yu, C. Gao, C. Huang, C. Lv, et al. (2025) 
+ Qwen3 technical report .
+ arXiv preprint arXiv:2505.09388 .
+ Cited by: §5.1 .
+ [47] 
+ J. Ye, Z. Xie, L. Zheng, J. Gao, Z. Wu, X. Jiang, Z. Li, and L. Kong (2025) 
+ Dream 7b: diffusion large language models .
+ arXiv preprint arXiv:2508.15487 .
+ Cited by: §1 ,
+ §1 ,
+ §4.1 ,
+ §4.1 ,
+ §5.1 .
+ [48] 
+ T. Zhang, X. Zhang, L. Han, H. Shi, X. He, Z. Li, H. Wang, K. Xu, A. Srivastava, V. Pavlovic, et al. (2026) 
+ T3D: few-step diffusion language models via trajectory self-distillation with direct discriminative optimization .
+ arXiv preprint arXiv:2602.12262 .
+ Cited by: §1 ,
+ §5.2 .
+ [49] 
+ J. Zhao, S. Xu, Z. Sun, F. Zhu, J. Ou, Y. Shi, C. Li, X. Zhang, and J. Xu (2026) 
+ DLLM-searcher: adapting diffusion large language model for search agents .
+ arXiv preprint arXiv:2602.07035 .
+ Cited by: §5.1 .
+ [50] 
+ S. Zhao, D. Gupta, Q. Zheng, and A. Grover (2025) 
+ D1: scaling reasoning in diffusion large language models via reinforcement learning .
+ arXiv preprint arXiv:2504.12216 .
+ Cited by: §5.1 .
+ [51] 
+ S. Zhao, Z. Xie, M. Liu, J. Huang, G. Pang, F. Chen, and A. Grover (2026) 
+ Self-distilled reasoner: on-policy self-distillation for large language models .
+ arXiv preprint arXiv:2601.18734 .
+ Cited by: §1 ,
+ §3.2 .
+ [52] 
+ H. Zhen, W. Lin, R. Liu, K. Han, Y. Li, Y. Tian, H. Chen, X. Li, X. Li, C. Chen, et al. (2026) 
+ DLLM agent: see farther, run faster .
+ arXiv preprint arXiv:2602.07451 .
+ Cited by: §5.1 .
+ [53] 
+ F. Zhu, R. Wang, S. Nie, X. Zhang, C. Wu, J. Hu, J. Zhou, J. Chen, Y. Lin, J. Wen, et al. (2025) 
+ Llada 1.5: variance-reduced preference optimization for large language diffusion models .
+ arXiv preprint arXiv:2505.19223 .
+ Cited by: §5.1 .
+ Appendix A Proof of Theoretical Analysis 
+ A.1 Equivalence of Joint KL Divergence and Expected Cross-Entropy 
+ We prove that minimizing the Kullback-Leibler divergence between the teacher’s sequential joint distribution and the student’s factorized distribution is equivalent to minimizing the expected sum of token-wise cross-entropies along the decoding trajectory. This result formally connects the theoretical objective in Eq.  7 of the main text to the trainable objective in Eq.  8 . 
+ Notation. 
+ Throughout this proof, we adopt the same notation as Section 3.1. Let 𝐱 t \mathbf{x}_{t} denote a teacher-generated intermediate masked state, q q the prompt, ℳ = { m 1 , … , m K } \mathcal{M}=\{m_{1},\ldots,m_{K}\} the ordered set of masked positions revealed by the teacher’s token-by-token rollout, and 𝐱 0 ℳ = ( x 0 m 1 , … , x 0 m K ) \mathbf{x}_{0}^{\mathcal{M}}=(x_{0}^{m_{1}},\ldots,x_{0}^{m_{K}}) the corresponding clean tokens. The teacher’s TBT joint distribution and the student’s factorized distribution are 
+ p θ T T ​ B ​ T ​ ( 𝐱 0 ℳ ∣ 𝐱 t , q ) \displaystyle p_{\theta_{T}}^{TBT}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t},q) 
+ = ∏ k = 1 K p θ T ​ ( x 0 m k ∣ 𝐱 t , x 0 m 1 , … , x 0 m k − 1 , q ) , \displaystyle=\prod_{k=1}^{K}p_{\theta_{T}}(x_{0}^{m_{k}}\mid\mathbf{x}_{t},x_{0}^{m_{1}},\ldots,x_{0}^{m_{k-1}},q), 
+ (15) 
+ p θ S ​ ( 𝐱 0 ℳ ∣ 𝐱 t , q ) \displaystyle p_{\theta_{S}}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t},q) 
+ = ∏ k = 1 K p θ S ​ ( x 0 m k ∣ 𝐱 t , q ) , \displaystyle=\prod_{k=1}^{K}p_{\theta_{S}}(x_{0}^{m_{k}}\mid\mathbf{x}_{t},q), 
+ (16) 
+ For brevity, we abbreviate 𝐱 0 m k \mathbf{x}_{0}^{m_{k}} as x k x_{k} and ( x 0 m 1 , … , x 0 m k − 1 ) (x_{0}^{m_{1}},\ldots,x_{0}^{m_{k-1}}) as x < k x_{<k} in the derivation below. 
+ Theorem 1 . 
+ Under the factorization in Eq.  16 , for any fixed intermediate state 𝐱 t \mathbf{x}_{t} , minimizing the joint KL divergence 
+ min θ S D KL ( p θ T T ​ B ​ T ( 𝐱 0 ℳ ∣ 𝐱 t , q ) ∥ p θ S ( 𝐱 0 ℳ ∣ 𝐱 t , q ) ) \min_{\theta_{S}}\;D_{\mathrm{KL}}\!\left(p_{\theta_{T}}^{TBT}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t},q)\,\big\|\,p_{\theta_{S}}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t},q)\right) 
+ (17) 
+ is equivalent to minimizing the expected sum of token-wise cross-entropies along the teacher’s decoding path: 
+ min θ S ∑ k = 1 K 𝔼 x < k ∼ p θ T T ​ B ​ T [ − ∑ x k p θ T ( x k ∣ 𝐱 t , x < k , q ) log p θ S ( x k ∣ 𝐱 t , q ) ] . \min_{\theta_{S}}\;\sum_{k=1}^{K}\mathbb{E}_{x_{<k}\sim p_{\theta_{T}}^{TBT}}\!\left[-\sum_{x_{k}}p_{\theta_{T}}(x_{k}\mid\mathbf{x}_{t},x_{<k},q)\,\log p_{\theta_{S}}(x_{k}\mid\mathbf{x}_{t},q)\right]. 
+ (18) 
+ Proof. 
+ By the definition of KL divergence, 
+ D KL ( p θ T T ​ B ​ T ∥ p θ S ) = 𝔼 𝐱 0 ℳ ∼ p θ T T ​ B ​ T [ log p θ T T ​ B ​ T ( 𝐱 0 ℳ ∣ 𝐱 t , q ) − log p θ S ( 𝐱 0 ℳ ∣ 𝐱 t , q ) ] . D_{\mathrm{KL}}\!\left(p_{\theta_{T}}^{TBT}\,\|\,p_{\theta_{S}}\right)=\mathbb{E}_{\mathbf{x}_{0}^{\mathcal{M}}\sim p_{\theta_{T}}^{TBT}}\!\left[\log p_{\theta_{T}}^{TBT}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t},q)-\log p_{\theta_{S}}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t},q)\right]. 
+ (19) 
+ Since the first term does not depend on θ S \theta_{S} , it acts as a constant in the optimization. Minimizing Eq.  17 is therefore equivalent to minimizing the cross-entropy 
+ min θ S − 𝔼 𝐱 0 ℳ ∼ p θ T T ​ B ​ T ​ [ log ⁡ p θ S ​ ( 𝐱 0 ℳ ∣ 𝐱 t , q ) ] . \min_{\theta_{S}}\;-\mathbb{E}_{\mathbf{x}_{0}^{\mathcal{M}}\sim p_{\theta_{T}}^{TBT}}\!\left[\log p_{\theta_{S}}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t},q)\right]. 
+ (20) 
+ Applying the factorization in Eq.  16 , the joint log-probability decomposes into a sum of marginal log-probabilities: 
+ log ⁡ p θ S ​ ( 𝐱 0 ℳ ∣ 𝐱 t , q ) = ∑ k = 1 K log ⁡ p θ S ​ ( x k ∣ 𝐱 t , q ) . \log p_{\theta_{S}}(\mathbf{x}_{0}^{\mathcal{M}}\mid\mathbf{x}_{t},q)=\sum_{k=1}^{K}\log p_{\theta_{S}}(x_{k}\mid\mathbf{x}_{t},q). 
+ (21) 
+ Substituting Eq.  21 into Eq.  20 and exchanging the finite sum with the expectation, 
+ min ⁡ ∑ k = 1 K θ S ⁡ ( − 𝔼 𝐱 0 ℳ ∼ p θ T T ​ B ​ T ​ [ log ⁡ p θ S ​ ( x k ∣ 𝐱 t , q ) ] ) . \min_{\theta_{S}}\;\sum_{k=1}^{K}\left(-\mathbb{E}_{\mathbf{x}_{0}^{\mathcal{M}}\sim p_{\theta_{T}}^{TBT}}\!\left[\log p_{\theta_{S}}(x_{k}\mid\mathbf{x}_{t},q)\right]\right). 
+ (22) 
+ For each index k k , the integrand log ⁡ p θ S ​ ( x k ∣ 𝐱 t , q ) \log p_{\theta_{S}}(x_{k}\mid\mathbf{x}_{t},q) depends only on x k x_{k} . By the law of total expectation, we marginalize the joint expectation over x < k x_{<k} , x k x_{k} , and x > k x_{>k} in turn: 
+ 𝔼 𝐱 0 ℳ ∼ p θ T T ​ B ​ T ​ [ log ⁡ p θ S ​ ( x k ∣ 𝐱 t , q ) ] = 𝔼 x < k ​ [ 𝔼 x k | x < k ​ [ 𝔼 x > k | x ≤ k ​ [ log ⁡ p θ S ​ ( x k ∣ 𝐱 t , q ) ] ] ] , \mathbb{E}_{\mathbf{x}_{0}^{\mathcal{M}}\sim p_{\theta_{T}}^{TBT}}\!\left[\log p_{\theta_{S}}(x_{k}\mid\mathbf{x}_{t},q)\right]=\mathbb{E}_{x_{<k}}\!\left[\mathbb{E}_{x_{k}\mid x_{<k}}\!\left[\mathbb{E}_{x_{>k}\mid x_{\leq k}}\!\left[\log p_{\theta_{S}}(x_{k}\mid\mathbf{x}_{t},q)\right]\right]\right], 
+ (23) 
+ where all conditional distributions on the right-hand side are induced by p θ T T ​ B ​ T p_{\theta_{T}}^{TBT} . Because log ⁡ p θ S ​ ( x k ∣ 𝐱 t , q ) \log p_{\theta_{S}}(x_{k}\mid\mathbf{x}_{t},q) is constant with respect to x > k x_{>k} , the innermost expectation reduces to log ⁡ p θ S ​ ( x k ∣ 𝐱 t , q ) \log p_{\theta_{S}}(x_{k}\mid\mathbf{x}_{t},q) itself. Expanding the remaining expectation over x k x_{k} , 
+ 𝔼 𝐱 0 ℳ ∼ p θ T T ​ B ​ T ​ [ log ⁡ p θ S ​ ( x k ∣ 𝐱 t , q ) ] = 𝔼 x < k ∼ p θ T T ​ B ​ T ​ [ ∑ x k p θ T ​ ( x k ∣ 𝐱 t , x < k , q ) ​ log ⁡ p θ S ​ ( x k ∣ 𝐱 t , q ) ] . \mathbb{E}_{\mathbf{x}_{0}^{\mathcal{M}}\sim p_{\theta_{T}}^{TBT}}\!\left[\log p_{\theta_{S}}(x_{k}\mid\mathbf{x}_{t},q)\right]=\mathbb{E}_{x_{<k}\sim p_{\theta_{T}}^{TBT}}\!\left[\sum_{x_{k}}p_{\theta_{T}}(x_{k}\mid\mathbf{x}_{t},x_{<k},q)\,\log p_{\theta_{S}}(x_{k}\mid\mathbf{x}_{t},q)\right]. 
+ (24) 
+ Substituting Eq.  24 back into Eq.  22 yields 
+ min θ S ∑ k = 1 K 𝔼 x < k ∼ p θ T T ​ B ​ T [ − ∑ x k p θ T ( x k ∣ 𝐱 t , x < k , q ) log p θ S ( x k ∣ 𝐱 t , q ) ] , \min_{\theta_{S}}\;\sum_{k=1}^{K}\mathbb{E}_{x_{<k}\sim p_{\theta_{T}}^{TBT}}\!\left[-\sum_{x_{k}}p_{\theta_{T}}(x_{k}\mid\mathbf{x}_{t},x_{<k},q)\,\log p_{\theta_{S}}(x_{k}\mid\mathbf{x}_{t},q)\right], 
+ (25) 
+ which matches Eq.  18 and completes the proof.
+∎ 
+ Remark. 
+ Theorem  1 formalizes the key insight underlying the TAD framework: the student’s per-position marginal predictions must match the teacher’s conditional probabilities along the sampled trajectory in order to internalize the sequential dependencies that a fully factorized model would otherwise miss. This conditional matching is exactly what motivates the hard cross-entropy loss on near tokens (Section  3.3 ), where the teacher’s conditional distribution becomes sharply peaked and is well approximated by a one-hot label. 
+ Algorithm 1 Temporal-Aware Trajectory Self-Distillation (TAD) 
+ Input: Trajectory dataset 𝒟 = { ( q , a , τ p ​ r ​ i ​ v ) } \mathcal{D}=\{(q,a,\tau_{priv})\} , temporal partition window δ \delta , temperature τ \tau , loss weights λ \lambda . 
+ Parameters: Trainable student model θ S \theta_{S} , frozen teacher model θ T \theta_{T} . 
+ Output: Optimized student model θ S ∗ \theta_{S}^{*} . 
+ 1: 
+   while not converged do 
+ 2: 
+   Sample a batch of tuples ( q , a , τ p ​ r ​ i ​ v ) (q,a,\tau_{priv}) from dataset 𝒟 \mathcal{D} 
+ 3: 
+   Sample a decoding step s s and obtain the intermediate masked state x s x_{s} from τ p ​ r ​ i ​ v \tau_{priv} 
+ 4: 
+   Obtain the look-ahead target state x t ​ a ​ r ​ g ​ e ​ t ← x s + δ x_{target}\leftarrow x_{s+\delta} from τ p ​ r ​ i ​ v \tau_{priv} 
+ 5: 
+    # 1. Privilege-Aware Input Construction 
+ 6: 
+   Construct student input: I S ← Concat ​ ( q , x s ) I_{S}\leftarrow\text{Concat}(q,x_{s}) 
+ 7: 
+   Construct teacher input: I T ← Concat ​ ( q , a , x s ) I_{T}\leftarrow\text{Concat}(q,a,x_{s}) 
+ 8: 
+    # 2. Spatial Partitioning of Masked Tokens 
+ 9: 
+   Initialize near subset ℳ n ​ e ​ a ​ r ← ∅ \mathcal{M}_{near}\leftarrow\emptyset , distant subset ℳ d ​ i ​ s ​ t ​ a ​ n ​ t ← ∅ \mathcal{M}_{distant}\leftarrow\emptyset 
+ 10: 
+   Initialize hard label sequence Y ← ∅ Y\leftarrow\emptyset 
+ 11: 
+    for each position i i in x s x_{s} do 
+ 12: 
+     if x s i = = [MASK] x_{s}^{i}==\text{[MASK]} x t ​ a ​ r ​ g ​ e ​ t i ≠ [MASK] x_{target}^{i}\neq\text{[MASK]} then 
+ 13: 
+      ℳ n ​ e ​ a ​ r ← ℳ n ​ e ​ a ​ r ∪ { i } \mathcal{M}_{near}\leftarrow\mathcal{M}_{near}\cup\{i\} {Near tokens to be decoded within δ \delta steps}
+ 14: 
+      Y i ← x t ​ a ​ r ​ g ​ e ​ t i Y^{i}\leftarrow x_{target}^{i} 
+ 15: 
+     else if x s i = = [MASK] x_{s}^{i}==\text{[MASK]} x t ​ a ​ r ​ g ​ e ​ t i = = [MASK] x_{target}^{i}==\text{[MASK]} then 
+ 16: 
+      ℳ d ​ i ​ s ​ t ​ a ​ n ​ t ← ℳ d ​ i ​ s ​ t ​ a ​ n ​ t ∪ { i } \mathcal{M}_{distant}\leftarrow\mathcal{M}_{distant}\cup\{i\} {Distant tokens remaining masked}
+ 17: 
+     end if 
+ 18: 
+    end for 
+ 19: 
+    # 3. Model Forward Pass 
+ 20: 
+    L S ← θ S ​ ( I S ) L_{S}\leftarrow\theta_{S}(I_{S}) {Student marginal logits}
+ 21: 
+    L T ← θ T ​ ( I T ) L_{T}\leftarrow\theta_{T}(I_{T}) {Teacher conditional logits (no_grad)}
+ 22: 
+    # 4. Decoupled Objective Computation 
+ 23: 
+    ℒ n ​ e ​ a ​ r ← CrossEntropy ​ ( L S ​ [ ℳ n ​ e ​ a ​ r ] , Y ⁡ [ ℳ n ​ e ​ a ​ r ] ) \mathcal{L}_{near}\leftarrow\text{CrossEntropy}(L_{S}[\mathcal{M}_{near}],Y[\mathcal{M}_{near}]) 
+ 24: 
+    P S ← LogSoftmax ​ ( L S ​ [ ℳ d ​ i ​ s ​ t ​ a ​ n ​ t ] / τ ) P_{S}\leftarrow\text{LogSoftmax}(L_{S}[\mathcal{M}_{distant}]/\tau) 
+ 25: 
+    P T ← Softmax ​ ( L T ​ [ ℳ d ​ i ​ s ​ t ​ a ​ n ​ t ] / τ ) P_{T}\leftarrow\text{Softmax}(L_{T}[\mathcal{M}_{distant}]/\tau) 
+ 26: 
+    ℒ d ​ i ​ s ​ t ​ a ​ n ​ t ← τ 2 ⋅ KLDiv ​ ( P S , P T ) \mathcal{L}_{distant}\leftarrow\tau^{2}\cdot\text{KLDiv}(P_{S},P_{T}) 
+ 27: 
+    ℒ T ​ A ​ D ← ℒ n ​ e ​ a ​ r + λ ​ ℒ d ​ i ​ s ​ t ​ a ​ n ​ t \mathcal{L}_{TAD}\leftarrow\mathcal{L}_{near}+\lambda\mathcal{L}_{distant} 
+ 28: 
+    # 5. Optimization 
+ 29: 
+   Update student parameters: θ S ← θ S − η ​ ∇ θ S ℒ T ​ A ​ D \theta_{S}\leftarrow\theta_{S}-\eta\nabla_{\theta_{S}}\mathcal{L}_{TAD} 
+ 30: 
+   end while 
+ Appendix B Algorithm 
+ In this section, we describe the training algorithm of TAD. Algorithm  1 provides the pseudocode of the full training procedure. 
+ Appendix C More Implementation Details 
+ C.1 Training Details 
+ We apply TAD to two dLLMs: LLaDA-8B-Instruct and Dream-7B-Instruct.
+Both models are fine-tuned using LoRA with DeepSpeed ZeRO-Stage 2 on 8 × \times H200 GPUs,
+using bfloat16 mixed precision throughout. The total training time is 20 hours for each model. The detailed training hyperparameters are summarized in Table  7 . 
+ Sequence Length. 
+ We do not impose a fixed maximum sequence length during training.
+Instead, each training sample is constructed by concatenating the tokenized prompt
+with the trajectory token sequence from the corresponding diffusion step,
+and sequences within each mini-batch are dynamically right-padded to the longest sample in that batch. Padding positions are excluded from all loss computations via label masking. 
+ Table 7 : Training hyperparameters for TAD. 
+ Hyperparameter 
+ TAD-LLaDA 
+ TAD-Dream 
+ Training 
+ Optimizer 
+ AdamW 
+ AdamW 
+ Learning Rate 
+ 2 × 10 − 5 2\times 10^{-5} 
+ 2 × 10 − 5 2\times 10^{-5} 
+ LR Scheduler 
+ Constant 
+ Constant 
+ Warmup Steps 
+ 0 
+ 0 
+ Weight Decay 
+ 0.01 
+ 0.01 
+ Max Gradient Norm 
+ 1.0 
+ 1.0 
+ Training Epochs 
+ 1 
+ 1 
+ Per-Device Batch Size 
+ 4 
+ 4 
+ Gradient Accumulation Steps 
+ 8 
+ 8 
+ Global Batch Size 
+ 256 
+ 256 
+ Precision 
+ bfloat16 
+ bfloat16 
+ DeepSpeed Stage 
+ ZeRO-2 
+ ZeRO-2 
+ Max Sequence Length 
+ Dynamic 
+ Dynamic 
+ LoRA 
+ Rank ( r r ) 
+ 128 
+ 128 
+ Alpha ( α \alpha ) 
+ 128 
+ 128 
+ Dropout 
+ 0.05 
+ 0.05 
+ Bias 
+ None 
+ None 
+ Target Modules 
+ q,k,v,o,gate,up,down _proj 
+ Distillation 
+ λ \lambda 
+ 1.0 
+ 1.0 
+ Temperature ( τ \tau ) 
+ 1.0 
+ 1.0 
+ C.2 Evaluation Details 
+ C.2.1 Evaluation Metrics 
+ We adopt the AUP (Accuracy Under Parallelism)  32 score as our primary evaluation metric. AUP is defined as a weighted area under the accuracy–parallelism curve, where parallelism is measured by Tokens Per Forward pass (TPF). Given a set of parallelism-accuracy pairs S = { ( ρ i , y i ) } i = 1 m S=\{(\rho_{i},y_{i})\}_{i=1}^{m} sorted by increasing parallelism ρ 1 < ρ 2 < ⋯ < ρ m \rho_{1}<\rho_{2}<\cdots<\rho_{m} , AUP is computed as: 
+ AUP ≜ ρ 1 ​ y 1 + ∑ i = 2 m ( ρ i − ρ i − 1 ) ​ ( y i ​ W ​ ( y i ) + y i − 1 ​ W ​ ( y i − 1 ) 2 ) , \mathrm{AUP}\triangleq\rho_{1}y_{1}+\sum_{i=2}^{m}(\rho_{i}-\rho_{i-1})\left(\frac{y_{i}W(y_{i})+y_{i-1}W(y_{i-1})}{2}\right), 
+ (26) 
+ where the weighting function W ⁡ ( y ) = min ⁡ ( e − α ⁡ ( 1 − y / y max ) , 1 ) W(y)=\min(e^{-\alpha(1-y/y_{\max})},1) penalizes accuracy degradation relative to the best accuracy y max y_{\max} achieved on that task. We use α = 3 \alpha=3 as the default penalty factor. A minimum accuracy threshold y min = y 1 − 5 y_{\min}=y_{1}-5 is applied to exclude regimes of severe accuracy degradation. AUP rewards methods that increase parallelism without sacrificing accuracy, while suppressing contributions from low-accuracy regimes. Importantly, AUP is hardware-independent since it relies on TPF rather than tokens per second (TPS), providing a fair comparison of algorithmic parallelism across different hardware setups. 
+ C.2.2 Evaluation Configurations 
+ We evaluate on four downstream benchmarks covering math reasoning and code generation. All evaluations are conducted using the lm-evaluation-harness framework. Due to differences in model architecture and instruction-following capabilities, TAD-LLaDA and TAD-Dream use slightly different task variants, as summarized in Table  8 .
+During inference, we set the maximum generation length to 256 tokens for all tasks. We use greedy decoding with temperature set to 0.0. The block size is fixed at 32 tokens for all experiments. For our TAD framework with multi-block generation, the block-add threshold is set to 0.1, and the decoded token threshold is 0.95. 
+ Table 8 : Evaluation configurations for TAD-LLaDA and TAD-Dream. 
+ Model 
+ Benchmark 
+ Few-shot 
+ Gen Length 
+ Block Size 
+ Entropy threshold 
+ TAD-LLaDA 
+ GSM8K 
+ 0-shot 
+ 256 
+ 32 
+ 0.5 
+ MATH (Minerva) 
+ 4-shot 
+ 256 
+ 32 
+ 0.5 
+ HumanEval 
+ 0-shot 
+ 256 
+ 32 
+ 0.5 
+ MBPP 
+ 3-shot 
+ 256 
+ 32 
+ 0.5 
+ TAD-Dream 
+ GSM8K 
+ 0-shot 
+ 256 
+ 32 
+ 0.5 
+ MATH (Minerva) 
+ 4-shot 
+ 256 
+ 32 
+ 0.5 
+ HumanEval-Instruct 
+ 0-shot 
+ 256 
+ 32 
+ 0.5 
+ MBPP-Instruct 
+ 0-shot 
+ 256 
+ 32 
+ 0.5 
+ Appendix D More Experiment Results 
+ D.1 Impact of Privileged Information on Trajectory Collection 
+ In this section, we investigate the quality of the intermediate trajectories collected during the data construction phase. Specifically, we evaluate the generative accuracy of the teacher models under two distinct rollout conditions: (1) standard self-generation, where the model is conditioned solely on the input question without access to the ground truth (w/o GT), and (2) generation with privileged information, where the model receives both the input question and the ground-truth response. 
+ As presented in Table 9 , the inclusion of ground-truth information yields a substantial and consistent improvement in trajectory accuracy across all evaluated benchmarks for both LLaDA-8B-Instruct and Dream-7B-Instruct architectures. For instance, on the GSM8K Training Set, the privileged information guidance improves LLaDA’s accuracy from 68.88% to 89.16%, and Dream’s from 75.17% to 94.79%. This performance confirms that leveraging ground truth as privileged information is beneficial to sample the high-quality intermediate states required for effective temporal-aware self-distillation. 
+ Table 9 : Performance comparison of dLLMs with and without Ground Truth (GT). 
+ Model 
+ Condition 
+ GSM8K 
+ KodCode 
+ LLaDA-8B-Instruct 
+ w/o GT 
+ 68.88 
+ 8.22 
+ with GT 
+ 89.16 
+ 77.28 
+ Dream-7B-Instruct 
+ w/o GT 
+ 75.17 
+ 14.05 
+ with GT 
+ 94.79 
+ 75.08 
+ D.2 Throughput Analysis 
+ To further validate the practical deployment efficiency of the TAD framework, we conduct a wall-clock throughput analysis on the GSM8K-CoT benchmark using NVIDIA H200 GPUs. We measure the generation speed in tokens per second (TPS) and compare it against the base models and strong acceleration baselines. The results for LLaDA and Dream architectures are presented in Table  10 . 
+ Results on LLaDA Architecture 
+As shown in Table  10 , TAD demonstrates a remarkable improvement over the baseline and existing acceleration methods on the LLaDA architecture. The Quality mode (TAD-LLaDA-Q) achieves 339.4 TPS, a 10.9-fold speedup over LLaDa, while simultaneously improving the accuracy from 72.6% to 79.9%. Furthermore, the Speed mode (TAD-LLaDA-S) maximizes hardware utilization, reaching a peak throughput of 451.8 TPS (a 14.5-fold acceleration) while maintaining a robust accuracy of 78.8%. 
+ Results on Dream Architecture 
+The Dream base model inherently possesses a highly optimized initial state, achieving 83.9% accuracy on GSM8K-CoT. As illustrated in Table 10 , all acceleration methods incur a minor accuracy penalty on this architecture. TAD-Dream-Q achieves 205.7 TPS (a 5.1-fold speedup) while preserving a highly competitive accuracy of 81.4%. TAD-Dream-S pushes the throughput to 288.4 TPS (a 7.2-fold speedup) with a marginal drop to 81.0% accuracy. We observe that while the absolute peak TPS of TAD-Dream-S is slightly lower than that of d3LLM  32 (295.0 TPS), TAD matches its accuracy in the Quality mode. 
+ Table 10 : Throughput comparison of TAD-LLaDA and TAD-Dream on GSM8K-CoT using H200 GPUs. We report tokens per second (TPS) and accuracy (%). Speedup ratios relative to the respective base models (LLaDA and Dream) are shown in parentheses. 
+ Method 
+ H200 TPS ↑ \uparrow 
+ Acc (%) ↑ \uparrow 
+ LLaDA 
+ 31.2 ( 1.0 × 1.0\times ) 
+ 72.6 
+ Fast-dLLM-LLaDA 
+ 137.3 ( 4.4 × 4.4\times ) 
+ 74.7 
+ D2F-LLaDA 
+ 121.1 ( 3.9 × 3.9\times ) 
+ 73.2 
+ dParallel-LLaDA 
+ 214.3 ( 6.9 × 6.9\times ) 
+ 72.6 
+ d3LLM-LLaDA 
+ 328.2 ( 10.5 × 10.5\times ) 
+ 73.1 
+ TAD-LLaDA-Q 
+ 339.4 ( 10.9 × 10.9\times ) 
+ 79.9 
+ TAD-LLaDA-S 
+ 451.8 ( 14.5 × 14.5\times ) 
+ 78.8 
+ Method 
+ H200 TPS ↑ \uparrow 
+ Acc (%) ↑ \uparrow 
+ Dream 
+ 40.1 ( 1.0 × 1.0\times ) 
+ 83.9 
+ Fast-dLLM-Dream 
+ 117.8 ( 2.9 × 2.9\times ) 
+ 79.0 
+ Fast-dLLM-v2 
+ 169.3 ( 4.2 × 4.2\times ) 
+ 77.5 
+ dParallel-Dream 
+ 189.4 ( 4.7 × 4.7\times ) 
+ 82.1 
+ d3LLM-Dream 
+ 295.0 ( 7.4 × 7.4\times ) 
+ 81.4 
+ TAD-Dream-Q 
+ 205.7 ( 5.1 × 5.1\times ) 
+ 81.4 
+ TAD-Dream-S 
+ 288.4 ( 7.2 × 7.2\times ) 
+ 81.0 
+ Experimental support, please
+ view the build logs 
+ for errors. Generated by
+ L
+ A 
+ T
+ E 
+ xml 
+ .
+ Instructions for reporting errors 
+ We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+ support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+ methods listed below: 
+ Click the "Report Issue" ( 
+ ) button, located in the page header. 
+ Tip: You can select the relevant text first, to include it in your report. 
+ Our team has already identified the following issues . We appreciate your time reviewing and reporting rendering errors we
+ may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+ should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+ all. 
+ Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion , and welcome developer contributions . 
+ We gratefully acknowledge support from
+ our major funders ,
+ member institutions , ,
+ and all contributors.
+ About 
+ · 
+ Help 
+ · 
+ Contact 
+ · 
+ Subscribe 
+ · 
+ Copyright 
+ · 
+ Privacy 
+ · 
+ Accessibility 
+ · 
+ Operational Status (opens in new tab) 
+ Major funding support from 

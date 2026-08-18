@@ -1,0 +1,115 @@
+You are the SECOND, INDEPENDENT reviewer of a dLLM research scoping document. Another model already wrote
+the document; your job is to attack it and to add what it missed. Use web search aggressively.
+
+## READ FIRST
+
+`/apdcephfs_wzc1/share_304376610/pighzliu_code/dllm_draft/proposal/CLAUDE_FRONTIER_20260815.md` (1262 lines,
+7 proposals P1-P7). Also read, in the same directory, `VENUE_RESOLUTION_20260815.md`.
+
+Do NOT rewrite that document. Produce an adversarial review plus NEW proposals it did not think of.
+
+## GROUND TRUTH ALREADY ESTABLISHED (verified today; do not re-verify these, build on them)
+
+- `arXiv:2508.00819` = DAEDAL, *Beyond Fixed: Training-Free Variable-Length Denoising for Diffusion Large
+  Language Models*. **OpenReview: venue "ICLR 2026 Poster", venueid `ICLR.cc/2026/Conference`, forum
+  `Ic2A2gCseC`, `Submission1382/-/Camera_Ready_Revision` present, decision pdate 2026-01-26.** Official
+  bibtex is `@inproceedings{li2026beyond, booktitle={The Fourteenth ICLR}, year={2026}}`. **A `CoRR 2025`
+  citation for DAEDAL is WRONG.**
+- DAEDAL Table 1's swept columns sit under its own column-group header **`Fixed-Length Denoising
+  (Baseline)`**, caption: "we compare the baseline performance at various generation lengths (64 to 2048)
+  against DAEDAL". So the sweep is over a TUNED FIXED-LENGTH BASELINE, not over DAEDAL's own variants.
+  HumanEval 18.9 -> 47.6, MBPP 20.8 -> 37.4/38.8. Models: BOTH LLaDA-Instruct-8B (T1) and LLaDA-1.5-8B (T2).
+- `arXiv:2601.22527` = rho-EOS, *Training-free Bidirectional Variable-Length Control for Masked Diffusion*,
+  2026-01-30. Same `Fixed-Length Denoising (Baseline)` header; MBPP 21.0 -> 36.7 (LLaDA-Instruct-8B) and
+  21.2 -> 39.2 (LLaDA-1.5-8B). OpenReview search shows `CoRR 2026` => preprint.
+- `arXiv:2605.10938` = ELF, *Embedded Language Flows* (comment: "Tech report"). `arXiv:2606.25331` =
+  *Improved Large Language Diffusion Models* (iLLaDA). `arXiv:2602.01326` = DreamOn, arXiv comment reads
+  "ICLR 2026". `arXiv:2505.22618` = Fast-dLLM.
+
+**CONSEQUENCE ALREADY DRAWN:** this group's own internal finding -- that DreamOn's full-program code
+weakness is largely a canvas-budget artefact (`initial_masks` 8->32 moves MBPP+ .0899->.3545, +26.5 pp) --
+is a **REPRODUCTION of a published phenomenon**, not a novel finding. It was formally killed as a novelty
+claim today. Do not propose anything that depends on that phenomenon being new.
+
+**A METHODOLOGICAL WARNING you must apply throughout:** DAEDAL proves a DBLP `CoRR` record can COEXIST with
+an accepted ICLR-2026 record. So "DBLP says CoRR" means **NOT-FOUND**, not **IS-A-PREPRINT**. The first
+reviewer's table has ~8 rows whose "preprint" status came from DBLP and are therefore unsafe: rho-EOS,
+iLLaDA, LLaDA-MoE, Dream-Coder, CAL, LR-DLLM, ELF, LLaDA-1.5. **Re-checking those venues through
+OpenReview is one of your concrete deliverables.** Note `api2.openreview.net/notes?forum=` is
+challenge-gated (403) but `api2.openreview.net/notes/search?term=<words>&limit=20` returns 200.
+
+## YOUR FIVE TASKS
+
+### 1. Re-verify the unsafe venue rows
+For each of rho-EOS (2601.22527), iLLaDA (2606.25331), LLaDA-MoE, LLaDA-1.5 (2505.19223), Dream-Coder,
+CAL, LR-DLLM (2602.07546), ELF (2605.10938): search OpenReview `/notes/search` and report venue + venueid,
+or state NOT-FOUND-IN-OPENREVIEW explicitly. For any ACL-family paper use ACL Anthology + DBLP instead --
+OpenReview is not authoritative for the ACL family, Findings included.
+
+### 2. Attack the 7 existing proposals
+For each of P1-P7 give a one-paragraph verdict: SURVIVES / NARROW / DEAD, with the specific reason. Attack
+on prior art (bar = "already shows the same thing", NOT "same area"; work within 2-3 months is concurrent
+and does NOT preempt), on confounds, and on decisiveness ("if this returns exactly the predicted number,
+does any scientific conclusion change?"). Name papers with verified metadata, not impressions.
+
+The first reviewer's own headline seam was: **nobody reports total NFE (forward-evaluation count) for
+their own adaptive-length loop** -- DAEDAL reports only an "effective token ratio", CAL reports 11-18 extra
+forwards without a total, LR-DLLM normalises per-token which hides that adaptive methods change the
+denominator. **Verify or refute that claim against the actual papers.** If it holds it is the most valuable
+thing in the document, because this group already has the counter-data on disk (`nfe_mean` 172.3 -> 393.7
+-> 593.4 across canvas 8/32/128).
+
+### 3. Propose 4-6 NEW proposals the first reviewer missed
+Same seven mandatory fields each: title + falsifiable one-sentence claim; mechanism at sampler/loss/
+architecture level with named knobs; why-not-already-done + closest prior work + the specific delta;
+a PRE-REGISTERED KILL GATE in the form "KILL if <quantity> on <benchmark> is <comparator> <threshold> under
+<test>" (a gate that cannot fire is not a gate -- and state the EXPECTED outcome honestly, including if you
+expect your own gate to fire); cheapest decisive first experiment with GPU-hour estimate and whether step 1
+is 0 GPU; confounds that would invalidate it; and what it licenses claiming vs must NOT claim.
+
+Look for the seams the first reviewer did not: dLLM training objectives beyond masking; the
+semi-autoregressive/block-diffusion boundary; distillation and few-step samplers; how remasking schedules
+interact with length; whether any dLLM claim about "parallel generation" survives an honest wall-clock (not
+NFE) accounting on modern hardware; multimodal/embodied dLLMs; RL/preference optimisation for dLLMs;
+KV-cache analogues; and AR<->diffusion conversion. Prefer proposals whose FIRST step is 0 GPU.
+
+### 4. Rank everything (existing survivors + your new ones) together
+By (expected information gain)/(GPU cost). Name the single one to run first, and say explicitly whether its
+first step needs GPU.
+
+### 5. State what you could not verify
+With the exact authority you tried and the exact error. Semantic Scholar has been returning HTTP 429 all
+day -- if it refuses you too, say so; its silence is NOT evidence of absence.
+
+## HARD CONSTRAINTS
+
+- Hardware: 2 nodes x 8 B200 (sm_100, 178 GB) + 3 nodes x 8 H20 (sm_90, 97.8 GB) = 40 cards, **all 100%
+  busy** with multi-day training runs. Nothing GPU-bound can start immediately => rank 0-GPU-first higher.
+- **Model weights can be downloaded to ANY disk on demand** (confirmed by the group lead). Do NOT penalise
+  a proposal for needing a checkpoint that is not yet local; just give the exact HF repo id.
+- On disk already: `Dream-Coder-v0-Base-7B`, `Dream-Coder-v0-Instruct-7B`, `DreamOn-v0-7B`,
+  `Qwen2.5-Coder-7B`, `Scaffold-v0-stage1-7B` under
+  `/apdcephfs_wzc1/share_304376610/pighzliu_code/dllm_draft/models/`.
+- Already-generated raw outputs on disk: per-item pass maps for HE+/MBPP+ at canvas 8/32/128 and 6
+  infilling arms at n=1033. CPU re-mining is free and instant, so proposals that mine these rank higher.
+- Benchmarks wired: HumanEval+, MBPP+ (EvalPlus), HumanEval-SingleLineInfilling.
+
+## INTEGRITY
+
+Never fabricate a bibliographic field -- write UNVERIFIED plus the authority tried. This group re-checks
+every venue string and has caught invented details before; one fabrication discredits the document.
+Distinguish RETRIEVED from INFERRED. Do not pad: four well-gated new proposals beat twelve vague ones.
+A direction may only be killed by its own experimental kill gate or by genuine preemption -- never by a
+count of adjacent papers.
+
+## OUTPUT HEADERS (use exactly)
+
+```
+# dLLM Second-Opinion Review — 2026-08-15
+## 1. Venue re-verification of the 8 unsafe rows
+## 2. Adversarial verdicts on P1-P7
+## 3. Is the "nobody reports NFE" seam real?
+## 4. New proposals (4-6, seven fields each)
+## 5. Unified ranking + the single first experiment
+## 6. What I could not verify (authority + exact error)
+```

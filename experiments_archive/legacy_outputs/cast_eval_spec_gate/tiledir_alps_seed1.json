@@ -1,0 +1,24 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/paper_v2/staged_diskb_models/outputs/paper_v2/alps/llama2_wandb_sf_alps_v1_alps_seed1/hf_model",
+  "in_scope_tensors": 224,
+  "elems": 6476005376,
+  "zeros": 3238002688,
+  "zero_frac": 0.5,
+  "tiles": 1619001344,
+  "tile_nonzero_histogram": {
+    "0": 0,
+    "1": 0,
+    "2": 1619001344,
+    "3": 0,
+    "4": 0
+  },
+  "tiles_gt2_TOTAL_budget_violations": 0,
+  "tiles_lt2_TOTAL_sparser_than_2of4": 0,
+  "exact_2of4_tile_ratio": 1.0,
+  "strict_gate_would_pass": true,
+  "deployable_2of4": true,
+  "n_offending_layers": 0,
+  "offending_layers": [],
+  "note": "A tile with <2 nonzeros is a strict subset of an allowed 2:4 tile (fewer live weights, same compressed format, runs on 2:4 tensor cores), so it does not break 2:4 deployability. A tile with >2 nonzeros does. Scoring gates on tiles_gt2 == 0.",
+  "verdict": "PASS"
+}

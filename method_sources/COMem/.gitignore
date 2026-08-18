@@ -1,0 +1,51 @@
+# weights / checkpoints / large binaries
+*.pt
+*.bin
+*.safetensors
+*.ckpt
+
+# data / results / outputs
+# NOTE: the glob is load-bearing. This repo is CODE-ONLY — result JSON/CSV must
+# never enter git. `*_results/` catches new benchmark dirs (bench_results/,
+# infbench_results/, ...) that the literal list below would otherwise miss and
+# that could be `git add`-ed by accident.
+*_results/
+data/
+outputs/
+ruler_results/
+babilong_results/
+longbench_results/
+longeval_results/
+locomo_results/
+bench_qcmem_vs_dense_result.txt
+
+# secrets / credentials
+configs/password*
+*.pem
+*.key
+.env
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# LaTeX build artifacts
+*.pdf
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.zip
+paper/_deprecated/
+missfont.log
+
+# misc
+.DS_Store

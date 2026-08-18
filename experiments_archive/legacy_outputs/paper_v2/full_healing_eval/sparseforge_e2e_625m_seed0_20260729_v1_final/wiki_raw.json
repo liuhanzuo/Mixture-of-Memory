@@ -1,0 +1,15 @@
+{
+  "wiki_ppl": {
+    "model.pt": 903.5179234823793
+  },
+  "lm_eval": {},
+  "config": {
+    "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/Llama--Llama2-7b",
+    "block_size": 2048,
+    "lm_eval_tasks": null,
+    "lm_eval_batch_size": 4,
+    "lm_eval_num_fewshot": 0,
+    "distributed": false,
+    "world_size": 1
+  }
+}

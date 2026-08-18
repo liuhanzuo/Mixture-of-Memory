@@ -1,0 +1,14 @@
+{
+  "model": "/apdcephfs_wzc1/share_304376610/pighzliu_code/outputs/paper_v2/staged_diskb_models/outputs/paper_v2/elsa/paper_v2_overnight_20260725_v1_elsa_full4096/Llama--Llama2-7b_pruned0.5_admm_lr0.0002_20260725_0136",
+  "seqlen": 2048,
+  "load_seconds": 14.68580412864685,
+  "global_zero_ratio": 0.48052907842483544,
+  "linear_zero_ratio": 0.5,
+  "exact_2of4_tile_ratio": 1.0,
+  "linear_layers": 224,
+  "linear_parameters": 6476005376,
+  "nm_tiles": 1619001344,
+  "wikitext2_ppl": 7.989485050040298,
+  "wikitext2_tokens": 335872,
+  "wikitext2_seconds": 7.285939693450928
+}

@@ -1,0 +1,14 @@
+{
+  "format": "sparseforge-mask-v1",
+  "pattern": "2:4",
+  "source_type": "sparseforge_soft_top2",
+  "source": "/apdcephfs_wzc1/share_304376610/pighzliu_code/out_llama/models_Llama--Llama2-7b_mask-unstructured_s0.5_m-hessian_obd_20260413_201320/model_best_lm_eval.pt",
+  "module_count": 224,
+  "total_elements": 6476005376,
+  "kept_elements": 3238002688,
+  "sparsity": 0.5,
+  "projection_audit": {
+    "source_nonbinary_elements": 3239577811,
+    "source_nonexact_2of4_groups": 26726
+  }
+}

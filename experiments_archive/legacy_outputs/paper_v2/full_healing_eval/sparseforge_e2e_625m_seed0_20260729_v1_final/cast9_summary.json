@@ -1,0 +1,37 @@
+{
+  "method": "SparseForge end-to-end 624.95M, seed 0",
+  "tasks": {
+    "boolq": 37.82874617737003,
+    "rte": 52.707581227436826,
+    "hellaswag": 25.801633140808605,
+    "winogrande": 49.56590370955012,
+    "arc_easy": 26.346801346801346,
+    "arc_challenge": 20.819112627986346,
+    "openbookqa": 14.799999999999999,
+    "race": 22.392344497607656,
+    "piqa": 53.97170837867247
+  },
+  "ast7_mean": 32.5528254614219,
+  "cast7_mean": 30.528214814489505,
+  "wiki_ppl": 903.5179234823793,
+  "c4_ppl": 310.0446362767369,
+  "c4_tokens": 1048576,
+  "ast7_tasks": [
+    "boolq",
+    "rte",
+    "hellaswag",
+    "winogrande",
+    "arc_easy",
+    "arc_challenge",
+    "openbookqa"
+  ],
+  "cast7_tasks": [
+    "hellaswag",
+    "race",
+    "piqa",
+    "winogrande",
+    "arc_easy",
+    "arc_challenge",
+    "openbookqa"
+  ]
+}
