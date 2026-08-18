@@ -1,0 +1,42 @@
+{
+  "config": {
+    "model_path": "models/Qwen3-8b-local",
+    "resume_j": 0,
+    "chunk_size": 512,
+    "topk": 12,
+    "dtype": "bfloat16",
+    "attn_impl": "sdpa",
+    "n_repeat": 20,
+    "warmup": 2,
+    "n_decode": 32,
+    "num_layers": 36,
+    "vocab_size": 151936,
+    "lora_adapter": "outputs/qcmem_distill_qwen_j12_r32_4k/final"
+  },
+  "rows": [
+    {
+      "length_label": "32k",
+      "L": 32768,
+      "full_ctx": {
+        "status": "ok",
+        "prefill_s": 6.923392815515399,
+        "decode_s": 1.1490979697555304,
+        "peak_gb": 34.07024431228638,
+        "seq_len": 32768
+      },
+      "qcmem": {
+        "status": "ok",
+        "prefill_s": 1.1083060950040817,
+        "write_s": 0.02429499849677086,
+        "select_s": 0.011910617351531982,
+        "read_s": 1.0720357112586498,
+        "decode_s": 34.25826860964298,
+        "peak_gb": 17.79432249069214,
+        "seq_len": 6657,
+        "n_chunks": 64,
+        "write_calls": 65
+      },
+      "speedup": 6.2468237310288375
+    }
+  ]
+}

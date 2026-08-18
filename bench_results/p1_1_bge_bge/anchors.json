@@ -1,0 +1,317 @@
+{
+  "primary_comem12_vs_dense_kstar_gpu_resident_deploy": {
+    "comem_k": 12,
+    "dense_k": 10,
+    "per_cell": {
+      "babilong/qa1/16k": {
+        "n": 100,
+        "comem": 33.0,
+        "dense_rag": 38.0,
+        "diff": -5.0
+      },
+      "babilong/qa1/4k": {
+        "n": 100,
+        "comem": 69.0,
+        "dense_rag": 74.0,
+        "diff": -5.0
+      },
+      "babilong/qa2/16k": {
+        "n": 100,
+        "comem": 20.0,
+        "dense_rag": 31.0,
+        "diff": -11.0
+      },
+      "babilong/qa2/4k": {
+        "n": 100,
+        "comem": 44.0,
+        "dense_rag": 45.0,
+        "diff": -1.0
+      },
+      "locomo/locomo/na": {
+        "n": 100,
+        "comem": 11.0,
+        "dense_rag": 12.0,
+        "diff": -1.0
+      },
+      "longeval/longeval/16k": {
+        "n": 100,
+        "comem": 35.0,
+        "dense_rag": 54.0,
+        "diff": -19.0
+      },
+      "longeval/longeval/8k": {
+        "n": 100,
+        "comem": 59.0,
+        "dense_rag": 70.0,
+        "diff": -11.0
+      },
+      "ruler/niah_multikey_1/16k": {
+        "n": 100,
+        "comem": 73.0,
+        "dense_rag": 72.0,
+        "diff": 1.0
+      },
+      "ruler/niah_multikey_1/8k": {
+        "n": 100,
+        "comem": 89.0,
+        "dense_rag": 93.0,
+        "diff": -4.0
+      }
+    },
+    "macro_comem": 48.11,
+    "macro_dense_rag": 54.33,
+    "macro_diff_comem_minus_dense": -6.22,
+    "paired_bootstrap_95ci": [
+      -9.111,
+      -3.333
+    ],
+    "mcnemar": {
+      "comem_only_b": 61,
+      "dense_only_c": 117,
+      "both": 372,
+      "neither": 350,
+      "exact_two_sided_p": 3.261258960563924e-05
+    },
+    "n_examples": 900,
+    "aggregation_schemes": {
+      "macro_equal_cell_diff": -6.222,
+      "sample_weighted_diff": -6.222,
+      "leave_one_task_out_diff": {
+        "drop_babilong": -6.8,
+        "drop_locomo": -6.875,
+        "drop_longeval": -3.714,
+        "drop_ruler": -7.571
+      },
+      "leave_one_task_out_range": [
+        -7.571,
+        -3.714
+      ],
+      "frozen_taskweight_diff": -4.75,
+      "frozen_taskweights_effective": {
+        "babilong": 0.35,
+        "locomo": 0.35,
+        "longeval": 0.15,
+        "ruler": 0.15
+      },
+      "frozen_taskweights_declared": {
+        "locomo": 0.35,
+        "babilong": 0.35,
+        "longeval": 0.15,
+        "ruler": 0.15
+      },
+      "n_cells": 9,
+      "n_examples_pooled": 900,
+      "note": "task-weight vector frozen before viewing results (pre-registered)."
+    }
+  },
+  "primary_comem12_vs_dense_kstar_cpu_pinned_deploy": {
+    "comem_k": 12,
+    "dense_k": 10,
+    "per_cell": {
+      "babilong/qa1/16k": {
+        "n": 100,
+        "comem": 33.0,
+        "dense_rag": 38.0,
+        "diff": -5.0
+      },
+      "babilong/qa1/4k": {
+        "n": 100,
+        "comem": 69.0,
+        "dense_rag": 74.0,
+        "diff": -5.0
+      },
+      "babilong/qa2/16k": {
+        "n": 100,
+        "comem": 20.0,
+        "dense_rag": 31.0,
+        "diff": -11.0
+      },
+      "babilong/qa2/4k": {
+        "n": 100,
+        "comem": 44.0,
+        "dense_rag": 45.0,
+        "diff": -1.0
+      },
+      "locomo/locomo/na": {
+        "n": 100,
+        "comem": 11.0,
+        "dense_rag": 12.0,
+        "diff": -1.0
+      },
+      "longeval/longeval/16k": {
+        "n": 100,
+        "comem": 35.0,
+        "dense_rag": 54.0,
+        "diff": -19.0
+      },
+      "longeval/longeval/8k": {
+        "n": 100,
+        "comem": 59.0,
+        "dense_rag": 70.0,
+        "diff": -11.0
+      },
+      "ruler/niah_multikey_1/16k": {
+        "n": 100,
+        "comem": 73.0,
+        "dense_rag": 72.0,
+        "diff": 1.0
+      },
+      "ruler/niah_multikey_1/8k": {
+        "n": 100,
+        "comem": 89.0,
+        "dense_rag": 93.0,
+        "diff": -4.0
+      }
+    },
+    "macro_comem": 48.11,
+    "macro_dense_rag": 54.33,
+    "macro_diff_comem_minus_dense": -6.22,
+    "paired_bootstrap_95ci": [
+      -9.111,
+      -3.333
+    ],
+    "mcnemar": {
+      "comem_only_b": 61,
+      "dense_only_c": 117,
+      "both": 372,
+      "neither": 350,
+      "exact_two_sided_p": 3.261258960563924e-05
+    },
+    "n_examples": 900,
+    "aggregation_schemes": {
+      "macro_equal_cell_diff": -6.222,
+      "sample_weighted_diff": -6.222,
+      "leave_one_task_out_diff": {
+        "drop_babilong": -6.8,
+        "drop_locomo": -6.875,
+        "drop_longeval": -3.714,
+        "drop_ruler": -7.571
+      },
+      "leave_one_task_out_range": [
+        -7.571,
+        -3.714
+      ],
+      "frozen_taskweight_diff": -4.75,
+      "frozen_taskweights_effective": {
+        "babilong": 0.35,
+        "locomo": 0.35,
+        "longeval": 0.15,
+        "ruler": 0.15
+      },
+      "frozen_taskweights_declared": {
+        "locomo": 0.35,
+        "babilong": 0.35,
+        "longeval": 0.15,
+        "ruler": 0.15
+      },
+      "n_cells": 9,
+      "n_examples_pooled": 900,
+      "note": "task-weight vector frozen before viewing results (pre-registered)."
+    }
+  },
+  "reference_k12_vs_k12": {
+    "comem_k": 12,
+    "dense_k": 12,
+    "per_cell": {
+      "babilong/qa1/16k": {
+        "n": 100,
+        "comem": 33.0,
+        "dense_rag": 46.0,
+        "diff": -13.0
+      },
+      "babilong/qa1/4k": {
+        "n": 100,
+        "comem": 69.0,
+        "dense_rag": 74.0,
+        "diff": -5.0
+      },
+      "babilong/qa2/16k": {
+        "n": 100,
+        "comem": 20.0,
+        "dense_rag": 30.0,
+        "diff": -10.0
+      },
+      "babilong/qa2/4k": {
+        "n": 100,
+        "comem": 44.0,
+        "dense_rag": 45.0,
+        "diff": -1.0
+      },
+      "locomo/locomo/na": {
+        "n": 100,
+        "comem": 11.0,
+        "dense_rag": 12.0,
+        "diff": -1.0
+      },
+      "longeval/longeval/16k": {
+        "n": 100,
+        "comem": 35.0,
+        "dense_rag": 57.0,
+        "diff": -22.0
+      },
+      "longeval/longeval/8k": {
+        "n": 100,
+        "comem": 59.0,
+        "dense_rag": 82.0,
+        "diff": -23.0
+      },
+      "ruler/niah_multikey_1/16k": {
+        "n": 100,
+        "comem": 73.0,
+        "dense_rag": 79.0,
+        "diff": -6.0
+      },
+      "ruler/niah_multikey_1/8k": {
+        "n": 100,
+        "comem": 89.0,
+        "dense_rag": 97.0,
+        "diff": -8.0
+      }
+    },
+    "macro_comem": 48.11,
+    "macro_dense_rag": 58.0,
+    "macro_diff_comem_minus_dense": -9.89,
+    "paired_bootstrap_95ci": [
+      -12.556,
+      -7.222
+    ],
+    "mcnemar": {
+      "comem_only_b": 36,
+      "dense_only_c": 125,
+      "both": 397,
+      "neither": 342,
+      "exact_two_sided_p": 1.032637886494449e-12
+    },
+    "n_examples": 900,
+    "aggregation_schemes": {
+      "macro_equal_cell_diff": -9.889,
+      "sample_weighted_diff": -9.889,
+      "leave_one_task_out_diff": {
+        "drop_babilong": -12.0,
+        "drop_locomo": -11.0,
+        "drop_longeval": -6.286,
+        "drop_ruler": -10.714
+      },
+      "leave_one_task_out_range": [
+        -12.0,
+        -6.286
+      ],
+      "frozen_taskweight_diff": -7.312,
+      "frozen_taskweights_effective": {
+        "babilong": 0.35,
+        "locomo": 0.35,
+        "longeval": 0.15,
+        "ruler": 0.15
+      },
+      "frozen_taskweights_declared": {
+        "locomo": 0.35,
+        "babilong": 0.35,
+        "longeval": 0.15,
+        "ruler": 0.15
+      },
+      "n_cells": 9,
+      "n_examples_pooled": 900,
+      "note": "task-weight vector frozen before viewing results (pre-registered)."
+    }
+  }
+}

@@ -1,0 +1,242 @@
+{
+  "primary_comem12_vs_rag_kstar_gpu_resident": {
+    "comem_k": 12,
+    "rag_k": 10,
+    "per_cell": {
+      "locomo/locomo/na": {
+        "n": 100,
+        "comem": 8.0,
+        "text_rag": 11.0,
+        "diff": -3.0
+      }
+    },
+    "macro_comem": 8.0,
+    "macro_text_rag": 11.0,
+    "macro_diff_comem_minus_rag": -3.0,
+    "paired_bootstrap_95ci": [
+      -7.0,
+      0.0
+    ],
+    "mcnemar": {
+      "comem_only_b": 0,
+      "rag_only_c": 3,
+      "both": 8,
+      "neither": 89,
+      "exact_two_sided_p": 0.25
+    },
+    "n_examples": 100,
+    "aggregation_schemes": {
+      "macro_equal_cell_diff": -3.0,
+      "sample_weighted_diff": -3.0,
+      "leave_one_task_out_diff": {
+        "drop_locomo": null
+      },
+      "leave_one_task_out_range": null,
+      "frozen_taskweight_diff": -3.0,
+      "frozen_taskweights_effective": {
+        "locomo": 1.0
+      },
+      "frozen_taskweights_declared": {
+        "locomo": 0.35,
+        "babilong": 0.35,
+        "longeval": 0.15,
+        "ruler": 0.15
+      },
+      "n_cells": 1,
+      "n_examples_pooled": 100,
+      "note": "task-weight vector frozen before viewing results (pre-registered)."
+    }
+  },
+  "secondary_textrag12_vs_comem_kstar_gpu_resident": {
+    "comem_k": 14,
+    "rag_k": 12,
+    "per_cell": {
+      "locomo/locomo/na": {
+        "n": 100,
+        "comem": 10.0,
+        "text_rag": 10.0,
+        "diff": 0.0
+      }
+    },
+    "macro_comem": 10.0,
+    "macro_text_rag": 10.0,
+    "macro_diff_comem_minus_rag": 0.0,
+    "paired_bootstrap_95ci": [
+      -4.0,
+      4.0
+    ],
+    "mcnemar": {
+      "comem_only_b": 2,
+      "rag_only_c": 2,
+      "both": 8,
+      "neither": 88,
+      "exact_two_sided_p": 1.0
+    },
+    "n_examples": 100,
+    "aggregation_schemes": {
+      "macro_equal_cell_diff": 0.0,
+      "sample_weighted_diff": 0.0,
+      "leave_one_task_out_diff": {
+        "drop_locomo": null
+      },
+      "leave_one_task_out_range": null,
+      "frozen_taskweight_diff": 0.0,
+      "frozen_taskweights_effective": {
+        "locomo": 1.0
+      },
+      "frozen_taskweights_declared": {
+        "locomo": 0.35,
+        "babilong": 0.35,
+        "longeval": 0.15,
+        "ruler": 0.15
+      },
+      "n_cells": 1,
+      "n_examples_pooled": 100,
+      "note": "task-weight vector frozen before viewing results (pre-registered)."
+    }
+  },
+  "primary_comem12_vs_rag_kstar_cpu_pinned": {
+    "comem_k": 12,
+    "rag_k": 10,
+    "per_cell": {
+      "locomo/locomo/na": {
+        "n": 100,
+        "comem": 8.0,
+        "text_rag": 11.0,
+        "diff": -3.0
+      }
+    },
+    "macro_comem": 8.0,
+    "macro_text_rag": 11.0,
+    "macro_diff_comem_minus_rag": -3.0,
+    "paired_bootstrap_95ci": [
+      -7.0,
+      0.0
+    ],
+    "mcnemar": {
+      "comem_only_b": 0,
+      "rag_only_c": 3,
+      "both": 8,
+      "neither": 89,
+      "exact_two_sided_p": 0.25
+    },
+    "n_examples": 100,
+    "aggregation_schemes": {
+      "macro_equal_cell_diff": -3.0,
+      "sample_weighted_diff": -3.0,
+      "leave_one_task_out_diff": {
+        "drop_locomo": null
+      },
+      "leave_one_task_out_range": null,
+      "frozen_taskweight_diff": -3.0,
+      "frozen_taskweights_effective": {
+        "locomo": 1.0
+      },
+      "frozen_taskweights_declared": {
+        "locomo": 0.35,
+        "babilong": 0.35,
+        "longeval": 0.15,
+        "ruler": 0.15
+      },
+      "n_cells": 1,
+      "n_examples_pooled": 100,
+      "note": "task-weight vector frozen before viewing results (pre-registered)."
+    }
+  },
+  "secondary_textrag12_vs_comem_kstar_cpu_pinned": {
+    "comem_k": 14,
+    "rag_k": 12,
+    "per_cell": {
+      "locomo/locomo/na": {
+        "n": 100,
+        "comem": 10.0,
+        "text_rag": 10.0,
+        "diff": 0.0
+      }
+    },
+    "macro_comem": 10.0,
+    "macro_text_rag": 10.0,
+    "macro_diff_comem_minus_rag": 0.0,
+    "paired_bootstrap_95ci": [
+      -4.0,
+      4.0
+    ],
+    "mcnemar": {
+      "comem_only_b": 2,
+      "rag_only_c": 2,
+      "both": 8,
+      "neither": 88,
+      "exact_two_sided_p": 1.0
+    },
+    "n_examples": 100,
+    "aggregation_schemes": {
+      "macro_equal_cell_diff": 0.0,
+      "sample_weighted_diff": 0.0,
+      "leave_one_task_out_diff": {
+        "drop_locomo": null
+      },
+      "leave_one_task_out_range": null,
+      "frozen_taskweight_diff": 0.0,
+      "frozen_taskweights_effective": {
+        "locomo": 1.0
+      },
+      "frozen_taskweights_declared": {
+        "locomo": 0.35,
+        "babilong": 0.35,
+        "longeval": 0.15,
+        "ruler": 0.15
+      },
+      "n_cells": 1,
+      "n_examples_pooled": 100,
+      "note": "task-weight vector frozen before viewing results (pre-registered)."
+    }
+  },
+  "reference_k12_vs_k12": {
+    "comem_k": 12,
+    "rag_k": 12,
+    "per_cell": {
+      "locomo/locomo/na": {
+        "n": 100,
+        "comem": 8.0,
+        "text_rag": 10.0,
+        "diff": -2.0
+      }
+    },
+    "macro_comem": 8.0,
+    "macro_text_rag": 10.0,
+    "macro_diff_comem_minus_rag": -2.0,
+    "paired_bootstrap_95ci": [
+      -5.0,
+      0.0
+    ],
+    "mcnemar": {
+      "comem_only_b": 0,
+      "rag_only_c": 2,
+      "both": 8,
+      "neither": 90,
+      "exact_two_sided_p": 0.5
+    },
+    "n_examples": 100,
+    "aggregation_schemes": {
+      "macro_equal_cell_diff": -2.0,
+      "sample_weighted_diff": -2.0,
+      "leave_one_task_out_diff": {
+        "drop_locomo": null
+      },
+      "leave_one_task_out_range": null,
+      "frozen_taskweight_diff": -2.0,
+      "frozen_taskweights_effective": {
+        "locomo": 1.0
+      },
+      "frozen_taskweights_declared": {
+        "locomo": 0.35,
+        "babilong": 0.35,
+        "longeval": 0.15,
+        "ruler": 0.15
+      },
+      "n_cells": 1,
+      "n_examples_pooled": 100,
+      "note": "task-weight vector frozen before viewing results (pre-registered)."
+    }
+  }
+}

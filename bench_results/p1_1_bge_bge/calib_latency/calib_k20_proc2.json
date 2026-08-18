@@ -1,0 +1,92 @@
+{
+  "mode": "calib_latency",
+  "phase": "B_dense",
+  "proc_id": 2,
+  "k": 20,
+  "k_effective": 20,
+  "calib_index": 902,
+  "calib_length": "32k",
+  "task": "niah_multikey_1",
+  "pack_read_len": 10272,
+  "n_store_rows": 64,
+  "n_dense_ctx_chunks": 62,
+  "store_bytes_per_chunk": 4194304,
+  "pack_h12_bytes": 83886080,
+  "dense_index_bytes": 126976,
+  "components_ms": {
+    "comem_selection_bm25": {
+      "median": 29.155125841498375,
+      "p95": 29.285637428984046
+    },
+    "comem_selection_charged": {
+      "median": 8.158679120242596,
+      "selector": "dense_bge"
+    },
+    "dense_selection_deploy": {
+      "median": 8.158679120242596,
+      "p95": 8.244489785283804
+    },
+    "dense_selection_coldindex": {
+      "median": 206.7364645190537,
+      "p95": 210.1708337198943
+    },
+    "dense_rag_write_j0": {
+      "median": 16.861630603671074,
+      "p95": 16.9543344527483
+    },
+    "dense_rag_read_j0": {
+      "median": 1433.9232905767858,
+      "p95": 1435.0180446635932
+    },
+    "comem_write_j12_sinkquery": {
+      "median": 17.7703695371747,
+      "p95": 17.8698661737144
+    },
+    "comem_read_j12": {
+      "median": 1162.25575376302,
+      "p95": 1162.5170898623765
+    },
+    "comem_fetch_gpu_resident": {
+      "median": 0.06536394357681274,
+      "p95": 0.06618057377636433
+    },
+    "comem_fetch_cpu_gather": {
+      "median": 0.976076815277338,
+      "p95": 0.9924274869263171
+    },
+    "comem_h2d_cpu_pinned": {
+      "median": 1.6405042260885239,
+      "p95": 2.1029870957136154
+    }
+  },
+  "ttft_ms": {
+    "dense_rag_deploy": 1458.9436003006995,
+    "dense_rag_coldindex": 1657.5213856995106,
+    "comem_gpu_resident": 1188.2501663640141,
+    "comem_cpu_pinned": 1190.8013834618032
+  },
+  "model_only_read_ms": {
+    "dense_rag_j0": 1433.9232905767858,
+    "comem_j12": 1162.25575376302
+  },
+  "config": {
+    "resume_j_rag": 0,
+    "resume_j_comem": 12,
+    "chunk_size": 512,
+    "warmup": 5,
+    "n_repeat": 20,
+    "dtype": "bfloat16",
+    "attn_impl": "sdpa",
+    "lora_sha256": "dd09cd17457c63578c0f38dab79b287ab5da6e3f14c119aedafec1c34400536f",
+    "bge_sha256": "45e1954914e29bd74080e6c1510165274ff5279421c89f76c418878732f64ae7",
+    "comem_selector": "dense_bge",
+    "dense_search": "flat brute-force cosine (CPU, == P1.9)"
+  },
+  "env": {
+    "torch": "2.13.0",
+    "cuda": "13.2",
+    "gpu": "NVIDIA H20",
+    "python": "3.14.6",
+    "node": "TENCENT64.site"
+  }
+}

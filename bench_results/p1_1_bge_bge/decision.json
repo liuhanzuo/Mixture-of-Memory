@@ -1,0 +1,10 @@
+{
+  "note": "paperA \u00a7P0.20 Phase B \u2014 dense-retriever equal-latency.",
+  "primary_anchor_diff_comem_minus_dense": -6.22,
+  "primary_anchor_95ci": [
+    -9.111,
+    -3.333
+  ],
+  "k_dense_star_deploy": 10,
+  "verdict": "NEGATIVE: latency-matched DENSE-RAG beats CoMem (CI<0) \u2014 the dense retriever's recall lets it read fewer-but-better chunks and win; report as a genuine limitation, do NOT package the equal-latency frontier as a CoMem win."
+}
