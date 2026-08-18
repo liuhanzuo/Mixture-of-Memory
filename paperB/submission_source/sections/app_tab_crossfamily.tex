@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Qwen3-8B arm} & \textbf{Depth} & \textbf{PPL}$\downarrow$ & \textbf{MMLU letter} \\
+\midrule
+Full base & 36/36 & 11.42 & .7297 \\
+keep12 + fresh2, 200k & 14/36 & 23.49 & .2495 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Cross-family endpoint diagnostic.} The Qwen3-8B~\citep{qwen3} arm heals on
+SlimPajama rather than Dolmino and is more compressed than the principal OLMo
+arm. It supports only the directional answer-letter finding; absolute PPL and
+recovery magnitude are not compared across families. This endpoint does not
+include the content-MMLU and closed-book diagnostics used in the principal study.}
+\label{tab:app-crossfamily}
+\end{table}

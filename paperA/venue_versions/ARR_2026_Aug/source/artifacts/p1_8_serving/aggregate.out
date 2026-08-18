@@ -1,0 +1,10 @@
+[p1.8][aggregate] 18 serve files, 6 (L,tier) cells, Q=[1, 4, 16, 32, 64]
+[p1.8][aggregate] L=128k tier=cpu comemW=6.824s j0idx=20.71ms | G1:Q*=27.6 G32:Q*=29.7 G128:Q*=37.4 G512:Q*=520.1
+[p1.8][aggregate] L=128k tier=gpu comemW=6.653s j0idx=21.73ms | G1:Q*=25.8 G32:Q*=26.8 G128:Q*=27.2 G512:Q*=164.2
+[p1.8][aggregate] L=1M tier=cpu comemW=50.616s j0idx=218.69ms | G1:Q*=198.2 G32:Q*=266.7 G128:Q*=421.3 G512:Q*=302.6
+[p1.8][aggregate] L=1M tier=gpu comemW=47.245s j0idx=207.97ms | G1:Q*=180.2 G32:Q*=183.0 G128:Q*=190.6 G512:Q*=574.7
+[p1.8][aggregate] L=32k tier=cpu comemW=2.253s j0idx=2.16ms | G1:Q*=8.9 G32:Q*=9.2 G128:Q*=10.9 G512:Q*=94.0
+[p1.8][aggregate] L=32k tier=gpu comemW=2.165s j0idx=2.16ms | G1:Q*=8.4 G32:Q*=7.7 G128:Q*=5.5 G512:Q*=inf
+[p1.8][aggregate] wrote bench_results/p1_8_serving/p1_8_serving_aggregate.json
+[p1.8][xcheck] @128k tier=cpu G=1 break-even Q*=27.6 (P0.2 analytic ≈17-20; agreement expected, larger G shifts earlier)
+[p1.8][xcheck] @128k tier=gpu G=1 break-even Q*=25.8 (P0.2 analytic ≈17-20; agreement expected, larger G shifts earlier)

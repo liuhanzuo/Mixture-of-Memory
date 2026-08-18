@@ -1,0 +1,69 @@
+% Compact layout for Tables 11--13.
+\begin{table*}[!t]
+\centering
+\small
+\begin{minipage}[t]{0.485\textwidth}
+\centering
+\setlength{\tabcolsep}{3pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+\textbf{Method} & \textbf{RULER task} & \textbf{8k} & \textbf{16k} & \textbf{32k} & \textbf{64k} & \textbf{128k} \\
+\midrule
+\multirow{2}{*}{\textbf{CoMem}} & niah\_single\_2 & 100.0 & 100.0 & 99.0 & 99.0 & 100.0 \\
+& var-track & 96.6 & 97.6 & 98.8 & 99.0 & 95.8 \\
+\midrule
+\multirow{2}{*}{StreamingLLM} & niah\_single & 85.0 & 36.0 & 20.0 & 10.0 & 2.0 \\
+& var-track & 41.8 & 2.2 & 0.6 & 0.2 & 0.8 \\
+\bottomrule
+\end{tabular}%
+}
+\captionof{table}{Equal-budget, no-chat RULER comparison ($n{=}100$/cell).
+CoMem and StreamingLLM use the same nominal budget and scorer but not paired
+examples; CoMem retrieves about 6.5k relevant tokens, whereas StreamingLLM keeps
+recent tokens.}
+\label{tab:slm}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.485\textwidth}
+\centering
+\setlength{\tabcolsep}{4pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Task} & \textbf{Full attn.} & \textbf{Block-diag.} & \boldmath$\Delta$ \\
+\midrule
+RULER niah\_single   & 100 / 100 & 100 / 96 & 0 / $+$4 \\
+RULER niah\_multikey & \textbf{96 / 94} & 60 / 32 & $+$36 / $+$62 \\
+BABILong qa2         & 36 / 20 & 17 / 13 & $+$19 / $+$7 \\
+BABILong qa5         & 78 / 69 & 78 / 55 & 0 / $+$14 \\
+\bottomrule
+\end{tabular}%
+}
+\captionof{table}{Full cross-chunk attention versus block-diagonal reuse
+(8k/16k, no chat). RULER uses $n{=}50$ and BABILong $n{=}100$ with identical
+top-12 retrieval. Joint recomputation matters most for multi-fact tasks.}
+\label{tab:crosschunk}
+\end{minipage}
+
+\vspace{4pt}
+\begin{minipage}[t]{0.72\textwidth}
+\centering
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrcccc@{}}
+\toprule
+\textbf{chunk} & \textbf{read tokens} & \textbf{uncached step} & \textbf{8k} & \textbf{16k} & \textbf{32k} & \textbf{64k} \\
+& & \textbf{(s/token)} & & & & \\
+\midrule
+128  & 1,665  & 0.19 & 91.0 & 90.0 & 81.0 & 85.0 \\
+256  & 3,329  & 0.37 & 80.0 & 90.0 & 90.0 & \textbf{94.0} \\
+512  & 6,657  & 0.72 & 89.0 & \textbf{95.0} & \textbf{97.0} & \textbf{94.0} \\
+1024 & 13,313 & 1.60 & \textbf{100.0} & 89.0 & 92.0 & \textbf{94.0} \\
+\bottomrule
+\end{tabular}
+\captionof{table}{Chunk-size trade-off on RULER \texttt{niah\_multikey}
+($n{=}100$, no chat). Packed-step cost grows approximately linearly with read
+length; accuracy values are point estimates, not a multi-seed claim.}
+\label{tab:chunk}
+\end{minipage}
+\end{table*}

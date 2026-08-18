@@ -1,0 +1,57 @@
+\begin{table*}[!tp]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.19\textwidth}p{0.25\textwidth}p{0.50\textwidth}@{}}
+\toprule
+\textbf{Protocol item} & \textbf{Setting} & \textbf{Auditable detail} \\
+\midrule
+Quality cohort & 9 cells, $n{=}100$/cell &
+BABILong qa1/qa2 at 4k and 16k; LongEval at 8k and 16k;
+RULER \texttt{niah\_multikey\_1} at 8k and 16k; first 100 LoCoMo items,
+which are all from conversation 0 in the stored ordering.
+Each cell contributes one equally weighted accuracy mean; the reported aggregate
+is the mean of the nine cell means. \\
+Generation/scoring & Greedy, no chat &
+BABILong: 20 tokens and official \texttt{compare\_answers};
+LongEval: 16 tokens and numeric exact match; RULER: 48 tokens and official
+\texttt{string\_match\_all}; LoCoMo diagnostic: 48 tokens and the deterministic
+local substring/F1-threshold or abstention accuracy from
+\texttt{score\_sample}, not the GPT-4o headline judge. \\
+Calibration split & Latency only, disjoint &
+Three RULER multikey 32k documents at reserved indices 900--902
+(\texttt{PYTHONHASHSEED=0}, experiment seed 42), disjoint from quality indices
+0--99. Integer $k\in\{2,4,6,8,10,12,14,16,20,24\}$ is selected only by TTFT
+within $\pm5\%$ of the CoMem budget-12 anchor. Here $k$ is a maximum chunk
+budget; iterative BM25 may return fewer chunks. This is a reserved synthetic
+calibration set, not a random train/test split. \\
+Timing & One NVIDIA H20; bf16/SDPA &
+Three independent processes per $k$, five warmups and 20 repetitions each;
+reported TTFT is the median of process medians. It includes online selection,
+raw/residual fetch, sink/query Write, and model prefill to first logits; decode,
+one-time document Write, and index construction are excluded. Component p95s
+are saved, but no directly measured end-to-end TTFT p95 is reported. \\
+BM25 result & Replay budget 10 vs CoMem budget 12 &
+TTFT 703.7 vs 698.3\,ms (GPU-resident CoMem; CPU-pinned 699.8\,ms);
+quality 64.78 vs 53.22; paired example bootstrap 95\% CI
+$[-14.44,-8.67]$; exact McNemar $p=8.04{\times}10^{-15}$. \\
+Frozen-BGE result & Replay budget 10 vs unchanged CoMem budget 12 &
+Deployment TTFT 697.8 vs 700.5\,ms (GPU-resident; CPU-pinned 702.2\,ms);
+quality 54.22 vs 53.22; CI $[-4.67,2.67]$; exact McNemar $p=.637$.
+At equal $k{=}12$, BGE replay is 58.56 vs 53.22
+(CI $[-8.89,-1.78]$). Cold-index passage encoding yields no tested $k$ in the
+matching band. \\
+Statistical unit & Paired examples &
+Within each selector experiment, arms share example IDs. The percentile
+bootstrap pools and resamples all 900 paired example differences IID 10,000
+times with seed 0; it does not resample task cells or LoCoMo conversations. \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Protocol-complete equal-latency audit.}
+All values were read from the saved Stage-A and Stage-B
+\texttt{decision/anchors/summary/manifest/sanity} records and their calibration
+JSON files; no model run was added for this table. Phase B intentionally compares
+two deployment selectors---frozen BGE for raw replay and iterative BM25 for
+CoMem---so it tests selector sensitivity rather than a same-pack depth effect.}
+\label{tab:equal-latency-protocol}
+\end{table*}

@@ -1,0 +1,142 @@
+{
+  "train_rows_scanned": 7570911,
+  "seq_len": 2048,
+  "train_tokens_scanned": 15505225728,
+  "ns": [
+    13,
+    8
+  ],
+  "contam_high": 0.8,
+  "contam_low": 0.1,
+  "benchmarks": {
+    "mmlu": {
+      "n13": {
+        "n_questions": 14042,
+        "n_decidable": 11351,
+        "CONTAMINATED": 267,
+        "PARTIAL": 512,
+        "CLEAN": 10572,
+        "SHORT": 2691,
+        "contam_rate": 0.01901,
+        "partial_rate": 0.03646,
+        "clean_rate": 0.75288,
+        "mean_containment": 0.04074,
+        "p95_containment": 0.33333,
+        "max_containment": 1.0,
+        "keep_for_recompute_size": 13775
+      },
+      "n8": {
+        "n_questions": 14042,
+        "n_decidable": 13512,
+        "CONTAMINATED": 484,
+        "PARTIAL": 2467,
+        "CLEAN": 10561,
+        "SHORT": 530,
+        "contam_rate": 0.03447,
+        "partial_rate": 0.17569,
+        "clean_rate": 0.7521,
+        "mean_containment": 0.09552,
+        "p95_containment": 0.63074,
+        "max_containment": 1.0,
+        "keep_for_recompute_size": 13558
+      }
+    },
+    "popqa": {
+      "n13": {
+        "n_questions": 14267,
+        "n_decidable": 750,
+        "CONTAMINATED": 0,
+        "PARTIAL": 15,
+        "CLEAN": 735,
+        "SHORT": 13517,
+        "contam_rate": 0.0,
+        "partial_rate": 0.00105,
+        "clean_rate": 0.05152,
+        "mean_containment": 0.00696,
+        "p95_containment": 0.0,
+        "max_containment": 0.66667,
+        "keep_for_recompute_size": 14267
+      },
+      "n8": {
+        "n_questions": 14267,
+        "n_decidable": 9991,
+        "CONTAMINATED": 10,
+        "PARTIAL": 282,
+        "CLEAN": 9699,
+        "SHORT": 4276,
+        "contam_rate": 0.0007,
+        "partial_rate": 0.01977,
+        "clean_rate": 0.67982,
+        "mean_containment": 0.00982,
+        "p95_containment": 0.0,
+        "max_containment": 1.0,
+        "keep_for_recompute_size": 14257
+      }
+    },
+    "triviaqa": {
+      "n13": {
+        "n_questions": 17944,
+        "n_decidable": 13281,
+        "CONTAMINATED": 142,
+        "PARTIAL": 291,
+        "CLEAN": 12848,
+        "SHORT": 4663,
+        "contam_rate": 0.00791,
+        "partial_rate": 0.01622,
+        "clean_rate": 0.71601,
+        "mean_containment": 0.01814,
+        "p95_containment": 0.0,
+        "max_containment": 1.0,
+        "keep_for_recompute_size": 17802
+      },
+      "n8": {
+        "n_questions": 17944,
+        "n_decidable": 17678,
+        "CONTAMINATED": 247,
+        "PARTIAL": 2865,
+        "CLEAN": 14566,
+        "SHORT": 266,
+        "contam_rate": 0.01377,
+        "partial_rate": 0.15966,
+        "clean_rate": 0.81175,
+        "mean_containment": 0.06216,
+        "p95_containment": 0.4,
+        "max_containment": 1.0,
+        "keep_for_recompute_size": 17697
+      }
+    },
+    "nq_open": {
+      "n13": {
+        "n_questions": 3610,
+        "n_decidable": 486,
+        "CONTAMINATED": 1,
+        "PARTIAL": 4,
+        "CLEAN": 481,
+        "SHORT": 3124,
+        "contam_rate": 0.00028,
+        "partial_rate": 0.00111,
+        "clean_rate": 0.13324,
+        "mean_containment": 0.00545,
+        "p95_containment": 0.0,
+        "max_containment": 0.8,
+        "keep_for_recompute_size": 3609
+      },
+      "n8": {
+        "n_questions": 3610,
+        "n_decidable": 3607,
+        "CONTAMINATED": 24,
+        "PARTIAL": 157,
+        "CLEAN": 3426,
+        "SHORT": 3,
+        "contam_rate": 0.00665,
+        "partial_rate": 0.04349,
+        "clean_rate": 0.94903,
+        "mean_containment": 0.02131,
+        "p95_containment": 0.09727,
+        "max_containment": 1.0,
+        "keep_for_recompute_size": 3586
+      }
+    }
+  },
+  "continuation_stream": "exact tokenized Dolmino continuation stream"
+}

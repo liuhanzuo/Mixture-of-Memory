@@ -1,0 +1,205 @@
+\section{Complete Results}
+\label{app:complete-results}
+
+The main paper emphasizes an observed-budget, single-run recovery gap. This
+appendix reports all consolidated checkpoints, including the qualitative 1B
+comparison, within-arm trajectories, and chance-adjusted summaries.
+
+\subsection{Held-out perplexity checkpoints}
+\label{app:ppl}
+\input{sections/app_tab_ppl}
+\input{sections/app_tab_shortgpt}
+
+Table~\ref{tab:app-ppl} distinguishes progressing checkpoints from true
+endpoints. The fully random-init arm is a random language model with the same
+$16$-layer architecture: its decoder blocks, embedding, final norm, and output
+head are initialized without OLMo-2 weights. It uses a different learning rate,
+so it is a budgeted operating point rather than an initialization-only ablation.
+Table~\ref{tab:app-shortgpt} reports the step-zero and 200k
+non-contiguous operating points. Its 16 retained layers are selected by cosine block
+influence on 128 Dolmino windows and include the original final layer.
+
+\subsection{Within-architecture training trajectories}
+\label{app:trajectories}
+\input{sections/app_tab_keep8}
+
+The complete 11-task keep8 trajectory in Table~\ref{tab:app-keep8} gives a
+within-arm view over available checkpoints. From 44k to 121k, most reported
+tasks improve, while aggregate MMLU changes from .2463 to .2535 and remains near
+chance. Because no common per-item 44k prediction set or replicated training run is
+available, we use this only as descriptive evidence against a uniform late gain
+over the observed interval, not against recovery after more training.
+
+\input{sections/app_tab_1b}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_1b_trajectory.pdf}
+\caption{\textbf{Qualitative OLMo-2-1B trajectory.} PPL and several ordinary
+tasks improve while MMLU stays near chance over the observed keep7 interval.}
+\label{fig:app-1b}
+\end{figure}
+
+The OLMo-2-0425-1B arm shows the same qualitative separation
+(Figure~\ref{fig:app-1b}; Tables~\ref{tab:app-1b-core}--\ref{tab:app-1b-know}):
+PPL falls $17.619\to15.628$ and HellaSwag/ARC-Easy/PIQA improve, while MMLU is
+$.2495/.2558/.2529/.2480$. Because this is one more-compressed arm from the same
+model family with a weaker base, we treat it as qualitative context, not an
+independent replication.
+
+\input{sections/app_tab_crossfamily}
+
+\subsection{Target evaluations and continued pretraining}
+\label{app:recovery}
+\input{sections/app_tab_recovery}
+\input{sections/app_tab_mmlu}
+\input{sections/app_tab_metric_sensitivity}
+
+Main-text Table~\ref{tab:downstream} contains the complete 11-task profile;
+Table~\ref{tab:main-results} provides the compact multi-axis endpoint summary.
+Table~\ref{tab:app-recovery} exposes why a single average benchmark score would
+be misleading. Fully random initialization nearly matches inherited keep14 on
+ARC-Easy, PIQA, and BoolQ, but inherited initialization retains more signal on
+WinoGrande, MMLU, and several other downstream tasks. The late keep14 audit is
+reported in the main paper (Table~\ref{tab:trajectory-audit}), while
+Table~\ref{tab:app-recovery} retains the broader endpoint and recovery summary.
+Table~\ref{tab:app-metric-sensitivity} additionally exposes raw and
+character-normalized scoring for BoolQ, CommonsenseQA, and SocialIQA,
+whose options have unequal lengths; the main tables consistently use raw
+accuracy for these tasks. The paired MMLU interface audit and headline
+closed-book results now appear in the main paper
+(Tables~\ref{tab:interface-audit} and \ref{tab:main-results}); exact protocols
+and sample counts appear below.
+The paired same-shape MMLU comparisons have moved to the main paper
+(Table~\ref{tab:paired-operating-points}); their intervals quantify
+evaluation-item variation rather than training-seed uncertainty.
+
+The confidence intervals in Table~\ref{tab:app-mmlu-ci} distinguish the
+available checkpoints conditionally: keep8 and fully random init include
+chance, while keep10, keep12, and keep14 are above it. These are not
+between-training-run intervals. The subject-group table below describes
+heterogeneity rather than testing domain-specific effects.
+
+\subsection{MMLU subject-group results}
+\label{app:mmlu-subjects}
+
+\input{sections/tab_group_construction}
+
+Table~\ref{tab:group-construction} quantifies the broad-domain pattern. The
+inherited keep14 model is strongest in social science and the heterogeneous
+``Other'' group, whereas science, technology, engineering, and mathematics
+(STEM) and humanities remain closer to chance.
+Table~\ref{tab:app-mmlu-full}, placed at the
+end of the appendix as two side-by-side panels, reports every one of the 57
+subjects at the $153.5$k and final $200$k keep14 checkpoints.
+
+\section{Evaluation and Reproducibility Details}
+\label{app:repro}
+
+\subsection{Training recipe and unavailable fields}
+Training uses English OLMo-2/Dolmino artifacts. The DCLM portion of
+\texttt{dolmino-mix-1124} is packed into 2,048-token windows; the training array
+contains 7,570,911 windows and the fixed in-domain validation array contains
+4,096 disjoint windows. Exact SHA-256 values for the training array, validation array, and five
+headline checkpoints are listed in the accompanying anonymous checksum
+manifest; the validation array begins \texttt{ee36248dc8e4a79c} and ends
+\texttt{2f0735e570f22e8}. All headline arms use effective
+batch size 128, 150 warmup steps, cosine decay, AdamW
+($\beta_1{=}0.9$, $\beta_2{=}0.95$, $\epsilon{=}10^{-8}$), matrix weight decay
+0.1, vector weight decay 0, and gradient clipping at 1.0. Parameters and
+optimizer state are fp32; forward passes use bf16 autocast; gradient
+checkpointing is enabled.
+
+The executed keep14 and frozen-front runs assigned every trainable tensor to
+the $2\times10^{-5}/2\times10^{-6}$ peak/minimum LR group; random-init used
+$10^{-4}/10^{-5}$; ShortGPT and full32 used
+$2\times10^{-5}/2\times10^{-6}$. Exact trainable sets and budgets appear in
+Table~\ref{tab:main-results}. Launch-time reconstruction checks require exact
+copied-tensor equality ($\max|\theta_{\mathrm{arm}}-\theta_{\mathrm{base}}|=0$),
+and evaluation rebuilds the architecture from checkpoint metadata before a
+strict state-dictionary load.
+
+Historical training seeds are unavailable. keep14 resumed at 34.5k with model,
+optimizer, and RNG state restored, but the checkpoint omitted the within-epoch
+loader offset; the resumed iterator restarted that epoch's distributed shuffle.
+Per-run wall time/GPU-hours and aggregate project compute are unavailable.
+The currently retained arrays and headline checkpoints have SHA-256 checksums,
+but no historical checksum manifest was recorded at execution time. We report nominal token presentations rather than unique-token counts
+and do not infer missing values.
+
+\subsection{Evaluation protocols and sample counts}
+\input{sections/app_tab_eval}
+
+Perplexity is merged as
+$\exp(\sum_g\mathrm{NLL}_g/\sum_g n_g)$ over eight shards; per-shard
+perplexities are never averaged. At keep14 128k, 153.5k, and 200k, independent
+merging reproduces the stored PPL and downstream aggregates to $10^{-9}$.
+
+For MMLU letter scoring, the prompt contains the subject description, question,
+all four options labeled A--D, and \texttt{Answer:}; the candidates are the
+four answer letters. For content scoring, the prompt retains the subject
+description and question but removes the lettered option body; the candidates
+are the four complete option texts. Both protocols use the same 14,042 item IDs,
+tokenizer, no-BOS rule, and truncation. Each saved per-item record contains
+option-level summed scores; content records additionally contain continuation
+token counts and normalized scores. The anonymous artifact directory contains
+the six headline-arm per-item content-interface files, summaries, and paired
+trajectory outputs, without benchmark text.
+
+Closed-book evaluation is zero-shot and no-retrieval. The exact prompt is
+\texttt{Question: \{q\}\textbackslash nAnswer:}; decoding is greedy with
+\texttt{do\_sample=False}, at most 32 new tokens, no chat template, and no
+inserted BOS. The first completion line is lowercased, stripped of punctuation
+and articles, and whitespace-normalized. Scores are maximized over all aliases.
+PopQA uses test ($n{=}14{,}267$) and containment; TriviaQA uses
+\texttt{rc.nocontext} validation ($n{=}17{,}944$) and exact match; NQ-open uses
+validation ($n{=}3{,}610$) and exact match. EM, containment, and token F1 were
+retained. The artifact contains all three prompt-free ShortGPT per-item score
+files and aggregate summaries for every headline arm. Aligned per-item records
+for the other arms were not all consolidated, so the manuscript does not report
+paired closed-book intervals.
+
+\subsection{OOD likelihood and continuation-stream overlap}
+\label{app:ood-contamination}
+The OOD arrays contain 288,627 WikiText-103 and 2,456,400 PG-19 target
+tokens. All six endpoint models use the same raw next-token evaluator,
+tokenizer, no-chat/no-BOS interface, and token-weighted aggregation as the
+Dolmino held-out result. The exact values appear in
+Table~\ref{tab:ood-audit}; the released summary records corpus token counts,
+sum-NLL aggregation, and each relative-to-base ratio.
+
+For overlap, we tokenize every benchmark item with the OLMo tokenizer and scan
+the exact 15,505,225,728-token continuation stream once with an inverted
+index. An item is flagged when at least 80\% of its token $n$-grams occur in
+the stream; both $n=13$ and $n=8$ are reported. Short items without a complete
+$13$-gram are marked undecidable rather than clean. The MMLU sensitivity
+recompute removes flagged items from the saved keep14 and Random per-item
+predictions; the gap changes by at most 0.17 points. This audit detects
+near-verbatim token overlap, not semantic paraphrases or exposure in the
+original OLMo pretraining corpus.
+
+\subsection{Evaluator and prediction provenance}
+The source package includes \texttt{anonymous\_artifact/} with evaluator
+scripts, protocol/config manifests, SHA-256 checksums, aggregate closed-book
+summaries, prompt-free ShortGPT closed-book per-item score files, six
+headline-arm content-MMLU per-item score files, endpoint OOD-PPL/contamination
+summaries, and the keep14 128k/200k paired trajectory artifacts. The local-only
+evaluator revisions are
+recorded in a manifest and their available source files are snapshotted; we do
+not claim public commit ancestry. The snapshot excludes benchmark text, private
+paths, credentials, model weights, and unconsolidated closed-book generations.
+It also does not infer the unavailable historical seed or loader offset.
+
+For artifact auditing, the base content-MMLU per-item JSONL has 14,042 rows;
+its SHA-256 begins \texttt{52f60373c952dd86} and ends
+\texttt{c1e07766e0364701}. Each row records
+item ID, subject, gold answer, raw option scores for letter/content, normalized
+content scores, continuation token counts, and correctness. The within-keep14
+128k/200k trajectory analysis uses 10,000 bootstrap resamples with seed 1234.
+The same-shape endpoint comparisons in
+Table~\ref{tab:paired-operating-points} instead use the six-arm
+\texttt{mmlu\_content} snapshot, 10,000 resamples with seed 0, and exact
+two-sided McNemar tests. Both are item-level procedures conditional on fixed
+checkpoints, but they are not mixed into one comparison.
+
+\input{sections/app_tab_mmlu_full}

@@ -1,0 +1,26 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Method family} & \textbf{Stored object} & \shortstack{\textbf{Cross-query}\\\textbf{persistence}} & \shortstack{\textbf{Independent}\\\textbf{writes}} & \shortstack{\textbf{Bounded query}\\\textbf{selection}} & \shortstack{\textbf{Direct upper-layer}\\\textbf{continuation}} \\
+\midrule
+Text RAG~\citep{rag} & token IDs & \checkmark & \checkmark & \checkmark & -- \\
+Token-axis compression~\citep{snapkv,pyramidkv} & full-depth KV & -- & -- & \checkmark & -- \\
+HCache~\citep{hcache} & intermediate activation & context-bound & -- & -- & \checkmark \\
+KV-Direct~\citep{kvdirect} & residual & request-bound & -- & -- & KV reconstruction \\
+Cache-Craft~\citep{cachecraft} & chunk KV & \checkmark & context-sensitive & \checkmark & partial KV repair \\
+REFORM~\citep{reform} & compressed KV + tokens & request-bound & streaming & \checkmark & KV recomputation \\
+MemoryLLM~\citep{memoryllm} & latent pool & \checkmark & -- & fixed pool & -- \\
+\textbf{CoMem} & depth-$j$ residual & \checkmark & \checkmark & \checkmark & \checkmark \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Interface-level comparison, not an empirical ranking. HCache is a
+checkpoint/replay precedent. Cache-Craft repairs context-dependent chunk caches,
+and REFORM gathers tokens before recomputing KV. CoMem combines persistent independent residual writes, bounded
+query-conditioned selection, and direct upper-layer continuation.}
+\label{tab:priorart}
+\end{table*}

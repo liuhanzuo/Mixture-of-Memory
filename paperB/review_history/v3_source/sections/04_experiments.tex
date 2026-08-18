@@ -1,0 +1,89 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Experimental setup}
+All main results use OLMo-2-7B under the base-model protocol in
+\S\ref{sec:method}. The central
+comparisons are the intact base, full32 continued-pretraining control,
+keep14+fresh2, ShortGPT-16, frozen-front, and fully random-init operating
+points. Detailed per-task results and all available checkpoints are in
+Appendix~\ref{app:complete-results}.
+
+\subsection{Main results: likelihood improves faster than knowledge-sensitive evaluation}
+\input{sections/tab_main_results}
+
+Table~\ref{tab:main-results} gives the central result. The half-depth keep14 arm
+reaches PPL 10.561 after 200k steps---a large improvement, but still
+$1.428\times$ the base---and remains far below the base on both MMLU interfaces
+and all three closed-book tasks. Short-horizon corpus shift is insufficient to
+explain the gap: the intact full32 control remains near the base at its observed
+step-25k plateau checkpoint in held-out likelihood, MMLU, and closed-book
+evaluation.
+
+The MMLU interface matters but does not erase the result. Scoring complete option
+text raises keep14's above-chance recovery relative to answer-letter scoring,
+which is consistent with a content-to-symbol or readout contribution. Yet
+fully random initialization attains nearly the same normalized-content score as
+frozen-front despite chance-level answer letters. The content protocol therefore
+contains a large fluency floor; neither interface alone is identified with
+stored knowledge.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_trajectory.pdf}
+\caption{\textbf{Late keep14 healing continues on both axes, but the remaining
+capability gap is large.} From 128k to 200k, PPL improves from 10.826 to 10.561
+and MMLU from .3012 to .3191; the intact base remains at .6053 MMLU. The figure
+supports slow late recovery, not a claim that MMLU is numerically constant.}
+\label{fig:keep14-trajectory}
+\end{figure}
+
+The separation is not specific to multiple choice. At 200k, keep14 reaches only
+.142 PopQA answer containment, .294 TriviaQA exact match, and .060 NQ-open exact
+match, compared with .257, .636, and .205 for the intact base. These factual
+recall tasks use a shared no-retrieval generation interface, while full32
+continued pretraining preserves much more of the base performance. Together with
+the two MMLU protocols, they rule out an answer-letter-only explanation.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_ppl_mmlu_scatter.pdf}
+\caption{\textbf{Held-out PPL does not uniquely determine answer-letter MMLU
+across interventions.} keep14, ShortGPT, frozen-front, and random-init are
+200k points; shallower prefix rows use their retained plateau checkpoints.
+Filled red points are controls or ShortGPT; the dashed line connects the prefix
+ladder as a visual guide.}
+\label{fig:ppl-mmlu-scatter}
+\end{figure}
+
+Figure~\ref{fig:ppl-mmlu-scatter} makes the measurement issue visible. PPL and
+MMLU broadly co-vary across the strongest endpoints, but no scalar PPL threshold
+certifies capability: the random-init arm has lower PPL than frozen-front yet
+lower MMLU, while several structurally distinct endpoints cluster near chance.
+The plot therefore motivates reporting both axes; it is not evidence that they
+are globally uncorrelated.
+
+\subsection{Controlled comparisons}
+\paragraph{Same-shape initialization and adaptation.}
+At 200k, keep14, frozen-front, and fully random init share the 16-layer shape.
+Their metric rankings disagree: frozen-front has worse PPL than random init but
+higher answer-letter MMLU, while train-all keep14 is strongest on both. Paired
+item-level tests confirm the keep14 advantage over each control, but learning
+rate and trainable-module differences prevent an initialization-only or
+adaptation-only causal claim. Appendix Table~\ref{tab:app-paired} reports exact
+McNemar tests and paired-bootstrap intervals.
+
+\paragraph{Full-model corpus control.}
+Through the observed 25k plateau checkpoint, continuing the intact 32-layer
+model leaves PPL and both MMLU interfaces close to the original base and
+preserves most PopQA, TriviaQA, and NQ-open performance. Thus short-horizon
+corpus shift is insufficient to explain the large half-depth gap. This control
+is not step- or token-exposure-matched to keep14 at 200k, so we do not treat it
+as an exact long-budget counterfactual.
+
+\paragraph{Scoring-interface control.}
+Across all nine evaluated arms, complete-option MMLU is less depth sensitive than
+answer-letter MMLU. ShortGPT remains stronger than the prefix arms under both
+interfaces, showing that the observed endpoint differs across constructions.
+The full table and
+protocol definition are in Appendix Table~\ref{tab:app-protocol-controls}.

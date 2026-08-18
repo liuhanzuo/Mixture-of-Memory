@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{keep14 checkpoint} & \textbf{128k} & \textbf{153.5k} & \textbf{200k} \\
+\midrule
+Held-out PPL$\downarrow$ & 10.826 & 10.693 & \textbf{10.561} \\
+MMLU letter$\uparrow$ & .3012 & .3124 & \textbf{.3191} \\
+MMLU deficit to base (pp)$\downarrow$ & 30.41 & 29.29 & \textbf{28.62} \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Late keep14 recovery audit.} This table uses the independently
+merged trajectory/downstream aggregate (.3191 at 200k), not the .3184
+dual-interface rerun in Table~\ref{tab:interface-audit}. PPL and MMLU both improve, but
+the endpoint still has a 28.62-point MMLU deficit to the intact base. On the
+common 14,042-item rerun, 128k$\rightarrow$200k gains 1.68 MMLU points
+(paired bootstrap 95\% CI $[1.08,2.29]$; exact McNemar
+$p=4.12{\times}10^{-8}$). The interval measures item variation for these fixed
+checkpoints.}
+\label{tab:trajectory-audit}
+\end{table}

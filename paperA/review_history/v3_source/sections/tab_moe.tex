@@ -1,0 +1,29 @@
+% CoMem on Qwen3-30B-A3B (48-layer sparse MoE), efficiency + super-window.
+% Numbers from status benchmark plan sect.1c (bench_qcmem_vs_dense_result.txt,
+% 30B-A3B row): prefill x = Dense/CoMem prefill time; CoMem peak memory is
+% constant because the read pack is fixed. Dense OOMs at 128k. Exploratory
+% decode ratios are omitted pending a clean synchronized per-step benchmark.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Length} & \textbf{Prefill speedup} & \textbf{Dense mem} & \textbf{CoMem mem} \\
+\midrule
+8k   & 1.4$\times$        & 63.7\,GB & 63.0\,GB \\
+32k  & 8.4$\times$        & 71.3\,GB & 63.0\,GB \\
+128k & \textbf{Dense OOM} & OOM      & \textbf{63.0\,GB} \\
+\bottomrule
+\end{tabular}%
+}
+\caption{CoMem on \textbf{Qwen3-30B-A3B} (48-layer sparse MoE; prefill speedup
+$=$ Dense/CoMem prefill time). CoMem peak memory is context-independent ($63.0$\,GB across 8k/32k/128k) while the
+full-context Dense reference grows and \emph{OOMs} at 128k on an NVIDIA H20.
+At 128k CoMem still runs and scores RULER
+\texttt{niah\_single} $100$ (Dense OOM$\to$CoMem $100$); its prefill stays
+$<0.7$\,s at every length. The depth partition, retrieval, and constant read
+thus hold at sparse-MoE scale.}
+\label{tab:moe}
+\end{table}

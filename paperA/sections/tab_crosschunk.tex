@@ -1,0 +1,25 @@
+% Cross-chunk attention ablation, no chat template.
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Task} & \textbf{Full attn.} & \textbf{Block-diag.} & \boldmath$\Delta$ \\
+\midrule
+RULER niah\_single   & 100 / 100 & 100 / 96 & 0 / $+$4 \\
+RULER niah\_multikey & \textbf{96 / 94} & 60 / 32 & $+$36 / $+$62 \\
+BABILong qa2         & 36 / 20 & 17 / 13 & $+$19 / $+$7 \\
+BABILong qa5         & 78 / 69 & 78 / 55 & 0 / $+$14 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Full causal cross-chunk attention versus block-diagonal reuse without
+a chat template (8k/16k). In both arms the final query attends to every
+retrieved chunk; the block-diagonal arm prevents cached chunks from attending
+across chunk boundaries. RULER uses $n{=}50$ and BABILong $n{=}100$, with the
+same top-12 iterative retrieval. Joint recomputation matters most for
+multi-fact disambiguation, while a single needle needs little interaction.}
+\label{tab:crosschunk}
+\end{table}

@@ -1,0 +1,42 @@
+% Cross-benchmark comparison under the unified evaluation protocol.
+\begin{table*}[!t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Method}
+& \textbf{RULER}$\uparrow$
+& \textbf{LongEval}$\uparrow$
+& \textbf{LongBench}$\uparrow$
+& \textbf{BABILong}$\uparrow$
+& \textbf{LoCoMo Judge}$\uparrow$ \\
+& 15-cell & 8k--128k & 6-QA F1 & qa1/2/5 macro & full set \\
+\midrule
+CoMem + LoRA ($j{=}12$)
+& \shortstack{\textbf{97.05}$^{A}$ / 96.07$^{B}$} & \textbf{69.0} & 12.15 & 50.43 & \textbf{38.27} \\
+KV-Direct
+& 78.80$^{A}$ & 65.2 & \textbf{12.17} & \textbf{63.00} & 34.59 \\
+InfLLM
+& 77.83$^{A}$ & 21.6 & 11.86 & 59.52 & 22.21 \\
+StreamingLLM
+& 23.37$^{A}$ & 30.8 & 11.11 & 48.14 & 25.63 \\
+MemoryLLM$^{\dagger}$
+& 16.55$^{A}$ & 13.6 & 9.01 & 30.00 & 16.11 \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{Selected-pack full-depth replay reference (excluded from ranking)}} \\
+Matched raw-text replay ($j{=}0$)
+& 99.20$^{B}$ & 97.2 & 12.31 & 56.14 & 41.59 \\
+\bottomrule
+\end{tabular}
+\caption{Cross-benchmark results under the unified no-chat protocol. Bold marks
+the best same-backbone point estimate; RULER ranking uses cohort
+$A$ only. $^{\dagger}$MemoryLLM uses a released 7B backbone with a fixed latent
+pool; it is listed as an external persistent-memory reference and is not
+budget-matched. The $j{=}0$ row retrieves the same raw-text chunks and
+recomputes all layers, providing the matched full-depth endpoint of CoMem's
+depth axis. RULER superscripts denote distinct $n{=}100$ cohorts, which are
+never pooled. Table~\ref{tab:adapter} isolates interface adaptation;
+Table~\ref{tab:scaling} gives the length-extension comparison.}
+\label{tab:overview}
+\end{table*}

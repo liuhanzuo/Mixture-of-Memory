@@ -1,0 +1,29 @@
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{2.2pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Replay selector} & \textbf{$k_{\max}$} &
+\textbf{Replay / CoMem} & \textbf{$\Delta$} &
+\textbf{Hier. 95\% CI} & \textbf{LOCO range} \\
+\midrule
+Iterative BM25 & 10 & 64.78 / 53.22 & $-11.56$ &
+$[-18.67,-5.11]$ & $[-13.13,-9.50]$ \\
+Frozen BGE & 10 & 54.22 / 53.22 & $-1.00$ &
+$[-10.67,8.33]$ & $[-3.50,1.75]$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Equal-latency quality exposes selector choice as a first-order
+frontier variable.}
+A latency-only calibration fixes replay budget 10 against CoMem budget 12
+within a predeclared $\pm5\%$ band. Quality is the equal-weight mean of nine
+100-example task--length cells; $\Delta$ is CoMem minus replay. The BM25 replay
+advantage is robust to hierarchical and leave-one-cell-out analyses. The
+frozen-BGE point estimate favors replay by one point, but both dependence-aware
+ranges span zero. Appendix Table~\ref{tab:equal-latency-protocol} gives the
+complete protocol and sensitivity analyses.}
+\label{tab:equal-latency}
+\end{table}

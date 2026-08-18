@@ -1,0 +1,24 @@
+% OLMo same-model probe saturation depths.
+% Sources: results/probe_linguistic_olmo2_7b.json and
+% results/knowledge_logit_lens_OLMo-2-1124-7B.json.
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{OLMo-2-7B quantity} & \textbf{layer} & \textbf{fractional depth} \\
+\midrule
+semantic probe mean sat$_{95}$ & 2.33 & $0.073L$ \\
+MMLU onset (chance$+0.05$) & 18 & $0.562L$ \\
+MMLU sat$_{95}$ & 19 & $0.594L$ \\
+next-token sat$_{95}$ & 32 & $1.000L$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Three ordered readout depths on the same OLMo model.}
+Semantic sat$_{95}$ averages WiC, SST-2, and RTE depths measured relative to
+each final-layer probe score. MMLU uses the final norm and output head;
+next-token sat$_{95}$ is exact top-1 agreement with the final layer. These are
+readout thresholds, not causal boundaries.}
+\label{tab:mechanism}
+\end{table}

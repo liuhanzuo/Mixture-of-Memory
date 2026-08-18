@@ -1,0 +1,26 @@
+\section{Proxy Validity on Literal Observed Paths}
+\label{sec:observation}
+
+Let $P_t$ denote in-domain perplexity and $E_t$ a knowledge-sensitive
+evaluation at an observed checkpoint $t$. We examine only the implication
+\[
+P_{t_2}<P_{t_1}\quad\Longrightarrow\quad
+\text{target recovery at }t_2 .
+\]
+Here ``target recovery'' means closing the large deficit to the intact-base
+score on the same evaluation, not merely obtaining a statistically detectable
+within-run gain. A path contradicts this improvement-only implication when PPL
+falls while a large intact-base target deficit remains. This is deliberately
+weaker than evaluating a prospective certificate: no absolute PPL threshold,
+base-relative tolerance, plateau rule, or construction-specific calibration was
+pre-registered. The analysis cannot identify where any capability resides,
+establish why paths differ, or predict behavior after the final checkpoint.
+The best observed keep14 PPL remains $1.428\times$ the base and only three late
+checkpoints are available, so we do not retrofit a post-hoc threshold table.
+
+This framing motivates three design choices. We preserve within-run checkpoints
+rather than infer a universal dynamic from an endpoint. We report multiple
+evaluation interfaces because each operationalizes the target differently. We
+also show null and alternative-construction operating points to bound simple
+explanations, while exposing every unmatched factor rather than calling the
+comparisons controlled ablations.

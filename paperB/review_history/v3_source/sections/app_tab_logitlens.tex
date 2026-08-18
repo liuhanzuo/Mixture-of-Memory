@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+\textbf{layer} & \textbf{frac. depth} & \textbf{MMLU acc.} &
+\textbf{gold log-lik.} \\
+\midrule
+15 & .4688 & .249 & $-11.555$ \\
+16 & .5000 & .234 & $-11.960$ \\
+17 & .5312 & .251 & $-11.947$ \\
+\textbf{18} & \textbf{.5625} & \textbf{.326} & $-11.652$ \\
+\textbf{19} & \textbf{.5938} & \textbf{.544} & $\mathbf{-8.517}$ \\
+20 & .6250 & .541 & $-8.038$ \\
+21 & .6562 & .538 & $-7.002$ \\
+32 & 1.0000 & .551 & $-3.791$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{OLMo-2-7B logit-lens transition.} Accuracy jumps at layers
+18--19; gold-answer log-likelihood continues improving after argmax accuracy
+saturates. Results use $1{,}000$ MMLU questions; complete layers are in
+Appendix~\ref{app:mechanism}.}
+\label{tab:logitlens-transition}
+\end{table}

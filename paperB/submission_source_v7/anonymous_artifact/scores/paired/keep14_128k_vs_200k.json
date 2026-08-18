@@ -1,0 +1,27 @@
+[
+  {
+    "pair": "keep14_128k_to_200k",
+    "A_label": "keep14@128k",
+    "B_label": "keep14@200k",
+    "n_shared": 14042,
+    "n_only_A": 0,
+    "n_only_B": 0,
+    "A_acc": 0.30116792479703747,
+    "B_acc": 0.3179746474861131,
+    "delta_pp_B_minus_A": 1.6806722689075626,
+    "b_Bcorrect_Awrong": 1038,
+    "c_Bwrong_Acorrect": 802,
+    "n_discordant": 1840,
+    "mcnemar_exact_two_sided_p": 4.118182589704451e-08,
+    "bootstrap_ci95_pp": [
+      1.0753453923942446,
+      2.2859991454208806
+    ],
+    "bootstrap_seed": 1234,
+    "n_boot": 10000,
+    "gold_nll_A_mean": 1.5649686094573394,
+    "gold_nll_B_mean": 1.5439645666571709,
+    "gold_nll_delta_B_minus_A": -0.021004042800168606,
+    "gold_nll_n": 14042
+  }
+]

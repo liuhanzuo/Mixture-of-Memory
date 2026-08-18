@@ -1,0 +1,162 @@
+{
+  "schema_version": "2.0.0",
+  "project": {
+    "title": "Null-calibrated measurement for multiple-choice benchmarks",
+    "target_venue": "ICLR 2026",
+    "venue_rubric_source": ".claude/skills/autonomous-paper-agent/references/review-rubric.md + paperC/review_prompts/{STRICT,NORMAL}_REVIEW_TEMPLATE.md (project's own ARR-calibrated pair)",
+    "paper_identity": "Report every multiple-choice construct against its construct-appropriate best-constant null, not against chance; and show that doing so changes published conclusions.",
+    "template": "iclr2026_conference.sty + \\documentclass{article} (per user directive: paperC uses the ICLR template, NOT paperB's acl.sty)"
+  },
+  "runtime": {
+    "host": "Claude Code, single node (wzc1 disk), CephFS project disk",
+    "subagents_available": true,
+    "reviewer_agent": "Workflow agent() via .claude/skills/autonomous-paper-agent/workflows/review_round.js (SKILL_LOCAL.md 3 mandates this over .claude/agents/, which has never existed in this repo)",
+    "meta_reviewer_agent": "same workflow, separate fresh agent after all 6 independent reviews land",
+    "change_verifier_agent": "same workflow, one fresh adversarial verifier per critical/major issue",
+    "max_parallel_reviewers": 6,
+    "degraded_mode": false,
+    "degraded_mode_reason": null,
+    "known_host_limitation": "PDF VISUAL INSPECTION IS IMPOSSIBLE ON THIS HOST -- no pdftoppm/gs/mutool/PyMuPDF (measured 2026-08-14, re-confirmed by paper_build.py this round). integrity_gates.pdf_visually_inspected therefore stays false with this reason attached, per SKILL_LOCAL.md 1 and 5.1. It is NOT a silent failure.",
+    "gpu_budget_this_round": "ZERO. All 32 cluster GPUs are committed to four unrelated 200k-step training jobs. paperC's own SUBMISSION_GAP_AUDIT.md states the headline needs 0 additional GPU-hours, so this is a real constraint but not a blocker."
+  },
+  "review_config": {
+    "reviewer_count": 6,
+    "panel_composition": "3 strict + 3 normal (project REVIEW_PROTOCOL.md), each additionally carrying one of the 5 upstream specialty lenses",
+    "abort_threshold": "<4 of 6 reviews returned -> round ABORTS (a median from a partial panel is not interpretable). This guard FIRED in round_00.",
+    "target_median_overall": 7.0,
+    "minimum_individual_score": 6.0,
+    "max_full_rounds": 5,
+    "min_full_rounds": 2,
+    "plateau_window": 2,
+    "minimum_meaningful_median_improvement": 0.25
+  },
+  "current_phase": "parallel_independent_review",
+  "current_round": 3,
+  "best_round": null,
+  "integrity_gates": {
+    "claims_traceable": "partial -- tab_claims.tex exists and maps claims; a formal claim_evidence_map.tsv is NOT yet built (open item)",
+    "numbers_traceable": "partial -- check_numbers.py exists and requires --evidence; not yet run this round (open item)",
+    "methods_traceable": "partial",
+    "citations_verified": "NOT re-verified this round; paperC/gate/venue_verification_openreview.json exists from an earlier pass and must be re-checked per family (OpenReview family needs venueid+Camera_Ready_Revision; ACL family incl. Findings needs aclanthology+DBLP)",
+    "build_passed": true,
+    "pdf_visually_inspected": false,
+    "venue_compliance_passed": "UNKNOWN -- SUSPECTED FAIL. ICLR 2026 allows 9 main-text pages excluding refs/appendix. Measured label pages: last main-text label tab:v2-resort on p10, \\bibliography at main.tex:32, \\appendix at main.tex:35, total 19 pages. Main text therefore appears to run to ~p10-13, i.e. OVER the 9-page limit. Being measured this round; also handed to the clarity reviewer to measure independently."
+  },
+  "build_record_this_round": {
+    "engine": "latexmk -pdf -bibtex -norc -gg -interaction=nonstopmode",
+    "toolchain": ".texlive/2026/bin/x86_64-linux/ (IN-REPO, not on $PATH -- see memory/absence-on-path-is-not-absence-on-disk.md; two historical records wrongly concluded latexmk was unavailable by asking $PATH only)",
+    "rc": 0,
+    "pages": 19,
+    "pdf_bytes": 342809,
+    "pdf_sha256": "2d9e546f2572bbe7d4a871a9881fe9e22305826da956a5bbe38466e49cd219ac",
+    "undefined_references": 0,
+    "undefined_citations": 0,
+    "overfull_hbox": 0,
+    "latex_errors": 0,
+    "underfull_hbox": 36,
+    "build_gate_pass": true
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "status": "ABORTED_BY_DESIGN",
+      "verdict": "ROUND_ABORTED_BY_DESIGN_PLUS_ONE_CONFIRMED_CRITICAL",
+      "reason": "only 3 of 6 reviews returned; the <4/6 guard fired as designed and prevented a 3-reviewer median from being reported as a 6-reviewer panel",
+      "cost": "980358 subagent tokens, 8042 s wall",
+      "median_overall": null,
+      "note": "NO SCORE EXISTS FOR ROUND 0. Do not later quote one. The round nevertheless produced three real criticals.",
+      "criticals_found_and_all_ADJUDICATED_BY_MAIN_FROM_RAW_DATA": [
+        {
+          "id": "S2-01",
+          "claim": "f_const = max over labels of noisy marginals on one finite sample is upward-biased even under exactly uniform gold labels (winner's curse); the paper never calibrated it",
+          "main_verdict": "CONFIRMED and LARGER than the reviewer computed (40k multinomial draws per construct at the paper's own (n,k)). All six constructs' reported floor-above-chance gaps fall INSIDE the 95th percentile of pure selection noise. OBQA: E[max]-chance = 2.315 pp (reviewer said 1.017) vs reported gap 2.600 pp, q95 = 4.400 pp.",
+          "fix": "tab_nulls gained E[f_hat]/q95/p under the balanced null; abstract scoped to the 3 surviving constructs (MMLU-Pro, MMLU, BoolQ)",
+          "evidence": "paperC/evidence/floor_winners_curse_calibration.json"
+        },
+        {
+          "id": "S2-02",
+          "claim": "the v1>=v2 ordering is proved only for the UNSTRATIFIED mixture bound",
+          "main_verdict": "CONFIRMED. argmax over labels differs from the global best constant in 4 of 8 n_opt strata (623/12032 items); proof slack 0.2992 pp.",
+          "fix": "03_method.tex:62 restated as a MEASURED property with its margin, not an identity",
+          "evidence": "paperC/evidence/s2_02_stratified_ordering.json"
+        },
+        {
+          "id": "S2-03",
+          "claim": "the flip claim holds its two sides to different evidentiary standards",
+          "main_verdict": "CONFIRMED. Floor side carried ci95+bootstrap p+McNemar; chance side had no inference at all. Under ONE standard the flip is 3/12 vs 1/12, not 10/12 vs 1/12.",
+          "fix": "05_analysis gained a both-sides table; abstract updated",
+          "evidence": "paperC/evidence/s2_03_symmetric_inference.json"
+        }
+      ],
+      "main_note": "All three were re-derived by MAIN from on-disk per-item data rather than taken on the reviewer's word, and TWO came back LARGER than reported. This is the standing adjudication policy for this paper."
+    },
+    {
+      "round": 1,
+      "status": "FROZEN_NOT_REVIEWED",
+      "snapshot_sha256_prefix": "96304267e30d79c3",
+      "n_files": 23,
+      "frozen_at": "2026-08-15T03:03+08:00",
+      "build_gate": {
+        "pages": 17,
+        "undefined_refs_cites": 0,
+        "overfull_hbox": 0,
+        "errors": 0,
+        "result": "PASS"
+      },
+      "design_change_introduced": "one defect per reviewer with the numbers inlined, instead of 'read the whole paper and find problems' -- introduced BECAUSE round_00 lost 3/6 reviewers to over-broad prompts. CARRIED FORWARD to round 3.",
+      "known_defect": "snapshot_sha256_prefix was recorded WITHOUT the recipe that produced it; 7 plausible recipes were tried and none reproduced it. The freeze documents intent, not verifiable state. A recipe was retro-pinned (baseline ab26fdbd0c0948e6) and is NOT comparable to the original value."
+    },
+    {
+      "round": 2,
+      "status": "FROZEN_NOT_REVIEWED",
+      "frozen_at": "2026-08-14T23:41+08:00",
+      "note": "submission/ exists (MANIFEST.json + manuscript + evidence) but NO verdict file -- the review round for it never ran. Superseded by round 3 because the tree changed after it (build now yields 19 pages vs round_01's 17)."
+    },
+    {
+      "round": 3,
+      "status": "REVIEW_IN_FLIGHT",
+      "snapshot_sha256": "1e18277a4d1eb601284e32c07a75a2abf5fb99d54e91738a353904203797bb62",
+      "n_files": 29,
+      "missing_dependencies": 0,
+      "blindness_verified_by_main": "grep audit of the frozen tree: 0 hits for our reviewers/rounds/scores. Every 'verdict' hit is the PAPER'S OWN vocabulary (its result tables carry a Verdict column).",
+      "panel": "6 (strict_1/2/3 + normal_1/2/3)",
+      "launched_at": "2026-08-15T20:33:04"
+    }
+  ],
+  "blockers": [
+    {
+      "id": "BLK-01",
+      "severity": "high",
+      "status": "open",
+      "statement": "ICLR 2026 9-page main-text limit appears VIOLATED (main text runs past p9; total 19 pp incl. refs+appendix). Must be measured exactly and fixed by moving content to the appendix, NOT by deleting evidence.",
+      "owner": "writer",
+      "gpu_required": false
+    },
+    {
+      "id": "BLK-02",
+      "severity": "medium",
+      "status": "open",
+      "statement": "claim_evidence_map.tsv, experiment_registry.json, method_provenance.tsv, citation_lock.json, issue_ledger.json, best_checkpoint.json not yet created as separate artifacts (the skill's Persistent State list). Some content exists inside tab_claims.tex and paperC/evidence/*.json but not in the machine-readable shapes the gates expect.",
+      "owner": "writer",
+      "gpu_required": false
+    },
+    {
+      "id": "BLK-03",
+      "severity": "medium",
+      "status": "open",
+      "statement": "Citations not re-verified this round. Must be re-run per family: OpenReview family (ICLR/NeurIPS/ICML) needs venueid + Camera_Ready_Revision; ACL family INCLUDING Findings needs aclanthology + DBLP. Needs http_proxy=http://hy-proxy.woa.com:3128.",
+      "owner": "writer",
+      "gpu_required": false
+    },
+    {
+      "id": "BLK-04",
+      "severity": "low",
+      "status": "permanent_host_limitation",
+      "statement": "PDF cannot be visually inspected on this host (no renderer). integrity gate item stays open with reason.",
+      "owner": "host",
+      "gpu_required": false
+    }
+  ],
+  "git_head_at_state_creation": "e942ed8",
+  "last_updated": "2026-08-15T20:33:04"
+}

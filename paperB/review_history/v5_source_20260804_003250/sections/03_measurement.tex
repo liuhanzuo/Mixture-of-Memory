@@ -1,0 +1,18 @@
+\section{Proxy Validity on Literal Observed Paths}
+\label{sec:observation}
+
+Let $P_t$ denote in-domain perplexity and $E_t$ a knowledge-sensitive
+evaluation at an observed checkpoint $t$. The certificate under examination is
+not that PPL is useful; it is the stronger implication that sufficient
+improvement in $P_t$ certifies recovery of $E_t$ after depth pruning and
+regrowth. A literal observed path can refute that certificate for its measured
+setting when PPL improvement coexists with a large target-evaluation deficit.
+It cannot identify where any capability resides, establish why the paths
+differ, or predict behavior after the final checkpoint.
+
+This framing motivates three design choices. We preserve within-run checkpoints
+rather than infer a universal dynamic from an endpoint. We report multiple
+evaluation interfaces because each operationalizes the target differently. We
+also show null and alternative-construction operating points to bound simple
+explanations, while exposing every unmatched factor rather than calling the
+comparisons controlled ablations.

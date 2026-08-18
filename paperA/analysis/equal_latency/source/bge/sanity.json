@@ -1,0 +1,57 @@
+{
+  "mode": "sanity",
+  "phase": "B_dense",
+  "lora_sha256": "dd09cd17457c63578c0f38dab79b287ab5da6e3f14c119aedafec1c34400536f",
+  "bge_sha256": "45e1954914e29bd74080e6c1510165274ff5279421c89f76c418878732f64ae7",
+  "lora_active_outside": 168,
+  "lora_active_inside_disable": 0,
+  "example0_read_len": {
+    "dense_rag": 6257,
+    "comem": 6257,
+    "comem_pack": 6257,
+    "dense_pack": 6257,
+    "n_selected_comem": 12,
+    "n_selected_dense": 12
+  },
+  "comem_packed_ids_sha256": "c5cfec9d236f379452a61f8f8bedd1303350bf758904d5307ae603161e95ff2b",
+  "dense_packed_ids_sha256": "0fdbca349a8143b09a1458f19da2515570caccd9eaea993c9fb24fe4ef029f4c",
+  "dense_deterministic": true,
+  "p19_reproduction": {
+    "attempted": true,
+    "matched": true,
+    "note": "",
+    "repro_sel": [
+      0,
+      1,
+      3,
+      5,
+      7,
+      8,
+      9,
+      11,
+      14,
+      24,
+      28,
+      29
+    ],
+    "p19_sel": [
+      0,
+      1,
+      3,
+      5,
+      7,
+      8,
+      9,
+      11,
+      14,
+      24,
+      28,
+      29
+    ]
+  },
+  "calib_offset": 900,
+  "limit": 100,
+  "split_disjoint": true,
+  "warns": [],
+  "fails": []
+}

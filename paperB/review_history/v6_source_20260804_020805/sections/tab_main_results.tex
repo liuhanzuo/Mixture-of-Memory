@@ -1,0 +1,38 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.6pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lllrllrrrrrr@{}}
+\toprule
+\textbf{Operating point} & \textbf{Construction} & \textbf{Inherited/fresh} &
+\textbf{Trainable set} & \textbf{Peak LR} & \textbf{Budget} &
+\textbf{PPL}$\downarrow$ & \textbf{MMLU-L} & \textbf{MMLU-C} &
+\textbf{PopQA} & \textbf{TriviaQA} & \textbf{NQ-open} \\
+\midrule
+Base & intact 32L checkpoint & 32/0 & none & --- & 0 & 7.398 & .605 & .471 & .257 & .636 & .205 \\
+full32 & intact CPT & 32/0 & all & $2{\times}10^{-5}$ & 25k / 6.6B & 7.670 & .588 & .466 & .228 & .572 & .158 \\
+\midrule
+keep14 & prefix14 + fresh2 & 14/2 & all & $2{\times}10^{-5}$ & 200k / 52.4B & 10.561 & .319 & .383 & .142 & .294 & .060 \\
+ShortGPT & selected $[0\text{--}12,16,17,31]$ & 16/0 & all & $2{\times}10^{-5}$ & 200k / 52.4B & 9.780 & .474 & .401 & --- & --- & --- \\
+Frozen & prefix14 + fresh2 & 14/2 & fresh2 + non-block & $2{\times}10^{-5}$ & 200k / 52.4B & 12.797 & .262 & .360 & .128 & .248 & .050 \\
+Random & fully random 16L & 0/16 & all & $1{\times}10^{-4}$ & 200k / 52.4B & 11.498 & .247 & .360 & .111 & .209 & .063 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Headline results and protocol differences.}
+Every trained construction is one run. ``Inherited/fresh'' counts decoder
+blocks; copied embeddings, final norm, and head are stated in
+\S\ref{sec:method}. MMLU-L scores answer letters; MMLU-C scores complete option
+text by mean log-likelihood per continuation token. PopQA is normalized-answer
+containment; TriviaQA and NQ-open are exact match. PPL is in-domain on a
+same-source held-out Dolmino shard. Budgets report optimizer steps and nominal
+token presentations (effective batch 128, length 2,048). full32 ends at 25k
+and only bounds short-horizon corpus shift; it is not a 200k endpoint control.
+ShortGPT changes four construction factors together. Random changes
+initialization, lexical modules, and LR; Frozen changes the trainable set.
+These rows are operating points, not clean ablations. Missing ShortGPT
+closed-book cells were not evaluated. Rounded values use three decimals; the
+common per-item reruns differ slightly and are reported separately.}
+\label{tab:main-results}
+\end{table*}

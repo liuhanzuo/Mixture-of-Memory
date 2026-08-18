@@ -1,0 +1,61 @@
+% Paper B — Prune-then-Heal depth study (OLMo-2-1124 base)
+% Structure: main.tex + sections/*.tex + paperB.bib
+% Drop into Overleaf ARR project (acl.sty / acl_natbib.bst included).
+% Compile: pdflatex -> bibtex -> pdflatex x2.
+% The manuscript reports only completed measurements and explicitly bounds unmatched controls.
+
+\documentclass[11pt]{article}
+\usepackage[review]{acl}          % ARR: [review] for submission; remove for camera-ready
+% \usepackage[preprint]{acl}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{flafter}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,patterns,calc,fit,backgrounds}
+\hbadness=10000
+\vbadness=10000
+
+\title{Perplexity Improvement Alone Does Not Imply Target Recovery:
+Observed Paths after Depth Pruning}
+
+\author{}
+
+
+\begin{document}
+\maketitle
+
+\input{sections/00_abstract}
+\input{sections/01_introduction}
+\input{sections/02_related}
+\input{sections/03_method}
+\input{sections/03_measurement}
+\input{sections/04_experiments}
+\input{sections/05_analysis}
+\FloatBarrier
+\input{sections/04b_discussion}
+\FloatBarrier
+\input{sections/05_conclusion}
+\clearpage
+\input{sections/06_limitations}
+\input{sections/07_ethics}
+
+\clearpage
+\bibliography{paperB}
+
+\clearpage
+\appendix
+\raggedbottom
+\input{sections/08_appendix}
+
+\end{document}

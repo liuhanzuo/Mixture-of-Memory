@@ -1,0 +1,28 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lllll@{}}
+\toprule
+\textbf{Family} & \textbf{Persistent object} & \textbf{Primary tunable axis} &
+\textbf{Post-selection model work} & \textbf{Difference from CoMem} \\
+\midrule
+Text RAG~\citep{rag} & token IDs & selection budget & all layers & CoMem's matched $j{=}0$ endpoint \\
+Reusable representations~\citep{readonce,embeddingrecycling} & compressed/intermediate features & compression or adapter & downstream model/layers & fixed representation interface \\
+Hidden-state restoration~\citep{hcache,kvdirect} & states across layers / checkpoints & I/O--reconstruction schedule & reconstruct layer-wise KV & restores standard per-layer state \\
+Chunk-KV / PIC~\citep{cacheblend,turborag,epic,mepic,ape} & per-layer KV & link/repair policy & repair or decode & full-depth KV object \\
+Learned modular KV~\citep{kvpacket,cartridgesbase,sempic} & learned per-layer KV & compiler/training/retrieval & little document recompute & full-depth learned object \\
+\textbf{CoMem} & one depth-$j$ residual/token & \textbf{split depth $j$} & execute layers $[j{:}L)$ & matched depth-reuse measurement \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Reusable-context interfaces expose different systems axes.}
+Prior work establishes intermediate-representation reuse, hidden-state
+restoration, and modular KV caching. CoMem contributes a single-residual object
+whose split depth directly controls prepaid versus online transformer work, plus
+a matched $j{=}0$ endpoint that holds the selected evidence and Read interface
+fixed. Published systems use different experimental boundaries; the table
+positions interfaces rather than substitutes for a same-backbone comparison.}
+\label{tab:priorart}
+\end{table*}

@@ -1,0 +1,8 @@
+Paper B v6 Figure 1 — legibility revision with exact-path AutoFigure-Edit re-import
+date=2026-08-04T02:06:01+08:00
+tool_path=/newcpfs/user/qixuan1/AutoFigure-Edit/autofigure2.py
+resolved_tool=/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/paper_tools/AutoFigure-Edit/autofigure2.py
+tool_commit=16f3749e9d512bdf7b7b55c162307bc289750b7a
+input=figures/autofigure_run_v6/pre_autofigure.png
+changes=minimum SVG class size raised from 15px to 25px; redundant cards/callouts removed; data unchanged
+command=python /newcpfs/user/qixuan1/AutoFigure-Edit/autofigure2.py --input_figure_path figures/autofigure_run_v6/pre_autofigure.png --output_dir figures/autofigure_run_v6/exact_path_reimport_final --provider custom --base_url <from .env> --stop_after 1 --disable_auto_upscale

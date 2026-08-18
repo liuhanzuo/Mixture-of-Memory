@@ -1,0 +1,25 @@
+% Select-first online-prefill cohort at 8k--128k.
+\begin{table}[!t]
+\centering
+\small
+\setlength{\tabcolsep}{3.5pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Length} & \shortstack{\textbf{Dense}\\\textbf{prefill}} & \shortstack{\textbf{CoMem}\\\textbf{prefill}} & \textbf{Speedup} & \shortstack{\textbf{Dense}\\\textbf{peak}} & \shortstack{\textbf{CoMem}\\\textbf{peak}} \\
+\midrule
+8k   & 1.20\,s  & 1.05\,s & 1.14$\times$ & 18.8\,GB & 18.7\,GB \\
+32k  & 7.33\,s  & 1.06\,s & 6.92$\times$ & 25.0\,GB & 18.7\,GB \\
+128k & 71.37\,s & 1.10\,s & \textbf{64.9$\times$} & 50.0\,GB & \textbf{18.7\,GB} \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Select-first online prefill on one H20 (Qwen3-8B, bf16/SDPA,
+median of three after one warmup). Dense runs the stock full-context path;
+CoMem uses its rank-32 LoRA and a fixed 6,657-token top-12 pack. This cohort
+times online model prefill after the persistent memory is built; it excludes
+one-time document Write and external-store fetch. The speedup is therefore an
+online bounded-read operating point, not a production end-to-end or depth-only
+causal effect.}
+\label{tab:online-prefill}
+\end{table}

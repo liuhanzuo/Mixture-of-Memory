@@ -1,0 +1,31 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Metric} & \textbf{128k} & \textbf{153.5k} & \textbf{200k} \\
+\midrule
+held-out PPL & 10.826 & 10.693 & \textbf{10.561} \\
+MMLU & .3012 & .3124 & \textbf{.3191} \\
+HellaSwag & .631 & .643 & .645 \\
+ARC-Challenge & .426 & .442 & .438 \\
+ARC-Easy & .702 & .705 & .705 \\
+PIQA & .747 & .745 & .745 \\
+WinoGrande & .630 & .633 & .626 \\
+OpenBookQA & .402 & .406 & .404 \\
+LAMBADA & .575 & .570 & .577 \\
+BoolQ (raw acc.) & .639 & .606 & .638 \\
+CommonsenseQA (raw) & .505 & .506 & .499 \\
+SocialIQA (raw) & .423 & .441 & .434 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Complete late keep14 trajectory.}
+From $153.5$k to $200$k, held-out PPL improves by $0.132$ while MMLU gains only
+$0.67$ points. Over the paired 14,042-item rerun from $128$k to $200$k, MMLU
+increases by $1.68$ points (95\% CI $[1.08,2.29]$, exact McNemar
+$p=4.12\times10^{-8}$). Most other metrics remain within one point from
+$153.5$k to $200$k, with mixed signs; continued pretraining yields a small but
+detectable answer-letter gain rather than broad late catch-up.}
+\label{tab:app-postapex}
+\end{table}

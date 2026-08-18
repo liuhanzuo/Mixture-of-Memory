@@ -1,0 +1,19 @@
+\begin{abstract}
+We study repeated queries over stable documents. \textbf{CoMem} stores one
+depth-$j$ residual per token, retrieves a bounded chunk set, and resumes layers
+$[j{:}L)$. In a matched comparison with identical evidence, mask, examples, and
+adapter, $j{=}12$ reduces isolated model Read from 931.9 to 664.4\,ms
+($1.403\times$) while lowering a 15-cell RULER macro from 99.19 to 96.07
+(paired gap 3.12, 95\% CI $[2.36,3.93]$). A rank-32 self-distillation adapter
+makes the interface usable without updating the backbone. The 8\,KiB/token
+store requires reuse: at 32k, CPU-pinned break-even is 8.9--10.9 queries for
+generations up to 128 tokens; at 128k and one generated token it is
+25.8--27.6 across GPU/CPU placement. In a nine-cell equal-latency diagnostic,
+dependence-aware hierarchical intervals show BM25 replay ahead by 11.56 points
+($[-18.67,-5.11]$), while frozen-BGE replay has an unresolved 1.00-point edge
+($[-10.67,8.33]$); CoMem wins neither aggregate. Restoring lower-layer document
+context raises a paired multikey diagnostic from 92.5 to 100.0, and a 32-token
+overlap reaches 98.5 without increasing persistent bytes or per-query Read.
+CoMem is an internal measurement of a depth-reuse operating point, not a claim
+of superiority over raw-text retrieval or modular-cache systems.
+\end{abstract}

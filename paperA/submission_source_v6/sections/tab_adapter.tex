@@ -1,0 +1,25 @@
+% Canonical Qwen3-8B same-j adapter on/off ablation, n=100.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llccc@{}}
+\toprule
+\textbf{Task} & \textbf{Adapter} & \textbf{8k} & \textbf{16k} & \textbf{32k} \\
+\midrule
+\multirow{2}{*}{niah\_single\_2}
+  & off & 36 & 7 & 22 \\
+  & on  & \textbf{100} & \textbf{100} & \textbf{100} \\
+\midrule
+\multirow{2}{*}{niah\_multikey\_1}
+  & off & 8 & 3 & 1 \\
+  & on  & \textbf{91} & \textbf{95} & \textbf{92} \\
+\bottomrule
+\end{tabular}
+\caption{Separate controlled RULER self-distillation ablation on Qwen3-8B at
+the same split $j{=}12$ ($n{=}100$ per cell). Each on/off pair uses the same
+task, length, selector, and cohort, so the difference isolates the adapter.
+Table~\ref{tab:depth-tradeoff} provides the broader same-$j$ LoCoMo/BABILong
+control used in the main argument.}
+\label{tab:adapter}
+\end{table}

@@ -1,0 +1,23 @@
+% Retrieval-expansion ablation on RULER variable tracking, n=100, no chat template.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Retrieval configuration} & \textbf{8k} & \textbf{16k} & \textbf{32k} & \textbf{64k} & \textbf{128k} \\
+\midrule
+Auto 3-round, top-12 ($\sim$6.5k) & 96.6 & \textbf{97.6} & \textbf{98.8} & \textbf{99.0} & \textbf{95.8} \\
+Hop-4 expansion ($\sim$17k) & \textbf{99.0} & 95.6 & 89.8 & 89.8 & 87.4 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Retrieval breadth on RULER variable tracking ($n{=}100$) without a
+chat template. The first row is the flagship automatic three-round retrieval;
+the second widens the read to roughly 17k. They are distinct configurations and
+not an equal-budget causal comparison. The expansion point estimate is higher at 8k and lower from
+16k onward, consistent with the larger read introducing distractor variable
+chains. More retrieval budget is not uniformly beneficial.}
+\label{tab:itervt}
+\end{table}

@@ -1,0 +1,51 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+\textbf{Model} & \textbf{step} & \textbf{HS} & \textbf{ARC-C} &
+\textbf{ARC-E} & \textbf{PIQA} & \textbf{WinoG} & \textbf{OBQA} &
+\textbf{PPL} \\
+\midrule
+1B full base & --- & .683 & .422 & .735 & .757 & .643 & .400 & 10.642 \\
+keep7+fresh2 & 50k & .411 & .289 & .568 & .671 & .531 & .318 & 17.619 \\
+keep7+fresh2 & 100k & .438 & .300 & .593 & .687 & .526 & .326 & 16.161 \\
+keep7+fresh2 & 147k & .450 & .311 & .595 & .692 & .530 & .326 & 15.628 \\
+keep7+fresh2 & 148.5k & .448 & .294 & .606 & .695 & .544 & .330 & --- \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{OLMo-2-1B core-task trajectory.} We report
+\texttt{acc\_norm} (continuation-length-normalized likelihood accuracy) except
+for WinoGrande, where raw and normalized accuracy coincide. Abbreviations:
+HS = HellaSwag; ARC-C/E = ARC-Challenge/Easy; WinoG = WinoGrande; OBQA =
+OpenBookQA; PPL = perplexity.}
+\label{tab:app-1b-core}
+\end{table}
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Model} & \textbf{step} & \textbf{MMLU} & \textbf{LAMBADA} &
+\textbf{BoolQ} & \textbf{CSQA} & \textbf{SIQA} \\
+\midrule
+1B full base & --- & .3820 & .6480 & .624 & .553 & .422 \\
+keep7+fresh2 & 50k & .2495 & .3536 & .618 & .368 & .384 \\
+keep7+fresh2 & 100k & .2558 & .3740 & .597 & .380 & .394 \\
+keep7+fresh2 & 147k & .2529 & .4021 & .584 & .391 & .384 \\
+keep7+fresh2 & 150k & .2480 & .3969 & .577 & .387 & .386 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{OLMo-2-1B MMLU and likelihood-task trajectory.}
+MMLU remains at the $.25$ chance floor across the complete measured trajectory,
+whereas LAMBADA and commonsense tasks improve. Raw accuracy is shown for these
+five tasks.}
+\label{tab:app-1b-know}
+\end{table}

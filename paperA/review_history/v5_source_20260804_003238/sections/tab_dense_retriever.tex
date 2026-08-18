@@ -1,0 +1,21 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Task / length} & \textbf{qa1 16k} & \textbf{qa2 16k} &
+\textbf{LongEval 16k} & \textbf{RULER multikey 16k} & \textbf{LoCoMo} \\
+\midrule
+Dense recall@12 & .52 & .45 & .58 & .81 & .70 \\
+Raw-text reader quality & .45 & .31 & .57 & .82 & .18 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Frozen dense-retriever diagnostic.} BGE-large-en-v1.5 uses
+CLS pooling, L2 normalization, cosine search, the same 512-token chunks, and a
+Qwen3-8B $j{=}0$ reader without LoRA ($n{=}100$ per cell). Long-context recall
+can be the bottleneck even when hit-conditional reading remains strong; this is
+a fixed top-12 diagnostic, not a trained-retriever comparison. The separate
+equal-latency selector audit is Table~\ref{tab:equal-latency}.}
+\label{tab:dense-retriever}
+\end{table*}

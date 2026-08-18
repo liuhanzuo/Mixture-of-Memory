@@ -1,0 +1,28 @@
+% Content-depth probe across three model families and five data splits.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Model} & \textbf{$L$} & \textbf{linear knee} & \textbf{native knee} & \textbf{gap} \\
+ & & ($/L$, 95\% CI) & ($/L$) & ($\Delta/L$) \\
+\midrule
+Qwen3-8B & 36 & 0.393 [0.319,0.466] & 0.824 & 0.43 \\
+Llama-3-8B$^\dagger$ & 32 & 0.275 & 1.000 & 0.725 \\
+OLMo-2-7B & 32 & 0.285 [0.214,0.357] & 0.875 & 0.59 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Linear accessibility precedes native readout under these
+probes.} The linear knee is the first layer reaching 98\% of peak held-out
+probe accuracy; the native knee applies each model's own final norm and LM head
+at every layer. Qwen and OLMo aggregate SST2, WiC, and RTE over five stratified
+data splits; their intervals reflect task--split variation, not model-training
+seeds. $^\dagger$For Llama, WiC and RTE native verbalizers remain near chance,
+so we report the SST2-only matched-support knees and do not form a misleading
+three-task native aggregate. These correlational probes do not localize
+understanding or establish the same knees on long-memory tasks.}
+\label{tab:depth}
+\end{table}

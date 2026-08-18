@@ -1,0 +1,25 @@
+\begin{abstract}
+Retrieval bounds the online token set but recomputes every model layer, whereas
+state reuse avoids computation by retaining layer-wise caches. We introduce
+\textbf{CoMem}, a cross-query memory interface that stores one intermediate
+residual per context token, selects a bounded set of chunks for each query, and
+continues computation only through the upper transformer layers. The split
+depth exposes an explicit quality--latency--storage trade-off: on a matched
+selected pack, resuming at layer 12 yields a $1.403\times$ Read-phase speedup
+over raw-text replay while reducing a 15-cell RULER macro by 3.12 points. A
+rank-32 self-distillation adapter recovers most of the otherwise severe
+interface loss without updating the backbone. For repeated-query workloads, the
+one-time Write is amortized after roughly 9 queries at 32k and 26--28 queries at
+128k in our serving measurements. The combined bounded-selection operating
+point keeps online prefill near 1.1\,s and 18.7\,GB at 128k, versus 71.4\,s and
+50.0\,GB for dense prefill on the same H20; this $64.9\times$ figure includes
+the benefit of selecting a fixed working set and is not a depth-only effect.
+On a paired multikey diagnostic, controlled interface ablations identify
+missing lower-layer document context during independent chunk writing as a
+major source of fidelity loss. A deployable overlap-Write variant raises that
+diagnostic from 92.5 to
+98.5--99.0 while leaving persistent storage and Read cost unchanged, at the
+price of additional one-time Write compute. CoMem therefore provides a measured
+computation-reuse frontier for long-context serving, rather than uniform quality
+dominance over raw-text retrieval.
+\end{abstract}

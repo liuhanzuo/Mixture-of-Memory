@@ -1,0 +1,35 @@
+% Matched-n=100 Qwen3-8B RULER scaling.
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3.8pt}
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+\textbf{Task} & \textbf{Method} & \textbf{8k} & \textbf{16k} & \textbf{32k} & \textbf{64k} & \textbf{128k} \\
+\midrule
+\multirow{4}{*}{single needle}
+& KV-Direct & 100 & 100 & 100 & 100 & 0 \\
+& KV-Direct+YaRN$^\dagger$ & 100 & 100 & 100 & 100 & \textbf{100} \\
+& CoMem+LoRA & 100 & 91 & 97 & 98 & 98 \\
+& CoMem+LoRA+YaRN$^\dagger$ & 100 & 90 & 97 & 97 & 98 \\
+\midrule
+\multirow{4}{*}{multikey}
+& KV-Direct & 100 & 100 & 98 & 88 & 0 \\
+& KV-Direct+YaRN$^\dagger$ & 98 & 94 & 96 & 91 & 89 \\
+& CoMem+LoRA & 94 & 91 & 99 & 90 & \textbf{93} \\
+& CoMem+LoRA+YaRN$^\dagger$ & 82 & 85 & 94 & 88 & \textbf{93} \\
+\midrule
+\multirow{4}{*}{variable tracking}
+& KV-Direct & 100 & 100 & 99.8 & 96.2 & 0 \\
+& KV-Direct+YaRN$^\dagger$ & 99.2 & 99.4 & 26.6 & 67.2 & 57.8 \\
+& CoMem+LoRA & 96.2 & 98.0 & 98.2 & 98.6 & \textbf{99.0} \\
+& CoMem+LoRA+YaRN$^\dagger$ & 88.6 & 90.0 & 89.4 & 95.0 & 93.6 \\
+\bottomrule
+\end{tabular}
+\caption{Matched-$n{=}100$ Qwen3-8B RULER scaling. $^\dagger$YaRN factor 4
+gives an effective 163,840-token window. At 128k, unextended-backbone CoMem+LoRA scores
+98/93/99.0 on single-needle, multikey, and variable tracking, versus
+100/89/57.8 for KV-Direct+YaRN. Applying YaRN to CoMem changes these to
+98/93/93.6, showing an in-window position-scaling tax on variable tracking.}
+\label{tab:scaling}
+\end{table*}

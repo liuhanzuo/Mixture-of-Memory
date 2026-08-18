@@ -1,0 +1,168 @@
+{
+  "_what": "B09 GATE -1 next_action item 1: the three provenance assertions, recomputed on the parquet actually on disk.",
+  "computed_at_utc": "2026-08-17T04:57:46.397924Z",
+  "shards": [
+    {
+      "shard": "tool-00000-of-00008.parquet",
+      "rows": 3013
+    },
+    {
+      "shard": "tool-00001-of-00008.parquet",
+      "rows": 3013
+    },
+    {
+      "shard": "tool-00002-of-00008.parquet",
+      "rows": 3013
+    },
+    {
+      "shard": "tool-00003-of-00008.parquet",
+      "rows": 3013
+    },
+    {
+      "shard": "tool-00004-of-00008.parquet",
+      "rows": 3012
+    },
+    {
+      "shard": "tool-00005-of-00008.parquet",
+      "rows": 3012
+    },
+    {
+      "shard": "tool-00006-of-00008.parquet",
+      "rows": 3012
+    },
+    {
+      "shard": "tool-00007-of-00008.parquet",
+      "rows": 3012
+    }
+  ],
+  "parquet_schema": [
+    "messages:string",
+    "instance_id:string",
+    "resolved:bool",
+    "model:string",
+    "traj_id:string",
+    "patch:string"
+  ],
+  "n_rows": 24100,
+  "resolved_true": 9427,
+  "resolved_false": 14673,
+  "model_counts": {
+    "claude-3-7-sonnet-20250219": 17715,
+    "claude-3-5-sonnet-20241022": 5751,
+    "gpt-4o-2024-08-06": 634
+  },
+  "substring_method": {
+    "_semantics": "marker present in the raw `messages` JSON string; reproduces the HF /filter LIKE test",
+    "message_type": 9176,
+    "tool_calls": 9116,
+    "both": 9116,
+    "thought_quoted": 9116
+  },
+  "parsed_method": {
+    "_semantics": "json.loads, then any(marker is a KEY of a dict turn)",
+    "message_type": 9116,
+    "tool_calls": 9116,
+    "both": 9116,
+    "thought": 9116
+  },
+  "method_disagreements": {
+    "message_type": 60,
+    "tool_calls": 0
+  },
+  "parse_failures": 0,
+  "traj_id": {
+    "distinct": 24100,
+    "max_rows_per_traj_id": 1,
+    "n_traj_id_with_more_than_1_row": 0
+  },
+  "instance_id": {
+    "distinct": 10637,
+    "max_rollouts": 21,
+    "min_rollouts": 1,
+    "rollout_count_hist": {
+      "1": 5962,
+      "2": 2234,
+      "3": 613,
+      "4": 438,
+      "5": 544,
+      "6": 225,
+      "7": 120,
+      "8": 171,
+      "9": 82,
+      "10": 29,
+      "11": 47,
+      "12": 104,
+      "13": 16,
+      "14": 28,
+      "15": 4,
+      "16": 10,
+      "17": 1,
+      "18": 5,
+      "20": 3,
+      "21": 1
+    }
+  },
+  "structured_subset": {
+    "n": 9116,
+    "by_model": {
+      "claude-3-7-sonnet-20250219": 5874,
+      "claude-3-5-sonnet-20241022": 2714,
+      "gpt-4o-2024-08-06": 528
+    },
+    "by_resolved": {
+      "True": 3452,
+      "False": 5664
+    },
+    "message_type_values": {
+      "system_prompt": 9116,
+      "observation": 278358,
+      "action": 278358
+    },
+    "role_values": {
+      "system": 9116,
+      "user": 9116,
+      "assistant": 278358,
+      "tool": 269242
+    },
+    "tool_names": {
+      "str_replace_editor": 156137,
+      "bash": 107050,
+      "submit": 14333
+    },
+    "action_turns_total": 278358
+  },
+  "n_messages_summary": {
+    "min": 7,
+    "max": 303,
+    "mean": 64.17095435684648,
+    "n_distinct_lengths": 118
+  },
+  "ASSERTIONS": {
+    "n_rows==24100": [
+      true,
+      24100,
+      24100
+    ],
+    "resolved_true==9427": [
+      true,
+      9427,
+      9427
+    ],
+    "resolved_false==14673": [
+      true,
+      14673,
+      14673
+    ],
+    "both_substring==9116": [
+      true,
+      9116,
+      9116
+    ],
+    "both_parsed==9116": [
+      true,
+      9116,
+      9116
+    ]
+  },
+  "ALL_PASS": true
+}

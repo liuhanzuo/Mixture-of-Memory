@@ -1,0 +1,22 @@
+\begin{abstract}
+We study repeated queries over a stable corpus: document state may be written
+once, but each query must retrieve evidence and generate an answer.
+\textbf{CoMem} stores one depth-$j$ residual per context token, retrieves a
+bounded chunk set, and resumes layers $[j{:}L)$. Its primary evidence is a
+matched two-point depth comparison. With identical selected chunks, order, mask,
+examples, and adapter, $j{=}12$ reduces isolated model Read from 931.9 to
+664.4\,ms ($1.403\times$) while lowering a 15-cell RULER macro from 99.19 to
+96.07 (paired gap 3.12, 95\% CI $[2.36,3.93]$). A rank-32
+self-distillation adapter makes this interface usable without updating the
+backbone. The 8\,KiB/token store pays off only under reuse: measured
+break-even is 8--11 queries at 32k for generations up to 128 tokens, and
+25.8--27.6 queries at 128k for one generated token. Equal-latency conclusions
+depend on the selector. On a nine-cell diagnostic mixture, BM25 raw replay
+beats CoMem by 11.56 points, whereas frozen-BGE replay is statistically tied
+($-1.00$, 95\% CI $[-4.67,2.67]$); CoMem wins neither aggregate. Finally, on a
+paired multikey diagnostic, restoring lower-layer document context raises 92.5
+to 100.0, and a 32-token overlap reaches 98.5 without increasing persistent
+bytes or per-query Read work. CoMem is therefore an internal measurement of a
+depth-reuse operating point and its workload boundary, not a claim of
+superiority over raw-text retrieval or modular-cache systems.
+\end{abstract}

@@ -1,0 +1,69 @@
+\section{Introduction}
+\label{sec:intro}
+
+\begin{figure*}[t]
+\centering
+\IfFileExists{figures/fig1_comem_autofigure.pdf}
+  {\includegraphics[width=0.96\textwidth]{figures/fig1_comem_autofigure.pdf}}
+  {\includegraphics[width=0.96\textwidth]{figures/Structure.pdf}}
+\caption{\textbf{CoMem treats transformer depth as a cross-query reuse axis.}
+\textsc{Write} stores one intermediate residual per token, \textsc{Select}
+retrieves a fixed working set, and \textsc{Read} resumes the upper layers with
+the query present. The matched $j{=}0$ path retrieves the same raw-text chunks
+but recomputes every layer. A small left-overlap is evaluated as a focused
+repair for missing lower-layer document context.}
+\label{fig:teaser}
+\end{figure*}
+
+Repeated-query long-context serving can save work in two different ways.
+Raw-text retrieval bounds the online token set but recomputes all layers
+~\citep{rag,xu2024retrievallong}. Prefix, position-independent caching (PIC),
+and modular-cache systems instead reuse precomputed document state, usually
+layer-wise KV, while repairing position or context dependencies
+~\citep{cacheblend,turborag,epic,cachecraft,kvpacket}. This paper asks a
+narrower question: \emph{how much transformer depth should a reusable document
+object prepay?}
+
+We instantiate that question with \textbf{CoMem} (Figure~\ref{fig:teaser}).
+\textsc{Write} runs each context chunk through layers $[0{:}j)$ and stores one
+residual vector per token. \textsc{Select} chooses a fixed number of chunks.
+\textsc{Read} packs their residuals with the query and executes only
+$[j{:}L)$ with full cross-pack attention. The endpoint $j{=}0$ stores token IDs
+and replays the same selected pack through every layer. Thus $j$ varies prepaid
+depth while holding evidence fixed.
+
+Our strongest evidence is this \emph{matched depth-reuse frontier}. On
+Qwen3-8B, $j{=}12$ lowers isolated selected-pack Read from 931.9 to 664.4\,ms
+($1.403\times$) but lowers a paired 15-cell RULER macro from 99.19 to 96.07.
+This is not quality-preserving acceleration. A self-distilled upper-layer LoRA
+is necessary to make the residual interface usable, and the 8\,KiB/token store
+is worthwhile only when reused: measured break-even ranges from 8--11 queries
+at 32k to 26--28 at 128k. Much larger dense-context numbers combine bounded
+selection with depth reuse and are secondary operating points, not the causal
+depth result.
+
+We deliberately test the strongest counterclaim. At matched online latency,
+raw-text replay can spend its budget on ten chunks while CoMem reads twelve; it
+still wins 64.78 to 53.22 on a held-out mixed diagnostic cohort. CoMem therefore
+does not establish a new quality ranking over RAG or reusable-KV systems. It
+establishes an internally matched computation--quality--storage frontier.
+
+We also bound one source of error rather than claiming a complete explanation.
+On a paired 8k/16k multikey diagnostic, document-contextual lower-layer states
+close the 92.5-to-100.0 gap, while document-origin position remapping alone
+reduces accuracy to 88.0. A deployable 32-token left overlap reaches 98.5 with
+unchanged persistent bytes and per-query Read work. Because this repair is not
+evaluated on the full natural-task suite, we treat it as a localized diagnosis
+and engineering hypothesis.
+
+\paragraph{Contributions.}
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+\item \textbf{Matched frontier:} a same-evidence, same-adapter measurement of
+the incremental benefit and quality cost of reusing lower-layer computation.
+\item \textbf{Transparent system boundary:} persistent bytes, Write
+amortization, serving crossover, and an equal-latency negative result, with
+bounded selection kept separate from depth reuse.
+\item \textbf{Bounded diagnosis:} controlled continuous-state, context,
+position, and overlap variants that isolate a major Write-side failure on one
+paired multikey cohort without generalizing it beyond the evidence.
+\end{itemize}

@@ -1,0 +1,66 @@
+\section{Design Evidence}
+\label{sec:motivation}
+
+CoMem does not require a claim that a model ``understands'' a document at one
+particular layer. We use three empirical observations to motivate the interface:
+information can be accessible before native final-head readout; resuming too
+deep creates a sharp fidelity loss; and the dominant bottleneck can move between
+retrieval and residual readout depending on the task.
+
+\subsection{Accessibility precedes native readout}
+Under our probe protocols, semantic labels become linearly accessible before a
+fixed final norm and LM head can express the corresponding native answer
+(Figure~\ref{fig:depth}). This ordering appears across the tested Qwen, Llama,
+and OLMo backbones. It is readout-dependent evidence, not a causal boundary or
+a statement that later layers are unnecessary.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/depth_motiv.pdf}
+\caption{\textbf{Intermediate accessibility motivates, but does not validate,
+depth reuse.} (a) Zero-shot task readout remains usable only up to a
+depth-dependent boundary. (b) Frozen linear probes become informative earlier
+than native LM-head readout under the specified protocols. Exact definitions and
+values are in Appendix~\ref{app:ablations}.}
+\label{fig:depth}
+\end{figure}
+
+\subsection{The split depth is a fidelity knob}
+A frozen residual interface degrades as the split moves deeper. Separate
+self-distilled adapters shift the usable frontier but do not eliminate it:
+RULER changes from 98.29 at $j{=}6$ to 96.07 at $j{=}12$ and 55.41 at
+$j{=}18$, while fixed-pack Read speedup rises from $1.166\times$ to
+$1.403\times$ and $1.807\times$ (Appendix
+Table~\ref{tab:distilled-depth-curve}). Because adapter spans and parameter
+counts differ, this is a deployment frontier, not a compute-matched causal
+depth ablation.
+
+\subsection{Retrieval and readout are separate failure modes}
+On a lexical single-needle diagnostic, BM25 and oracle selection retain the
+evidence while recency and reader-attention heuristics deteriorate with length
+(Figure~\ref{fig:read}). That observation is deliberately narrow. On LongEval,
+BM25 recall is 97--100\% across 8k--128k and matched $j{=}0$ replay is nearly
+perfect conditional on a retrieval hit, whereas frozen $j{=}12$ fails and the
+distilled interface recovers only 64--76\% hit-conditional accuracy. On
+BABILong, both retrieval misses and residual readout contribute, with the
+balance varying by task. Thus a bounded memory needs both a suitable selector
+and a compatible stored representation.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/read_motiv.pdf}
+\caption{\textbf{Selection is one bottleneck, not always the bottleneck.}
+Oracle and BM25 remain strong on the single-needle diagnostic; other analyses
+separate evidence recall from reader accuracy and show substantial residual
+readout loss on multi-step tasks.}
+\label{fig:read}
+\end{figure}
+
+\subsection{Implications}
+The evidence suggests three design requirements. First, expose split depth as a
+measured quality--cost knob. Second, retrieve a bounded relevant pack but allow
+full upper-layer interaction among its chunks. Third, preserve enough
+lower-layer document context during Write that the stored residual is compatible
+with later composition. Section~\ref{sec:method} instantiates the first two;
+Section~\ref{sec:experiments} evaluates independent and overlapping Write
+variants for the third.

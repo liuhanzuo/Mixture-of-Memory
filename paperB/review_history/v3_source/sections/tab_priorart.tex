@@ -1,0 +1,23 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.6pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llllll@{}}
+\toprule
+\textbf{Study family} & \textbf{Intervention} & \textbf{Adaptation} & \textbf{Reported recovery} & \textbf{Trajectory?} & \textbf{Key control(s)} \\
+\midrule
+ShortGPT / SLEB & ranked block removal & none & PPL + task endpoints & no & importance/policy variants \\
+Gromov et al. & contiguous deep-block removal & continued pretraining & post-heal PPL + tasks & limited & depth and healing budget \\
+Sheared / compact / DRPruning & structured pruning & CPT or distillation & compact-model endpoints & limited & data/training recipe \\
+\textbf{This study} & prefix+fresh tail; ShortGPT endpoint & controlled healing & PPL + task + interface & \textbf{yes} & full32, init, freeze, policy \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Positioning of the study.} This study does not introduce a new
+importance score. Its distinguishing object is the recovery trajectory, together
+with controls that separate structural intervention, continued-training drift,
+initialization/adaptation, pruning policy, and scoring interface. ``Limited''
+means that intermediate training points are not the primary analysis object.}
+\label{tab:priorart}
+\end{table*}

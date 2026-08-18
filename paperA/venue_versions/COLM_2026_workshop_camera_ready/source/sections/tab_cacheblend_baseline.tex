@@ -1,0 +1,31 @@
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Method / recompute} & \textbf{RULER} & \textbf{BABI-qa5} &
+\textbf{LoCoMo} & \textbf{Store/tok.} \\
+\midrule
+CacheBlend-style, $r{=}0$    & 67.80 & 49.33 & 17.07 & 144\,KiB \\
+CacheBlend-style, $r{=}.10$  & 72.57 & 48.50 & 16.77 & 144\,KiB \\
+CacheBlend-style, $r{=}.15$  & 73.78 & 49.83 & 17.07 & 144\,KiB \\
+CacheBlend-style, $r{=}.18$  & 74.70 & 49.17 & 17.37 & 144\,KiB \\
+\midrule
+CoMem ($j{=}12$) & 97.05 & 68.67 & 23.36 & 8\,KiB \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Same-backbone full-depth chunk-KV comparison.}
+The baseline uses independently prefetched 36-layer KV, global RoPE reindexing,
+and selective recomputation; its $r{=}1$ self-test matches full prefill. Both
+arms use Qwen3-8B, 512-token chunks, iterative-BM25 top-12, plain text, and the
+same scorers. However, CacheBlend reports 12 RULER cells at 4k--32k and six
+BABI-qa5 cells at 0k--16k, whereas the CoMem entries summarize 15 cells at
+8k--128k and seven cells at 0k--32k. LoCoMo has 1,986 questions for both, but
+the artifact does not prove itemwise pack identity. The training-free baseline
+and adapted CoMem are therefore protocol-aligned diagnostics, not paired or
+adaptation-matched estimates. Full-depth bf16 GQA KV costs 147,456 bytes/token
+versus 8,192 for CoMem. The recorded BABILong \texttt{resume\_j=6} is a host
+default; CacheBlend executes all 36 layers.}
+\label{tab:cacheblend-baseline}
+\end{table}

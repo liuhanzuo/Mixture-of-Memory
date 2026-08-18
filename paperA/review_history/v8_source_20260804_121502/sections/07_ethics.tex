@@ -1,0 +1,20 @@
+\section*{Ethical Considerations}
+CoMem inherits the underlying model's hallucination, bias, unsafe-generation,
+and misuse risks; cheaper access to long histories can scale both beneficial and
+harmful applications. Retrieved or cached material may disclose sensitive or
+unauthorized text, and residual tensors may permit inversion or membership
+inference, although we do not test these attacks. Deployments should protect the
+store at least as strongly as source text through authorization, tenant
+isolation, encryption, auditing, pre-Write filtering/redaction, output
+monitoring, and verifiable deletion; large persistent stores and Overlap-Write
+also require careful update invalidation. Bounded reads reduce per-query compute,
+but training and evaluation still consume energy; measured final-run hardware
+and compute appear in Appendix~\ref{app:reproducibility}.
+
+We collect no new human-subject data or annotations. Experiments use released
+models, corpora, and benchmarks; LoCoMo conversations are model-generated. The
+anonymous artifact excludes model weights, benchmark text, credentials, private
+API metadata, and raw private responses. Subject to upstream terms, it provides
+the adapter, evaluation code, permissible prediction artifacts or hashes, judge
+prompts/parsed decisions, timing records, licenses, and provenance needed to
+audit the reported results.

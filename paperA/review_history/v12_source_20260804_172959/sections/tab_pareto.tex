@@ -1,0 +1,41 @@
+% Unified quality--latency--storage operating points at 128k.
+\begin{table}[!t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Operating point} & \textbf{RULER} & \textbf{B/token} & \textbf{Query (s)} & \textbf{Write (s)} & \textbf{Peak (GB)} \\
+\midrule
+Full context & 78.80$^{A}$ & 147,456 & 50.59 & 0 & 50.0$^\dagger$ \\
+Matched raw-text replay ($j{=}0$) & \textbf{99.20}$^{B}$ & $\sim$4--8 & 1.141 & 0.09 & 18.5 \\
+CoMem frozen ($j{=}12$) & 8.01$^{A}$ & 8,192 & 0.849 & 5.83 & 18.5 \\
+CoMem + LoRA ($j{=}12$) & 96.07$^{B}$ & 8,192 & \textbf{0.807} & 5.83 & 18.5 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Representative quality and systems operating points, not a single
+matched Pareto frontier. Quality is a 15-cell RULER macro from the explicitly
+marked A/B cohort; systems columns are measured at 128k on one H20
+(bf16/SDPA, median of three). The 50.59\,s full-context row is a stock-dense,
+LoRA-off measurement from this Pareto harness; it is distinct from the
+71.37\,s stock-dense cohort in Table~\ref{tab:online-prefill} and the
+same-adapter L20A cohort in Table~\ref{tab:eff}. Superscripts follow Table~\ref{tab:overview};
+the frozen quality point is not compared numerically across cohorts, while its
+direct same-task collapse appears in Table~\ref{tab:adapter}. All three retrieved
+systems rows use the same top-12 working set. The $j{=}0$ row stores raw token
+IDs and replays all layers; the $j{=}12$ rows store residuals and replay only the
+upper layers. The $j{=}0$ row has no LoRA whereas the flagship $j{=}12$ row is
+adapted; their 0.33\,s/query difference is therefore a
+deployable operating-point comparison, not depth-only causal isolation. It
+prepays 5.74\,s of Write and gives a 17--20-query analytic break-even in this
+component cohort; the separate write-once serving experiment reports
+length- and storage-dependent measured crossover. Frozen $j{=}12$
+shows that depth reuse requires interface adaptation. $^\dagger$Full-context
+KV-cached generation peaks at 50.0\,GB; a separate single-forward write-all
+harness that materializes full-sequence logits OOMs on H20. The 89.39\,GB
+L20A cohort in Appendix~\ref{app:efficiency} is therefore not a contradictory hardware
+capacity claim.}
+\label{tab:pareto}
+\end{table}

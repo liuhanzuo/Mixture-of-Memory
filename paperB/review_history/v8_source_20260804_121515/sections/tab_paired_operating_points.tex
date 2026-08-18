@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{MMLU letter comparison} & $\boldsymbol{\Delta}$ \textbf{(pp)} &
+\textbf{95\% CI} & \textbf{McNemar $p$} \\
+\midrule
+keep14 $-$ Random & +7.11 & $[6.14,8.09]$ & $1.63{\times}10^{-46}$ \\
+keep14 $-$ Frozen & +5.50 & $[4.51,6.49]$ & $6.99{\times}10^{-27}$ \\
+Frozen $-$ Random & +1.61 & $[0.58,2.64]$ & $2.59{\times}10^{-3}$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Paired same-shape operating-point differences.} All rows use
+the common 14,042-item rerun at 200k steps; intervals use 10,000 paired
+bootstrap resamples and exact two-sided McNemar tests. Inherited keep14 retains
+a clear letter-interface advantage over both null points even though Frozen and
+Random converge to the same .360 content score
+(Table~\ref{tab:interface-audit}).}
+\label{tab:paired-operating-points}
+\end{table}

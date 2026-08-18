@@ -1,0 +1,37 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llllcccccc@{}}
+\toprule
+\textbf{Study} & \textbf{Intervention} & \textbf{Adaptation} &
+\textbf{Trajectory} & \textbf{Loss+task} & \textbf{Scratch/init} &
+\textbf{Intact CPT} & \textbf{MMLU iface.} & \textbf{Closed-book} &
+\textbf{Construction} \\
+\midrule
+Gromov et al. & deep-block removal & CPT & P & Y & N & N & N & N & depth/budget \\
+Shortened LLaMA & depth pruning & CPT/LoRA & Y & Y & Y & N & N & N & ratio/method \\
+Minitron & structured pruning & distillation/CPT & Y & Y & Y & N & N & N & iterative/shape \\
+IteRABRe & iterative block removal & iterative recovery & Y & Y & N & N & N & N & iteration \\
+PASER & pruned-model recovery & selected CPT data & P & Y & N & N & N & N & data policy \\
+\textbf{This study} & prefix+fresh tail & CPT & Y & Y & O & P & Y & Y & coupled 16L \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Nearest-work positioning.} Prior work already studies recovery
+curves, loss--task gaps, initialization, and iterative retraining. The narrower
+increment here is the \emph{combination} of an OLMo prefix+fresh-tail path with
+an available short-horizon intact branch, same-shape operating points, two MMLU
+interfaces, closed-book QA, and an explicitly coupled 16-layer construction
+comparison. Criteria are binary at the study level: trajectory = at least two
+post-intervention adaptation checkpoints; loss+task = likelihood and at least
+one downstream task at a common checkpoint; scratch/init = an explicit
+initialization comparator; intact CPT = same-corpus continued intact model;
+MMLU interface = more than one MMLU answer-scoring interface; closed-book =
+no-retrieval open generation; construction = an explicit comparison among
+retained structures. Y/N denote criterion present/absent; P denotes only a
+partial or short-horizon instance; O denotes a confounded operating point
+rather than a one-factor initialization ablation.}
+\label{tab:priorart}
+\end{table*}

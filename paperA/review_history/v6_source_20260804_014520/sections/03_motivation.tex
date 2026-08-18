@@ -1,0 +1,35 @@
+\section{Why Reuse Model Depth?}
+\label{sec:motivation}
+
+The interface does not require a layer at which a model has ``understood'' the
+document. It requires only that intermediate states retain useful information
+and that later layers can be adapted to read states produced without the query.
+Figure~\ref{fig:depth} supplies motivation, while the matched experiment in
+Section~\ref{sec:experiments} supplies the actual evidence.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/depth_motiv.pdf}
+\caption{\textbf{Intermediate accessibility motivates, but does not validate,
+depth reuse.} Frozen probes become informative before native LM-head readout,
+but both measures are protocol-dependent; definitions and controls are in
+Appendix~\ref{app:ablations}.}
+\label{fig:depth}
+\end{figure}
+
+A frozen interface deteriorates as the split moves deeper. With separately
+distilled adapters, RULER changes from 98.29 at $j{=}6$ to 96.07 at $j{=}12$
+and 55.41 at $j{=}18$, while fixed-pack Read speedup rises from
+$1.166\times$ to $1.403\times$ and $1.807\times$
+(Appendix Table~\ref{tab:distilled-depth-curve}). Because each split has a
+different adapter span and parameter count, the retained $j{=}12$ Write value
+is missing, and the points are not one compute-matched causal frontier. We call
+this a \emph{multi-depth deployment curve}; the paper's matched causal claim is
+only the $j{=}0$ versus $j{=}12$ endpoint.
+
+Selection and representation also fail separately. BM25 retains lexical
+single-needle evidence, but on LongEval the distilled $j{=}12$ reader reaches
+only 64--76\% accuracy conditional on a retrieval hit; BABILong exhibits both
+misses and hit-conditional readout failures. We therefore evaluate depth under
+a fixed evidence pack and diagnose Write context only after retrieval is held
+constant.

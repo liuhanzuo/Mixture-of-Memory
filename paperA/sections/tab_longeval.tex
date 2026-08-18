@@ -1,0 +1,31 @@
+% LongEval chat-template-free comparison by length.
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\textbf{Method} & \textbf{8k} & \textbf{16k} & \textbf{32k} & \textbf{64k} & \textbf{128k} & \textbf{Mean} \\
+\midrule
+Raw replay ($j{=}0$) & 100 & 96 & 99 & 94 & 97 & 97.2 \\
+CoMem + LoRA & 69 & 75 & 64 & 67 & 70 & 69.0 \\
+CoMem frozen ($j{=}9$) & 8 & 0 & 4 & 0 & 4 & 3.2 \\
+KV-Direct & 100 & 96 & 92 & 38 & 0 & 65.2 \\
+StreamingLLM & 86 & 34 & 18 & 10 & 6 & 30.8 \\
+InfLLM & 60 & 30 & 12 & 4 & 2 & 21.6 \\
+MemoryLLM$^{\dagger}$ & 22 & 22 & 16 & 6 & 2 & 13.6 \\
+\bottomrule
+\end{tabular}
+\caption{LongEval register-content accuracy. The raw-replay row reports the
+measured length-specific $j{=}0$ results ($n{=}100$/length), not the overview
+aggregate repeated across cells. Unmarked rows use the unified chat-template-free
+protocol. Means use the common 8k--128k support. KV-Direct
+uses native RoPE without YaRN, so its 64k/128k cells are unextended stress
+references and the five-length mean is not a length-extended upper bound.
+CoMem's separate six-length headline is 72.83 after
+including its 4k score of 92. The frozen CoMem control used 48 generation
+tokens rather than 16; both budgets exceed the single-number answer length.
+$^{\dagger}$MemoryLLM is the external persistent-memory reference and uses a
+different chat-tuned backbone, so its row is not a matched comparison.}
+\label{tab:longeval}
+\end{table}

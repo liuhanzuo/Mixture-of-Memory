@@ -1,0 +1,61 @@
+\section{Observed Constructions and Evaluation}
+\label{sec:method}
+
+\subsection{Model constructions}
+We study the 32-block OLMo-2-1124-7B base model~\citep{olmo2}. The principal
+\texttt{keep14+fresh2} construction retains pretrained blocks 0--13, copies the
+embedding, final normalization, and output head, appends two randomly
+initialized decoder blocks, and trains all parameters. The resulting model has
+16 blocks and 4.060B parameters.
+
+The other rows are \emph{operating points}. full32 inherits all 32 blocks and
+has no fresh tail. Frozen-front uses the keep14 construction but freezes the 14
+inherited decoder blocks; fresh blocks and copied non-block modules remain
+trainable. Fully random init has the same 16-block shape but inherits no
+weights. ShortGPT-16 inherits the selected original blocks
+$[0\text{--}12,16,17,31]$, appends no fresh blocks, and trains all parameters.
+ShortGPT therefore changes inherited count, contiguity/selection, final-block
+retention, and fresh-tail use together.
+
+\subsection{Continued-pretraining paths}
+Training uses the DCLM portion of \texttt{dolmino-mix-1124}, retokenized into
+2,048-token windows. A disjoint $4096\times2048$ shard from the same source is
+used for in-domain perplexity. Effective batch size is 128; hence 200k steps
+correspond to 52.4B nominal token presentations and 25k to 6.6B. ``Nominal''
+matters because the keep14 resume did not preserve the within-epoch loader
+offset.
+
+keep14, ShortGPT, frozen-front, and random-init are evaluated at 200k. full32
+has an available 25k checkpoint only. The shallow keep8, keep10, and keep12 arms
+are also reported at 200k. The 7B pruned endpoints therefore share the same step
+and nominal-token budget, while remaining unmatched in FLOPs because their
+depths differ. Table~\ref{tab:main-results} exposes construction, trainable set,
+learning rate, and budget for every headline row.
+
+Executed keep14 and frozen-front training used peak/minimum LR
+$2\times10^{-5}/2\times10^{-6}$ for every trainable parameter because the
+historical distributed parameter grouping assigned all trainable tensors to
+the inherited group. Random-init used $10^{-4}/10^{-5}$. ShortGPT and full32
+used $2\times10^{-5}/2\times10^{-6}$. This makes random-init a null operating
+point rather than an initialization-only ablation. Frozen-front changes the
+trainable set and is likewise not an adaptation-only ablation.
+
+\subsection{Knowledge-sensitive evaluations}
+Perplexity is raw next-token loss with no chat template or inserted BOS.
+The same evaluator is run on 289k WikiText-103 and 2.46M PG-19 test tokens.
+We also scan the exact 15.505B-token Dolmino continuation stream for token
+$13$-/$8$-gram containment, flagging items at 0.80.
+Standard MMLU~\citep{hendrycks2021mmlu} displays four lettered options and
+scores the answer-letter continuation. A content protocol instead uses a
+label-free prompt and scores each full option text, reporting both summed and
+per-token mean log-likelihood; the latter is the content headline. The
+protocols share all 14,042 MMLU test items, but simultaneously change prompt,
+candidate string, tokenization, and normalization. They are therefore paired
+interfaces, not a one-factor readout ablation.
+
+PopQA~\citep{mallen2023popqa}, TriviaQA~\citep{joshi2017triviaqa}, and NQ-open
+~\citep{kwiatkowski2019natural} use zero-shot, no-retrieval generation with the
+same plain \texttt{Question:/Answer:} prompt. PopQA reports normalized-answer
+containment; TriviaQA and NQ-open report exact match. Exact sample counts,
+prompts, normalization, software provenance, and unavailable metadata appear
+in Appendix~\ref{app:repro}.

@@ -1,0 +1,99 @@
+% LongBench comparison by dataset under the unified evaluation protocol.
+\begin{table}[!htbp]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+\textbf{Method}
+& \textbf{NQA}
+& \textbf{Qasper}
+& \textbf{Hotpot}
+& \textbf{2Wiki}
+& \textbf{MultiF.}
+& \textbf{Musique}
+& \textbf{Macro} \\
+\midrule
+\textbf{CoMem + LoRA}
+& 4.12
+& 11.01
+& 11.62
+& \textbf{12.83}
+& \textbf{25.41}
+& \textbf{7.91}
+& 12.15 \\
+
+CoMem frozen ($j{=}9$)
+& \textbf{4.63}
+& 11.23
+& 9.41
+& 10.71
+& 22.05
+& 5.72
+& 10.63 \\
+
+KV-Direct
+& 3.70
+& \textbf{11.82}
+& \textbf{12.68}
+& 12.03
+& 25.30
+& 7.49
+& \textbf{12.17} \\
+
+InfLLM
+& 2.99
+& 11.35
+& 12.08
+& 12.50
+& 25.33
+& 6.94
+& 11.86 \\
+
+StreamingLLM
+& 3.49
+& 11.64
+& 11.02
+& 12.19
+& 22.42
+& 5.88
+& 11.11 \\
+
+MemoryLLM$^{\dagger}$
+& 3.13
+& 8.46
+& 8.76
+& 10.27
+& 17.43
+& 5.98
+& 9.01 \\
+
+LLoCO$^{\ddagger}$
+& 24.21
+& 24.45
+& 44.24
+& ---
+& ---
+& ---
+& 30.97 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Official LongBench QA token F1 by dataset. Except for the explicitly
+marked LLoCO diagnostic, methods use the same plain-text no-chat protocol. CoMem with LoRA scores
+12.15 and full-context KV-Direct scores 12.17; because only CoMem uses the
+split-interface adapter, this near-equality is descriptive rather than a
+training-budget-matched compression estimate. The frozen
+CoMem configuration reports adapter-free performance at $j{=}9$.
+NQA denotes NarrativeQA, and MultiF. denotes MultiFieldQA-en.
+$^{\dagger}$MemoryLLM is the principal external persistent-memory reference and
+uses its released Llama-3-8B-chat checkpoint. Its different backbone precludes
+matched attribution; its official chat template does not improve the tested
+diagnostics (Appendix~\ref{sec:appendix}).
+$^{\ddagger}$LLoCO uses LLaMA-2-7B AutoCompressor, released per-domain supervised
+LoRAs, fp16, and its native task prompts. Released weights cover only
+NarrativeQA/Qasper/HotpotQA on our 200-example sets; 30.97 is their three-task
+macro and is not comparable to the six-task macro column.}
+\label{tab:longbench}
+\end{table}

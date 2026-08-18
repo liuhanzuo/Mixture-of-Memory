@@ -1,0 +1,35 @@
+% Depth-sweep held-out NTP perplexity / LM tax.
+% Source: PAPER_B_DATA.md secs. 3(a), 8.1.
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Arm} & \textbf{step} & \textbf{layers} & \textbf{PPL}$\downarrow$ &
+\textbf{tax}$\downarrow$ \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{OLMo-2-7B ($L{=}32$, base PPL $7.398$)}}\\
+full base                  & ---    & 32 & $7.398$  & $1.000\times$ \\
+keep8+fresh2$^{\dagger}$   & 44k    & 10 & $15.131$ & $2.045\times$ \\
+keep10+fresh2$^{\ddagger}$ & 83.5k  & 12 & $12.816$ & $1.732\times$ \\
+keep12+fresh2$^{\ddagger}$ & 124k   & 14 & $11.443$ & $1.547\times$ \\
+keep14+fresh2              & 128k   & 16 & $10.826$ & $1.463\times$ \\
+keep14+fresh2              & 153.5k & 16 & $10.693$ & $1.445\times$ \\
+keep14+fresh2              & 200k   & 16 & $10.561$ & $1.428\times$ \\
+ShortGPT-16                & 200k   & 16 & $\mathbf{9.780}$ & $\mathbf{1.322\times}$ \\
+frozen-front keep14+fresh2 & 200k   & 16 & $12.797$ & $1.730\times$ \\
+fully random-init control  & 200k   & 16 & $11.498$ & $1.554\times$ \\
+\midrule
+\multicolumn{5}{@{}l}{\emph{OLMo-2-1B ($L{=}16$, base PPL $10.642$)}}\\
+full base                  & ---    & 16 & $10.642$ & $1.000\times$ \\
+keep7+fresh2$^{\dagger}$   & 147k   &  9 & $15.628$ & $1.469\times$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Available-checkpoint PPL frontier.} ``layers'' is resulting
+model depth. Prefix arms use $\texttt{keep}+2$; ShortGPT retains 16 pretrained
+blocks with no fresh tail. $^{\dagger}$Training was still
+progressing. $^{\ddagger}$Stopped after auxiliary tasks and MMLU plateaued at the shown
+step; PPL was still decreasing, so these are not $200$k endpoints.}
+\label{tab:depth-ppl}
+\end{table}

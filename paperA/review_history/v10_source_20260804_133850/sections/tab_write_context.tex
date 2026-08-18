@@ -1,0 +1,28 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.6pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Writer} & \textbf{Context} & \textbf{Macro}$\uparrow$ &
+\textbf{Write FLOPs} \\
+\midrule
+Chunk local ($w{=}0$) & current chunk & 92.5 & $1.000\times$ \\
+Overlap ($w{=}32$) & 32-token left prefix & 98.5 & $1.057\times$ \\
+Overlap ($w{=}64$) & 64-token left prefix & 98.5 & $1.115\times$ \\
+Overlap ($w{=}128$) & 128-token left prefix & \textbf{99.0} & $1.229\times$ \\
+Document-context oracle & full prefix & 100.0 & $O(N)$ forward \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{A 32-token Write overlap recovers 6.0 of the 7.5-point local
+context gap.}
+Paired Qwen3-8B results on RULER \texttt{niah\_multikey\_1} at 8k and 16k
+($n{=}200$ pooled). For $w{=}32$, the gain over chunk-local Write has 95\% CI
+$[3.0,9.5]$. Every deployable overlap row preserves persistent storage and
+per-query Read/decode; only one-time Write work and edit invalidation increase.
+FLOPs are theoretical lower-12 Write ratios, while measured wall-clock overhead
+is larger because execution remains chunk-level.}
+\label{tab:write-context}
+\end{table}

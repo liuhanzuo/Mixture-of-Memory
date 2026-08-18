@@ -1,0 +1,45 @@
+\begin{table*}[t]
+\centering
+\begin{minipage}[t]{.49\textwidth}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lrrlrr@{}}
+\toprule
+\textbf{Run} & \textbf{step} & \textbf{layers} & \textbf{init.} & \textbf{NaNs} & \textbf{BoolQ trunc.} \\
+\midrule
+full base & --- & 32 & pretrained & 0 & 2 \\
+keep8 & 121k & 10 & inherited & 0 & 2 \\
+keep10 & 83.5k & 12 & inherited & 0 & 2 \\
+keep12 & 124k & 14 & inherited & 0 & 2 \\
+keep14-a & 128k & 16 & inherited & 0 & 2 \\
+keep14-p & 153.5k & 16 & inherited & 0 & 2 \\
+keep14-f & 200k & 16 & inherited & 0 & 2 \\
+frozen-front & 200k & 16 & inherited/frozen & 0 & 2 \\
+random init & 200k & 16 & random & 0 & 2 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Evaluation-integrity manifest.} Every cell has its full sample count and zero NaNs. keep14-a/p/f denote 128k/153.5k/200k. The same two BoolQ passages are consistently truncated; all other tasks have zero truncations.}
+\label{tab:app-integrity}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.49\textwidth}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Model} & \textbf{depths} & \textbf{onset} & \textbf{sat95} & \textbf{sat99} & \textbf{peak} & \textbf{top acc.} \\
+\midrule
+OLMo-2-7B & 33 & L18 & L19 & L27 & L32 (0.551) & 0.551 \\
+Qwen3-8B & 37 & L25 & L25 & L28 & L34 (0.638) & 0.632 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{MMLU logit-lens summary.} Onset exceeds chance by $.05$; sat95/sat99 reach $95\%$/$99\%$ of the top-layer above-chance signal.}
+\label{tab:app-logitlens-summary}
+\end{minipage}
+\end{table*}

@@ -1,0 +1,142 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\paragraph{Setup.}
+The principal model is frozen Qwen3-8B~\citep{qwen3}, with $j{=}12$,
+512-token chunks, iterative BM25 top-12, a BOS sink, and the rank-32 LoRA.
+Prompting is plain text without chat templates. We evaluate RULER
+~\citep{ruler}, BABILong~\citep{babilong}, LongEval~\citep{longchat}, six
+LongBench QA datasets~\citep{longbench}, and all 1,986 LoCoMo questions
+~\citep{locomo}. Appendices~\ref{app:tasks} and~\ref{app:statistics} give
+complete cells, prompts, sample counts, uncertainty, and integrity checks. We keep four
+timing boundaries separate: selected-pack model Read, store-ready online
+prefill, Write-inclusive pipeline, and external index/store cost.
+
+\subsection{Matched depth reuse}
+\input{sections/tab_core_tradeoff}
+
+Table~\ref{tab:core-tradeoff} is the central comparison. Raw-text replay
+($j{=}0$) and CoMem receive the same selected chunks in the same order and use
+the same sink, mask, examples, and LoRA. Skipping the lower 12 layers reduces
+fixed-pack Read from 931.9 to 664.4\,ms ($1.403\times$), but lowers the RULER
+macro from 99.19 to 96.07. This gives the matched depth frontier: $1.403\times$ faster Read for a
+3.12-point quality cost. The continuous-prefix control exactly matches $j{=}0$,
+showing that the upper 24 layers retain sufficient capacity to reproduce replay
+when supplied compatible states. It therefore turns the observed loss into a
+Write-interface problem that the following controls can diagnose.
+
+Natural-task transfer is uneven. Relative to matched $j{=}0$, $j{=}12$
+falls sharply on LongEval (97.2 to 69.0), changes modestly on LoCoMo (41.59 to
+38.27), and is nearly unchanged on six LongBench QA datasets (12.31 to 12.15;
+Table~\ref{tab:overview}); BABILong varies by task
+(Table~\ref{tab:babilong}). The detailed tables
+(Tables~\ref{tab:longeval}, \ref{tab:longbench}, and \ref{tab:locomo}) include
+the corresponding measured $j{=}0$ reference cells rather than repeating an
+overview macro in each length or dataset column. They support transfer of the
+interface, not uniform preservation of task quality.
+Data-overlap and judge qualifications appear in the appendix and Limitations.
+
+\subsection{Same-backbone chunk-KV comparison}
+\input{sections/tab_cacheblend_baseline}
+
+Table~\ref{tab:cacheblend-baseline} compares CoMem with a minimal faithful
+CacheBlend-style arm~\citep{cacheblend}. The measured dimensions held common
+are Qwen3-8B, iterative-BM25 top-12 retrieval, 512-token chunks, plain-text
+prompts, and scorers. Both use the same pack-construction policy, but the
+retained artifact does not prove identical examples or packs; their length
+supports also differ, and only CoMem is adapted. The baseline prefills
+full-depth per-chunk KV, reindexes
+RoPE when chunks are assembled, and selectively recomputes the highest-deviation
+context tokens; a real-model $r{=}1$ self-test agrees with vanilla full prefill
+to $2.8\!\times\!10^{-5}$ maximum logit difference and 100\% top-1 agreement.
+Increasing $r$ from 0 to .18 improves its 12-cell RULER macro from 67.80 to
+74.70, but leaves BABILong qa5 near 49 and LoCoMo substring accuracy near 17.
+CoMem separately reports 97.05 on 15 RULER cells, 68.67 on seven BABILong qa5
+cells, and 23.36 on the full LoCoMo set. Its single residual
+uses 8\,KiB/token rather than 144\,KiB/token for full-depth bf16 GQA KV. Thus,
+as a protocol-aligned diagnostic rather than a matched estimate, full-layer KV
+still underperforms the residual-plus-upper-recompute path. This is not a native
+CacheBlend reproduction or an adaptation-matched causal estimate.
+
+\subsection{Amortization and equal-latency boundaries}
+\input{sections/tab_serving_crossover}
+
+The residual store costs 8,192 bytes/token and must first be written. In the
+write-once serving harness, CPU-pinned break-even is 8.9--10.9 queries at 32k
+for generated lengths up to 128 tokens; the full GPU/CPU grid is 5.5--10.9.
+The 512-token 32k CPU case moves to 94 queries because decode dominates, and
+the 32k GPU cell has no finite crossover at that output length. At 128k,
+break-even is 25.8--27.2 queries for GPU placement and 27.6--37.4 for CPU
+placement through $G{=}128$; at 1M tokens it rises to roughly 180--421 queries.
+Each value follows the displayed measured-time equation and includes fetch,
+model Read, and decode; for one-off or weakly reused documents, raw text is
+cheaper.
+
+\input{sections/tab_equal_latency}
+
+We then map the boundary at which depth reuse remains attractive. A latency-only
+calibration freezes maximum budgets of 10 replay chunks and 12 CoMem chunks;
+selectors may under-fill. With the same iterative-BM25 ranking, raw replay leads
+by 11.56 points, establishing that the saved depth does not compensate for its
+representation cost on this tested mixture. Replacing only the replay selector
+with frozen BGE changes the point difference to $-1.00$, while the unchanged
+CoMem arm remains at 53.22. A hierarchical bootstrap that first resamples cells gives
+$[-18.67,-5.11]$ for BM25 and $[-10.67,8.33]$ for BGE; leave-one-cell-out
+ranges are $[-13.13,-9.50]$ and $[-3.50,1.75]$. The applicable regime is
+therefore explicit: BM25 replay has a robust advantage, whereas the
+cross-selector BGE diagnostic is unresolved under task-cell dependence. Depth
+reuse can buy a larger evidence budget, but whether that budget closes the
+representation gap depends strongly on retrieval quality.
+Appendix Table~\ref{tab:equal-latency-protocol} exposes the cohort, weights,
+generation limits, split, absolute latencies, and bootstrap unit.
+
+\subsection{Write-interface diagnosis and repair}
+\input{sections/tab_context_position}
+\input{sections/tab_write_context}
+
+Holding retrieval, adapter, and upper-layer Read fixed, the $2{\times}2$
+diagnostic separates lower-layer attention scope from Read positions.
+Document-contextual Write closes the gap under either position convention;
+document-origin positions alone make chunk-local states 4.5 points worse. The $+4.5$ interaction precludes a purely additive explanation and identifies
+the Write representation---especially missing lower-layer document context---as
+the dominant tested source of the gap rather than position remapping.
+
+Overlap-Write turns this control into a local deployable intervention:
+$w{=}32$ raises 92.5 to 98.5 and $w{=}128$ to 99.0 while preserving stored
+bytes and per-query work. Its measured wall-clock overhead exceeds the theoretical FLOP ratios, but the
+result demonstrates that most of the local gap can be repaired with only 32
+left-context tokens and no increase in persistent bytes or online Read. A
+separately trained lower-layer Write adapter reaches the same 98.5 on this
+cohort; details and paired tests are in Table~\ref{tab:write-context}. Both
+repairs remain synthetic diagnostics rather than natural-task or end-to-end
+validation.
+
+\subsection{Efficiency and timing boundaries}
+The main store-ready reference is the H20 Pareto harness: stock Qwen3-8B
+without the CoMem adapter prefills the full 128k source in 50.59\,s, whereas
+adapted CoMem processes its selected pack in 1.32\,s
+(Table~\ref{tab:online-prefill}). This composed operating point combines bounded
+selection with depth reuse and excludes one-time document Write and
+external-store fetch; because its dense arm is LoRA-off, it is not a
+same-adapter comparison. Finally, the same-adapter L20A pipeline comparison processes the full source in
+6.035\,s and CoMem in 2.202\,s ($2.74\times$), with the latter including
+document Write, CPU BM25 retrieval, query Write, and upper-layer Read but
+excluding BM25-index construction and external I/O (Table~\ref{tab:eff}). The
+two measurements therefore separate store-ready online work from a
+Write-inclusive same-adapter pipeline rather than forming interchangeable
+speedup denominators; the appendix retains the separate H20 cohort for
+completeness.
+
+The matched $j{=}0\!\rightarrow\!12$ result has a still narrower boundary: it
+saves 267.5\,ms of selected-pack Read at 16k (931.9 to 664.4\,ms). In that
+same benchmark, total autoregressive decode medians are approximately
+2.76--2.86\,s for both arms. End-to-end including autoregressive generation,
+the depth-only Read saving therefore becomes a modest $1.07$--$1.09\times$
+total-latency reduction. This does not contradict the composed 128k prefill
+point: the former asks how much skipping 12 layers changes a fixed-pack
+request once generation dominates, whereas the latter asks how bounded
+selection plus depth reuse changes prefill before generation. Autoregressive
+decode is therefore the remaining bottleneck for short selected packs, as for
+other bounded-read systems. Speculative decoding and prompt/prefix-cache reuse
+are orthogonal techniques that can compound the Read-phase saving, but we do
+not measure their composition here.

@@ -1,0 +1,9 @@
+{
+  "note": "See paperA TODOList \u00a7P0.20 success criterion.",
+  "primary_anchor_diff": -11.56,
+  "primary_anchor_95ci": [
+    -14.444,
+    -8.667
+  ],
+  "verdict": "NEGATIVE: CoMem reads more chunks yet is WORSE at matched latency -> bottleneck is cached-state readout; redirect to P0.17/P0.18/P1.10, do NOT package as a positive Pareto result."
+}

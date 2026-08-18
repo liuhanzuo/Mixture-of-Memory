@@ -1,0 +1,25 @@
+% Natural long-document over-native-window stress test.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Method} & \textbf{Book QA} & \textbf{Book choice} & \textbf{Peak/card} \\
+ & F1 (completed) & acc. (completed) & \\
+\midrule
+CoMem + LoRA & \textbf{6.06} (351/351) & 17.47 (229/229) & $\sim$18.5 GB \\
+Full-context Dense & 2.16 (351/351) & 2.86 (35/229) & 49--95 GB \\
+\bottomrule
+\end{tabular}%
+}
+\caption{InfiniteBench natural long-document stress test. Documents contain
+roughly 90k--266k tokens, all beyond Qwen3-8B's native 40,960-token window;
+therefore this is not a native-128k-backbone result. CoMem completes every item
+with a bounded read, whereas Dense OOMs on 194/229 choice documents. QA F1 is
+directly comparable at $n{=}351$; choice accuracy is not compared as a quality
+ratio because completion denominators differ and no-chat letter extraction is
+format-sensitive.}
+\label{tab:infbench}
+\end{table}

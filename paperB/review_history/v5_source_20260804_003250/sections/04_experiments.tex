@@ -1,0 +1,64 @@
+\section{Results}
+\label{sec:experiments}
+
+\subsection{In-domain PPL does not certify the measured evaluations}
+\input{sections/tab_main_results}
+
+Table~\ref{tab:main-results} gives the central result and the protocol matrix.
+Along the single keep14 path, PPL falls to 10.561 by 200k steps while
+answer-letter MMLU reaches .319, versus .605 for the intact base. The
+closed-book endpoints remain lower as well: .142 versus .257 on PopQA, .294
+versus .636 on TriviaQA, and .060 versus .205 on NQ-open. These evaluations do
+not exhaust capability, but they show that improved in-domain likelihood is
+not a sufficient certificate for the measured target behavior on this path.
+
+The late trajectory is not numerically flat. From 128k to 200k, PPL improves
+$10.826\!\rightarrow\!10.561$ and MMLU improves
+$.3012\!\rightarrow\!.3191$ (Figure~\ref{fig:proxy-validity}). On a common
+14,042-item rerun, the MMLU increase is 1.68 points with a paired item-bootstrap
+95\% CI of $[1.08,2.29]$. This interval conditions on the two realized
+checkpoints; it is not training-seed uncertainty and does not imply a stable
+dynamic across reruns or beyond 200k.
+
+\subsection{Null baselines and interfaces bound simple accounts}
+\paragraph{Short-horizon intact continuation.}
+full32 remains near the base at 25k on PPL, both MMLU interfaces, and all three
+closed-book tasks. This makes short-horizon corpus shift insufficient as a
+complete explanation for the large keep14 deficit. Because no full32 result is
+available after 25k, the branch says nothing decisive about the intact 200k
+endpoint.
+
+\paragraph{Content scoring has a high random baseline.}
+Complete-option scoring raises keep14 from .318 to .383 on the common MMLU
+rerun. However, random-init reaches .360 under that interface while remaining
+at .247 on answer letters. The content score therefore includes a substantial
+baseline attainable without inherited OLMo weights under this training recipe.
+Letter and content scoring also change prompt, candidate text, tokenization,
+and normalization together, so the contrast establishes protocol sensitivity
+rather than isolating an answer-symbol mechanism.
+
+\paragraph{Closed-book recurrence is not an answer-letter artifact.}
+The base--keep14 gap recurs under zero-shot generation on all three QA datasets.
+The evaluated sets contain 14,267 PopQA, 17,944 TriviaQA, and 3,610 NQ-open
+items. We do not report paired uncertainty for these tasks because the saved
+paper bundle does not contain the aligned per-item artifacts needed to
+recompute it. Small differences among compressed operating points should
+therefore not be overinterpreted; the load-bearing observation is the large
+base-to-keep14 gap.
+
+\subsection{Construction dependence without factor attribution}
+ShortGPT reaches PPL 9.780 and answer-letter MMLU .474 at 200k, substantially
+stronger than keep14 at the same nominal depth and step budget. Thus the
+keep14 endpoint is not shared by every tested 16-layer construction. The
+comparison cannot identify why: ShortGPT inherits two additional pretrained
+blocks, selects non-contiguously, retains block 31, and appends no fresh tail.
+It is evidence of construction dependence, not a selection-only effect or a
+clean recommendation for retaining any particular block.
+
+The same caution applies to the same-shape null points. Frozen has worse PPL
+than Random but higher answer-letter MMLU, so the ordering depends on which
+metric is inspected. Yet Frozen changes the trainable set and Random changes
+LR and all initialization, preventing initialization-only or adaptation-only
+attribution. Item-paired MMLU comparisons quantify the realized checkpoint
+differences in Appendix Table~\ref{tab:app-paired}; they do not repair these
+design confounds.

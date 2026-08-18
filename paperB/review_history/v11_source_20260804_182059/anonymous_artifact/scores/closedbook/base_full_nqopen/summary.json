@@ -1,0 +1,26 @@
+{
+  "output_name": "base_full_nqopen",
+  "n_shards": 8,
+  "add_bos": false,
+  "meta": {
+    "mode": "base",
+    "num_hidden_layers": 32,
+    "base_model": "allenai/OLMo-2-1124-7B",
+    "add_bos": false,
+    "max_new_tokens": 32,
+    "initialization": "pretrained_base"
+  },
+  "tasks": {
+    "nq_open": {
+      "n": 3610,
+      "em": 0.20498614958448755,
+      "contains": 0.24903047091412742,
+      "f1": 0.284095172001901,
+      "em_hits": 740,
+      "contains_hits": 899,
+      "f1_sum": 1025.5835709268626,
+      "majority_em": 0.005263157894736842,
+      "empty_em": 0.0
+    }
+  }
+}

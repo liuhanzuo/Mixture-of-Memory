@@ -1,0 +1,46 @@
+\section*{Limitations}
+
+CoMem is evaluated mainly on one Qwen3-8B model, a lexical selector, and English
+benchmarks. Cross-scale and sparse-MoE results test implementation portability,
+not matched replication, and some large-model cells are smaller. The flagship
+adapter is one batch-8 run; two matched-data runs use effective batch 3, so they
+conflate seed and optimization noise. We also lack a same-backbone,
+same-hardware implementation of the nearest PIC, chunk-KV-repair, or learned
+modular-cache systems. Published results differ in model, task, training,
+storage tier, and timing boundary; Table~\ref{tab:priorart} is therefore
+structural rather than a competitive ranking. The controlled depth evidence is
+the $j{=}0\!\rightarrow\!12$ endpoint; separately trained splits form a
+deployment curve, not a compute-matched causal frontier.
+
+The workload assumes repeated queries over a stable corpus. Residual storage is
+linear and much larger than text, selector/store latency grows with corpus size,
+and model-specific states generally require rewriting after changes to the
+backbone, tokenizer, split, adapter, or lower-layer implementation. One-off,
+low-reuse, or frequently edited documents may favor raw text; Overlap-Write can
+also invalidate a neighboring chunk after an edit. Latency and break-even depend
+on hardware, kernels, batch size, storage placement, and timing boundaries. The
+large-output crossover can be unstable when decode leaves only a small
+per-query latency difference; serving reports single-query medians rather than
+concurrent throughput or p95/p99 tails. Quantization,
+eviction, update contention, and production multi-tenancy are not evaluated.
+
+Quality remains task-, selector-, and evidence-budget-dependent. Top-$k$ limits
+coverage; lexical retrieval transfers poorly to low-overlap and non-whitespace
+settings; and residual readout can fail after a retrieval hit. Overlap-Write is
+validated only on paired synthetic multikey instances, without a natural-task or
+Write-inclusive repaired frontier. Beyond-native-window results are positional
+stress tests. In the equal-latency mixture, BM25 replay wins robustly, while the
+frozen-BGE difference spans both signs; cells are equally weighted and the 100
+LoCoMo items come from one conversation, preventing conversation-cluster
+inference. Thus this diagnostic does not establish a selector-independent
+advantage.
+
+LoCoMo uses a mutable, undated \texttt{gpt-4o} judge; saved decisions and a
+200-item DeepSeek-V3 audit preserve ordering but not exact reproducibility under
+a fixed snapshot. PG-19 overlaps InfiniteBench long-book support, so that
+comparison was removed; equivalent audits are incomplete for other natural
+benchmarks, including NarrativeQA. Those results are benchmark measurements,
+not contamination-free generalization estimates. Finally, probes measure
+readout compatibility rather than the location or causal necessity of
+``understanding'' or factual knowledge. Long-form, code, multilingual,
+multimodal, and dynamic-memory use remain open.

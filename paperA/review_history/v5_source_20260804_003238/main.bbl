@@ -1,0 +1,342 @@
+\begin{thebibliography}{43}
+\providecommand{\natexlab}[1]{#1}
+
+\bibitem[{Agarwal et~al.(2025)Agarwal, Sundaresan, Mitra, Mahapatra, Gupta,
+  Sharma, Kapu, Yu, and Saini}]{cachecraft}
+Shubham Agarwal, Sai Sundaresan, Subrata Mitra, Debabrata Mahapatra, Archit
+  Gupta, Rounak Sharma, Nirmal~Joshua Kapu, Tong Yu, and Shiv Saini. 2025.
+\newblock \href {https://doi.org/10.1145/3725273} {{Cache-Craft}: Managing
+  chunk-caches for efficient retrieval-augmented generation}.
+\newblock \emph{Proceedings of the ACM on Management of Data}.
+
+\bibitem[{Bai et~al.(2024)Bai, Lv, Zhang, Lyu, Tang, Huang, Du, Liu, Zeng, Hou,
+  Dong, Tang, and Li}]{longbench}
+Yushi Bai, Xin Lv, Jiajie Zhang, Hongchang Lyu, Jiankai Tang, Zhidian Huang,
+  Zhengxiao Du, Xiao Liu, Aohan Zeng, Lei Hou, Yuxiao Dong, Jie Tang, and
+  Juanzi Li. 2024.
+\newblock \href {https://doi.org/10.18653/v1/2024.acl-long.172} {{LongBench}: A
+  bilingual, multitask benchmark for long context understanding}.
+\newblock In \emph{Proceedings of the 62nd Annual Meeting of the Association
+  for Computational Linguistics (Volume 1: Long Papers)}, pages 3119--3137.
+
+\bibitem[{Cai et~al.(2025)Cai, Zhang, Gao, Liu, Liu, Lu, Xiong, Dong, Chang,
+  Hu, and Xiao}]{pyramidkv}
+Zefan Cai, Yichi Zhang, Bofei Gao, Yuliang Liu, Tianyu Liu, Keming Lu, Wayne
+  Xiong, Yue Dong, Baobao Chang, Junjie Hu, and Wen Xiao. 2025.
+\newblock \href {https://arxiv.org/abs/2406.02069} {{PyramidKV}: Dynamic {KV}
+  cache compression based on pyramidal information funneling}.
+\newblock In \emph{Conference on Language Modeling}.
+
+\bibitem[{Chen et~al.(2026)Chen, Zhang, Yin, Zhuo, Li, and
+  Schlichtmann}]{kvpacket}
+Chuangtao Chen, Grace~Li Zhang, Xunzhao Yin, Cheng Zhuo, Bing Li, and Ulf
+  Schlichtmann. 2026.
+\newblock \href {https://arxiv.org/abs/2604.13226} {{KV Packet}:
+  Recomputation-free context-independent {KV} caching for {LLM}s}.
+\newblock \emph{arXiv preprint arXiv:2604.13226}.
+
+\bibitem[{Eyuboglu et~al.(2026)Eyuboglu, Ehrlich, Arora, Guha, Zinsley, Liu,
+  Rudra, Zou, Mirhoseini, and R{\'e}}]{cartridgesbase}
+Sabri Eyuboglu, Ryan Ehrlich, Simran Arora, Neel Guha, Dylan Zinsley, Emily
+  Liu, Atri Rudra, James~Y. Zou, Azalia Mirhoseini, and Christopher R{\'e}.
+  2026.
+\newblock \href {https://arxiv.org/abs/2506.06266} {Cartridges: Lightweight and
+  general-purpose long context representations via self-study}.
+\newblock In \emph{International Conference on Learning Representations},
+  volume 2026, pages 42642--42687.
+
+\bibitem[{Gao et~al.(2025)Gao, Chen, and Shu}]{hcache}
+Shiwei Gao, Youmin Chen, and Jiwu Shu. 2025.
+\newblock \href {https://doi.org/10.1145/3689031.3696072} {Fast state
+  restoration in {LLM} serving with {HCache}}.
+\newblock In \emph{Proceedings of the Twentieth European Conference on Computer
+  Systems (EuroSys)}, pages 128--143.
+
+\bibitem[{Grattafiori et~al.(2024)}]{llama3}
+Aaron Grattafiori et~al. 2024.
+\newblock \href {https://arxiv.org/abs/2407.21783} {The {Llama 3} herd of
+  models}.
+\newblock \emph{arXiv preprint arXiv:2407.21783}.
+
+\bibitem[{Hardalov et~al.(2026)Hardalov, Iglesias, and de~Gispert}]{cartridges}
+Momchil Hardalov, Gonzalo Iglesias, and Adri{\`a} de~Gispert. 2026.
+\newblock \href {https://arxiv.org/abs/2606.04557} {Cartridges at scale:
+  Training modular {KV} caches over large document collections}.
+\newblock \emph{arXiv preprint arXiv:2606.04557}.
+
+\bibitem[{Hinton et~al.(2015)Hinton, Vinyals, and Dean}]{distillation}
+Geoffrey Hinton, Oriol Vinyals, and Jeff Dean. 2015.
+\newblock Distilling the knowledge in a neural network.
+\newblock \emph{arXiv preprint arXiv:1503.02531}.
+
+\bibitem[{Hsieh et~al.(2024)Hsieh, Sun, Kriman, Acharya, Rekesh, Jia, Zhang,
+  and Ginsburg}]{ruler}
+Cheng-Ping Hsieh, Simeng Sun, Samuel Kriman, Shantanu Acharya, Dima Rekesh, Fei
+  Jia, Yang Zhang, and Boris Ginsburg. 2024.
+\newblock \href {https://arxiv.org/abs/2404.06654} {{RULER}: What's the real
+  context size of your long-context language models?}
+\newblock In \emph{First Conference on Language Modeling}.
+
+\bibitem[{Hu et~al.(2022)Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, and
+  Chen}]{lora}
+Edward~J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean
+  Wang, Lu~Wang, and Weizhu Chen. 2022.
+\newblock \href {https://arxiv.org/abs/2106.09685} {{LoRA}: Low-rank adaptation
+  of large language models}.
+\newblock In \emph{International Conference on Learning Representations}.
+
+\bibitem[{Hu et~al.(2025)Hu, Huang, Wang, Wang, Hu, Zhang, Feng, Chen, Shan,
+  and Xie}]{epic}
+Junhao Hu, Wenrui Huang, Weidong Wang, Haoyi Wang, Tiancheng Hu, Qin Zhang, Hao
+  Feng, Xusheng Chen, Yizhou Shan, and Tao Xie. 2025.
+\newblock \href {https://arxiv.org/abs/2410.15332} {{EPIC}: Efficient
+  position-independent caching for serving large language models}.
+\newblock In \emph{International Conference on Machine Learning}.
+
+\bibitem[{Jin et~al.(2025)Jin, Zhang, Jiang, Liu, Liu, Liu, and Jin}]{ragcache}
+Chao Jin, Zili Zhang, Xuanlin Jiang, Fangyue Liu, Shufan Liu, Xuanzhe Liu, and
+  Xin Jin. 2025.
+\newblock \href {https://doi.org/10.1145/3768628} {{RAGCache}: Efficient
+  knowledge caching for retrieval-augmented generation}.
+\newblock \emph{ACM Transactions on Computer Systems}, 44:1--27.
+
+\bibitem[{Kuratov et~al.(2024)Kuratov, Bulatov, Anokhin, Rodkin, Sorokin,
+  Sorokin, and Burtsev}]{babilong}
+Yuri Kuratov, Aydar Bulatov, Petr Anokhin, Ivan Rodkin, Dmitry Sorokin, Artyom
+  Sorokin, and Mikhail Burtsev. 2024.
+\newblock \href {https://doi.org/10.52202/079017-3381} {{BABILong}: Testing the
+  limits of {LLMs} with long context reasoning-in-a-haystack}.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~37, pages 106519--106554.
+
+\bibitem[{Lewis et~al.(2020)Lewis, Perez, Piktus, Petroni, Karpukhin, Goyal,
+  Kuettler, Lewis, Yih, Rocktaschel, Riedel, and Kiela}]{rag}
+Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir
+  Karpukhin, Naman Goyal, Heinrich Kuettler, Mike Lewis, Wen-tau Yih, Tim
+  Rocktaschel, Sebastian Riedel, and Douwe Kiela. 2020.
+\newblock Retrieval-augmented generation for knowledge-intensive {NLP} tasks.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~33.
+
+\bibitem[{Li et~al.(2023)Li, Shao, Xie, Sheng, Zheng, Gonzalez, Stoica, Ma, and
+  Zhang}]{longchat}
+Dacheng Li, Rulin Shao, Anze Xie, Ying Sheng, Lianmin Zheng, Joseph~E.
+  Gonzalez, Ion Stoica, Xuezhe Ma, and Hao Zhang. 2023.
+\newblock \href {https://lmsys.org/blog/2023-06-29-longchat} {How long can
+  open-source {LLMs} truly promise on context length?}
+\newblock LMSYS Org Blog.
+
+\bibitem[{Li et~al.(2024)Li, Huang, Yang, Venkitesh, Locatelli, Ye, Cai, Lewis,
+  and Chen}]{snapkv}
+Yuhong Li, Yingbing Huang, Bowen Yang, Bharat Venkitesh, Acyr Locatelli,
+  Hanchen Ye, Tianle Cai, Patrick Lewis, and Deming Chen. 2024.
+\newblock \href {https://doi.org/10.52202/079017-0722} {{SnapKV}: {LLM} knows
+  what you are looking for before generation}.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~37, pages 22947--22970.
+
+\bibitem[{Liang et~al.(2025)Liang, Liu, Ji, Li, Yang, He, and Li}]{ilre}
+Manlai Liang, Mandi Liu, Jiangzhou Ji, Huaijun Li, Haobo Yang, Yaohan He, and
+  Jinlong Li. 2025.
+\newblock {ILRe}: Intermediate layer retrieval for context compression in
+  causal language models.
+\newblock \emph{arXiv preprint arXiv:2508.17892}.
+
+\bibitem[{Lin et~al.(2021)Lin, Sabharwal, and Khot}]{readonce}
+Shih-Ting Lin, Ashish Sabharwal, and Tushar Khot. 2021.
+\newblock \href {https://doi.org/10.18653/v1/2021.acl-long.554} {Readonce
+  transformers: Reusable representations of text for transformers}.
+\newblock In \emph{Proceedings of the 59th Annual Meeting of the Association
+  for Computational Linguistics}.
+
+\bibitem[{Liu et~al.(2024)Liu, Liu, Pan, He, Haffari, and Zhuang}]{minicache}
+Akide Liu, Jing Liu, Zizheng Pan, Yefei He, Gholamreza Haffari, and Bohan
+  Zhuang. 2024.
+\newblock \href {https://doi.org/10.52202/079017-4443} {{MiniCache}: {KV} cache
+  compression in depth dimension for large language models}.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~37, pages 139997--140031.
+
+\bibitem[{Lu et~al.(2025)Lu, Wang, Rong, Chen, and Tang}]{turborag}
+Songshuo Lu, Hua Wang, Yutian Rong, Zhi Chen, and Yaohua Tang. 2025.
+\newblock \href {https://doi.org/10.18653/v1/2025.emnlp-main.334} {{TurboRAG}:
+  Accelerating retrieval-augmented generation with precomputed {KV} caches for
+  chunked text}.
+\newblock In \emph{Proceedings of the 2025 Conference on Empirical Methods in
+  Natural Language Processing}, pages 6588--6601.
+
+\bibitem[{Maharana et~al.(2024)Maharana, Lee, Tulyakov, Bansal, Barbieri, and
+  Fang}]{locomo}
+Adyasha Maharana, Dong-Ho Lee, Sergey Tulyakov, Mohit Bansal, Francesco
+  Barbieri, and Yuwei Fang. 2024.
+\newblock \href {https://doi.org/10.18653/v1/2024.acl-long.747} {Evaluating
+  very long-term conversational memory of {LLM} agents}.
+\newblock In \emph{Proceedings of the 62nd Annual Meeting of the Association
+  for Computational Linguistics (Volume 1: Long Papers)}, pages 13851--13870.
+
+\bibitem[{Monteiro et~al.(2024)Monteiro, Marcotte, No{\"e}l, Zantedeschi,
+  V{\'a}zquez, Chapados, Pal, and Taslakian}]{xccache}
+Jo{\~a}o Monteiro, {\'E}tienne Marcotte, Pierre-Andr{\'e} No{\"e}l, Valentina
+  Zantedeschi, David V{\'a}zquez, Nicolas Chapados, Christopher Pal, and Perouz
+  Taslakian. 2024.
+\newblock \href {https://doi.org/10.18653/v1/2024.findings-emnlp.896}
+  {{XC-Cache}: Cross-attending to cached context for efficient {LLM}
+  inference}.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  EMNLP 2024}.
+
+\bibitem[{Qasim et~al.(2026)Qasim, Zhang, Shaheen, Alharith, and
+  Zhang}]{kvdirect}
+Kaleem~Ullah Qasim, Jiashu Zhang, Muhammad~Kafeel Shaheen, Razan Alharith, and
+  Heying Zhang. 2026.
+\newblock The residual stream is all you need: On the redundancy of the {KV}
+  cache in transformer inference.
+\newblock \emph{arXiv preprint arXiv:2603.19664}.
+
+\bibitem[{Rae et~al.(2019)Rae, Potapenko, Jayakumar, and Lillicrap}]{pg19}
+Jack~W. Rae, Anna Potapenko, Siddhant~M. Jayakumar, and Timothy~P. Lillicrap.
+  2019.
+\newblock \href {https://arxiv.org/abs/1911.05507} {Compressive transformers
+  for long-range sequence modelling}.
+\newblock \emph{arXiv preprint arXiv:1911.05507}.
+
+\bibitem[{Robertson and Zaragoza(2009)}]{bm25}
+Stephen Robertson and Hugo Zaragoza. 2009.
+\newblock \href {https://doi.org/10.1561/1500000019} {The probabilistic
+  relevance framework: {BM25} and beyond}.
+\newblock \emph{Foundations and Trends in Information Retrieval},
+  4(1--2):1--174.
+
+\bibitem[{Saad-Falcon et~al.(2023)Saad-Falcon, Singh, Soldaini, D'Arcy, Cohan,
+  and Downey}]{embeddingrecycling}
+Jon Saad-Falcon, Amanpreet Singh, Luca Soldaini, Mike D'Arcy, Arman Cohan, and
+  Doug Downey. 2023.
+\newblock \href {https://doi.org/10.18653/v1/2023.findings-eacl.145} {Embedding
+  recycling for language models}.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  EACL 2023}.
+
+\bibitem[{Shi et~al.(2026)Shi, Ming, Nguyen, Liang, and Joty}]{gemfilter}
+Zhenmei Shi, Yifei Ming, Xuan-Phi Nguyen, Yingyu Liang, and Shafiq Joty. 2026.
+\newblock \href {https://doi.org/10.18653/v1/2026.findings-acl.677}
+  {Discovering the gems in early layers: Accelerating long-context {LLM}s with
+  1000x input token reduction}.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  ACL 2026}, pages 13839--13857.
+
+\bibitem[{Song et~al.(2025)Song, Jayanthi, Ronanki, Sathyendra, Shin, Galstyan,
+  Katiyar, and Bodapati}]{reform}
+Woomin Song, Sai~Muralidhar Jayanthi, Srikanth Ronanki, Kanthashree~Mysore
+  Sathyendra, Jinwoo Shin, Aram Galstyan, Shubham Katiyar, and Sravan~Babu
+  Bodapati. 2025.
+\newblock \href {https://arxiv.org/abs/2506.01215} {Compress, gather, and
+  recompute: {REFORM}ing long-context processing in transformers}.
+\newblock \emph{arXiv preprint arXiv:2506.01215}.
+
+\bibitem[{Tan et~al.(2024)Tan, Li, Patil, Wu, Zhang, Keutzer, Gonzalez, and
+  Popa}]{lloco}
+Sijun Tan, Xiuyu Li, Shishir Patil, Ziyang Wu, Tianjun Zhang, Kurt Keutzer,
+  Joseph~E. Gonzalez, and Raluca~Ada Popa. 2024.
+\newblock \href {https://doi.org/10.18653/v1/2024.emnlp-main.975} {{LLoCO}:
+  Learning long contexts offline}.
+\newblock In \emph{Proceedings of the 2024 Conference on Empirical Methods in
+  Natural Language Processing}, pages 17605--17621.
+
+\bibitem[{{Tencent Hunyuan Team}(2026)}]{hunyuan}
+{Tencent Hunyuan Team}. 2026.
+\newblock {Hy3}: An open 295b mixture-of-experts model with 21b activated
+  parameters.
+\newblock \url{https://huggingface.co/tencent/Hy3}.
+
+\bibitem[{Wang et~al.(2026)Wang, Xie, Zhang, Zhang, Dong, Zhu, Lin, Tang, Han,
+  Ai, Chen, Wu, and Jiang}]{fusionrag}
+Jiahao Wang, Weiyu Xie, Mingxing Zhang, Boxing Zhang, Jianwei Dong, Yuening
+  Zhu, Chen Lin, Jinqi Tang, Yaochen Han, Zhiyuan Ai, Xianglin Chen, Yongwei
+  Wu, and Congfeng Jiang. 2026.
+\newblock \href {https://arxiv.org/abs/2601.12904} {From prefix cache to fusion
+  {RAG} cache: Accelerating {LLM} inference in retrieval-augmented generation}.
+\newblock \emph{arXiv preprint arXiv:2601.12904}.
+
+\bibitem[{Wang et~al.(2025)Wang, Yousefijamarani, Heisler, Gu, Xiaolong,
+  Yizhou, Zhang, Lan, Xiong, Zhang, and Fan}]{mepic}
+Qian Wang, Zahra Yousefijamarani, Morgan~Lindsay Heisler, Rongzhi Gu, Bai
+  Xiaolong, Shan Yizhou, Wei Zhang, Wang Lan, Ying Xiong, Yong Zhang, and
+  Zhenan Fan. 2025.
+\newblock \href {https://arxiv.org/abs/2512.16822} {{MEPIC}: Memory efficient
+  position independent caching for {LLM} serving}.
+\newblock \emph{arXiv preprint arXiv:2512.16822}.
+
+\bibitem[{Wang et~al.(2023)Wang, Dong, Cheng, Liu, Yan, Gao, and Wei}]{longmem}
+Weizhi Wang, Li~Dong, Hao Cheng, Xiaodong Liu, Xifeng Yan, Jianfeng Gao, and
+  Furu Wei. 2023.
+\newblock Augmenting language models with long-term memory.
+\newblock In \emph{Advances in Neural Information Processing Systems}.
+
+\bibitem[{Wang et~al.(2024)Wang, Gao, Chen, Jiang, Li, Yang, Yin, Li, Li, Yin,
+  Shang, and McAuley}]{memoryllm}
+Yu~Wang, Yifan Gao, Xiusi Chen, Haoming Jiang, Shiyang Li, Jingfeng Yang,
+  Qingyu Yin, Zheng Li, Xian Li, Bing Yin, Jingbo Shang, and Julian McAuley.
+  2024.
+\newblock \href {https://arxiv.org/abs/2402.04624} {{MemoryLLM}: Towards
+  self-updatable large language models}.
+\newblock In \emph{Proceedings of the 41st International Conference on Machine
+  Learning}, volume 235 of \emph{Proceedings of Machine Learning Research},
+  pages 50453--50466. PMLR.
+
+\bibitem[{Xiao et~al.(2024{\natexlab{a}})Xiao, Zhang, Han, Xiao, Lin, Zhang,
+  Liu, and Sun}]{infllm}
+Chaojun Xiao, Pengle Zhang, Xu~Han, Guangxuan Xiao, Yankai Lin, Zhengyan Zhang,
+  Zhiyuan Liu, and Maosong Sun. 2024{\natexlab{a}}.
+\newblock \href {https://doi.org/10.52202/079017-3801} {{InfLLM}: Training-free
+  long-context extrapolation for {LLM}s with an efficient context memory}.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~37, pages 119638--119661.
+
+\bibitem[{Xiao et~al.(2024{\natexlab{b}})Xiao, Tian, Chen, Han, and
+  Lewis}]{streamingllm}
+Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song Han, and Mike Lewis.
+  2024{\natexlab{b}}.
+\newblock \href {https://arxiv.org/abs/2309.17453} {Efficient streaming
+  language models with attention sinks}.
+\newblock In \emph{International Conference on Learning Representations}.
+
+\bibitem[{Xie et~al.(2026)Xie, Xiao, Deng, Dou, Yang, and Guo}]{sempic}
+Hui Xie, Peng Xiao, Yutong Deng, Shuoran Dou, Jian Yang, and Jinyang Guo. 2026.
+\newblock \href {https://arxiv.org/abs/2607.28069} {{SemPIC}: Learning semantic
+  position-independent {KV} caches}.
+\newblock \emph{arXiv preprint arXiv:2607.28069}.
+
+\bibitem[{Xu et~al.(2024)Xu, Ping, Wu, McAfee, Zhu, Liu, Subramanian,
+  Bakhturina, Shoeybi, and Catanzaro}]{xu2024retrievallong}
+Peng Xu, Wei Ping, Xianchao Wu, Lawrence McAfee, Chen Zhu, Zihan Liu, Sandeep
+  Subramanian, Evelina Bakhturina, Mohammad Shoeybi, and Bryan Catanzaro. 2024.
+\newblock Retrieval meets long context large language models.
+\newblock In \emph{International Conference on Learning Representations}.
+
+\bibitem[{Yang et~al.(2025{\natexlab{a}})}]{qwen3}
+An~Yang et~al. 2025{\natexlab{a}}.
+\newblock \href {https://arxiv.org/abs/2505.09388} {{Qwen3} technical report}.
+\newblock \emph{arXiv preprint arXiv:2505.09388}.
+
+\bibitem[{Yang et~al.(2025{\natexlab{b}})Yang, Chen, and Chen}]{ape}
+Xinyu Yang, Tianqi Chen, and Beidi Chen. 2025{\natexlab{b}}.
+\newblock \href {https://arxiv.org/abs/2502.05431} {{APE}: Faster and longer
+  context-augmented generation via adaptive parallel encoding}.
+\newblock \emph{arXiv preprint arXiv:2502.05431}.
+
+\bibitem[{Yao et~al.(2025)Yao, Li, Liu, Ray, Cheng, Zhang, Du, Lu, and
+  Jiang}]{cacheblend}
+Jiayi Yao, Hanchen Li, Yuhan Liu, Siddhant Ray, Yihua Cheng, Qizheng Zhang,
+  Kuntai Du, Shan Lu, and Junchen Jiang. 2025.
+\newblock \href {https://doi.org/10.1145/3689031.3696098} {{CacheBlend}: Fast
+  large language model serving for {RAG} with cached knowledge fusion}.
+\newblock In \emph{Proceedings of the Twentieth European Conference on Computer
+  Systems}, pages 94--109.
+
+\bibitem[{Zhang et~al.(2023)}]{h2o}
+Zhenyu Zhang et~al. 2023.
+\newblock {H2O}: Heavy-hitter oracle for efficient generative inference of
+  large language models.
+\newblock In \emph{NeurIPS}.
+
+\end{thebibliography}

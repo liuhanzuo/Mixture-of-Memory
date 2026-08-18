@@ -1,0 +1,21 @@
+\begin{abstract}
+Reusable chunk caches precompute document state, but the amount of model depth
+that should be prepaid remains unclear. We study this question with
+\textbf{CoMem}, which stores one depth-$j$ residual per context token, retrieves
+a bounded chunk set, and resumes only layers $[j{:}L)$. The main result is a
+matched depth-reuse frontier: with identical selected chunks, order, mask,
+examples, and adapter, $j{=}12$ reduces isolated model Read from 931.9 to
+664.4\,ms ($1.403\times$) while lowering a 15-cell RULER macro from 99.19 to
+96.07. A rank-32 self-distillation adapter makes this operating point usable
+without updating the backbone. The one-time Write amortizes only under reuse:
+measured break-even is about 8--11 queries at 32k and 26--28 at 128k, depending
+on generation length and store placement. We also report a transparent negative
+result: at matched online latency, raw-text replay scores 64.78 versus 53.22 for
+CoMem on a held-out mixed diagnostic cohort. Finally, a paired multikey
+factorization bounds one failure mode. Restoring lower-layer document context
+raises 92.5 to 100.0, whereas changing positions alone lowers accuracy; a
+deployable 32-token overlap recovers to 98.5 without increasing persistent bytes
+or per-query Read work. These findings establish a measured
+quality--latency--storage frontier and a narrow mechanism diagnosis, not
+superiority over raw-text retrieval or existing modular-cache systems.
+\end{abstract}

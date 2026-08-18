@@ -1,0 +1,69 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{What does healing restore?}
+The combined evidence argues against treating recovery as a single scalar. PPL
+measures how well the healed model fits held-out next-token events; it improves
+substantially in every inherited-prefix arm. That improvement is useful---the
+models recover fluent continuation and several commonsense tasks---but it does
+not uniquely determine answer selection or closed-book recall. The endpoint
+scatter makes the distinction concrete: models with similar PPL can occupy
+meaningfully different MMLU regimes, and random initialization can outrank a
+frozen inherited front in PPL while underperforming it on answer letters. We
+therefore interpret healing as partial recovery of distributional modeling plus
+a task-dependent remainder, not as a binary return of the original model.
+
+\paragraph{Interface sensitivity is substantial but insufficient.}
+Complete-option MMLU recovers more smoothly than answer-letter MMLU, showing
+substantial protocol sensitivity that is consistent with an answer-symbol
+component. The protocols also change the prompt, candidate continuation,
+tokenization, and normalization, so they do not isolate mapping loss. The
+random-init fluency floor and the independent PopQA, TriviaQA,
+and NQ-open gaps rule out a formatting-only account. This distinction matters
+for evaluation: a single multiple-choice protocol can overstate damage when its
+interface is brittle, whereas a content-likelihood protocol can overstate
+recovery when generic fluency makes plausible options easy to score. Agreement
+across interfaces is more informative than designating either as ground truth.
+
+\paragraph{Different constructions yield different endpoints.}
+The step-matched keep14--ShortGPT comparison shows that half depth is not one
+operating point. Preserving selected upper blocks yields a much stronger
+likelihood--capability endpoint than retaining only a prefix and regrowing a
+tail. The result does not identify whether the advantage comes from the
+original final block, two additional inherited blocks, non-contiguous selection,
+or avoiding fresh layers. It shows that conclusions drawn from one prefix
+construction should not be generalized to every 16-layer construction;
+isolating the responsible factor requires additional matched structures.
+
+\paragraph{Which behaviors remain difficult?}
+The residual deficit spans factual recall (PopQA, TriviaQA, and NQ-open), broad
+academic knowledge (all four MMLU groups), and some answer-interface behavior.
+In contrast, several continuation-style commonsense tasks recover more readily.
+This taxonomy is behavioral rather than anatomical. Knowledge-neuron and causal
+tracing studies motivate asking whether particular feed-forward computations
+support factual recall~\citep{dai2022knowledge,meng2022locating}, but neither our
+subject groups nor ShortGPT's retention of block 31 identifies the missing
+substrate. Structure-isolation and causal interventions are required before
+making that claim.
+
+\paragraph{A reporting protocol for structural compression.}
+For prune-then-heal studies, we recommend reporting likelihood, target
+capability, recovery compute, and exact structural policy together. An intact
+model continued on the same corpus and nominal schedule measures short-horizon
+drift, while same-shape
+initialization/adaptation controls expose fluency floors and inherited-computation
+effects.
+
+\begin{center}
+\fbox{\begin{minipage}{0.92\columnwidth}
+\small\textbf{Before claiming recovery from PPL alone:}
+(1) evaluate an independent target capability;
+(2) test a second scoring or generation interface;
+(3) include a continued-full-model corpus control; and
+(4) report the exact structure and healing budget.
+\end{minipage}}
+\end{center}
+
+This checklist does not replace efficiency or endpoint-quality comparisons. It
+prevents a low PPL alone from being interpreted as evidence that the behaviors
+of interest have returned.

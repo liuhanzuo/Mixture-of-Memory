@@ -1,0 +1,45 @@
+Paper B Figure 1 — AutoFigure-Edit import + manual editable-SVG workflow
+Date: 2026-08-03 (Asia/Shanghai)
+Repository tool: paper_tools/AutoFigure-Edit @ 16f3749e9d512bdf7b7b55c162307bc289750b7a
+Input figure: paperB/figures/fig1_concept_gptimage_corrected.png
+
+Successful required import run:
+  python paper_tools/AutoFigure-Edit/autofigure2.py \
+    --input_figure_path paperB/figures/fig1_concept_gptimage_corrected.png \
+    --output_dir paperB/figures/autofigure_run_B/import_stage1 \
+    --provider custom --base_url "$OPENAI_BASE_URL" \
+    --stop_after 1 --disable_auto_upscale
+  Log: 01_autofigure_import_stage1.log
+  Artifact: import_stage1/figure.png
+  Result: EXIT_CODE=0; imported raster is pixel-identical to the source after RGB normalization.
+
+Continuation checks retained for reproducibility:
+  import_workflow.log
+    Full local-SAM attempt before package installation; stopped because sam3 was missing.
+  import_workflow_roboflow.log
+    Roboflow attempt; stopped because no ROBOFLOW_API_KEY was configured.
+  03_autofigure_sam_installed_attempt.log
+    Local SAM after installing sam3; exposed missing packaged BPE asset.
+  04_autofigure_sam_weights_attempt.log
+    Local SAM after supplying the BPE asset; stopped at gated facebook/sam3 weights
+    because no authorized Hugging Face token was available. No paper files were changed.
+  07_autofigure_noicon_reconstruction.log
+    First direct AutoFigure SVG reconstruction attempt; provider returned a transient 500/DNS error.
+  08_autofigure_noicon_reconstruction_qwenvl.log
+    Successful AutoFigure step-4 no-icon SVG reconstruction with qwen3-vl-235b-a22b-instruct;
+    syntax repair ran and optimized_template.svg was produced. The manually polished deliverable
+    was then rebuilt from vector primitives to correct layout, wording, and all requested metrics.
+
+Manual editable-vector build:
+  python paperB/scripts/build_fig1_pruneheal_autofigure.py
+
+Primary outputs:
+  paperB/figures/fig1_pruneheal_autofigure.svg
+  paperB/figures/fig1_pruneheal_autofigure.pdf
+  paperB/figures/fig1_pruneheal_autofigure.png
+
+QA previews and check:
+  final_preview_1800.png
+  final_preview_1200.png
+  autofigure_noicon_reconstruction/{template.svg,optimized_template.svg,*.png}
+  05_multimodal_qa.json.txt

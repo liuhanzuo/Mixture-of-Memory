@@ -1,0 +1,166 @@
+{
+  "tool": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/proposal/backlog/B03-cyclic-layer-reset-boundary/reset_layers_ckpt.py",
+  "run_utc": "2026-08-17T05:00:05Z",
+  "gpu_used": false,
+  "host": "TENCENT64.site",
+  "torch_version": "2.13.0",
+  "python": "3.14.6",
+  "inputs": {
+    "in_ckpt": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/b03_g0_fixture_1B_keep7fresh2/step2.pt",
+    "out_ckpt": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/b03_g0_fixture_1B_keep7fresh2/step2_reset.pt",
+    "model_path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/models/OLMo-2-0425-1B",
+    "keep_front_layers": 7,
+    "n_fresh_layers": 2,
+    "seed": 42
+  },
+  "trainer_ref": {
+    "path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/scripts/train_olmo2_arch_probe2.py",
+    "sha256": "88d263c3d5f7c5ac1657882ed9e88bbffdda29e553d197832c3a958d0d4c368f"
+  },
+  "selftests": {
+    "a_nonreset_bytes_identical": {
+      "pass": true,
+      "n_nonreset_tensors_checked": 80,
+      "n_mismatched": 0,
+      "mismatched_names": [],
+      "n_reset_tensors": 22,
+      "n_reset_tensors_whose_sha_changed": 22,
+      "note": "a reset tensor whose sha did NOT change would mean the surgery was a no-op on it; reported so the test cannot pass vacuously."
+    },
+    "a_negative_control_reset_tensors_did_change": {
+      "pass": true,
+      "n_reset_tensors": 22,
+      "n_changed": 22,
+      "unchanged_names": []
+    },
+    "b_assert_fresh_init": {
+      "pass": true,
+      "checked_layer": 7,
+      "post_attention_layernorm_all_ones": true,
+      "q_norm_all_ones": true,
+      "q_proj_weight_std": 0.01999109424650669,
+      "band": "0.01 < std < 0.04",
+      "assertion_error": null,
+      "called": "train_olmo2_arch_probe2._assert_fresh_init (the trainer's own function, not a reimplementation)",
+      "post_norm_note": "OLMo-2 is POST-norm: the checked RMSNorm is post_attention_layernorm, NOT input_layernorm (which does not exist in this architecture)."
+    },
+    "c_strict_load": {
+      "pass": true,
+      "n_missing": 0,
+      "n_unexpected": 0,
+      "missing": [],
+      "unexpected": [],
+      "how": "build_olmo2_minimal(..., transplant=False).load_state_dict(ckpt['model_state'], strict=True) -- the same statement the trainer runs at scripts/train_olmo2_arch_probe2.py:776 on the resume path.",
+      "prereg_literal_form_was_unfireable": true,
+      "prereg_literal_form_defect": "GATE_PREREGISTRATION.md sec 8.2 (c) says 'strict-loads under --dry_run_build'. In main(), `if args.dry_run_build:` (line 714) CONTAINS A RETURN and precedes `if args.resume_from:` (line 752), so --dry_run_build never reads the checkpoint: the run prints '[dry_run_build] ... -> OK' regardless of whether the surgery produced garbage. AST evidence: evidence/g0_selftest_c_unfireable_20260817.json."
+    },
+    "d_optimizer_group_count_preserved": {
+      "pass": true,
+      "n_ckpt_groups_before": 4,
+      "n_ckpt_groups_after": 4,
+      "n_groups_the_trainer_rebuilds_on_resume": 4,
+      "shim_would_trigger": false,
+      "vacuous": false,
+      "vacuity_note": "build_param_groups (line 480) DROPS empty groups and _classify_param routes every model.layers.{lid>=keep_front} param to 'fresh', so the rebuilt group count is a function of the FLAGS AND ARCH, not of the ckpt. (d) is only evidence if the INPUT ckpt is a genuine trainer-written 4-group ckpt: a 2-group input would make the counts 'agree' without exercising anything. n_ckpt_groups_before != 4 is therefore reported as VACUOUS, not PASS.",
+      "shim_ref": "scripts/train_olmo2_arch_probe2.py:912 (elif n_ckpt_groups == 2 and n_new_groups == 4)"
+    }
+  },
+  "notes": [],
+  "reset_layer_ids": [
+    7,
+    8
+  ],
+  "in_ckpt_keys": [
+    "base_model_path",
+    "epoch",
+    "freeze_front",
+    "from_scratch",
+    "hidden_size",
+    "keep_front_layers",
+    "max_steps",
+    "model_family",
+    "model_state",
+    "n_fresh_layers",
+    "num_hidden_layers",
+    "optimizer_state",
+    "random_trunk",
+    "rng_state",
+    "seed",
+    "seq_len",
+    "step",
+    "tie_word_embeddings",
+    "train_args",
+    "vocab_size",
+    "warmup_steps"
+  ],
+  "in_ckpt_step": 2,
+  "in_ckpt_has_optimizer_state": true,
+  "n_model_tensors": 102,
+  "ckpt_arch": {
+    "hidden_size": 2048,
+    "vocab_size": 100352,
+    "n_decoder_layers": 9,
+    "ckpt_keep_front_layers": 7,
+    "ckpt_n_fresh_layers": 2
+  },
+  "fresh_shell": {
+    "num_hidden_layers": 9,
+    "hidden_size": 2048,
+    "vocab_size": 100352,
+    "initializer_range": 0.02,
+    "built_via": "train_olmo2_arch_probe2.build_olmo2_minimal(transplant=False) -> Olmo2ForCausalLM(cfg) post_init"
+  },
+  "n_tensors_replaced": 22,
+  "replaced_tensor_names": [
+    "model.layers.7.mlp.down_proj.weight",
+    "model.layers.7.mlp.gate_proj.weight",
+    "model.layers.7.mlp.up_proj.weight",
+    "model.layers.7.post_attention_layernorm.weight",
+    "model.layers.7.post_feedforward_layernorm.weight",
+    "model.layers.7.self_attn.k_norm.weight",
+    "model.layers.7.self_attn.k_proj.weight",
+    "model.layers.7.self_attn.o_proj.weight",
+    "model.layers.7.self_attn.q_norm.weight",
+    "model.layers.7.self_attn.q_proj.weight",
+    "model.layers.7.self_attn.v_proj.weight",
+    "model.layers.8.mlp.down_proj.weight",
+    "model.layers.8.mlp.gate_proj.weight",
+    "model.layers.8.mlp.up_proj.weight",
+    "model.layers.8.post_attention_layernorm.weight",
+    "model.layers.8.post_feedforward_layernorm.weight",
+    "model.layers.8.self_attn.k_norm.weight",
+    "model.layers.8.self_attn.k_proj.weight",
+    "model.layers.8.self_attn.o_proj.weight",
+    "model.layers.8.self_attn.q_norm.weight",
+    "model.layers.8.self_attn.q_proj.weight",
+    "model.layers.8.self_attn.v_proj.weight"
+  ],
+  "expected_n_tensors_replaced": 22,
+  "n_reset_optimizer_indices": 22,
+  "n_optimizer_states_in_ckpt": 102,
+  "flat_index_group_layout": {
+    "fresh_decay": 15,
+    "fresh_nodecay": 8,
+    "inh_decay": 50,
+    "inh_nodecay": 29
+  },
+  "surviving_groups": [
+    "fresh_decay",
+    "fresh_nodecay",
+    "inh_decay",
+    "inh_nodecay"
+  ],
+  "optimizer_reset_report": {
+    "n_zeroed": 22,
+    "n_absent": 0,
+    "absent_indices": [],
+    "unexpected_keys_seen": {}
+  },
+  "out_ckpt_bytes": 12181304665,
+  "out_ckpt_written": true,
+  "elapsed_s": 69.18,
+  "all_evaluable_selftests_pass": true,
+  "failed_selftests": [],
+  "skipped_selftests": [],
+  "verdict": "G0_PASS"
+}

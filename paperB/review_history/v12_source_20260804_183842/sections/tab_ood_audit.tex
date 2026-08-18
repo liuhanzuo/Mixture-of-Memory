@@ -1,0 +1,23 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4.2pt}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{PPL corpus} & \textbf{Base} & \textbf{full32} &
+\textbf{ShortGPT} & \textbf{keep14} & \textbf{Random} &
+\textbf{Frozen} \\
+\midrule
+Dolmino held-out & 7.40 & 7.67 & 9.78 & 10.56 & 11.50 & 12.80 \\
+WikiText-103 & 6.00 & 6.77 & 10.58 & 11.56 & 13.45 & 13.66 \\
+PG-19 & 10.18 & 10.76 & 14.45 & 15.43 & 17.54 & 17.35 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{The likelihood ordering transfers out of domain.}
+Token-weighted PPL uses the same no-chat, no-BOS evaluator on 289k
+WikiText-103 tokens and 2.46M PG-19 tokens. The ordering
+Base$\approx$full32 $<$ ShortGPT $<$ keep14 $<$ Random/Frozen is unchanged.
+Thus the same-source PPL result is not hiding an OOD reversal; the compressed
+models pay an equal or larger relative likelihood tax outside Dolmino.}
+\label{tab:ood-audit}
+\end{table*}

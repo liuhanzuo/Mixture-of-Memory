@@ -1,0 +1,390 @@
+{
+  "alpha": 0.05,
+  "analysis_script": {
+    "path": "reanalyze_equal_latency.py",
+    "sha256": "b141e4a30ec5577dcd7b6ee918685f30919c9f3aa0ccd15a8203ea1144da8d84"
+  },
+  "base_seed": 20260804,
+  "created_from_saved_scores_only": true,
+  "model_evaluation_or_training_performed": false,
+  "n_boot": 100000,
+  "schema_version": "paperA.equal_latency_dependence_reanalysis.v1",
+  "selectors": {
+    "bge": {
+      "bootstrap": {
+        "hierarchical_cells_then_examples": {
+          "alpha": 0.05,
+          "bootstrap_mean_pp": -0.9968277777777778,
+          "ci_percentile_pp": [
+            -10.666666666666666,
+            8.333333333333334
+          ],
+          "definition": "Resample nine cell labels with replacement; for each selected cell occurrence independently resample n=100 paired examples within that cell; equal-weight the nine resulting cell means.",
+          "n_boot": 100000,
+          "n_cell_draws_per_replicate": 9,
+          "seed": 21261006,
+          "within_cell_n": {
+            "babilong_qa1_16k": 100,
+            "babilong_qa1_4k": 100,
+            "babilong_qa2_16k": 100,
+            "babilong_qa2_4k": 100,
+            "locomo_locomo_na": 100,
+            "longeval_longeval_16k": 100,
+            "longeval_longeval_8k": 100,
+            "ruler_niah_multikey_1_16k": 100,
+            "ruler_niah_multikey_1_8k": 100
+          }
+        },
+        "pooled_iid_sensitivity": {
+          "alpha": 0.05,
+          "bootstrap_mean_pp": -0.9985022222222222,
+          "ci_percentile_pp": [
+            -4.666666666666667,
+            2.6666666666666665
+          ],
+          "definition": "Pool all 900 paired differences and resample 900 pairs IID; retained only as sensitivity to match the original analysis.",
+          "n_boot": 100000,
+          "n_pairs": 900,
+          "seed": 21261107
+        },
+        "stratified_fixed_cells": {
+          "alpha": 0.05,
+          "bootstrap_mean_pp": -0.9999577777777778,
+          "ci_percentile_pp": [
+            -4.555555555555555,
+            2.5555555555555554
+          ],
+          "definition": "Keep all nine observed cells fixed; within every cell resample exactly its observed n=100 paired examples; equal-weight the nine resampled cell means.",
+          "n_boot": 100000,
+          "n_cells_fixed": 9,
+          "seed": 21260905,
+          "within_cell_n": {
+            "babilong_qa1_16k": 100,
+            "babilong_qa1_4k": 100,
+            "babilong_qa2_16k": 100,
+            "babilong_qa2_4k": 100,
+            "locomo_locomo_na": 100,
+            "longeval_longeval_16k": 100,
+            "longeval_longeval_8k": 100,
+            "ruler_niah_multikey_1_16k": 100,
+            "ruler_niah_multikey_1_8k": 100
+          }
+        }
+      },
+      "estimand": "Equal-weight mean of the nine observed cell mean paired score differences, in percentage points (CoMem - replay).",
+      "leave_one_cell_out": {
+        "definition": "Drop one observed cell, then equally average the remaining eight observed cell mean paired differences.",
+        "estimates_pp": {
+          "babilong_qa1_16k": 1.5,
+          "babilong_qa1_4k": -0.5,
+          "babilong_qa2_16k": 1.75,
+          "babilong_qa2_4k": -1.125,
+          "locomo_locomo_na": -1.625,
+          "longeval_longeval_16k": -3.125,
+          "longeval_longeval_8k": -1.125,
+          "ruler_niah_multikey_1_16k": -3.5,
+          "ruler_niah_multikey_1_8k": -1.25
+        },
+        "range_pp": [
+          -3.5,
+          1.75
+        ],
+        "sign_counts": {
+          "negative": 7,
+          "positive": 2,
+          "zero": 0
+        }
+      },
+      "locomo_dependence": {
+        "conversation_cluster_bootstrap_performed": false,
+        "n_items": 100,
+        "n_observed_conversation_clusters": 1,
+        "observed_conversation_clusters": [
+          "conv0"
+        ],
+        "reason": "The retained first-100 LoCoMo slice is entirely conversation 0; with one observed cluster, conversation-level resampling is not identifiable.  The cell is kept as one diagnostic cell rather than treated as 100 independent conversations."
+      },
+      "per_cell": {
+        "babilong_qa1_16k": {
+          "comem_pp": 17.0,
+          "diff_comem_minus_replay_pp": -21.0,
+          "n": 100,
+          "replay_pp": 38.0
+        },
+        "babilong_qa1_4k": {
+          "comem_pp": 68.0,
+          "diff_comem_minus_replay_pp": -5.0,
+          "n": 100,
+          "replay_pp": 73.0
+        },
+        "babilong_qa2_16k": {
+          "comem_pp": 8.0,
+          "diff_comem_minus_replay_pp": -23.0,
+          "n": 100,
+          "replay_pp": 31.0
+        },
+        "babilong_qa2_4k": {
+          "comem_pp": 44.0,
+          "diff_comem_minus_replay_pp": 0.0,
+          "n": 100,
+          "replay_pp": 44.0
+        },
+        "locomo_locomo_na": {
+          "comem_pp": 17.0,
+          "diff_comem_minus_replay_pp": 4.0,
+          "n": 100,
+          "replay_pp": 13.0
+        },
+        "longeval_longeval_16k": {
+          "comem_pp": 70.0,
+          "diff_comem_minus_replay_pp": 16.0,
+          "n": 100,
+          "replay_pp": 54.0
+        },
+        "longeval_longeval_8k": {
+          "comem_pp": 70.0,
+          "diff_comem_minus_replay_pp": 0.0,
+          "n": 100,
+          "replay_pp": 70.0
+        },
+        "ruler_niah_multikey_1_16k": {
+          "comem_pp": 91.0,
+          "diff_comem_minus_replay_pp": 19.0,
+          "n": 100,
+          "replay_pp": 72.0
+        },
+        "ruler_niah_multikey_1_8k": {
+          "comem_pp": 94.0,
+          "diff_comem_minus_replay_pp": 1.0,
+          "n": 100,
+          "replay_pp": 93.0
+        }
+      },
+      "point_estimate_pp": -1.0,
+      "source": {
+        "contains_benchmark_text": false,
+        "contains_predictions": false,
+        "fields": [
+          "benchmark",
+          "cell",
+          "comem_score",
+          "diff_comem_minus_replay_pp",
+          "example_id",
+          "k_comem",
+          "k_replay",
+          "length",
+          "replay_score",
+          "selector",
+          "source_comem_shards",
+          "source_replay_shard",
+          "task"
+        ],
+        "k_comem": 12,
+        "k_replay": 10,
+        "n_cells": 9,
+        "n_pairs": 900,
+        "n_per_cell": {
+          "babilong_qa1_16k": 100,
+          "babilong_qa1_4k": 100,
+          "babilong_qa2_16k": 100,
+          "babilong_qa2_4k": 100,
+          "locomo_locomo_na": 100,
+          "longeval_longeval_16k": 100,
+          "longeval_longeval_8k": 100,
+          "ruler_niah_multikey_1_16k": 100,
+          "ruler_niah_multikey_1_8k": 100
+        },
+        "path": "source/bge/paired_scores_comem12_replay10.jsonl",
+        "sha256": "6b35e47c0d84949fc8d60c2fc8058a62d4ee46b8bec7c567175892f267fed61e"
+      }
+    },
+    "bm25": {
+      "bootstrap": {
+        "hierarchical_cells_then_examples": {
+          "alpha": 0.05,
+          "bootstrap_mean_pp": -11.56018111111111,
+          "ci_percentile_pp": [
+            -18.666666666666668,
+            -5.111111111111111
+          ],
+          "definition": "Resample nine cell labels with replacement; for each selected cell occurrence independently resample n=100 paired examples within that cell; equal-weight the nine resulting cell means.",
+          "n_boot": 100000,
+          "n_cell_draws_per_replicate": 9,
+          "seed": 20261006,
+          "within_cell_n": {
+            "babilong_qa1_16k": 100,
+            "babilong_qa1_4k": 100,
+            "babilong_qa2_16k": 100,
+            "babilong_qa2_4k": 100,
+            "locomo_locomo_na": 100,
+            "longeval_longeval_16k": 100,
+            "longeval_longeval_8k": 100,
+            "ruler_niah_multikey_1_16k": 100,
+            "ruler_niah_multikey_1_8k": 100
+          }
+        },
+        "pooled_iid_sensitivity": {
+          "alpha": 0.05,
+          "bootstrap_mean_pp": -11.558177777777777,
+          "ci_percentile_pp": [
+            -14.444444444444445,
+            -8.666666666666666
+          ],
+          "definition": "Pool all 900 paired differences and resample 900 pairs IID; retained only as sensitivity to match the original analysis.",
+          "n_boot": 100000,
+          "n_pairs": 900,
+          "seed": 20261107
+        },
+        "stratified_fixed_cells": {
+          "alpha": 0.05,
+          "bootstrap_mean_pp": -11.5556,
+          "ci_percentile_pp": [
+            -14.333333333333334,
+            -8.777777777777779
+          ],
+          "definition": "Keep all nine observed cells fixed; within every cell resample exactly its observed n=100 paired examples; equal-weight the nine resampled cell means.",
+          "n_boot": 100000,
+          "n_cells_fixed": 9,
+          "seed": 20260905,
+          "within_cell_n": {
+            "babilong_qa1_16k": 100,
+            "babilong_qa1_4k": 100,
+            "babilong_qa2_16k": 100,
+            "babilong_qa2_4k": 100,
+            "locomo_locomo_na": 100,
+            "longeval_longeval_16k": 100,
+            "longeval_longeval_8k": 100,
+            "ruler_niah_multikey_1_16k": 100,
+            "ruler_niah_multikey_1_8k": 100
+          }
+        }
+      },
+      "estimand": "Equal-weight mean of the nine observed cell mean paired score differences, in percentage points (CoMem - replay).",
+      "leave_one_cell_out": {
+        "definition": "Drop one observed cell, then equally average the remaining eight observed cell mean paired differences.",
+        "estimates_pp": {
+          "babilong_qa1_16k": -10.875,
+          "babilong_qa1_4k": -12.25,
+          "babilong_qa2_16k": -11.75,
+          "babilong_qa2_4k": -12.625,
+          "locomo_locomo_na": -13.125,
+          "longeval_longeval_16k": -9.5,
+          "longeval_longeval_8k": -9.75,
+          "ruler_niah_multikey_1_16k": -11.875,
+          "ruler_niah_multikey_1_8k": -12.25
+        },
+        "range_pp": [
+          -13.125,
+          -9.5
+        ],
+        "sign_counts": {
+          "negative": 9,
+          "positive": 0,
+          "zero": 0
+        }
+      },
+      "locomo_dependence": {
+        "conversation_cluster_bootstrap_performed": false,
+        "n_items": 100,
+        "n_observed_conversation_clusters": 1,
+        "observed_conversation_clusters": [
+          "conv0"
+        ],
+        "reason": "The retained first-100 LoCoMo slice is entirely conversation 0; with one observed cluster, conversation-level resampling is not identifiable.  The cell is kept as one diagnostic cell rather than treated as 100 independent conversations."
+      },
+      "per_cell": {
+        "babilong_qa1_16k": {
+          "comem_pp": 17.0,
+          "diff_comem_minus_replay_pp": -17.0,
+          "n": 100,
+          "replay_pp": 34.0
+        },
+        "babilong_qa1_4k": {
+          "comem_pp": 68.0,
+          "diff_comem_minus_replay_pp": -6.0,
+          "n": 100,
+          "replay_pp": 74.0
+        },
+        "babilong_qa2_16k": {
+          "comem_pp": 8.0,
+          "diff_comem_minus_replay_pp": -10.0,
+          "n": 100,
+          "replay_pp": 18.0
+        },
+        "babilong_qa2_4k": {
+          "comem_pp": 44.0,
+          "diff_comem_minus_replay_pp": -3.0,
+          "n": 100,
+          "replay_pp": 47.0
+        },
+        "locomo_locomo_na": {
+          "comem_pp": 17.0,
+          "diff_comem_minus_replay_pp": 1.0,
+          "n": 100,
+          "replay_pp": 16.0
+        },
+        "longeval_longeval_16k": {
+          "comem_pp": 70.0,
+          "diff_comem_minus_replay_pp": -28.0,
+          "n": 100,
+          "replay_pp": 98.0
+        },
+        "longeval_longeval_8k": {
+          "comem_pp": 70.0,
+          "diff_comem_minus_replay_pp": -26.0,
+          "n": 100,
+          "replay_pp": 96.0
+        },
+        "ruler_niah_multikey_1_16k": {
+          "comem_pp": 91.0,
+          "diff_comem_minus_replay_pp": -9.0,
+          "n": 100,
+          "replay_pp": 100.0
+        },
+        "ruler_niah_multikey_1_8k": {
+          "comem_pp": 94.0,
+          "diff_comem_minus_replay_pp": -6.0,
+          "n": 100,
+          "replay_pp": 100.0
+        }
+      },
+      "point_estimate_pp": -11.555555555555555,
+      "source": {
+        "contains_benchmark_text": false,
+        "contains_predictions": false,
+        "fields": [
+          "benchmark",
+          "cell",
+          "comem_score",
+          "diff_comem_minus_replay_pp",
+          "example_id",
+          "k_comem",
+          "k_replay",
+          "length",
+          "replay_score",
+          "selector",
+          "source_comem_shards",
+          "source_replay_shard",
+          "task"
+        ],
+        "k_comem": 12,
+        "k_replay": 10,
+        "n_cells": 9,
+        "n_pairs": 900,
+        "n_per_cell": {
+          "babilong_qa1_16k": 100,
+          "babilong_qa1_4k": 100,
+          "babilong_qa2_16k": 100,
+          "babilong_qa2_4k": 100,
+          "locomo_locomo_na": 100,
+          "longeval_longeval_16k": 100,
+          "longeval_longeval_8k": 100,
+          "ruler_niah_multikey_1_16k": 100,
+          "ruler_niah_multikey_1_8k": 100
+        },
+        "path": "source/bm25/paired_scores_comem12_replay10.jsonl",
+        "sha256": "f84c0a1613ba898db70390cf91562cbe0d8469a80a9c752cfbeb6f898f00b417"
+      }
+    }
+  }
+}

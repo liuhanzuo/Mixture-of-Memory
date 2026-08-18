@@ -1,0 +1,20 @@
+% Portable self-distillation control on the retrieval-free HCache read path.
+\begin{table}[!t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Configuration} & \textbf{LoRA} & \textbf{LoCoMo Judge} \\
+\midrule
+HCache-style ($j{=}12$) & no  & 13.29 \\
+HCache-style ($j{=}12$) & yes & \textbf{31.17} \\
+\bottomrule
+\end{tabular}
+\caption{Interface-adaptation diagnostic on an HCache-style, retrieval-free
+checkpoint path. The two configurations share the $j{=}12$ split and evaluation
+harness, isolating the adapter. The gain shows that aligning intermediate states
+to native upper-layer readout transfers beyond CoMem; this is not a head-to-head
+long-term-memory comparison.}
+\label{tab:hcache-lora}
+\end{table}

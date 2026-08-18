@@ -1,0 +1,35 @@
+\section*{Reproducibility Statement}
+
+Every quantitative claim in this paper is bound to a machine-readable record, and the
+binding is checked mechanically rather than by hand. A checker walks all numerals in the
+source and requires each to be either an exact match to a value in the evidence set, a
+correct rounding of one, or a stated difference of two; at the time of writing it reports
+610 numerals with none unresolved. The two nulls, the winner's-curse calibration of the
+best-constant floor, the stratified permutation statistic, and the power analysis are each
+emitted from the per-item prediction records by a script rather than transcribed, so a
+reader who re-runs the emitters obtains the tables as printed or a diff.
+
+The measurement protocol is fixed and reported in full in
+Section~\ref{sec:setup}: \texttt{chat\_template = False}, \texttt{add\_bos = 0},
+\texttt{desc\_style = none}, fp32 master weights with bf16-autocast forward, batch size 48,
+and maximum length 2048 for the cross-family MMLU-Pro runs, with zero truncation asserted
+per shard in every reported cell. The chat template is disabled deliberately and not for
+convenience: the evaluated systems are base language models with neither supervised
+fine-tuning nor RLHF, so applying a chat template would measure a different object.
+
+Three properties of this study are load-bearing for reproduction and are stated here
+rather than left implicit. First, the floor is a maximum over noisy label marginals and is
+therefore upward biased even under exactly uniform labels; any attempt to reproduce a
+floor-above-chance claim must reproduce that calibration, not only the point estimate.
+Second, content-side floors are not a property of a dataset alone: they are determined
+jointly by the tie convention, the length unit, and the tokenizer, so a reproduction that
+fixes only the dataset will not recover our numbers. Third, the ordering between the two
+nulls is a measured property of the reported cells under an explicitly stated regularity
+condition, not an identity; we give the margin by which it holds and the construction that
+violates it.
+
+We also record what a reproduction will \emph{not} find. Claims that earlier drafts of this
+work considered and that the evidence did not sustain are listed with their current status
+in Table~\ref{tab:claims}, including six retracted and two prohibited numeric claims. That
+ledger is part of the artifact: it exists so that a reader who encounters one of those
+numbers elsewhere can see that we withdrew it and why.

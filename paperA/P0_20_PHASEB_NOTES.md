@@ -99,3 +99,53 @@ quality: finite-logits per arm; per-example provenance (input_ids_sha256, dense_
 comem_sel_sha, lora_sha).
 aggregate: pairs only on shared example ids; verdict reported for ALL cells (never
 dense-wins-only). k_dense* frozen on latency ONLY, never after seeing quality.
+
+## 5. RESULTS (GPU run on .104, 2026-08-03; n=9000 paired = 9 cells × k∈{2..24})
+
+Run COMPLETE 21:07 GMT+8. Outputs on .104 diskB:
+`bench_results/p0_20_phaseB_dense/{decision.json, summary.json}`,
+aggregate log `logs/p0_20_phaseB/aggregate.out`.
+
+### 5a. Headline (pre-registered anchor: CoMem@k=12 vs latency-matched dense-RAG)
+* **k_dense\* = 10** (deployment model, both gpu-resident and cpu-pinned) — the largest
+  dense-RAG k whose deployment TTFT lands in CoMem(k=12)'s ±5% band.
+* **PRIMARY (deployment): CoMem = 53.22, dense-RAG@k\*=10 = 54.22, diff(CoMem−dense) = −1.0pp,
+  95%CI [−4.667, 2.667], McNemar p=0.637 → STATISTICAL TIE** (gpu-resident == cpu-pinned).
+* **Cold-index (sensitivity): k_dense\* = None** — encoding all passages online alone blows
+  the ±5% band around the 698 ms CoMem anchor, so dense-RAG cannot match CoMem's TTFT at
+  ANY k (documented, not hidden).
+* Reference (NOT latency-matched, both read k=12): CoMem 53.22 vs dense 58.56, diff −5.33,
+  CI [−8.889, −1.778], p=0.00387 — dense wins ONLY when latency is ignored.
+* **VERDICT: MIXED** — dense-RAG ahead on point estimate (+1.0pp) but CI includes 0.
+
+### 5b. Phase A → Phase B (the selector-dependence story)
+CoMem arm is byte-identical across phases (both 53.22). Swapping ONLY the text-RAG selector:
+* Phase A (lexical iter_bm25): text-RAG@k\*=10 = **64.78** → CoMem −11.56pp, CI[−14.444,−8.667],
+  McNemar b=41 — **text-RAG WON significantly**.
+* Phase B (dense BGE-large): dense-RAG@k\*=10 = **54.22** → CoMem −1.0pp, ns — **TIE**.
+The general dense retriever retrieves *worse* than lexical BM25 on this needle-heavy cohort
+(64.78 → 54.22, a 10.6pp drop), collapsing text-RAG's Phase-A edge to a tie. ⇒ the
+equal-latency verdict is **selector-dependent**; CoMem's best case vs a deployable text-RAG
+is a tie (dense), not a win. Do NOT conflate with P1.8 (latency-amortization).
+
+### 5c. Per-cell structural finding (k-curve shape)
+CoMem accuracy is **non-monotonic in k** (peaks at low k, degrades as k grows); dense-RAG is
+**monotone-increasing** in k. Examples (comem / dense_rag by k=2..24):
+* LongEval-16k CoMem: 96 95 97 93 85 70 58 47 43 34 ; dense: 15 28 34 44 54 57 62 66 79 90
+* RULER-mk1-16k CoMem: 98 96 97 97 92 91 92 88 88 88 ; dense: 32 48 60 64 72 79 81 86 91 97
+* LoCoMo ~tied and low both (14–18) throughout.
+At TIGHT budgets (low k ⇒ low latency) CoMem dominates hugely (LongEval-16k k=2 +81pp;
+RULER-16k k=2 +66pp); dense only overtakes at high k. The crossover sits ≈k=12–14 on these
+cells, so the flagship CoMem@12 anchor lands right at/just past it ⇒ the aggregate tie.
+Honest reading: CoMem's structural advantage is at tight latency budgets; k=12 is a
+conservative (not cherry-picked) operating point — we do NOT re-select k post-hoc.
+
+### 5d. Provenance / integrity
+All gates PASSED (manifest backbone+LoRA sha dd09cd17… layers[12..35] 168 mods + BGE sha;
+sanity LoRA-toggle + dense determinism + P1.9 repro + split-disjoint). One harness bug found
+and fixed mid-run (commit `306ccbe`): the read_len 4-way equal-arm assert crashed on
+babilong-qa1 where iter_bm25 under-fills below k (positive-overlap filter + early break) while
+dense returns exactly min(k,n); relaxed to per-arm self-consistency + additive
+`comem_read_len`/`dense_read_len` fields (equal-latency anchors on TTFT, not equal read_len).
+Backward-compatible: 67 pre-fix rc=0 shards preserved; only the 8 crashed qa1 shard-1 cells
+(4k:k4,k8; 16k:k4,k8,k12,k16,k20,k24) re-ran with the fixed code → all 8 rc=0, aggregate clean.

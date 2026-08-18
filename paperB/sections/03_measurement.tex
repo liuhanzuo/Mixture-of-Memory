@@ -1,0 +1,18 @@
+\section{A Multi-Axis Recovery Audit}
+\label{sec:observation}
+
+Let $P_t$ denote in-domain perplexity and $E_t$ a knowledge-sensitive
+evaluation at checkpoint $t$. A common informal recovery argument is
+\[
+P_{t_2}<P_{t_1}\quad\Longrightarrow\quad
+\text{target recovery at }t_2 .
+\]
+Here ``target recovery'' means closing the large deficit to the intact-base
+score on the same evaluation, not merely obtaining a statistically detectable
+within-run gain. We audit that argument on three axes:
+\textbf{trajectory} (does the target gap close as PPL falls?),
+\textbf{interface} (does the verdict survive a change in scoring, and what is
+the null floor?), and \textbf{construction} (do models with the same nominal
+depth reach similar endpoints?). The full32 branch adds a short-horizon intact
+same-corpus reference. This design yields diagnostic operating-point
+comparisons rather than a single scalar recovery score.

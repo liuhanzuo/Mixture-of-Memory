@@ -49,7 +49,7 @@ This is the structural answer, and it drives §6.
 | | leg 1 — notes + raw | leg 2 — typed ledger | leg 3 — pyramid |
 |---|---|---|---|
 | **Is the architecture prior art?** | **YES, and our own tree says so.** `longmemeval/compressor.py:8` credits "raw evidence + notes" as **the LongMemEval-V2 winning pattern**. | **YES, every primitive.** validity intervals, supersession, tombstones, provenance/confidence → all built (§4). | **YES.** near/far/profile tiering → MemGPT, HippoRAG, G-Memory, HMO, Pancake (§5). |
-| **Is the *measurement* prior art?** | **NO / thin.** No verified work holds retrieval at a **measured** `any_hit = 1.000` and varies only context composition while scoring an **unsupported-claim rate** on a notes-only arm. | **YES.** MemConflict, MemSyco-Bench, and *Ground Truth First* already measure stale/conflict/validity-interval failure directly (§4). | **N/A — there is nothing to measure.** No cell, no arm, no metric on disk. |
+| **Is the *measurement* prior art?** | **NO / thin.** No verified work holds retrieval at a **measured** `any_hit = 1.000` and varies only context composition while scoring an **unsupported-claim rate** on a notes-only arm. ⛔ **§13.2 — the `any_hit = 1.000` conjunct in this cell is a PRECONDITION, not a contribution. Only the *unsupported-claim rate on a notes-only arm* conjunct is load-bearing; `arXiv:2607.17545` and `arXiv:2605.24579` both hold retrieval closed (§12.1, §12.2).** | **YES.** MemConflict, MemSyco-Bench, and *Ground Truth First* already measure stale/conflict/validity-interval failure directly (§4). | **N/A — there is nothing to measure.** No cell, no arm, no metric on disk. |
 | **Do WE have adjacent evidence?** | **Supporting**: the retrieval-closed stratum is measured (`any_hit` 1.000 on KU n=78 + SSA n=56, re-verified at the gate's own `budget=4000`). | **Neutral**: the cell is the same n=78; `src/eval/update_eval.py` is git-tracked and reusable. | **AGAINST, and it is ours**: A02 measured the fixed-Read advantage at **1.03–1.37×** with break-even reuse `N*` **8 → 25 → 186** across 32k → 128k → 1M — the economics get *worse* exactly where a pyramid is pitched. |
 | **Code status** | harness runs; 2 arms missing (§3.4) | `src/eval/update_eval.py` git-tracked ✅ | ⚠️ **REVENANT**: `src/memory/l2/`, `src/memory/l3/`, `src/agents/memory_agent.py` are **byte-identical to `legacy/src_dead_subsystems/`** (commit `b63b5a1`) and are **untracked in git**. |
 | **Pressure verdict** | **methodological gap survives; the mechanism claim does not** | **foreclosed on BOTH axes** | **occupied AND negatively pre-measured by us** |
@@ -69,7 +69,7 @@ Per `STATUS.json.next_gate`: on the retrieval-closed LongMemEval-S stratum (`kno
 n=78 + `single-session-assistant` n=56, stratum n=134, measured `any_hit_recall == 1.000` at BM25
 top_k=10 **and re-verified at the gate's own `evidence_token_budget=4000`**), freeze retrieval and
 vary **only** context composition across three arms — `A-raw`, `A-notes+raw`, `A-notes-only` —
-reading out **ACC** and **U** (unsupported-claim rate). PASS on Δ_aug CI > 0 **or** Δ_U CI > +5.0 pp.
+reading out **ACC** and **U** (unsupported-claim rate). PASS on Δ_aug CI > 0 **or** Δ_U CI > +5.0 pp. ⛔ **§13.3 — this OR-disjunction is superseded: `Δ_U` is the SOLE decisive clause and `Δ_aug` is demoted to supporting (it also carries the single-reader scope limit of §13.4). ⚠ §13.5: this line's `Δ_U` PASS threshold is ALSO one of three non-equivalent spellings of it in the proposal — do not score against this line.** ⛔ **§13.7 CORRECTS THE PRECEDING SENTENCE: this line is NOT an outlier. It agrees with `next_gate.decidable_outcome` and prereg 5.6 (all three = `CI lower bound > +5.0 pp`). The lone outlier is §8's blockquote. Scoring against THIS line is fine; it is the majority reading.**
 
 **The retrieval premise is a constraint, not a win**: with `any_hit` 96.8% at top_k=10 overall,
 only ~3.2 pp of retrieval headroom is left, so `established_measurements.consequence_is_a_CONSTRAINT_not_a_win`
@@ -79,7 +79,7 @@ already forbids framing leg 1 as a retrieval contribution.
 
 | work | year | venue (verified) | what it does | precise difference |
 |---|---|---|---|---|
-| **RECOMP** | 2024 | **ICLR 2024**, OpenReview `venueid=ICLR.cc/2024/Conference` (poster) | Compresses retrieved documents into extractive **or abstractive summaries** before the reader, with selective augmentation (skip when retrieval is unhelpful). | ⚠️ **The canonical "summarise the retrieved evidence for the reader" paper, peer-reviewed.** Difference: RECOMP optimises **end-task accuracy at a token budget** and does not measure whether the abstractive summary **invents** facts; it also never pins retrieval at a *measured* recall of 1.000, so its deltas remain retrieval-confounded. **"We introduce query-conditioned summarisation of retrieved evidence" is unclaimable.** |
+| **RECOMP** | 2024 | **ICLR 2024**, OpenReview `venueid=ICLR.cc/2024/Conference` (poster) | Compresses retrieved documents into extractive **or abstractive summaries** before the reader, with selective augmentation (skip when retrieval is unhelpful). | ⚠️ **The canonical "summarise the retrieved evidence for the reader" paper, peer-reviewed.** Difference: RECOMP optimises **end-task accuracy at a token budget** and does not measure whether the abstractive summary **invents** facts; it also never pins retrieval at a *measured* recall of 1.000, so its deltas remain retrieval-confounded. ⚠ **§13.2 — DEMOTED: this retrieval-pinning contrast is no longer a differentiator (closure is a precondition). NOTE: unlike the ROC row below, this sentence has NOT been checked against RECOMP's own protocol — it is demoted as non-load-bearing, NOT declared false.** **"We introduce query-conditioned summarisation of retrieved evidence" is unclaimable.** |
 | **LLMLingua** | 2023 | **EMNLP 2023 (main)**, Anthology `2023.emnlp-main.825`, DOI `10.18653/v1/2023.emnlp-main.825` | Coarse-to-fine budget-controlled prompt compression with a small LM's perplexity signal. | Token-deletion compression, task-agnostic. No notes, no faithfulness read-out. |
 | **LongLLMLingua** | 2024 | **ACL 2024 (main, long)**, Anthology `2024.acl-long.91` | Question-aware coarse-to-fine compression for long context. | ⚠️ **Owns "query-aware compression".** Still deletion-based, still no unsupported-claim metric. |
 | **LLMLingua-2** | 2024 | **Findings of ACL 2024**, Anthology `2024.findings-acl.57` (⚠️ DBLP prints `venue=ACL` — wrong) | Data-distilled task-agnostic compression, and the title's own word is **"Faithful"**. | ⚠️ **The word "faithful compression" is taken.** Difference: its faithfulness is *token-level fidelity to the source* on compression benchmarks; B08's `U` is a **downstream unsupported-claim rate on the reader's answer** with the notes as sole context. Adjacent, not identical — but the phrasing must be careful. |
@@ -97,7 +97,7 @@ already forbids framing leg 1 as a retrieval contribution.
 | **ALCE — Enabling LLMs to Generate Text with Citations** | 2023 | **EMNLP 2023 (main)**, Anthology `2023.emnlp-main.398` | Benchmark + metrics for **citation precision/recall** in generated text: is each claim supported by the cited passage? | ⚠️ **This is the closest thing to B08's `U` metric that has a venue.** Difference: ALCE scores *citation attribution* of a final answer against a retrieved corpus. `U` scores whether a claim is absent from **that arm's own context**, which is a per-arm-conditional denominator (that conditioning is what makes the notes-only arm interpretable). **B08 must build `U` on ALCE/NLI-entailment machinery and say so, not present it as a new metric family.** |
 | **FActScore** | 2023 | **EMNLP 2023 (main)**, Anthology `2023.emnlp-main.741` | Atomic-fact decomposition + per-fact support checking against a knowledge source. | Same disposition: the **method** for computing `U` already exists. **"No faithfulness scorer exists anywhere in the tree"** (`STATUS.json` blocker 3) is true of **our repo**, not of the literature. Those are different statements and the write-up must not blur them. |
 | **SummaC** | 2022 | **TACL 2022**, DBLP `journals/tacl/LabanSBH22`, DOI `10.1162/tacl_a_00453` | NLI-based sentence-level inconsistency detection for summarisation. | The classical instrument for "did the summary invent something". Ditto. |
-| **Retain or Consolidate? Budget-Dependent Operator Selection for Language Agent Memory** | 2026-07-20 | `arXiv:2607.17545`; DBLP **CoRR 2026** → **arXiv-only** | ⚠️⚠️⚠️ Formalises exactly leg 1's trade-off: **retention (raw records, exact detail, may not fit) vs consolidation (compress/combine, better coverage per token, risks losing query-critical detail)**; decomposes each operator's utility into a *coverage effect on omitted evidence* + a *signed replacement effect on raw evidence that already fits*; learns the choice (OAS) with **held-out harm calibration**. Evaluated **on public LongMemEval and LoCoMo**, reporting up to **+48% absolute accuracy** from consolidation under tight budgets and retention preferable under loose ones. | ⚠️ **The single most dangerous paper for leg 1, and it is CONCURRENT (2026-07 vs our prereg 2026-08-14) so it cannot preempt.** But it does foreclose a lot: the raw-vs-notes trade-off framing, the budget-dependence, and the LongMemEval workload are all taken, **with a learner on top**. What it does **not** do: (a) it never pins retrieval at a **measured** `any_hit = 1.000`, so its deltas mix retrieval with composition — the exact confound B08's stratum was chosen to remove; (b) its harm signal is a *calibrated utility estimate*, **not a measured unsupported-claim rate on a notes-only arm**; (c) it does not run notes-only-vs-raw as a paired faithfulness contrast. **Leg 1's residual claim must be stated against this paper explicitly, and it shrinks to (a)+(b).** |
+| **Retain or Consolidate? Budget-Dependent Operator Selection for Language Agent Memory** | 2026-07-20 | `arXiv:2607.17545`; DBLP **CoRR 2026** → **arXiv-only** | ⚠️⚠️⚠️ Formalises exactly leg 1's trade-off: **retention (raw records, exact detail, may not fit) vs consolidation (compress/combine, better coverage per token, risks losing query-critical detail)**; decomposes each operator's utility into a *coverage effect on omitted evidence* + a *signed replacement effect on raw evidence that already fits*; learns the choice (OAS) with **held-out harm calibration**. Evaluated **on public LongMemEval and LoCoMo**, reporting up to **+48% absolute accuracy** from consolidation under tight budgets and retention preferable under loose ones. | ⚠️ **The single most dangerous paper for leg 1, and it is CONCURRENT (2026-07 vs our prereg 2026-08-14) so it cannot preempt.** But it does foreclose a lot: the raw-vs-notes trade-off framing, the budget-dependence, and the LongMemEval workload are all taken, **with a learner on top**. What it does **not** do: ⛔ **(a) IS STRUCK — FALSE. See §13.1: ROC's Setup supplies GOLD EVIDENCE to every arm, i.e. recall 1.000 by construction. Struck text retained below for provenance:** ~~(a) it never pins retrieval at a **measured** `any_hit = 1.000`, so its deltas mix retrieval with composition — the exact confound B08's stratum was chosen to remove;~~ (b) its harm signal is a *calibrated utility estimate*, **not a measured unsupported-claim rate on a notes-only arm**; (c) it does not run notes-only-vs-raw as a paired faithfulness contrast. **Leg 1's residual claim must be stated against this paper explicitly, and it shrinks to (a)+(b).** ⛔ **§13.1 — CORRECTED: it shrinks to (b) ALONE, not (a)+(b). (a) is STRUCK above as FALSE, so this sentence's own arithmetic no longer holds as written; leaving it would let a reader restore the falsified conjunct from the summary line. (c) is a true statement about ROC but is not a differentiator of leg 1 — it is the same notes-only contrast that (b) already names.** |
 | **LongMemEval-V2** | 2026-05 | `arXiv:2605.12493`, **arXiv-only** | Web-agent memory benchmark (451 questions, ≤500 trajectories, 115M tokens); "context gathering" formulation; **AgentRunbook-R** keeps knowledge pools of raw observations, events **and strategy notes**. | This is the source our own `compressor.py:8` credits for the notes+raw pattern. **The architecture is credited prior art inside our own repository. Nothing in leg 1 may claim it.** |
 
 ### 3.4 Leg 1 — what still blocks it, and it is not literature
@@ -228,7 +228,7 @@ cutting it buys nothing. Leg 1 is the only leg with a residual methodological ga
   a replication on 78 items. Keep it folded, never gate it separately, never call it a design.
 - **Leg 1 = WE DID TOO LITTLE.** Chain-of-Note (EMNLP 2024), RECOMP (ICLR 2024) and
   Retain-or-Consolidate (`2607.17545`, concurrent) own the mechanism, but **not** the pairing of a
-  measured retrieval-closed stratum with a notes-only unsupported-claim contrast. That gap is real
+  measured retrieval-closed stratum with a notes-only unsupported-claim contrast. ⛔ **§13.2 — SUPERSEDED: the *pairing* is no longer the claimed gap. The retrieval-closed stratum is a PRECONDITION (ROC and WhenLoss both close retrieval, one by oracle construction). What remains unoccupied is the notes-only unsupported-claim contrast ALONE.** That gap is real
   and the reason it is unmeasured is that **two of our own arms do not exist yet** (§3.4).
 
 ---
@@ -300,6 +300,31 @@ into the sentence below via the `knowledge-update` cell, and leg 3's does not ex
 > CI entirely above 0, while `Δ_aug = ACC(notes+raw) − ACC(raw)` does not require notes to beat
 > raw for the claim to hold.**
 
+⛔ **§13.4 — MANDATORY SCOPE CLAUSE ON THE SENTENCE ABOVE (single reader).** The
+gate reads out at **exactly one reader**, `models/Meta-Llama-3-8B`
+(`next_gate.frozen_across_arms`). `arXiv:2606.21807` measures, on **LongMemEval-S
+itself**, that generic summarisation **flips 31% of pairwise model rankings**, and
+that compression gain **shrinks as the reader gets stronger** (9/10 settings
+p<0.05 over 20 readers). Therefore the sentence above is, as written, a claim
+about **notes at Meta-Llama-3-8B's competence**, not a claim about notes. Until a
+second reader is run, every `Δ_aug` and `Δ_sub` number from this gate MUST be
+reported with that qualifier attached, and no reader-independent generalisation
+may be drawn from it. `Δ_U` is *less* exposed (it is scored against each arm's own
+context, not against a reader-strength-dependent accuracy ceiling) but is not
+immune, because U is measured on text this one reader generated.
+
+⛔ **§13.3 — `Δ_U` IS THE SOLE DECISIVE CLAUSE.** Of prereg 5.6's three survival
+branches, only the `Δ_U` branch is unoccupied: `arXiv:2606.27472` (Supersede)
+already measured the `Δ_sub` direction on 78 of this stratum's 134 items
+(92%→77%, paired McNemar p=0.0033), in the OPPOSITE direction to prereg 5.6's
+"~30x context reduction at no accuracy cost". `Δ_sub` may therefore be reported
+only as a replication under a different closure regime, never as a finding.
+
+⚠ **§13.5 — the `Δ_U` PASS threshold is written three non-equivalent ways in this
+proposal. Do not score until the owner picks one.** See §13.5.
+
+⛔ **§13.7 CORRECTS THE LINE ABOVE, AND THE CORRECTION LANDS ON THIS VERY BLOCKQUOTE.** It is **two** spellings, not three — and **the blockquote directly above is the outlier**. It states PASS as *"exceeds +5.0 pp with a 95% paired-bootstrap CI entirely above 0"*, i.e. `point > +5.0 AND lo > 0`. The pre-registration of record (`B08_LEG1_GATE_PREREG.md` §5.6), the machine-read `STATUS.json.next_gate.decidable_outcome`, and §3.1 all say `CI entirely above +5.0 pp`, i.e. `lo > +5.0` — **strictly stronger**. So this blockquote can call a result a PASS that the pre-registration calls a FAIL (worked case in §13.7). **Score against prereg 5.6, not against this blockquote, until the owner reconciles them.**
+
 **Why this is falsifiable and can lose** (the gate is two-sided, `kill_gate.falsifiability_worked_example`):
 KILL iff **all three** fire — K1 `Δ_aug` CI contains 0 (i.e. < 10.82 pp MDE at n=134, disc=0.20),
 K2 `Δ_U` CI upper bound < +5.0 pp, K3 `Δ_sub` CI not entirely above −2.0 pp. Then notes merely
@@ -314,7 +339,7 @@ the stratum is **mandatorily** extended to n=500 (4.31 GPU-h). The escalation is
 n-hack.
 
 **What differentiates this sentence from the closest three works, stated so a reviewer can check
-it in one line each:** Chain-of-Note needs retrieval to be *noisy* (we pin it closed);
+it in one line each:** Chain-of-Note needs retrieval to be *noisy* (we pin it closed); ⛔ **§13.2 — "we pin it closed" is a precondition, not a difference: ROC/WhenLoss pin it too. The surviving one-line difference is that neither scores an unsupported-claim rate on a notes-withheld arm.**
 Retain-or-Consolidate estimates a *calibrated utility* (we measure an *unsupported-claim rate*);
 RECOMP optimises *accuracy at a budget* (we hold the budget fixed and vary only composition).
 
@@ -617,3 +642,246 @@ directly (`2026.acl-long` 5,079,040 B and `2026.acl-short` 210,861 B fetched, HT
 zero title matches for WhenLoss / Supersede / LazyMem / Reader-Scaling / Retain-or-Consolidate in the
 volumes fully retrieved. Per `memory/venue-verify-acl-family-needs-anthology.md` the Anthology is the
 ACL-family authority; **the Findings-ACL-2026 negative rests on DBLP alone and is labelled as such.**
+---
+
+## 13. REQUIRED NARROWING APPLIED (2026-08-17, fourth agent) — the four mandated edits, LANDED
+
+**0 GPU, 0 ssh, 0 network.** All four edits named in
+`STATUS.json.novelty_verdict.REQUIRED_NARROWING_four_edits_0_GPU` (and restated as
+`NOVELTY_VERDICT.md` §5.1) are applied by this section **plus in-place pointer
+markers at each live site**, because §12.1 already demonstrated that an appended
+declaration alone does not reach the reader.
+
+### 13.0 Mechanics, and the one convention this section bends on purpose
+
+§11 declares §1-§10 byte-stable and §12 declares §1-§11 byte-stable. Edit 1,
+however, says **STRIKE** (`NOVELTY_VERDICT.md` §5.1 item 1: "DELETE the
+differentiator"). A delete is by definition not an append, so the mandate and the
+convention are in direct conflict, and §12 resolved it by obeying the convention:
+it appended a paragraph saying the sentence "is hereby STRUCK" and left the
+sentence live, verbatim and unmarked, at line 100 — **426 lines above the
+paragraph that struck it**. A reviewer auditing leg 1's differentiators lands in
+§3, not in §12.
+
+This round resolves the conflict the other way, minimally and verifiably:
+
+* **INSERT-ONLY. Zero deletions, zero rewordings.** Eight short pointer markers
+  were inserted; not one original byte was removed or changed. The writer
+  (`proposal/shared/code/b08_apply_required_narrowing_20260817.py`) *proves* this:
+  it strips exactly the inserted marker strings from the result and asserts the
+  remainder is byte-identical to the pre-edit file
+  (59,799 B, sha256 `83fda7862862e8cd182077e1c042c7c9d201db7b93d5dd671dd7da34e52af5b4`).
+  So the original adjudication remains fully recoverable — which is what
+  byte-stability was protecting — while §3 now shows the strike.
+* Each anchor was asserted to occur **exactly once** before any write.
+* The one genuinely FALSE sentence is wrapped in `~~ ~~` so it renders struck.
+
+### 13.1 EDIT 1 — STRUCK: "ROC never pins retrieval at a measured `any_hit = 1.000`"
+
+**Site: §3.3, the `arXiv:2607.17545` (Retain or Consolidate?) row, differentiator
+(a).** Now marked ⛔ and wrapped in strikethrough in place.
+
+It is false, on ROC's own words, already quoted in §12.1: *"In the controlled
+evaluation, **every action receives the same gold evidence** and differs only in
+its budgeted representation. … This pairing **isolates the when–which decision
+from evidence discovery**."* Gold evidence to every arm is recall = 1.000 **by
+construction** — a *stronger* closure than B08's measured-1.000 stratum. So the
+"its deltas mix retrieval with composition" half of the differentiator is also
+false: ROC's controlled deltas do not mix them.
+
+**⚠ CORRECTION TO THE DISPATCH THAT COMMISSIONED THIS ROUND.** It stated that the
+same sentence is live "at :82 (RECOMP row)" as an "identical" instance and should
+get the same treatment. **The two are not equivalent and must not get the same
+marker.** §3.2's RECOMP row says RECOMP "never pins retrieval at a *measured*
+recall of 1.000". **Nobody in any round has read RECOMP's protocol to check
+that.** Marking it STRUCK/FALSE would manufacture a finding about an ICLR 2024
+paper from an unrelated paper's text. It therefore carries a **demotion** marker
+(§13.2's remit) with the non-verification stated inline. If a later round wants
+RECOMP's row adjudicated on the merits, that is a new literature task: read
+RECOMP §Experiments and check whether it reports a retrieval-recall figure at all.
+
+
+
+**⛔ Addendum (same session, found by sweeping for CONSEQUENCES of the strike).**
+The ROC row's own closing sentence — *"Leg 1's residual claim … shrinks to
+(a)+(b)"* — still cited the struck (a). Striking a sentence is not finished until
+the sentences that CITE it are reconciled, so that conclusion now carries a
+correction marker in place: **the residual claim shrinks to (b) ALONE.**
+(b) is "its harm signal is a *calibrated utility estimate*, not a measured
+unsupported-claim rate on a notes-only arm" — the `Δ_U` differentiator, which is
+exactly what §13.3 re-anchors the gate on. (c) — "it does not run notes-only-vs-raw
+as a paired faithfulness contrast" — is true of ROC but is not an independent
+differentiator: it is the same notes-only contrast (b) already names.
+
+A regex sweep of §1-§11 for statements dependent on the struck text
+(`\(a\)\+\(b\)`, `shrinks to`, `differentiator`, `retrieval-closed isolation`)
+returned exactly **two** live hits — §3.2's RECOMP row (already demoted, §13.1)
+and this one. Both are now marked; no third dependent statement exists in §1-§11.
+
+### 13.2 EDIT 2 — DEMOTED: the retrieval-closed stratum is a PRECONDITION, not a contribution
+
+Marked in place at four sites: §2's "Is the *measurement* prior art?" cell, §3.2
+(RECOMP row), §6 ("Leg 1 = WE DID TOO LITTLE"), and §8's one-line-each paragraph
+("we pin it closed").
+
+The stratum **stays in the design** — it is still the right cell, and the closure
+is measured at the gate's own `evidence_token_budget=4000`
+(`evidence/b08_prereg_corrections_20260814.json`: `knowledge-update` n=78
+`any_hit=1.0000`, `single-session-assistant` n=56 `any_hit=1.0000`, while overall
+falls to 0.9600 and `single-session-preference` to 0.7000, which is why that type
+is excluded). What changes is its **status in the argument**: it is a control that
+makes the read-out interpretable, not a novelty. Two concurrent works close
+retrieval on this very benchmark — ROC by oracle construction (§12.1) and WhenLoss
+via its OE condition (§12.2) — so "we isolate the composition axis by pinning
+retrieval" is not an available framing.
+
+The **one** sentence it still supports is a *provenance* difference, never a
+headline: closure here is **measured on the deployed BM25 retriever**, not
+**supplied by an oracle**. That is a statement about external validity (the
+closed regime is one the deployed system actually reaches on this stratum), and it
+is worth exactly one sentence.
+
+Note that §3.1 **already** contained the correct framing before this round — *"The
+retrieval premise is a constraint, not a win"*, citing
+`established_measurements.consequence_is_a_CONSTRAINT_not_a_win`. Edit 2 is
+therefore partly a consistency repair: §3.1 said precondition while §2/§3.3/§6/§8
+still said contribution.
+
+### 13.3 EDIT 3 — RE-ANCHORED: `Δ_U` is the sole decisive clause
+
+Landed as a marker on §3.1's PASS disjunction and as a full paragraph under §8's
+residual-claim blockquote.
+
+**⚠ SECOND CORRECTION TO THE DISPATCH.** It stated that this edit is unlanded
+because "§8's residual sentence still gives `Δ_aug` equal billing". **It does
+not.** The §8 blockquote already reads: *"`Δ_U` … exceeds +5.0 pp with a 95%
+paired-bootstrap CI entirely above 0, while `Δ_aug` … **does not require notes to
+beat raw for the claim to hold**."* `Δ_U` is already sole load-bearing *there*.
+
+The place that still grants `Δ_aug` co-decisive standing is **§3.1**:
+*"PASS on Δ_aug CI > 0 **or** Δ_U CI > +5.0 pp"* — a disjunction in which either
+clause alone passes the gate — and its upstream source
+`STATUS.json.next_gate.decidable_outcome`, which is worded the same way. That is
+where the marker went. Being precise about the site matters: an agent that
+"fixed" §8 would have changed a sentence that was already correct and left the
+actual disjunction standing.
+
+Substance (unchanged from `NOVELTY_VERDICT.md` §5.1 item 3): `arXiv:2606.27472`
+(Supersede) already measured the `Δ_sub` branch on 78 of this stratum's 134 items,
+in the opposite direction (92%→77%, paired McNemar p=0.0033), so `Δ_sub` is a
+replication and not a finding; `Δ_aug`'s branch is occupied by ROC/RECOMP/CoN as
+accuracy-at-a-budget; only `Δ_U` is unoccupied. **K2 is therefore the decisive
+kill clause, not one of three.**
+
+### 13.4 EDIT 4 — ADDED: the single-reader scope clause, in the gate's scope sentence
+
+Landed as a marked paragraph directly under §8's blockquote, which is the location
+`NOVELTY_VERDICT.md` §5.1 item 4 and §12.2's last row both name ("must be written
+into the gate's scope sentence").
+
+**This was genuinely absent, verified rather than assumed**: a grep over §8
+(lines 291–322 pre-edit) for `reader|competence|Llama-3-8B|scope|2606.21807`
+returned **zero hits**. `arXiv:2606.21807` appeared exactly once in the whole
+59,799-byte file, in §12.2's table — i.e. the design threat was *recorded* in the
+appendix and never *applied* to the claim.
+
+### 13.5 ⚠ NEW DEFECT FOUND WHILE PLACING EDIT 3: the `Δ_U` PASS threshold has three non-equivalent spellings
+
+⛔ **RETRACTED IN PART, SAME SESSION — see §13.7 for the corrected version.** The count below is WRONG: it is **two** distinct PASS predicates, not three, and `kill_gate` K2 is a **kill-side** clause that does not belong in a table of PASS thresholds. The underlying inconsistency is real but is narrower: §8's blockquote is a **lone outlier** against three concordant sources. Original text retained below unedited.
+
+Not previously recorded in any round, and **not resolved here** — resolving it
+would be a pre-registration change, which is the owner's call, not a writer's.
+
+| where | what it says about `Δ_U` | as a condition |
+|---|---|---|
+| `STATUS.json.next_gate.decidable_outcome` | "`Δ_U` … has a CI entirely above **+5.0 pp**" | PASS iff CI **lower** bound > +5.0 |
+| `STATUS.json.kill_gate` K2 | kill fires iff "`Δ_U` 95% CI **UPPER BOUND < +5.0 pp**" | K2 does not fire iff CI **upper** bound ≥ +5.0 |
+| `RELATED_WORK.md` §8 blockquote | "exceeds +5.0 pp with a 95% … **CI entirely above 0**" | PASS iff point est > +5.0 **and** CI lower bound > 0 |
+
+These are three different tests. Worked counterexample using the file's own
+plausible-PASS figure (`kill_gate.falsifiability_worked_example`,
+`Δ_U = +11.4 pp`, CI `[+6.2, +16.9]`): all three agree → PASS. Now perturb to
+`Δ_U = +6.0 pp`, CI `[+1.0, +11.0]`: `next_gate` says **FAIL** (lower bound 1.0 is
+not > 5.0); §8 says **PASS** (6.0 > 5.0 and 1.0 > 0); K2 does **not** fire (upper
+bound 11.0 ≥ 5.0), so the ALL-THREE kill branch is blocked and the gate is
+neither a pass nor a kill. **On that data the proposal has no verdict.** Note the
+two-sided gate is not symmetric here: "K2 does not fire" only blocks the KILL; it
+is not the same predicate as the PASS.
+
+Recommended repair (**for the owner, PRE-DATA**): make §8 and `next_gate` quote K2
+by reference instead of restating a threshold, so exactly one arithmetic
+definition exists. Doing this before any number is scored keeps it a clarification
+rather than an outcome-dependent choice.
+
+### 13.6 What this round did NOT do
+
+1. **It did not clear the gate's runnability.** ACC still does not exist:
+   `longmemeval/scoring.py:30-43` `write_submission` emits only
+   `{question_id, hypothesis}`, while `scripts/a02_judge_openweight.py:187-201`
+   keys on `item["id"]` and reads `pred` / `question` / `answers` / `category` /
+   `is_abstention`. Without an adapter, `Δ_aug` and `Δ_sub` are not computable
+   even after a card is booked. `Δ_U` is unaffected: `longmemeval/faithfulness.py`
+   consumes the `--context_log` records, which already carry every field it needs.
+   Full field-by-field mapping: `STATUS.json.judge_adapter_spec_20260817`.
+2. **It did not verify any asset on zwfy6.** `/apdcephfs_zwfy6` is **not mounted**
+   on this node (`ls -d` → "No such file or directory"; `mount` lists only
+   `/apdcephfs_wzc1*`) and ssh was barred. Every presence claim in this file stays
+   **wzc1-scoped**. `remaining_blockers_all_CPU[6]` is NOT closed and cannot be
+   closed without ssh.
+3. **It did not read RECOMP's protocol** (see §13.1's correction), so §3.2's row
+   is demoted, not adjudicated.
+4. **It did not re-run any literature search.** §12.3's negatives and §12.6's venue
+   verifications stand as they were; the `2026.findings-acl` gap flagged at the end
+   of §12.6 is still open.
+5. **It did not resolve §13.5**, by design.
+
+
+### 13.7 SELF-CORRECTION to §13.5 (same session): it is TWO spellings, not three, and §8 is the outlier
+
+§13.5 was written from *reading* the threshold sentences. I then *executed* them as
+predicates over `(point, lo, hi)` on a 108-point grid, and the reading was wrong in
+two ways. Both corrections make the defect **smaller and better localised**, not
+larger — recorded because a self-correction that shrinks my own finding is exactly
+the kind that does not get written down
+(`memory/state-direction-only-for-rows-you-computed.md`).
+
+**Error 1 — a units error.** `kill_gate` K2 (`Δ_U` 95% CI **upper** bound < +5.0 pp)
+is a **KILL-side** clause. §13.5 tabulated it as a third PASS threshold. Comparing a
+kill condition with pass conditions is a category error, and "K2 does not fire" is
+**not** the same predicate as "the gate passes" — it only blocks the ALL-THREE KILL.
+
+**Error 2 — the count, and the missing source.** §13.5 never checked
+`B08_LEG1_GATE_PREREG.md` §5.6, which is the **pre-registration of record**. It reads
+*"`ΔU` CI entirely **above +5.0 pp**"* — agreeing with `next_gate.decidable_outcome`
+and with §3.1. Adding it collapses the count:
+
+| written form | as a predicate | verdict |
+|---|---|---|
+| `B08_LEG1_GATE_PREREG.md` §5.6 — "CI entirely above +5.0 pp" | `lo > +5.0` | **pre-registration of record** |
+| `STATUS.json.next_gate.decidable_outcome` — "CI entirely above +5.0 pp" | `lo > +5.0` | concordant (machine-read) |
+| `RELATED_WORK.md` §3.1 — "Δ_U CI > +5.0 pp" | `lo > +5.0` | concordant |
+| `RELATED_WORK.md` §8 blockquote — "exceeds +5.0 pp with a 95% CI entirely above 0" | `point > +5.0` **and** `lo > 0` | ⛔ **LONE OUTLIER, strictly weaker** |
+
+**So: TWO distinct PASS predicates, 3-to-1, and the outlier is the sentence §8 calls
+the "safe residual claim" — the one a reviewer reads.** It is strictly weaker than
+the pre-registration, so it can declare a PASS the prereg calls a FAIL.
+
+**Worked case (predicates executed, not read).** `Δ_U = +6.0 pp`, CI `[+1.0, +11.0]`:
+§8 → **PASS** (6.0 > 5.0 and 1.0 > 0); prereg 5.6 / `next_gate` / §3.1 → **FAIL**
+(lo = 1.0 is not > 5.0); K2 → does not fire (hi = 11.0 ≥ 5.0), so no KILL either.
+Control: on prereg 5.7's own plausible-PASS figures (`Δ_U = +11.4`, CI `[+6.2, +16.9]`)
+**all four forms agree → PASS**, and on its plausible-KILL figures (`+0.7`,
+`[-2.6, +4.1]`) all four agree → not a pass, K2 fires. The divergence is confined to
+the band where `lo ∈ (0, 5.0]` and `point > 5.0`.
+
+**Also retracted from §13.5**: it called the divergent case *"the proposal has no
+verdict"* and framed that as part of the defect. That framing is wrong. A two-sided
+gate with an inconclusive middle band is **normal** and is what `kill_gate` already
+specifies (KILL iff ALL THREE; PASS on its own clause; neither ⇒ inconclusive). An
+inconclusive region is not a defect. **The only defect is the §8-vs-prereg
+disagreement.**
+
+**Repair, unchanged and still for the owner, PRE-DATA**: make §8's blockquote quote
+prereg §5.6 by reference instead of restating the arithmetic, so exactly one
+definition exists. Doing it before any number is scored keeps it a clarification
+rather than an outcome-dependent choice. **Until then, prereg 5.6 governs.**

@@ -1,0 +1,207 @@
+<svg width="1536" height="1024" viewBox="0 0 1536 1024" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .depth-label { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; }
+    .section-title { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; }
+    .model-label { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; }
+    .text-purple { fill: #6a0dad; }
+    .text-orange { fill: #ff8c00; }
+    .text-red { fill: #ff0000; }
+    .text-blue { fill: #0000ff; }
+    .text-black { fill: #000000; }
+    .text-green { fill: #006400; }
+    .text-pink { fill: #ff1493; }
+    .box-green { fill: #f0fff0; stroke: #006400; stroke-width: 2; rx: 8; ry: 8; }
+    .box-pink { fill: #fff0f5; stroke: #ff1493; stroke-width: 2; rx: 8; ry: 8; }
+    .layer { stroke: #000000; stroke-width: 1; }
+    .dashed-purple { stroke: #6a0dad; stroke-dasharray: 5,5; stroke-width: 2; }
+    .dashed-orange { stroke: #ff8c00; stroke-dasharray: 5,5; stroke-width: 2; }
+    .dashed-red { stroke: #ff0000; stroke-dasharray: 5,5; stroke-width: 2; }
+    .dashed-blue { stroke: #0000ff; stroke-dasharray: 5,5; stroke-width: 2; }
+    .solid-blue { stroke: #0000ff; stroke-width: 2; }
+    .solid-red { stroke: #ff0000; stroke-width: 2; }
+    .arrow { marker-end: url(#arrowhead); stroke-width: 2; }
+    .bracket { stroke: #888888; stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Section 1: Pretrained 32-layer model -->
+  <text x="300" y="40" class="section-title">1) Pretrained 32-layer model</text>
+  <text x="20" y="100" class="depth-label">Depth</text>
+
+  <!-- Pretrained 32L model stack -->
+  <g transform="translate(250, 100)">
+    <!-- Top 18 layers (discarded) -->
+    <g>
+      <rect x="0" y="0" width="100" height="360" fill="#f0f0f0" stroke="#000000" stroke-width="1"/>
+      <line x1="0" y1="20" x2="100" y2="20" class="layer"/>
+      <line x1="0" y1="40" x2="100" y2="40" class="layer"/>
+      <line x1="0" y1="60" x2="100" y2="60" class="layer"/>
+      <line x1="0" y1="80" x2="100" y2="80" class="layer"/>
+      <line x1="0" y1="100" x2="100" y2="100" class="layer"/>
+      <line x1="0" y1="120" x2="100" y2="120" class="layer"/>
+      <line x1="0" y1="140" x2="100" y2="140" class="layer"/>
+      <line x1="0" y1="160" x2="100" y2="160" class="layer"/>
+      <line x1="0" y1="180" x2="100" y2="180" class="layer"/>
+      <line x1="0" y1="200" x2="100" y2="200" class="layer"/>
+      <line x1="0" y1="220" x2="100" y2="220" class="layer"/>
+      <line x1="0" y1="240" x2="100" y2="240" class="layer"/>
+      <line x1="0" y1="260" x2="100" y2="260" class="layer"/>
+      <line x1="0" y1="280" x2="100" y2="280" class="layer"/>
+      <line x1="0" y1="300" x2="100" y2="300" class="layer"/>
+      <line x1="0" y1="320" x2="100" y2="320" class="layer"/>
+      <line x1="0" y1="340" x2="100" y2="340" class="layer"/>
+      <!-- Diagonal lines for hatching -->
+      <g stroke="#cccccc" stroke-width="0.5">
+        <line x1="0" y1="0" x2="100" y2="20"/>
+        <line x1="0" y1="20" x2="100" y2="40"/>
+        <line x1="0" y1="40" x2="100" y2="60"/>
+        <line x1="0" y1="60" x2="100" y2="80"/>
+        <line x1="0" y1="80" x2="100" y2="100"/>
+        <line x1="0" y1="100" x2="100" y2="120"/>
+        <line x1="0" y1="120" x2="100" y2="140"/>
+        <line x1="0" y1="140" x2="100" y2="160"/>
+        <line x1="0" y1="160" x2="100" y2="180"/>
+        <line x1="0" y1="180" x2="100" y2="200"/>
+        <line x1="0" y1="200" x2="100" y2="220"/>
+        <line x1="0" y1="220" x2="100" y2="240"/>
+        <line x1="0" y1="240" x2="100" y2="260"/>
+        <line x1="0" y1="260" x2="100" y2="280"/>
+        <line x1="0" y1="280" x2="100" y2="300"/>
+        <line x1="0" y1="300" x2="100" y2="320"/>
+        <line x1="0" y1="320" x2="100" y2="340"/>
+        <line x1="0" y1="340" x2="100" y2="360"/>
+      </g>
+    </g>
+
+    <!-- Middle 2 layers (OLMo answer-letter readout) -->
+    <g>
+      <rect x="0" y="360" width="100" height="40" fill="#ffeb99" stroke="#000000" stroke-width="1"/>
+      <line x1="0" y1="380" x2="100" y2="380" class="layer"/>
+    </g>
+
+    <!-- Bottom 12 layers (inherited) -->
+    <g>
+      <rect x="0" y="400" width="100" height="240" fill="#e6f2ff" stroke="#000000" stroke-width="1"/>
+      <line x1="0" y1="420" x2="100" y2="420" class="layer"/>
+      <line x1="0" y1="440" x2="100" y2="440" class="layer"/>
+      <line x1="0" y1="460" x2="100" y2="460" class="layer"/>
+      <line x1="0" y1="480" x2="100" y2="480" class="layer"/>
+      <line x1="0" y1="500" x2="100" y2="500" class="layer"/>
+      <line x1="0" y1="520" x2="100" y2="520" class="layer"/>
+      <line x1="0" y1="540" x2="100" y2="540" class="layer"/>
+      <line x1="0" y1="560" x2="100" y2="560" class="layer"/>
+      <line x1="0" y1="580" x2="100" y2="580" class="layer"/>
+      <line x1="0" y1="600" x2="100" y2="600" class="layer"/>
+      <line x1="0" y1="620" x2="100" y2="620" class="layer"/>
+    </g>
+
+    <!-- Labels and arrows -->
+    <text x="-150" y="20" class="text-purple">Next-token sat95<br/>~1.000L (OLMo)</text>
+    <line x1="-20" y1="20" x2="0" y2="20" class="dashed-purple"/>
+    <polygon points="-20,17 -25,20 -20,23" fill="#6a0dad"/>
+
+    <text x="-150" y="380" class="text-orange">OLMo answer-letter readout<br/>0.562–0.594L</text>
+    <line x1="-20" y1="380" x2="0" y2="380" class="dashed-orange"/>
+    <polygon points="-20,377 -25,380 -20,383" fill="#ff8c00"/>
+
+    <text x="-150" y="500" class="text-red">Prune cut<br/>14/32 = 0.44L</text>
+    <line x1="-20" y1="500" x2="0" y2="500" class="dashed-red"/>
+    <polygon points="-20,497 -25,500 -20,503" fill="#ff0000"/>
+
+    <text x="-150" y="620" class="text-blue">Semantic sat95<br/>~0.073L (OLMo)</text>
+    <line x1="-20" y1="620" x2="0" y2="620" class="dashed-blue"/>
+    <polygon points="-20,617 -25,620 -20,623" fill="#0000ff"/>
+
+    <!-- Bracket for discarded layers -->
+    <path d="M110,0 L110,360" class="bracket"/>
+    <path d="M110,360 L120,360" class="bracket"/>
+    <path d="M120,360 L120,0" class="bracket"/>
+    <path d="M120,0 L110,0" class="bracket"/>
+    <text x="130" y="180" class="text-black">discarded<br/>pretrained<br/>layers</text>
+
+    <!-- Label at bottom -->
+    <text x="0" y="660" class="model-label">Pretrained 32L</text>
+  </g>
+
+  <!-- Section 2: Pruned & regrown 16-layer model -->
+  <text x="700" y="40" class="section-title">2) Pruned &amp; regrown<br/>16-layer model</text>
+
+  <!-- Compressed 16L model stack -->
+  <g transform="translate(700, 400)">
+    <!-- Top 2 layers (fresh) -->
+    <g>
+      <rect x="0" y="0" width="100" height="40" fill="#ffeb99" stroke="#000000" stroke-width="1"/>
+      <line x1="0" y1="20" x2="100" y2="20" class="layer"/>
+    </g>
+
+    <!-- Bottom 14 layers (inherited) -->
+    <g>
+      <rect x="0" y="40" width="100" height="280" fill="#e6f2ff" stroke="#000000" stroke-width="1"/>
+      <line x1="0" y1="60" x2="100" y2="60" class="layer"/>
+      <line x1="0" y1="80" x2="100" y2="80" class="layer"/>
+      <line x1="0" y1="100" x2="100" y2="100" class="layer"/>
+      <line x1="0" y1="120" x2="100" y2="120" class="layer"/>
+      <line x1="0" y1="140" x2="100" y2="140" class="layer"/>
+      <line x1="0" y1="160" x2="100" y2="160" class="layer"/>
+      <line x1="0" y1="180" x2="100" y2="180" class="layer"/>
+      <line x1="0" y1="200" x2="100" y2="200" class="layer"/>
+      <line x1="0" y1="220" x2="100" y2="220" class="layer"/>
+      <line x1="0" y1="240" x2="100" y2="240" class="layer"/>
+      <line x1="0" y1="260" x2="100" y2="260" class="layer"/>
+      <line x1="0" y1="280" x2="100" y2="280" class="layer"/>
+      <line x1="0" y1="300" x2="100" y2="300" class="layer"/>
+    </g>
+
+    <!-- Label at bottom -->
+    <text x="0" y="340" class="model-label">Compressed 16L</text>
+
+    <!-- Bracket for inherited layers -->
+    <path d="M-10,40 L-10,320" class="bracket"/>
+    <path d="M-10,320 L-20,320" class="bracket"/>
+    <path d="M-20,320 L-20,40" class="bracket"/>
+    <path d="M-20,40 L-10,40" class="bracket"/>
+    <text x="-40" y="180" class="text-blue">14 inherited</text>
+
+    <!-- Arrow from Pruned 32L to Compressed 16L -->
+    <line x1="120" y1="200" x2="680" y2="200" class="solid-red"/>
+    <polygon points="680,197 685,200 680,203" fill="#ff0000"/>
+    <text x="250" y="190" class="text-red">Prune at 14/32<br/>+ 2 fresh layers</text>
+  </g>
+
+  <!-- Section 3: Post-healing outcomes -->
+  <text x="1100" y="40" class="section-title">3) Post-healing outcomes</text>
+
+  <!-- Box: Perplexity recovers -->
+  <rect x="1100" y="100" width="300" height="120" class="box-green"/>
+  <text x="1110" y="120" class="text-green" font-weight="bold">Perplexity recovers</text>
+  <text x="1110" y="140" class="text-green">PPL 10.561 vs. 7.398</text>
+  <text x="1110" y="160" class="text-green">1.428× tax @ 200k</text>
+
+  <!-- Box: MMLU lags -->
+  <rect x="1100" y="250" width="300" height="120" class="box-pink"/>
+  <text x="1110" y="270" class="text-pink" font-weight="bold">MMLU lags</text>
+  <text x="1110" y="290" class="text-pink">Train all: 19.4%</text>
+  <text x="1110" y="310" class="text-pink">ShortGPT-16: 63.0%</text>
+  <text x="1110" y="330" class="text-pink">Random init: ≈0%</text>
+
+  <!-- Arrow: Heal on Dolmino -->
+  <line x1="800" y1="200" x2="1080" y2="200" class="solid-blue"/>
+  <polygon points="1080,197 1085,200 1080,203" fill="#0000ff"/>
+  <text x="850" y="190" class="text-blue">Heal<br/>on Dolmino</text>
+
+  <!-- Dashed arrows to outcomes -->
+  <line x1="1080" y1="200" x2="1100" y2="160" class="dashed-blue"/>
+  <polygon points="1100,157 1105,160 1100,163" fill="#0000ff"/>
+
+  <line x1="1080" y1="200" x2="1100" y2="280" class="dashed-blue"/>
+  <polygon points="1100,277 1105,280 1100,283" fill="#0000ff"/>
+
+  <!-- Depth axis at left -->
+  <line x1="20" y1="120" x2="20" y2="640" stroke="#888888" stroke-width="1" stroke-dasharray="5,5"/>
+  <polygon points="20,640 17,645 23,645" fill="#888888"/>
+  <text x="10" y="660" class="text-black">0 (input)</text>
+</svg>

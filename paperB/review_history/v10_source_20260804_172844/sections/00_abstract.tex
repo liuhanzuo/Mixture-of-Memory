@@ -1,0 +1,26 @@
+\begin{abstract}
+Perplexity and downstream performance can diverge after compression, but
+post-pruning recovery is still commonly summarized by a loss curve and a small
+set of endpoints. We present a \emph{multi-interface recovery audit} that
+jointly follows same-source perplexity, two MMLU scoring
+interfaces, and zero-shot closed-book QA while pairing them with an intact
+continued-pretraining control, a random null floor, and an alternative
+same-depth construction. On OLMo-2-7B, a 16-layer keep14+fresh2 model improves
+through 200k steps to PPL 10.561, yet reaches only .319 MMLU versus .605 for the
+intact base and remains 11.6--34.2 points behind on PopQA, TriviaQA, and
+NQ-open. Complete-option scoring raises keep14 by 6.48 points, but raises a
+fully random 16-layer model by 11.28 points to the same .360 content-score
+floor, showing why an interface gain needs a null baseline. At the same nominal
+depth and displayed 200k-step budget, ShortGPT reaches PPL 9.780 and is
+15.5 points stronger on letter MMLU but only 1.8 points stronger on content
+MMLU than keep14; this contrast jointly changes inherited-block count,
+non-contiguous selection, final-block retention, and fresh-tail use. It also
+improves all three closed-book tasks but remains far below the intact
+references. The likelihood ordering transfers to WikiText-103 and PG-19, while
+a 15.505B-token continuation-stream audit finds too little benchmark overlap
+to explain the gaps. The intact full32 branch remains much
+closer to the base over its available 25k horizon. Together, these findings
+establish a practical measurement lesson: recovery should be audited across
+likelihood, target behavior, evaluation interface, construction, budget, and
+run-level uncertainty rather than certified by perplexity improvement alone.
+\end{abstract}

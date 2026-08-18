@@ -1,0 +1,24 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{MMLU group} & $\boldsymbol{n}$ & \textbf{Base} &
+\textbf{full32} & \textbf{keep14} & \textbf{ShortGPT} \\
+\midrule
+STEM & 3,864 & .535 & .509 & .295 & .405 \\
+Humanities & 4,705 & .554 & .543 & .292 & .429 \\
+Social science & 3,077 & .709 & .690 & .341 & .551 \\
+Other & 2,396 & .685 & .670 & .379 & .576 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{The ShortGPT advantage spans all broad MMLU groups.}
+ShortGPT exceeds keep14 by 11.0, 13.6, 21.1, and 19.7 points, respectively.
+The largest differences occur in social science and Other rather than one
+isolated subject family. full32 is the 25k intact-CPT point; keep14 and
+ShortGPT are 200k endpoints.}
+\label{tab:group-construction}
+\end{table}

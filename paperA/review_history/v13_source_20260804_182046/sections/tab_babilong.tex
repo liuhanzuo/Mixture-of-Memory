@@ -1,0 +1,62 @@
+% BABILong full baseline grid under the unified evaluation protocol,
+% with n=100 examples per task--length cell.
+\begin{table}[!htbp]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llrrrrrrrr@{}}
+\toprule
+\textbf{Method} & \textbf{Task}
+& \textbf{0k} & \textbf{1k} & \textbf{2k} & \textbf{4k}
+& \textbf{8k} & \textbf{16k} & \textbf{32k} & \textbf{Mean} \\
+\midrule
+\multirow{3}{*}{\textbf{CoMem + LoRA}}
+& qa1 & \textbf{98} & 80 & 68 & 68 & 46 & 17 & 12 & 55.6 \\
+& qa2 & 26 & 44 & 43 & 44 & 23 & 8 & 1 & 27.0 \\
+& qa5 & 68 & \textbf{76} & \textbf{76} & \textbf{75}
+      & 68 & \textbf{60} & \textbf{58} & \textbf{68.7} \\
+\midrule
+\multirow{3}{*}{CoMem frozen ($j{=}9$)}
+& qa1 & \textbf{98} & 59 & 71 & 57 & 7 & 1 & 4 & 42.4 \\
+& qa2 & 53 & 17 & 28 & 26 & 8 & 4 & 1 & 19.6 \\
+& qa5 & 70 & 74 & 65 & 60 & 41 & 39 & 40 & 55.6 \\
+\midrule
+\multirow{3}{*}{KV-Direct}
+& qa1 & \textbf{98} & \textbf{84} & 80 & \textbf{74}
+      & \textbf{80} & \textbf{72} & \textbf{63} & \textbf{78.7} \\
+& qa2 & \textbf{58} & 53 & \textbf{50} & 46
+      & \textbf{49} & \textbf{49} & \textbf{37} & \textbf{48.9} \\
+& qa5 & 71 & 73 & 62 & 59 & 65 & 42 & \textbf{58} & 61.4 \\
+\midrule
+\multirow{3}{*}{InfLLM}
+& qa1 & 97 & \textbf{84} & \textbf{81} & 72 & 69 & 52 & 34 & 69.9 \\
+& qa2 & 51 & \textbf{58} & 41 & 47 & 41 & 39 & 30 & 43.9 \\
+& qa5 & 69 & 68 & 63 & 66 & \textbf{73} & \textbf{60} & 55 & 64.9 \\
+\midrule
+\multirow{3}{*}{StreamingLLM}
+& qa1 & 97 & 83 & 80 & 71 & 23 & 27 & 12 & 56.1 \\
+& qa2 & 49 & 56 & 44 & \textbf{49} & 19 & 11 & 4 & 33.1 \\
+& qa5 & 68 & 65 & 68 & 65 & 39 & 47 & 34 & 55.1 \\
+\midrule
+\multirow{3}{*}{MemoryLLM$^{\dagger}$}
+& qa1 & 52 & 46 & 35 & 28 & 23 & 17 & 12 & 30.4 \\
+& qa2 & 37 & 29 & 17 & 18 & 21 & 17 & 11 & 21.4 \\
+& qa5 & 50 & 45 & 39 & 35 & 35 & 34 & 29 & 38.1 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{BABILong accuracy ($n{=}100$ per task--length cell), evaluated with
+the official \texttt{compare\_answers} scorer and \texttt{TASK\_LABELS}.
+Within the native context window, full-context KV-Direct is substantially
+stronger on qa1 and qa2, exposing the compression tax, whereas distilled CoMem
+achieves the highest qa5 mean, ahead of InfLLM (68.7 vs.\ 64.9).
+All methods are evaluated under the unified plain-text prompting protocol,
+with model-specific chat templating disabled
+(\texttt{chat\_template=False}).
+$^{\dagger}$MemoryLLM is the principal external persistent-memory reference and
+uses its released Llama-3-8B-chat checkpoint. Its different backbone precludes
+matched attribution. We retain the uniform no-chat row and make no
+prompt-sensitivity claim without a paper-retained matched table.}
+\label{tab:babilong}
+\end{table}

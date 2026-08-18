@@ -1,0 +1,42 @@
+% Downstream zero-shot MC + MMLU per arm (7B).
+% Source: PAPER_B_DATA.md secs. 3(b), 8.1--8.2.
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{@{}llccccccccccc@{}}
+\toprule
+\textbf{Arm} & \textbf{step} & \textbf{MMLU} & \textbf{HS} &
+\textbf{ARC-C} & \textbf{ARC-E} & \textbf{PIQA} & \textbf{WinoG} &
+\textbf{OBQA} & \textbf{LAMB.} & \textbf{BoolQ} & \textbf{CSQA} &
+\textbf{SIQA} \\
+\midrule
+7B base full (32L)       & ---    & \textbf{.6053} & .805 & .571 & .829 & .811 & .744 & .462 & .732 & .815 & .665 & .502 \\
+keep8 (10L)              & 121k   & \textbf{.2535} & .517 & .360 & .652 & .717 & .531 & .366 & .446 & .595 & .452 & .398 \\
+keep10 (12L)             & 83.5k  & \textbf{.2718} & .547 & .366 & .644 & .726 & .542 & .356 & .496 & .609 & .454 & .415 \\
+keep12 (14L)             & 124k   & \textbf{.2752} & .599 & .394 & .689 & .737 & .607 & .376 & .535 & .587 & .496 & .410 \\
+keep14 (16L)             & 128k   & \textbf{.3012} & .631 & .426 & .702 & .747 & .630 & .402 & .575 & .639 & .505 & .423 \\
+keep14 (16L)             & 153.5k & \textbf{.3124} & .643 & .442 & .705 & .745 & .633 & .406 & .570 & .606 & .506 & .441 \\
+keep14 (16L)             & 200k   & \textbf{.3191} & .645 & .438 & .705 & .745 & .626 & .404 & .577 & .638 & .499 & .434 \\
+ShortGPT-16              & 200k   & \textbf{.4739} & .685 & .476 & .746 & .758 & .655 & .408 & .619 & .729 & .534 & .442 \\
+frozen-front (16L)       & 200k   & \textbf{.2628} & .595 & .381 & .666 & .724 & .646 & .366 & .513 & .592 & .453 & .414 \\
+fully random-init (16L)  & 200k   & \textbf{.2461} & .578 & .414 & .697 & .733 & .545 & .384 & .484 & .614 & .450 & .416 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Downstream zero-shot likelihood scoring (7B).}
+\texttt{acc\_norm} is used for HS, ARC-C/E, PIQA, and OBQA; raw accuracy is
+used for MMLU, WinoG, LAMBADA, BoolQ, CSQA, and SIQA. Here \texttt{acc\_norm} means accuracy from continuation-length-normalized
+log-likelihood. Appendix Table~\ref{tab:app-metric-sensitivity} reports both raw
+and normalized views for the final three tasks. Abbreviations: HS = HellaSwag;
+ARC-C/E = ARC-Challenge/Easy; WinoG = WinoGrande; OBQA = OpenBookQA; LAMB. =
+LAMBADA; CSQA = CommonsenseQA; SIQA = SocialIQA.
+The prefix ladder places keep8 at MMLU chance and final keep14 at $19.4\%$
+above-chance recovery. ShortGPT-16 reaches $63.0\%$, but also inherits two more
+pretrained blocks and the original final layer. Frozen-front reaches only
+$3.6\%$, while fully random init remains at chance despite nontrivial scores
+elsewhere and similar raw BoolQ accuracy to keep14 ($.614$ vs.\ $.638$).
+The shallow prefix ladder uses unequal latest retained checkpoints and is not
+step- or compute-matched; keep14, ShortGPT, and the same-shape operating points are
+literal 200k evaluations.}
+\label{tab:downstream}
+\end{table*}

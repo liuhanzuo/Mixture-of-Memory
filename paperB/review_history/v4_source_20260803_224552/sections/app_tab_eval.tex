@@ -1,0 +1,30 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llrrl@{}}
+\toprule
+\textbf{Task} & \textbf{split / mode} & $\boldsymbol{n}$ &
+\textbf{chance} & \textbf{metric} \\
+\midrule
+HellaSwag & validation, 4-choice & 10,042 & .25 & acc\_norm \\
+ARC-Challenge & test, 4-choice & 1,172 & .25 & acc\_norm \\
+ARC-Easy & test, 4-choice & 2,376 & .25 & acc\_norm \\
+PIQA & validation, 2-choice & 1,838 & .50 & acc\_norm \\
+WinoGrande & validation, 2-choice cloze & 1,267 & .50 & accuracy \\
+OpenBookQA & test, 4-choice & 500 & .25 & acc\_norm \\
+MMLU & test, 57 subjects, 4-choice letters & 14,042 & .25 & accuracy \\
+LAMBADA-OpenAI & test, greedy final word & 5,153 & $\approx0$ & exact greedy accuracy \\
+BoolQ & validation, yes/no & 3,270 & .50 & accuracy \\
+CommonsenseQA & validation, 5-choice & 1,221 & .20 & accuracy \\
+SocialIQA & validation, 3-choice & 1,954 & .333 & accuracy \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Evaluation suite and chance floors.} All tasks are zero-shot
+and likelihood scored; no free-form generation or chat template is used.
+\texttt{acc\_norm} selects answers after dividing candidate log-likelihood by
+continuation character length. All listed examples are evaluated.}
+\label{tab:app-eval}
+\end{table}

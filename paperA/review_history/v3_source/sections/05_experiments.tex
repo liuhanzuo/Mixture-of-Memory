@@ -1,0 +1,117 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Experimental setup}
+\paragraph{Model and interface.}
+The principal backbone is Qwen3-8B~\citep{qwen3} (36 layers; exact revision in
+Appendix~\ref{app:reproducibility}). Unless stated otherwise, CoMem uses
+$j{=}12$, 512-token chunks, iterative BM25, top-12 retrieval, a BOS sink, and
+a rank-32 self-distillation LoRA on layers 12--35; the backbone is frozen.
+All methods use plain-text prompting with chat templating disabled. The
+selected pack is approximately 6.5k tokens.
+
+\paragraph{Evaluation.}
+We report RULER~\citep{ruler}, BABILong~\citep{babilong}, LongEval
+~\citep{longchat}, six LongBench QA datasets~\citep{longbench}, and
+LoCoMo~\citep{locomo}. Distinct RULER cohorts are labeled and never pooled.
+LoCoMo uses the full 1,986-example set; semantic Judge is primary, with item and
+conversation-cluster bootstrap intervals plus an independent-judge audit.
+Appendices~\ref{app:tasks}--\ref{app:statistics} give every cell, sample count,
+prompt, aggregation rule, and integrity check.
+
+\paragraph{Efficiency protocol.}
+We distinguish (i) selected-pack model Read, (ii) select-first online prefill
+after a persistent store exists, (iii) Write-inclusive pipeline time, and
+(iv) external-store/index costs. Hardware and timing boundaries are reported
+with each table; numbers from different cohorts are not mixed into a causal
+speedup.
+
+\subsection{The matched depth-reuse frontier}
+\input{sections/tab_core_tradeoff}
+
+Table~\ref{tab:core-tradeoff} is the central comparison. Raw-text replay
+($j{=}0$) and CoMem receive the same selected chunks in the same order and use
+the same sink, mask, examples, and LoRA. Skipping the lower 12 layers reduces
+fixed-pack Read from 931.9 to 664.4\,ms ($1.403\times$), but lowers the RULER
+macro from 99.19 to 96.07. CoMem is therefore not quality preserving. The
+continuous-prefix control exactly matches $j{=}0$, showing that the upper-layer
+continuation implementation can reproduce replay when supplied states from a
+single lower-layer forward. Because this control jointly restores document,
+cross-chunk, and query-side lower-layer interactions, it does not by itself
+identify which interaction explains every deployable error.
+
+Across broader benchmarks, matched $j{=}0$ is also the quality ceiling on most
+tasks: it scores 97.2 versus 69.0 on LongEval, 41.59 versus 38.27 on LoCoMo,
+and 12.31 versus 12.15 on the six LongBench QA datasets. CoMem is stronger on
+BABILong qa5 but weaker on qa1/qa2. These results motivate a workload question,
+not a dominance claim: when does avoiding repeated lower-layer computation
+justify the fidelity and storage costs?
+
+\subsection{When does prepaid depth reuse amortize?}
+The residual store costs 8,192 bytes/token in bf16---about 1\,GiB at 128k and
+8.2\,GB at one million tokens---versus a few bytes/token for raw token IDs.
+Serving measurements explicitly write a document once and answer repeated
+queries from GPU- or CPU-resident storage. At 32k, CoMem overtakes raw-text
+replay after approximately 8--11 queries across the measured generation
+lengths; at 128k with one generated token, crossover is 25.8 queries for a
+GPU-resident store and 27.6 for CPU-resident storage. The advantage appears only
+under reuse; for one-off queries, raw-text replay is cheaper.
+
+\input{sections/tab_online_prefill}
+
+Table~\ref{tab:online-prefill} reports a different operating point: the
+persistent store already exists and selection bounds the online working set.
+At 128k, CoMem prefills its 6,657-token pack in 1.10\,s and 18.7\,GB, versus
+71.37\,s and 50.0\,GB for dense full-context prefill on the same H20. The
+$64.9\times$ speedup combines bounded selection with depth reuse; it must not be
+interpreted as the incremental benefit of depth alone. A separate same-adapter,
+Write-inclusive L20A cohort reaches $2.74\times$ at 128k while keeping peak
+memory near 18.5\,GB (Appendix~\ref{app:efficiency}).
+
+\subsection{What limits fidelity on multikey retrieval?}
+\input{sections/tab_write_context}
+
+The paired multikey diagnostic exposes one missing ingredient. Independent
+chunk writing reaches 92.5, whereas a document-contextual lower-layer control
+reaches 100.0 while using the same upper-layer Read interface. A 32-token
+left-overlap recovers six points to 98.5 with unchanged persistent storage and
+Read/decode work; 128 tokens reaches 99.0. A $2{\times}2$ factorization confirms
+that lower-layer attention scope is the larger tested effect: switching from chunk-local
+to document-contextual Write adds 7.5--12.0 points depending on position mode,
+whereas applying document-origin positions alone to chunk-local states reduces
+accuracy by 4.5 points. The factors interact, so we do not assign an additive
+causal decomposition. Within this diagnostic, adding context during Write is
+substantially more useful than merely remapping positions during Read; we do not
+assume the same attribution holds on every benchmark.
+
+\paragraph{Retrieval versus readout.}
+The conclusion is task dependent. On LongEval, BM25 recall is 97--100\% and
+raw-text replay is nearly perfect conditional on a hit; frozen residual replay
+fails, while distillation recovers only 64--76\% hit-conditional accuracy. On
+BABILong, dense and lexical retrieval both lose recall at longer contexts and
+the residual reader can fail even when evidence is retrieved. These
+decompositions explain why widening the evidence budget is not sufficient.
+
+\subsection{Equal-latency evidence budgets}
+\input{sections/tab_equal_latency}
+
+We pre-register a direct challenge: because CoMem replays fewer layers, can it
+read more chunks than raw-text replay at the same online latency and thereby
+win on quality? Under BM25, the answer is no on the evaluated cohort.
+Latency-only calibration selects raw-text top-10 against CoMem top-12; raw text
+then leads by 11.56 points. This negative result narrows the systems claim:
+CoMem reduces repeated computation, but its current residual interface does not
+uniformly convert the saved latency into superior task quality. A frozen
+BGE-large-en-v1.5 experiment further shows a complementary failure mode:
+dense-retrieval recall drops at long lengths even when the conditional reader
+remains strong (Appendix~\ref{app:ablations}).
+
+\subsection{Long-context and cross-model evidence}
+On matched $n{=}100$ RULER scaling, unextended CoMem remains usable through
+128k, scoring 98/93/99.0 on single-needle, multikey, and variable tracking;
+KV-Direct with YaRN scores 100/89/57.8 (Appendix~\ref{app:tasks}). These are synthetic length-extension stress tests,
+not evidence that CoMem is uniformly more accurate inside the backbone's native
+window. Additional appendices report LoCoMo scale trends, standard KV
+compression baselines with their full-prefill cost, and sparse-MoE ports.
+They support portability of the interface, but the strongest controlled claims
+remain the Qwen3-8B matched comparisons above.

@@ -1,0 +1,47 @@
+{
+  "run_utc": "2026-08-17T05:03:54Z",
+  "gpu_used": false,
+  "input": {
+    "path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/b03_g0_fixture_1B_keep7fresh2/step2.pt",
+    "bytes": 12181294367,
+    "n_param_groups": 4,
+    "reset_layer_params_with_both_moments_zero": 0,
+    "reset_layer_params_with_a_nonzero_moment": 22,
+    "nonreset_params_with_both_moments_zero": 0,
+    "nonreset_params_with_a_nonzero_moment": 80,
+    "reset_layer_step_values": [
+      2
+    ],
+    "nonreset_step_values": [
+      2
+    ],
+    "ckpt_step_field": 2,
+    "has_b03_reset_provenance": false
+  },
+  "surgical": {
+    "path": "/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/outputs/b03_g0_fixture_1B_keep7fresh2/step2_reset.pt",
+    "bytes": 12181304665,
+    "n_param_groups": 4,
+    "reset_layer_params_with_both_moments_zero": 22,
+    "reset_layer_params_with_a_nonzero_moment": 0,
+    "nonreset_params_with_both_moments_zero": 0,
+    "nonreset_params_with_a_nonzero_moment": 80,
+    "reset_layer_step_values": [
+      0
+    ],
+    "nonreset_step_values": [
+      2
+    ],
+    "ckpt_step_field": 2,
+    "has_b03_reset_provenance": true
+  },
+  "assertions": {
+    "input_reset_moments_were_NOT_already_zero": true,
+    "surgical_all_reset_moments_zero": true,
+    "surgical_nonreset_moments_untouched": true,
+    "surgical_reset_step_is_zero": true,
+    "surgical_nonreset_step_preserved": true,
+    "group_count_preserved_on_disk": true
+  },
+  "all_pass": true
+}

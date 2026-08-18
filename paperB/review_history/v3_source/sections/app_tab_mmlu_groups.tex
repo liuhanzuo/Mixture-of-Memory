@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Group} & $\boldsymbol{n}$ & \textbf{base} & \textbf{full32} & \textbf{keep14} & \textbf{ShortGPT} & \textbf{random} \\
+\midrule
+STEM & 3,864 & .534 & .507 & .294 & .405 & .236 \\
+Humanities & 4,705 & .555 & .542 & .299 & .428 & .252 \\
+Social science & 3,077 & .709 & .690 & .335 & .554 & .240 \\
+Other & 2,396 & .686 & .670 & .377 & .574 & .259 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Sample-weighted MMLU broad-group accuracy.} full32 is the 25k
+continued-full-model control; keep14, ShortGPT, and random are their reported
+200k endpoints. Group definitions follow the standard four-way MMLU taxonomy.}
+\label{tab:app-mmlu-groups}
+\end{table}

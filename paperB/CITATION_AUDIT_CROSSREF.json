@@ -1,0 +1,275 @@
+[
+  {
+    "key": "olmo2",
+    "title": "2 OLMo 2 Furious",
+    "crossref_status": "candidate",
+    "candidate": "Olmo",
+    "score": 22.327703
+  },
+  {
+    "key": "dolma",
+    "title": "Dolma: An Open Corpus of Three Trillion Tokens for Language Model Pretraining Research",
+    "crossref_status": "candidate",
+    "candidate": "Dolma: an Open Corpus of Three Trillion Tokens for Language Model Pretraining Research",
+    "score": 76.92909
+  },
+  {
+    "key": "hendrycks2021mmlu",
+    "title": "Measuring Massive Multitask Language Understanding",
+    "crossref_status": "candidate",
+    "candidate": "TurkishMMLU: Measuring Massive Multitask Language Understanding in Turkish",
+    "score": 41.529644
+  },
+  {
+    "key": "mallen2023popqa",
+    "title": "When Not to Trust Language Models: Investigating Effectiveness of Parametric and Non-Parametric Memories",
+    "crossref_status": "candidate",
+    "candidate": "When Not to Trust Language Models: Investigating Effectiveness of Parametric and Non-Parametric Memories",
+    "score": 65.70718
+  },
+  {
+    "key": "joshi2017triviaqa",
+    "title": "TriviaQA: A Large Scale Distantly Supervised Challenge Dataset for Reading Comprehension",
+    "crossref_status": "candidate",
+    "candidate": "TriviaQA: A Large Scale Distantly Supervised Challenge Dataset for\n            Reading Comprehension",
+    "score": 75.868034
+  },
+  {
+    "key": "kwiatkowski2019natural",
+    "title": "Natural Questions: A Benchmark for Question Answering Research",
+    "crossref_status": "candidate",
+    "candidate": "Natural Questions: A Benchmark for Question Answering                     Research",
+    "score": 48.803032
+  },
+  {
+    "key": "hellaswag",
+    "title": "HellaSwag: Can a Machine Really Finish Your Sentence?",
+    "crossref_status": "candidate",
+    "candidate": "HellaSwag: Can a Machine Really Finish Your Sentence?",
+    "score": 67.40846
+  },
+  {
+    "key": "arc",
+    "title": "Think You Have Solved Question Answering? Try ARC",
+    "crossref_status": "candidate",
+    "candidate": "Don’t think you have enough self-control? Try believing that you do",
+    "score": 34.048218
+  },
+  {
+    "key": "winogrande",
+    "title": "WinoGrande: An Adversarial Winograd Schema Challenge at Scale",
+    "crossref_status": "candidate",
+    "candidate": "WinoGrande: An Adversarial Winograd Schema Challenge at Scale",
+    "score": 64.45346
+  },
+  {
+    "key": "piqa",
+    "title": "PIQA: Reasoning about Physical Commonsense in Natural Language",
+    "crossref_status": "candidate",
+    "candidate": "PIQA: Reasoning about Physical Commonsense in Natural Language",
+    "score": 63.03545
+  },
+  {
+    "key": "lambada",
+    "title": "The LAMBADA Dataset: Word Prediction Requiring a Broad Discourse Context",
+    "crossref_status": "candidate",
+    "candidate": "The LAMBADA dataset: Word prediction requiring a broad discourse context",
+    "score": 67.94577
+  },
+  {
+    "key": "boolq",
+    "title": "BoolQ: Exploring the Surprising Difficulty of Natural Yes/No Questions",
+    "crossref_status": "candidate",
+    "candidate": "A Benchmark Suite of Japanese Natural Questions",
+    "score": 28.670898
+  },
+  {
+    "key": "openbookqa",
+    "title": "Can a Suit of Armor Conduct Electricity? A New Dataset for Open Book Question Answering",
+    "crossref_status": "candidate",
+    "candidate": "Can a Suit of Armor Conduct Electricity? A New Dataset for Open Book Question Answering",
+    "score": 73.71382
+  },
+  {
+    "key": "commonsenseqa",
+    "title": "CommonsenseQA: A Question Answering Challenge Targeting Commonsense Knowledge",
+    "crossref_status": "candidate",
+    "candidate": "Faithful Knowledge Graph Explanations in Commonsense Question Answering",
+    "score": 38.245205
+  },
+  {
+    "key": "socialiqa",
+    "title": "SocialIQA: Commonsense Reasoning about Social Interactions",
+    "crossref_status": "candidate",
+    "candidate": "Social IQa: Commonsense Reasoning about Social Interactions",
+    "score": 44.307533
+  },
+  {
+    "key": "gromov2024unreasonable",
+    "title": "The Unreasonable Ineffectiveness of the Deeper Layers",
+    "crossref_status": "candidate",
+    "candidate": "The unreasonable ineffectiveness of mathematics in economics",
+    "score": 28.119297
+  },
+  {
+    "key": "men2024shortgpt",
+    "title": "ShortGPT: Layers in Large Language Models are More Redundant Than You Expect",
+    "crossref_status": "candidate",
+    "candidate": "ShortGPT: Layers in Large Language Models are More Redundant Than You Expect",
+    "score": 76.46208
+  },
+  {
+    "key": "shortenedllama",
+    "title": "Shortened LLaMA: Depth Pruning for Large Language Models with Comparison of Retraining Methods",
+    "crossref_status": "candidate",
+    "candidate": "Z -Prunear: Post-Training Pruning of Large Language Models for Efficiency without Retraining",
+    "score": 34.495922
+  },
+  {
+    "key": "song2024sleb",
+    "title": "SLEB: Streamlining LLMs through Redundancy Verification and Elimination of Transformer Blocks",
+    "crossref_status": "candidate",
+    "candidate": "Band Selection Through Redundancy Elimination",
+    "score": 28.357742
+  },
+  {
+    "key": "yang2024laco",
+    "title": "LaCo: Large Language Model Pruning via Layer Collapse",
+    "crossref_status": "candidate",
+    "candidate": "LaCo: Large Language Model Pruning via Layer Collapse",
+    "score": 64.270355
+  },
+  {
+    "key": "siddiqui2024deeper",
+    "title": "A Deeper Look at Depth Pruning of LLMs",
+    "crossref_status": "candidate",
+    "candidate": "A Deeper Look at Anesthesia Depth",
+    "score": 30.714607
+  },
+  {
+    "key": "lu2024reassessing",
+    "title": "Reassessing Layer Pruning in LLMs: New Insights and Methods",
+    "crossref_status": "candidate",
+    "candidate": "Pruning via Merging: Compressing LLMs via Manifold Alignment Based Layer Merging",
+    "score": 25.291847
+  },
+  {
+    "key": "xia2024sheared",
+    "title": "Sheared LLaMA: Accelerating Language Model Pre-Training via Structured Pruning",
+    "crossref_status": "candidate",
+    "candidate": "Accelerating DNN Training with Structured Data Gradient Pruning",
+    "score": 35.372444
+  },
+  {
+    "key": "muralidharan2024compact",
+    "title": "Compact Language Models via Pruning and Knowledge Distillation",
+    "crossref_status": "candidate",
+    "candidate": "Compact Language Models via Pruning and Knowledge Distillation",
+    "score": 52.767986
+  },
+  {
+    "key": "deng2025drpruning",
+    "title": "DRPruning: Efficient Large Language Model Pruning through Distributionally Robust Optimization",
+    "crossref_status": "candidate",
+    "candidate": "DRPruning: Efficient Large Language Model Pruning through Distributionally Robust Optimization",
+    "score": 76.420074
+  },
+  {
+    "key": "blockpruner",
+    "title": "BlockPruner: Fine-grained Pruning for Large Language Models",
+    "crossref_status": "candidate",
+    "candidate": "BlockPruner: Fine-grained Pruning for Large Language Models",
+    "score": 62.735367
+  },
+  {
+    "key": "minitron",
+    "title": "LLM Pruning and Distillation in Practice: The Minitron Approach",
+    "crossref_status": "candidate",
+    "candidate": "SPADE: Structured Pruning and Adaptive Distillation for Efficient LLM-TTS",
+    "score": 27.965343
+  },
+  {
+    "key": "calibration2026",
+    "title": "Rethinking Layer Redundancy: Calibration Matters More Than Search in LLM Depth Pruning",
+    "crossref_status": "candidate",
+    "candidate": "Rethinking redox electrolyte design: Why diffusion layer ion exchange matters more than surface area",
+    "score": 31.979462
+  },
+  {
+    "key": "costcompression",
+    "title": "The Cost of Compression: Investigating the Impact of Compression on Parametric Knowledge in Language Models",
+    "crossref_status": "candidate",
+    "candidate": "The Cost of Compression: Investigating the Impact of Compression on Parametric Knowledge in Language Models",
+    "score": 54.631367
+  },
+  {
+    "key": "beyondperplexity",
+    "title": "Beyond Perplexity: Multi-dimensional Safety Evaluation of LLM Compression",
+    "crossref_status": "candidate",
+    "candidate": "Beyond Perplexity: Multi-dimensional Safety Evaluation of LLM Compression",
+    "score": 60.760857
+  },
+  {
+    "key": "jaiswal2024truth",
+    "title": "Compressing LLMs: The Truth Is Rarely Pure and Never Simple",
+    "crossref_status": "candidate",
+    "candidate": "Rarely Pure and Never Simple: Talking about Truth",
+    "score": 47.69443
+  },
+  {
+    "key": "meng2022locating",
+    "title": "Locating and Editing Factual Associations in GPT",
+    "crossref_status": "candidate",
+    "candidate": "Locating and Editing Factual Associations in GPT",
+    "score": 53.850143
+  },
+  {
+    "key": "geva2021transformer",
+    "title": "Transformer Feed-Forward Layers Are Key-Value Memories",
+    "crossref_status": "candidate",
+    "candidate": "Transformer Feed-Forward Layers Are Key-Value Memories",
+    "score": 57.311554
+  },
+  {
+    "key": "dai2022knowledge",
+    "title": "Knowledge Neurons in Pretrained Transformers",
+    "crossref_status": "candidate",
+    "candidate": "Knowledge Neurons in Pretrained Transformers",
+    "score": 41.523785
+  },
+  {
+    "key": "nostalgebraist2020logitlens",
+    "title": "Interpreting GPT: The Logit Lens",
+    "crossref_status": "candidate",
+    "candidate": "Interpreting logit models",
+    "score": 26.936302
+  },
+  {
+    "key": "tunedlens",
+    "title": "Eliciting Latent Predictions from Transformers with the Tuned Lens",
+    "crossref_status": "candidate",
+    "candidate": "Eliciting latent productivity",
+    "score": 25.78605
+  },
+  {
+    "key": "chuang2024dola",
+    "title": "DoLa: Decoding by Contrasting Layers Improves Factuality in Large Language Models",
+    "crossref_status": "candidate",
+    "candidate": "Decoding by Factual Prompts and Hallucination Prompts Improves Factuality in Large Language Models",
+    "score": 41.553093
+  },
+  {
+    "key": "layerskip",
+    "title": "LayerSkip: Enabling Early Exit Inference and Self-Speculative Decoding",
+    "crossref_status": "candidate",
+    "candidate": "LayerSkip: Enabling Early Exit Inference and Self-Speculative Decoding",
+    "score": 72.99348
+  },
+  {
+    "key": "qwen3",
+    "title": "Qwen3 Technical Report",
+    "crossref_status": "candidate",
+    "candidate": "Reconstructing Qwen3 into Qwen3-Protein: A Versatile Biophysics-Grounded Protein Language Foundation Model for PTMs and Downstream Tasks",
+    "score": 18.280615
+  }
+]

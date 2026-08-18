@@ -1,0 +1,131 @@
+% Paper B Figure 1: prune--re-grow--heal concept.
+% Load-bearing OLMo values:
+%   cut depth keep14 = 14/32 = 0.4375L
+%   knowledge onset/sat95 = 0.562L / 0.594L
+%   keep14 final PPL = 10.561 vs. base 7.398 (1.428x) at 200k
+%   MMLU above-chance recovery = 19.4%; ShortGPT-16 = 63.0%
+% Semantic and next-token depth markers are Qwen3 cross-model references (*).
+\begin{tikzpicture}[
+  font=\scriptsize,
+  >=Stealth,
+  line width=0.45pt,
+  result/.style={
+    draw=black!50,
+    rounded corners=2pt,
+    align=left,
+    inner sep=3.5pt,
+    text width=2.28cm
+  }
+]
+
+% ---------------------------------------------------------------------------
+% Geometry and measured depth locations.
+% ---------------------------------------------------------------------------
+\def\OW{0.72}    % original-stack width
+\def\OH{4.45}    % original-stack height = 32 pretrained layers
+\def\CX{3.05}    % x-position of compressed stack
+\def\CY{0.82}    % y-position of compressed stack
+\def\CW{0.72}
+\def\CH{2.23}    % visual half-height = 16/32
+
+\pgfmathsetmacro{\ySem}{0.13*\OH}
+\pgfmathsetmacro{\yCut}{0.4375*\OH}
+\pgfmathsetmacro{\yKnowA}{0.562*\OH}
+\pgfmathsetmacro{\yKnowB}{0.594*\OH}
+\pgfmathsetmacro{\yKnowMid}{(\yKnowA+\yKnowB)/2}
+\pgfmathsetmacro{\yNTP}{0.944*\OH}
+\pgfmathsetmacro{\cInherited}{\CY+14/16*\CH}
+\pgfmathsetmacro{\cTop}{\CY+\CH}
+
+% ---------------------------------------------------------------------------
+% Stage 1: original 32-layer model and its depth-localized functions.
+% ---------------------------------------------------------------------------
+\fill[blue!10] (0,0) rectangle (\OW,\yCut);
+\fill[gray!10] (0,\yCut) rectangle (\OW,\OH);
+\fill[pattern=north east lines, pattern color=gray!42]
+  (0,\yCut) rectangle (\OW,\OH);
+\fill[yellow!55, opacity=.90] (0,\yKnowA) rectangle (\OW,\yKnowB);
+
+\draw[black, line width=.7pt] (0,0) rectangle (\OW,\OH);
+\foreach \k in {1,...,7}{
+  \draw[gray!32, very thin] (0,\k*\OH/8) -- (\OW,\k*\OH/8);
+}
+\draw[red!70!black, densely dashed, line width=1pt]
+  (-.07,\yCut) -- (\OW+.07,\yCut);
+\draw[orange!80!black, thin] (0,\yKnowA) -- (\OW,\yKnowA);
+\draw[orange!80!black, thin] (0,\yKnowB) -- (\OW,\yKnowB);
+\draw[blue!60!black, densely dashed, thin] (0,\ySem) -- (\OW,\ySem);
+\draw[purple!70, densely dashed, thin] (0,\yNTP) -- (\OW,\yNTP);
+
+% Functional depth labels are kept in a dedicated left lane.
+\node[anchor=east, align=right, text=purple!70] at (-.16,\yNTP)
+  {next token$^{*}$\\$\sim0.94L$};
+\draw[->, purple!70, thin] (-.12,\yNTP) -- (-.01,\yNTP);
+
+\node[anchor=east, align=right, text=orange!80!black] at (-.16,\yKnowMid)
+  {knowledge\\$0.56$--$0.59L$};
+\draw[->, orange!80!black, thin] (-.12,\yKnowMid) -- (-.01,\yKnowMid);
+
+\node[anchor=east, align=right, text=blue!55!black] at (-.16,\ySem)
+  {semantics$^{*}$\\$\sim0.13L$};
+\draw[->, blue!55!black, thin] (-.12,\ySem) -- (-.01,\ySem);
+
+\node[rotate=90, text=gray!62, font=\tiny] at (\OW/2,3.55)
+  {discarded pretrained layers};
+\node[below, font=\scriptsize] at (\OW/2,-.12)
+  {\textbf{pretrained 32L}};
+
+% ---------------------------------------------------------------------------
+% Stage 1 -> Stage 2: prune at layer 14, then append two fresh layers.
+% ---------------------------------------------------------------------------
+\draw[->, line width=.85pt, red!65!black]
+  (\OW+.13,\yCut) -- (\CX-.18,\yCut);
+\node[above, align=center, font=\tiny, text=red!65!black]
+  at ({(\OW+\CX)/2},\yCut+.04)
+  {\textbf{prune at $14/32$}\\$+2$ fresh blocks};
+
+% ---------------------------------------------------------------------------
+% Stage 2: resulting half-depth model (14 inherited + 2 fresh).
+% ---------------------------------------------------------------------------
+\fill[blue!14] (\CX,\CY) rectangle (\CX+\CW,\cInherited);
+\fill[orange!28] (\CX,\cInherited) rectangle (\CX+\CW,\cTop);
+\draw[black, line width=.7pt] (\CX,\CY) rectangle (\CX+\CW,\cTop);
+\foreach \k in {1,2,3}{
+  \draw[gray!32, very thin]
+    (\CX,\CY+\k*\CH/4) -- (\CX+\CW,\CY+\k*\CH/4);
+}
+\draw[orange!75!black, thin]
+  (\CX,\cInherited) -- (\CX+\CW,\cInherited);
+
+\node[above, text=orange!80!black, font=\tiny]
+  at (\CX+\CW/2,\cTop+.03) {2 fresh};
+\node[rotate=90, text=blue!55!black, font=\tiny]
+  at (\CX+\CW/2,{(\CY+\cInherited)/2}) {14 inherited};
+\node[below, font=\scriptsize] at (\CX+\CW/2,\CY-.12)
+  {\textbf{compressed 16L}};
+
+% ---------------------------------------------------------------------------
+% Stage 3: healing branches into LM recovery and knowledge retention outcomes.
+% ---------------------------------------------------------------------------
+\node[result, fill=green!11, anchor=west] (ppl) at (6.08,3.28)
+  {\textbf{Perplexity recovers}\\
+   $10.561$ vs.\ $7.398$\\
+   ($1.428\times$ tax @ 200k)};
+
+\node[result, fill=red!8, anchor=west] (know) at (6.08,1.62)
+  {\textbf{Policy-dependent lag}\\
+   keep14: $19.4\%$\\
+   ShortGPT-16: $63.0\%$};
+
+\coordinate (fork) at (5.72,2.30);
+\draw[blue!60!black, line width=.85pt]
+  (\CX+\CW+.18,2.30) -- (fork);
+\draw[->, blue!60!black, line width=.85pt]
+  (fork) |- (ppl.west);
+\draw[->, blue!60!black, line width=.85pt]
+  (fork) |- (know.west);
+\node[above, fill=white, inner sep=1.2pt, text=blue!60!black,
+      align=center, font=\scriptsize]
+  at (4.77,2.46) {\textbf{heal on Dolmino}};
+
+\end{tikzpicture}

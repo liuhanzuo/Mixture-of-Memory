@@ -1,0 +1,133 @@
+{
+  "task": "B-P1.2 OOD-PPL + contamination audit (OLMo-2 prune-then-heal probe)",
+  "notes": [
+    "All PPL uses the released no-chat, no-BOS OLMo-2 evaluator and token-weighted aggregation.",
+    "WikiText-103 contains 288,627 target tokens; PG-19 contains 2,456,400 target tokens.",
+    "The contamination audit scans the exact 15.505B-token continuation stream without downsampling."
+  ],
+  "ood_ppl_table": [
+    {
+      "model": "base",
+      "indomain_dolmino": 7.3981,
+      "ood_wikitext103": 5.9969,
+      "ood_pg19": 10.175,
+      "rel_vs_base": {
+        "indomain_dolmino": 1.0,
+        "ood_wikitext103": 1.0,
+        "ood_pg19": 1.0
+      }
+    },
+    {
+      "model": "full32",
+      "indomain_dolmino": 7.6699,
+      "ood_wikitext103": 6.7654,
+      "ood_pg19": 10.7566,
+      "rel_vs_base": {
+        "indomain_dolmino": 1.037,
+        "ood_wikitext103": 1.128,
+        "ood_pg19": 1.057
+      }
+    },
+    {
+      "model": "keep14",
+      "indomain_dolmino": 10.5613,
+      "ood_wikitext103": 11.5562,
+      "ood_pg19": 15.4263,
+      "rel_vs_base": {
+        "indomain_dolmino": 1.428,
+        "ood_wikitext103": 1.927,
+        "ood_pg19": 1.516
+      }
+    },
+    {
+      "model": "shortgpt16",
+      "indomain_dolmino": 9.78,
+      "ood_wikitext103": 10.5841,
+      "ood_pg19": 14.4525,
+      "rel_vs_base": {
+        "indomain_dolmino": 1.322,
+        "ood_wikitext103": 1.765,
+        "ood_pg19": 1.42
+      }
+    },
+    {
+      "model": "random_init",
+      "indomain_dolmino": 11.4983,
+      "ood_wikitext103": 13.447,
+      "ood_pg19": 17.5434,
+      "rel_vs_base": {
+        "indomain_dolmino": 1.554,
+        "ood_wikitext103": 2.242,
+        "ood_pg19": 1.724
+      }
+    },
+    {
+      "model": "frozen_front",
+      "indomain_dolmino": 12.7973,
+      "ood_wikitext103": 13.6594,
+      "ood_pg19": 17.3542,
+      "rel_vs_base": {
+        "indomain_dolmino": 1.73,
+        "ood_wikitext103": 2.278,
+        "ood_pg19": 1.706
+      }
+    }
+  ],
+  "corpora": {
+    "indomain_dolmino": "data/dolmino_now_val.npy (8.38M tok)",
+    "ood_wikitext103": "data/ood_ppl/wikitext103_test.npy (289K tok, general/encyclopedic)",
+    "ood_pg19": "data/ood_ppl/pg19_test.npy (2.46M tok, long-form narrative books)"
+  },
+  "contamination": {
+    "method": "token 13/8-gram containment vs exact tokenized Dolmino continuation stream (15.505B tok), inverted single pass, no downsampling",
+    "thresholds": "CONTAMINATED>=0.80, CLEAN<0.10",
+    "per_benchmark": {
+      "mmlu": {
+        "n_questions": 14042,
+        "n13_CONTAMINATED": 267,
+        "n13_contam_rate": 0.01901,
+        "n13_keep": 13775,
+        "n8_CONTAMINATED": 484,
+        "n8_contam_rate": 0.03447
+      },
+      "popqa": {
+        "n_questions": 14267,
+        "n13_CONTAMINATED": 0,
+        "n13_contam_rate": 0.0,
+        "n13_keep": 14267,
+        "n8_CONTAMINATED": 10,
+        "n8_contam_rate": 0.0007
+      },
+      "triviaqa": {
+        "n_questions": 17944,
+        "n13_CONTAMINATED": 142,
+        "n13_contam_rate": 0.00791,
+        "n13_keep": 17802,
+        "n8_CONTAMINATED": 247,
+        "n8_contam_rate": 0.01377
+      },
+      "nq_open": {
+        "n_questions": 3610,
+        "n13_CONTAMINATED": 1,
+        "n13_contam_rate": 0.00028,
+        "n13_keep": 3609,
+        "n8_CONTAMINATED": 24,
+        "n8_contam_rate": 0.00665
+      }
+    },
+    "verdict": "negligible: worst-case MMLU 1.90% (n13)/3.45% (n8); TriviaQA 0.79%/1.38%; NQ 0.03%/0.66%; PopQA 0%/0.07%"
+  },
+  "mmlu_clean_recompute": {
+    "arms": "keep14 vs random(fromscratch)",
+    "n_common": 14042,
+    "keep14_full_acc_pct": 31.911,
+    "random_full_acc_pct": 24.612,
+    "keep14_clean_n13_acc_pct": 31.819,
+    "random_clean_n13_acc_pct": 24.617,
+    "gap_full_pp": 7.3,
+    "gap_clean_n13_pp": 7.201,
+    "gap_clean_n8_pp": 7.132,
+    "gap_change_n13_pp": -0.099,
+    "gap_change_n8_pp": -0.168
+  }
+}

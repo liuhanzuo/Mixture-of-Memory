@@ -1,0 +1,28 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Arm} & \textbf{MMLU} & \textbf{SE} & \textbf{approx.\ 95\% CI} \\
+\midrule
+full 7B base & .6053 & .0041 & $[.5972,.6134]$ \\
+keep8, 200k & .2535 & .0037 & $[.2463,.2607]$ \\
+keep10, 200k & .2718 & .0038 & $[.2644,.2792]$ \\
+keep12, 200k & .2752 & .0038 & $[.2678,.2826]$ \\
+keep14, 128k & .3012 & .0039 & $[.2936,.3088]$ \\
+keep14, 153.5k & .3124 & .0039 & $[.3047,.3201]$ \\
+keep14, 200k & .3191 & .0039 & $[.3114,.3268]$ \\
+ShortGPT-16, 200k & .4739 & .0042 & $[.4656,.4822]$ \\
+frozen-front, 200k & .2628 & .0037 & $[.2555,.2701]$ \\
+fully random init, 200k & .2461 & .0036 & $[.2390,.2532]$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Marginal MMLU uncertainty across the 7B frontier.} Standard
+errors and Wald intervals use $n=14{,}042$ questions. keep8 and
+fully random init include the $.25$ chance floor; keep10/keep12,
+frozen-front, all keep14 checkpoints, and ShortGPT are above it. These marginal intervals summarize each
+arm separately; Table~\ref{tab:paired-operating-points} gives the stronger item-paired
+three-control comparisons.}
+\label{tab:app-mmlu-ci}
+\end{table}

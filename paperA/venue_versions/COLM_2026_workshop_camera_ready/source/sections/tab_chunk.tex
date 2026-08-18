@@ -1,0 +1,25 @@
+% Chunk-size ablation, RULER niah_multikey, n=100, no chat template.
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrcccc@{}}
+\toprule
+\textbf{chunk} & \textbf{read tokens} & \textbf{uncached step} & \textbf{8k} & \textbf{16k} & \textbf{32k} & \textbf{64k} \\
+& & \textbf{(s/token)} & & & & \\
+\midrule
+128  & 1,665  & 0.19 & 91.0 & 90.0 & 81.0 & 85.0 \\
+256  & 3,329  & 0.37 & 80.0 & 90.0 & 90.0 & \textbf{94.0} \\
+512  & 6,657  & 0.72 & 89.0 & \textbf{95.0} & \textbf{97.0} & \textbf{94.0} \\
+1024 & 13,313 & 1.60 & \textbf{100.0} & 89.0 & 92.0 & \textbf{94.0} \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Chunk-size trade-off: observed RULER \texttt{niah\_multikey} accuracy
+($n{=}100$) and same-harness packed-step cost without a chat template. Cost is
+approximately linear in read length. It is an uncached full-pack diagnostic,
+not the deployed KV-cache decode in Table~\ref{tab:eff}. Accuracy differences
+are point estimates rather than a multi-seed stability claim.}
+\label{tab:chunk}
+\end{table}

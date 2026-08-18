@@ -1,0 +1,63 @@
+\section{Related Work}
+\label{sec:related}
+
+We position CoMem by the object that is stored, the scope over which it can be
+reused, and the computation performed after retrieval. Table~\ref{tab:priorart}
+summarizes representative interfaces; it is not an empirical ranking.
+
+\input{sections/tab_priorart}
+
+\paragraph{Token-axis KV reduction.}
+StreamingLLM retains a recent window and attention sinks
+~\citep{streamingllm}; H2O and SnapKV evict positions
+~\citep{h2o,snapkv}; PyramidKV, ZigZagKV, LCKV, and MiniCache redistribute,
+condense, or merge layer-wise states~\citep{pyramidkv,zigzagkv,lckv,minicache}.
+Query-aware systems such as Quest, RetrievalAttention, ACRE, FIER, A$^2$ATS,
+HeteroCache, and REAL dynamically retrieve or retain relevant KV
+~\citep{quest,retrievalattention,acre,fier,a2ats,heterocache,real}. These methods
+primarily optimize which \emph{tokens or KV entries} remain available. CoMem
+instead stores one intermediate residual per token and reconstructs the selected
+tokens' upper-layer computation. This depth partition is complementary to
+quantization, eviction, and heterogeneous storage.
+
+\paragraph{Intermediate activations and recomputation.}
+HCache checkpoints intermediate activations to restore evicted execution state
+~\citep{hcache}. KV-Direct reconstructs layer-wise KV from residuals but keeps
+the full token sequence~\citep{kvdirect}. ILRe uses intermediate-layer
+representations to retrieve tokens for context compression~\citep{ilre}.
+REFORM incrementally compresses context, gathers salient tokens, and recomputes
+their KV~\citep{reform}. These works make intermediate states a useful systems
+object. CoMem differs in the conjunction of \emph{cross-query persistence},
+\emph{independently written chunks}, \emph{bounded query-time selection}, and
+\emph{direct continuation from the corresponding depth}. We restrict our
+novelty claim to that interface combination.
+
+\paragraph{Reusable context and chunk caches.}
+CacheBlend, RAGCache, IMDC, and Cache-Craft reuse or repair cached states for
+retrieval-augmented serving~\citep{cacheblend,ragcache,imdc,cachecraft}.
+Cache-Craft is particularly close in workload: retrieved chunks recur across
+queries, but arbitrary context changes make their KV caches only partially
+reusable. It selectively recomputes cache regions to restore quality. CoMem
+stores a single residual tensor rather than layer-wise chunk KV and exposes
+split depth as an explicit reuse knob; our overlap-Write variant analogously
+shows that limited neighboring context can repair independently cached chunks.
+
+\paragraph{Learned and architectural memory.}
+MemoryLLM maintains a fixed-size latent pool, LongMem retrieves external states
+through a side network, and RecursiveSummarizing stores natural-language
+summaries~\citep{memoryllm,longmem,recsum}. YOCO and CEPE redesign the model to
+share or encode context efficiently~\citep{yoco,cepe}; Activation Beacon,
+KV-CAT, LLoCO, and IndexMem train compressible or compensating memory
+representations~\citep{actbeacon,kvcat,lloco,indexmem}. CoMem keeps the backbone
+frozen and trains only an optional interface LoRA. Its residual store grows
+linearly with the written corpus and is therefore not a constant-capacity memory.
+
+\paragraph{Raw-text retrieval.}
+Conventional RAG retrieves text and recomputes the reader
+~\citep{rag,xu2024retrievallong}. Our $j{=}0$ baseline is not intended to
+represent every RAG system: it fixes CoMem's selector, selected chunk order,
+sink, and attention mask, making it the direct endpoint of the depth axis.
+Dense-retriever experiments in the appendix show that realistic retrieval can
+introduce a separate recall bottleneck. The central comparison in this paper is
+therefore not ``memory versus RAG'' in general, but raw-text full-depth replay
+versus residual upper-layer continuation under the same evidence pack.

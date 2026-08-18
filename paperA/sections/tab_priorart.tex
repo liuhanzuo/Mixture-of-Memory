@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{@{}p{0.23\textwidth}p{0.22\textwidth}p{0.22\textwidth}p{0.21\textwidth}@{}}
+\toprule
+\textbf{Family} & \textbf{Stored state} & \textbf{Tunable axis} &
+\textbf{Online work} \\
+\midrule
+Text replay & token IDs & selection budget & all layers \\
+Activation reuse & intermediate / multi-layer states & matching / restoration & downstream or rebuilt layers \\
+Full-depth KV reuse & cached or learned KV & linking / repair & repair + decode \\
+\textbf{CoMem} & one residual / token & \textbf{split depth $j$} & suffix $[j{:}L)$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Compact positioning of reusable-context interfaces.}
+CoMem makes prepaid depth tunable and provides a matched $j{=}0$ endpoint;
+detailed distinctions appear in Appendix~\ref{app:systems}.}
+\label{tab:priorart}
+\end{table}

@@ -1,0 +1,25 @@
+% Same-pack, same-example, same-LoRA quality--latency control.
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Replay start} & \textbf{RULER} & \textbf{Read (ms)} & \textbf{p10} & \textbf{p90} \\
+\midrule
+$j{=}0$  & \textbf{99.19} & 931.9 & 931.6 & 942.0 \\
+$j{=}12$ & 96.07 & \textbf{664.4} & 663.8 & 667.1 \\
+\midrule
+Trade-off & $-3.12$ pt & \multicolumn{3}{c}{$1.403\times$ speedup} \\
+\bottomrule
+\end{tabular}
+\caption{Paired quality--latency control with the same LoRA. Quality is the
+15-cell RULER macro ($n{=}1{,}500$ paired examples); the 3.12-point loss has
+paired-bootstrap 95\% CI $[2.36,3.93]$. Latency uses a fixed approximately
+6.5k-token pack retrieved from 16k source contexts and reports
+medians across three independent processes (20 reads each). Retrieval, reusable
+Write, and I/O are excluded. Total decode is similar across arms (about
+2.76--2.86\,s), reducing the combined Read-plus-decode ratio to roughly
+$1.07$--$1.09\times$.}
+\label{tab:replay-latency}
+\end{table}

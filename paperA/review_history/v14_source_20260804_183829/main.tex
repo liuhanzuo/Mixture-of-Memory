@@ -1,0 +1,57 @@
+% CoMem — anonymous ACL ARR submission.
+% Compile in an isolated build directory; see BUILD.md.
+
+\documentclass[11pt]{article}
+% \usepackage{arxiv}
+\usepackage[review]{acl}          % ARR: [review] for submission; remove for camera-ready
+% \usepackage[preprint]{acl} 
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{natbib} 
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{placeins}
+\usepackage{xcolor}
+
+\title{CoMem: Reusing Transformer Depth across Queries with
+Persistent Intermediate Residuals}
+
+\author{Anonymous ACL Submission}
+
+
+\begin{document}
+\maketitle
+
+\input{sections/00_abstract}
+\input{sections/01_introduction}
+\input{sections/02_related}
+\input{sections/03_motivation}
+\input{sections/04_methodology}
+\input{sections/05_experiments}
+\FloatBarrier
+\input{sections/06_conclusion}
+
+% ARR excludes the unnumbered Limitations and Ethical Considerations sections
+% from the main-text page limit. Flush all numbered-body floats before them.
+\FloatBarrier
+\clearpage
+\input{sections/07_limitations}
+\input{sections/07_ethics}
+\clearpage
+
+\bibliography{qcmem}
+
+\clearpage
+\appendix
+\raggedbottom
+\input{sections/08_appendix}
+\input{sections/08_statistics_appendix}
+
+\end{document}

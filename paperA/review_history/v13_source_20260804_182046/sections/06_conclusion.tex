@@ -1,0 +1,14 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+CoMem makes prepaid transformer depth a measurable coordinate of reusable
+context. On Qwen3-8B, prepaying 12 of 36 layers gives a $1.403\times$
+selected-pack Read speedup at a 3.12-point RULER cost. Bounded selection keeps
+online work independent of stored-context length, while a separate
+Write-inclusive pipeline reaches $2.74\times$. A same-Qwen3 CacheBlend-style
+control uses $18\times$ more bytes/token; its protocol-aligned quality results
+are reported with explicit cohort and adaptation boundaries.
+The continuous-prefix oracle and overlap repair locate the remaining loss at the
+Write interface, while equal-latency replay shows the selector-dependent
+boundary. Together, these results establish depth alongside selection budget,
+stored representation, and placement as a tunable repeated-query systems axis.

@@ -1,0 +1,24 @@
+\section*{Limitations}
+
+This is an observational case study of one OLMo-2-7B prune--regrow recipe.
+keep14, ShortGPT, and the same-shape points are single runs; item-level
+intervals do not measure variation from initialization, data order,
+optimization, or block selection. Shallower arms stop at unequal retained
+checkpoints while PPL is still falling, and full32 stops at 25k. There was no
+registered common stopping rule, so neither the depth ladder nor full32 is a
+step-, token-, or FLOP-matched 200k counterfactual.
+
+Random-init uses a higher learning rate, frozen-front changes the trainable
+set, and ShortGPT changes inherited count, selected layers, final-block
+retention, and fresh-tail use. These are operating points, not factor-isolating
+ablations. The two MMLU protocols also change prompt, candidate, tokenization,
+and normalization; closed-book scores add generation and normalization choices.
+Only selected answer-letter contrasts have paired intervals.
+
+The study covers English base models, one mixture, and mainly 7B scale. PPL is
+in-domain; no contamination audit or out-of-domain PPL is reported. We also do
+not report latency, throughput, memory, or recovery FLOPs. Exact reproduction
+is limited by unset training seeds, an unrecorded resumed data-loader offset,
+incomplete compute accounting, and no frozen runnable artifact. Layer-wise
+readouts are relegated to Appendix~\ref{app:mechanism} and carry no mechanistic
+claim.

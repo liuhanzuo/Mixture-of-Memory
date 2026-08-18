@@ -1,0 +1,40 @@
+{
+  "base_model": "allenai/OLMo-2-1124-7B",
+  "model_revision": "7df9a82518afdecae4e8c026b27adccc8c1f0032",
+  "ppl": {
+    "source": "same-source held-out Dolmino/DCLM array",
+    "windows": 4096,
+    "window_tokens": 2048,
+    "merge": "exp(sum shard NLL / sum shard target tokens)",
+    "add_bos": false
+  },
+  "mmlu": {
+    "dataset_revision": "c30699e8356da336a370243923dbaf21066bb9fe",
+    "items": 14042,
+    "letter_metric": "summed answer-letter log-likelihood",
+    "content_raw_metric": "summed option-text log-likelihood",
+    "content_norm_metric": "mean option-text log-likelihood per continuation token",
+    "bootstrap_resamples": 10000
+  },
+  "closed_book": {
+    "tasks": ["popqa", "triviaqa", "nq_open"],
+    "prompt": "Question: {q}\\nAnswer:",
+    "decoding": "greedy, no chat template, no inserted BOS, max 32 new tokens",
+    "headline_metrics": {"popqa": "normalized-answer containment", "triviaqa": "exact match", "nq_open": "exact match"}
+  },
+  "ood_ppl": {
+    "corpora": {
+      "wikitext103_test": 288627,
+      "pg19_test": 2456400
+    },
+    "metric": "token-weighted exp(sum NLL / target tokens)",
+    "interface": "no chat template; no inserted BOS; OLMo-2 packing"
+  },
+  "continuation_overlap": {
+    "stream_tokens": 15505225728,
+    "ngrams": [13, 8],
+    "flag_threshold": 0.8,
+    "scan": "exact tokenized continuation stream; inverted single pass; no downsampling"
+  },
+  "note": "This manifest documents the released snapshot. It does not reconstruct unavailable historical training seeds or the lost keep14 within-epoch loader offset."
+}

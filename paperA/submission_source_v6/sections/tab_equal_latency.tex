@@ -1,0 +1,33 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.2pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Replay selector} & \textbf{$k_{\max}$} &
+\textbf{Replay / CoMem} & \textbf{$\Delta$} &
+\textbf{Hier. 95\% CI} & \textbf{LOCO range} \\
+\midrule
+Iterative BM25 & 10 & 64.78 / 53.22 & $-11.56$ &
+$[-18.67,-5.11]$ & $[-13.13,-9.50]$ \\
+Frozen BGE & 10 & 54.22 / 53.22 & $-1.00$ &
+$[-10.67,8.33]$ & $[-3.50,1.75]$ \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Equal-latency quality is selector-dependent; CoMem does not
+win either aggregate.}
+The latency-only calibration freezes replay budget 10 against CoMem budget 12
+within a predeclared $\pm5\%$ band. Quality is the equal-weight mean of nine
+task--length cells ($n{=}100$ each), and $\Delta$ is CoMem minus replay.
+``Hier.'' first resamples nine cells with replacement and then resamples the
+100 paired examples within each selected cell (100,000 replicates,
+deterministic seeds). LOCO drops one cell and averages the other eight. The
+original pooled-IID intervals remain only as sensitivity:
+$[-14.44,-8.67]$ (BM25) and $[-4.67,2.67]$ (BGE). The first 100 LoCoMo items
+are all conversation 0, so conversation-cluster resampling is not identifiable.
+Appendix Table~\ref{tab:equal-latency-protocol} gives protocol, per-cell
+differences, and the fixed-cell stratified bootstrap.}
+\label{tab:equal-latency}
+\end{table}

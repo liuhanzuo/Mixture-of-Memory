@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{ShortGPT point} & \textbf{PPL} & \textbf{core6} & \textbf{MMLU} \\
+\midrule
+step 0 & 401.124 & --- & .2620 \\
+step 200k & \textbf{9.780} & \textbf{.6215} & \textbf{.4739} \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Non-contiguous ShortGPT endpoint.} Cosine block influence
+selects 16 of 32 pretrained layers, $[0\text{--}12,16,17,31]$, with no fresh
+tail. The unhealed model is initially degenerate; after the same $200$k-step
+Dolmino healing budget it recovers $63.0\%$ of base above-chance MMLU.}
+\label{tab:app-shortgpt}
+\end{table}

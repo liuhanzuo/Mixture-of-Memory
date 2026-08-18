@@ -1,0 +1,26 @@
+% Equal-budget chat-template-free comparison, measured read approximately 6.5k.
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+\textbf{Method} & \textbf{RULER task} & \textbf{8k} & \textbf{16k} & \textbf{32k} & \textbf{64k} & \textbf{128k} \\
+\midrule
+\multirow{2}{*}{\textbf{CoMem}} & niah\_single\_2 & 100.0 & 100.0 & 99.0 & 99.0 & 100.0 \\
+& var-track & 96.6 & 97.6 & 98.8 & 99.0 & 95.8 \\
+\midrule
+\multirow{2}{*}{StreamingLLM} & niah\_single & 85.0 & 36.0 & 20.0 & 10.0 & 2.0 \\
+& var-track & 41.8 & 2.2 & 0.6 & 0.2 & 0.8 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Equal-budget, chat-template-free RULER comparison ($n{=}100$ per
+cell). Both methods use Cohort A's \texttt{niah\_single\_2} and
+\texttt{variable\_tracking}; CoMem uses chunk 512, top-12, a BOS sink, and a
+measured read of about 6.5k tokens, while StreamingLLM retains the same nominal
+budget by recency. They share tasks, sample count, budget, and scorer but not
+paired sampled examples, so inference is at the cell level.}
+\label{tab:slm}
+\end{table}

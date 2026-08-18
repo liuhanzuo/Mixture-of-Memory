@@ -1,0 +1,46 @@
+\section{Boundaries of the Observation}
+\label{sec:analysis}
+
+\subsection{Descriptive variation across MMLU groups}
+Across the standard broad MMLU groups, keep14 remains below the intact base and
+ShortGPT remains above keep14. The realized keep14 scores range from .294 on
+STEM to .377 on Other; ShortGPT improves each group but does not close the
+base gap. These are descriptive fixed-checkpoint summaries. We did not
+predeclare a family of domain tests, adjust for the 57 subjects examined, or
+estimate variation across training runs. We therefore do not infer
+domain-specific recovery effects, knowledge types, or anatomical boundaries
+from these differences. Complete group and subject tables are in
+Appendix~\ref{app:mmlu-subjects}.
+
+\subsection{The shallow observations are not a depth law}
+The retained shallow rows stop at 121k (keep8), 83.5k (keep10), and 124k
+(keep12), whereas keep14 reaches 200k. The checkpoints were retained after
+knowledge-sensitive metrics appeared stable, without a registered stopping
+rule, and PPL was still decreasing. Equal steps would also imply unequal FLOPs
+across depths. Consequently, the ladder is useful only as an inventory of
+available operating points. It cannot support a converged architectural
+threshold, a depth-dependent recovery rate, or a compute-normalized ordering.
+
+Within keep8, several likelihood-style tasks and PPL improve over the observed
+interval while aggregate MMLU remains near chance. Within keep14, MMLU rises
+modestly late in training. These two literal traces differ, but their starting
+quality, budget, and stochastic realization are unmatched. No claim about a
+general dynamic follows.
+
+\subsection{Scope checks do not constitute replications}
+A more compressed OLMo-2-1B prefix+fresh-tail run shows falling PPL with
+near-chance MMLU, and an existing Qwen3-8B endpoint is also near chance after
+200k. The 1B arm changes scale and retained fraction; the Qwen arm additionally
+changes architecture, corpus, and available evaluations. We include them as
+directional context only, not as matched replications or evidence of
+cross-family universality (Appendix Table~\ref{tab:app-crossfamily}).
+
+\subsection{What remains identified}
+The evidence identifies a measurement limitation: for the reported OLMo
+constructions, budgets, and interfaces, in-domain perplexity alone cannot
+certify the measured knowledge-sensitive evaluations. The operating points
+also bound three complete explanations: short-horizon corpus shift, an
+answer-letter-only artifact, and nominal depth alone. They do not identify the
+responsible structural factor, estimate a causal treatment effect, establish
+what happens after the observed horizon, or locate any capability in the
+network.

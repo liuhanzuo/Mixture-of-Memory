@@ -1,0 +1,47 @@
+\section{Related Work}
+\label{sec:related}
+
+We position CoMem by stored object and post-retrieval computation.
+Table~\ref{tab:priorart} is an interface map, not an empirical ranking.
+
+\input{sections/tab_priorart}
+
+\paragraph{PIC and modular document caches.}
+CacheBlend, TurboRAG, RAGCache, and Cache-Craft precompute or reuse retrieved
+chunk KV and handle context-dependent composition in different ways
+~\citep{cacheblend,turborag,ragcache,cachecraft}. PIC systems such as EPIC and
+MEPIC splice independently encoded per-layer KV and repair boundaries or
+selected tokens; APE uses parallel context encoding and attention realignment
+~\citep{epic,mepic,ape}. Fusion RAG Cache studies selection and cache fusion at
+serving scale~\citep{fusionrag}. Learned modular objects further include KV
+Packet's independently compiled KV plus boundary adapters and Cartridges'
+distilled reusable KV representations~\citep{kvpacket,cartridgesbase}.
+Concurrent Cartridges at Scale and SemPIC retrieve learned per-document KV
+objects~\citep{cartridges,sempic}. These works already establish reusable
+document caches. CoMem does \emph{not} claim that idea; it studies the distinct
+single-residual object, whose split depth trades persistent bytes and online
+upper-layer computation. We lack a matched same-backbone implementation of
+these systems, so Table~\ref{tab:priorart} supports taxonomy rather than
+superiority.
+
+\paragraph{Intermediate-state reuse and token reduction.}
+ReadOnce Transformers and Embedding Recycling cache intermediate text
+representations and adapt later layers~\citep{readonce,embeddingrecycling}.
+HCache checkpoints activations to restore evicted state; KV-Direct reconstructs
+layer-wise KV from residuals; ILRe and REFORM select or gather tokens before
+recomputation~\citep{hcache,kvdirect,ilre,reform}. GemFilter likewise selects
+with early layers but does not persist the states across queries
+~\citep{gemfilter}. Token/KV compression instead changes the retained token set
+or state budget after full or partial processing
+~\citep{streamingllm,h2o,snapkv,pyramidkv,minicache}. CoMem's narrow technical
+object is one persistent depth-$j$ residual per selected token followed by
+direct execution of $[j{:}L)$.
+
+\paragraph{External memory and the matched endpoint.}
+MemoryLLM, LongMem, and XC-Cache add latent pools or auxiliary readers
+~\citep{memoryllm,longmem,xccache}; they are useful external references but not
+matched depth controls. Our $j{=}0$ endpoint is deliberately narrower than
+``RAG'': it fixes selector, chunk IDs and order, sink, mask, examples, and
+adapter, then replaces stored residuals with token IDs. The paper's causal claim
+is therefore about depth reuse under identical evidence, not a ranking over
+retrieval or memory systems.

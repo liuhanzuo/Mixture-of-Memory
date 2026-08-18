@@ -1,0 +1,13 @@
+\section*{Ethical Considerations}
+
+This work adds no safety mechanism and inherits risks of the underlying model
+and data, including hallucination, bias, and unsafe generation. Its practical
+caution is measurement-related: better in-domain perplexity need not imply
+recovery of capabilities required in deployment, so target evaluations and
+relevant null baselines should be checked directly.
+
+We collect no human-subject data or annotations. Experiments use released
+models, corpora, and benchmarks under their upstream terms. Training and
+large-scale evaluation consume energy; incomplete historical records prevent a
+reliable GPU-hour total. Released artifacts should preserve upstream licenses
+and exclude benchmark text or model weights that cannot be redistributed.

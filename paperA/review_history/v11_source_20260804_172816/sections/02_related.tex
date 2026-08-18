@@ -1,0 +1,85 @@
+\section{Related Work}
+\label{sec:related}
+
+We organize prior work by the persistent object and the model computation that
+remains after retrieval (Table~\ref{tab:priorart}). This comparison exposes the
+specific conjunction studied by CoMem: a persistent document residual at one
+chosen split, direct decoder-suffix execution, and an identical-evidence
+$j{=}0$ endpoint for measuring the incremental depth effect.
+
+\input{sections/tab_priorart}
+
+\paragraph{Reusable intermediate representations.}
+ReadOnce Transformers construct compressed, task-independent document
+representations for repeated downstream use, while Embedding Recycling caches
+an intermediate encoder layer and trains adapters above it
+~\citep{readonce,embeddingrecycling}. These works establish that intermediate
+text representations can be persistent and useful, but their main trade-off is
+representation compression or downstream adaptation; the cached layer is a
+chosen architecture setting rather than a measured decoder-serving axis.
+CoMem operates in an autoregressive decoder, keeps one residual per selected
+token, and varies the suffix depth executed for each query.
+
+LLMCache caches intermediate activations in an independent bank for every
+transformer layer and uses semantic fingerprints to reuse a matching state for
+similar inputs~\citep{llmcache}. It therefore makes cache behavior
+layer-dependent and supports arbitrary layers, but it does not define one
+document residual split followed by a fixed native suffix, nor an
+identical-evidence $j{=}0$ endpoint. HCache and KV-Direct are closer at the state
+level. HCache saves hidden states
+throughout the model and reconstructs each layer's KV for fast restoration;
+KV-Direct reconstructs layer-wise KV from residual checkpoints
+~\citep{hcache,kvdirect}. Their goal is efficient restoration of the standard
+layer-wise KV state. CoMem chooses one split residual and executes the remaining
+transformer blocks directly, which creates a different storage--depth--quality
+trade-off and admits the matched $j{=}0$ control.
+
+\paragraph{Full-depth chunk-KV reuse.}
+Prompt Cache reuses exact-match prompt modules, while Block-Attention and
+TurboRAG independently precompute chunk KV and restore positional consistency
+when modules are assembled~\citep{promptcache,blockattention,turborag}.
+CacheBlend adds selective recomputation to repair cross-chunk dependencies;
+RAGCache and Cache-Craft optimize management and repair around the same
+full-depth object~\citep{cacheblend,ragcache,cachecraft}. These systems avoid
+most document recomputation by storing KV at every layer. CoMem instead makes
+\emph{cached depth} the adjustable resource: one $h_j$ residual replaces the
+full-depth KV object, and layers $[j{:}L)$ reconstruct query-conditioned state.
+Our same-Qwen3 comparison (Table~\ref{tab:cacheblend-baseline}) makes this
+difference empirical: a minimal faithful CacheBlend-style implementation with
+global RoPE reindexing and up to 18\% selective recomputation reaches
+67.80--74.70 RULER, 48.50--49.83 BABILong qa5, and 16.77--17.37 LoCoMo
+substring accuracy, versus CoMem's 97.05, 68.67, and 23.36 while storing
+$18\times$ fewer bytes/token. This comparison isolates a full-depth
+chunk-KV alternative under one backbone and evidence pack; it does not replace
+each system's native serving implementation.
+
+\paragraph{PIC and learned modular document caches.}
+EPIC and MEPIC formalize position-independent caching and reduce link-time
+recomputation; APE encodes contexts in parallel and realigns attention
+~\citep{epic,mepic,ape}. Fusion RAG Cache further studies cache selection and
+fusion at serving scale~\citep{fusionrag}. Learned modular objects include KV
+Packet's compiled context-independent KV and Cartridges' self-studied reusable
+KV representations~\citep{kvpacket,cartridgesbase}. Cartridges at Scale and
+SemPIC extend learned per-document KV retrieval~\citep{cartridges,sempic}.
+They optimize how a full-depth KV object is compiled, linked, or retrieved;
+CoMem exposes a single-residual depth axis and quantifies the compute that
+remains after selection.
+
+\paragraph{Token selection, compression, and external memory.}
+ILRe, REFORM, and GemFilter use intermediate layers to select or gather tokens
+before later computation, but do not persist the selected hidden states across
+queries~\citep{ilre,reform,gemfilter}. KV-compression methods reduce retained
+state after processing~\citep{streamingllm,h2o,snapkv,pyramidkv,minicache}.
+MemoryLLM, LongMem, and XC-Cache add latent pools or auxiliary readers
+~\citep{memoryllm,longmem,xccache}. CoMem addresses a separate repeated-query
+boundary: prepay a chosen number of native decoder layers once, retrieve a
+bounded residual pack, and resume the unmodified suffix through a small
+adapter.
+
+\paragraph{Positioning.}
+The nearest systems differ in backbone, training, tasks, storage tier, and
+timing boundary, precluding a numerical cross-paper ranking. The defensible
+novelty is narrower and structural: CoMem makes transformer split depth the
+controlled variable of reusable-context serving, provides an identical-pack
+$j{=}0$ endpoint, and measures the resulting residual object across quality,
+latency, storage, Write amortization, and context dependence.

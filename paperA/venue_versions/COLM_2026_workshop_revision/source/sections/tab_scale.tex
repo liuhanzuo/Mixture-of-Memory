@@ -1,0 +1,25 @@
+% Completed chat-template-free Qwen3-family scale sweep.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Model} & \textbf{$j$} & \textbf{single} & \textbf{multikey} & \textbf{VT} & \textbf{macro} \\
+\midrule
+0.6B & 2  & 99.80 & 85.48 & 62.47 & 85.68 \\
+1.7B & 3  & 99.08 & 48.08 & 44.20 & 66.81 \\
+4B   & 6  & 96.36 & 35.48 & 42.50 & 60.52 \\
+14B  & 13 & 95.28 & 34.44 & 13.10 & 52.91 \\
+30B-A3B & 12 & 99.44 & 57.56 & 87.07 & 80.48 \\
+32B  & 27 & 100.00 & 93.60 & 59.47 & 88.18$^\dagger$ \\
+\bottomrule
+\end{tabular}
+\caption{Completed adapter-free Qwen3-family RULER sweep. Values are means over
+five lengths for single and multikey (8k--128k), three for variable tracking
+(8k--32k), and all 13 cells for the macro. All cells use the same no-chat,
+chunk-512 protocol and $n{=}500$, except $^\dagger$32B ($n{=}25$). Scale is
+non-monotonic: architecture, selected split, and task family matter in addition
+to parameter count.}
+\label{tab:scale}
+\end{table}

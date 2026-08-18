@@ -1,0 +1,44 @@
+\section*{Limitations}
+\label{sec:limitations}
+
+CoMem is evaluated primarily on one 8B backbone with a lexical selector and an
+English benchmark suite. Results on other Qwen scales and sparse MoEs support
+portability but are not matched replications, and several large-model cells use
+smaller sample counts. The principal adapter is trained once; most ablations
+measure evaluation uncertainty rather than training-seed variance.
+
+The paper does not provide a same-backbone, same-hardware implementation of the
+closest PIC, chunk-KV repair, or learned modular-cache systems. Their published
+operating points use different models, tasks, training budgets, storage tiers,
+and latency boundaries, so Table~\ref{tab:priorart} is taxonomic and our
+experiments establish an internal depth frontier rather than competitive
+superiority.
+
+The system assumes repeated queries over a relatively stable corpus. Its
+residual store grows linearly and is much larger than raw text or token IDs;
+for one-off queries, frequently edited documents, or low reuse, raw-text
+retrieval is usually preferable. Selector and external-store latency still grow
+with corpus size even though model-side Read is bounded. Reported crossover and
+speed measurements depend on hardware, kernels, batch size, storage tier, and
+the precise timing boundary.
+
+Stored states are tied to the exact backbone, tokenizer, split depth, adapter,
+and lower-layer implementation; model upgrades generally require rewriting the
+store. Overlap-Write also weakens strict chunk independence because a local edit
+can invalidate the following chunk's cached state. We do not evaluate residual
+quantization, eviction, or multi-tenant update contention.
+
+Quality is task dependent. Bounded top-$k$ retrieval imposes an evidence ceiling,
+lexical selection transfers poorly to low-overlap or non-whitespace languages,
+and residual readout can fail even when the evidence is present. Overlap-Write
+is tested on a focused multikey diagnostic rather than the natural benchmark
+suite, and its wall-clock Write overhead is not integrated into a repaired
+end-to-end frontier. It is not a universal quality fix. Results beyond the
+backbone's native context window are positional-extrapolation stress tests.
+
+Our probes and controls characterize readout compatibility; they do not locate
+``understanding,'' factual storage, or causal necessity at a particular layer.
+Long-form generation, code, multilingual and multimodal memory, dynamic
+updates/deletions, stronger learned retrievers, and production-scale
+multi-tenant scheduling remain open. The serving experiments report medians on
+single-query harnesses rather than concurrent p95 throughput or tail latency.

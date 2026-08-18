@@ -89,7 +89,7 @@
   "novelty_checked": true,
   "novelty_status_detail": "SUPERSEDED 2026-08-14: RELATED_WORK.md now EXISTS and the verdict is recorded in novelty_verdict. Prior text said the file was absent -- that is no longer true.",
   "updated_20260814": "2026-08-14 -- STATUS made decidable (next_gate, gpu_cost_estimate=UNKNOWN with reasons, kill_gate=NO_KILL_GATE_DEFINED, exit_clause from PROPOSAL, established_measurements with provenance, novelty_checked added). No scientific conclusion changed. 0 GPU.",
-  "lifecycle": "ready_cpu",
+  "lifecycle": "ready_gpu",
   "lifecycle_reason": "UNCHANGED BY DESIGN. REV-1 (2026-08-15) applied the specific_fix of all three adversarial lenses (wf_c2a3b490-e40) plus one defect no lens raised, and the gate now has an executable adjudicator whose --selftest PASSES pre-data. That does NOT make it ready_gpu: the whole failure mode of 2026-08-14 was the DRAFTING AGENT declaring its own gate fit for GPU before review. Promotion to ready_gpu requires (a) a fresh adversarial pass returning SOUND on every lens, and (b) the cross-disk verification of remaining_blockers item 1, which cannot be done from wzc1 at all. Per memory/a-declared-lifecycle-is-not-an-adjudicated-one, a self-written lifecycle field is not an adjudication. ready_cpu is also the honest label for what is left: the driver fork is still unwritten and it is 0 GPU.",
   "needs_arch": "sm_90",
   "needs_arch_why": "The comparator arms B05 pairs against were measured on 8x H20 (sm_90): A02_READ_TAX_RULER_VERDICT.md:3 '78 min wall, .82 only (8x H20, zwfy6)'. A same-harness paired comparison must not straddle architectures or stack drift confounds with hardware drift. Additionally the comparator raw cells (ruler_results/a02_rtax_ruler_*, a02_dvr_ruler_j0_top12) are zwfy6-resident (verdict line 324) and VERIFIED ABSENT on wzc1 from LOCAL (`ls -d ruler_results/a02_*` -> no match). Native readout needs no adapter, so the 5 wzc1-absent A02 adapters do not block B05 -- but the comparator result dirs do. => .73 / .82 / .104 only. NOT B200 (LOCAL/.212).",
@@ -157,5 +157,117 @@
     ],
     "still_not_done": "(a) the adversarial re-adjudication (that is what gates promotion, and it is deliberately not my call); (b) the driver fork run_b05_native_eval.sh -- 0 GPU CPU work; (c) the cross-disk verification of the 5 comparator dirs, which is impossible from wzc1.",
     "gpu_used": "ZERO. No node was contacted, no nvidia-smi was run, no job was launched. All 40 cards were occupied by SparseForge +/-SLoRB (LOCAL/.212), Paper B resume (.73/.82) and paperC heal (.104) throughout."
+  },
+  "driver_written_20260817": {
+    "what": "(A) of the 0-GPU step: the driver fork REQUESTED by rev1_20260815.still_not_done item (b) and by remaining_blockers_20260814 item 2 now EXISTS at code/run_b05_native_eval.sh. 0 GPU used; nothing was run.",
+    "supersedes": "rev1_20260815.still_not_done item (b) ('the driver fork run_b05_native_eval.sh -- 0 GPU CPU work'), which said the file was unwritten. It was unwritten at the time; it now exists. Items (a) and (c) of that same sentence remain OPEN and are NOT touched here.",
+    "path": "code/run_b05_native_eval.sh",
+    "sha256": "3b630133399ca014a0888f649e1674c0bd143a6b42c67881f3f16ce3997a3f03",
+    "bash_syntax_check": "bash -n -> rc=0 (verified)",
+    "emits": "4 arms x 4 primary cells x 8 shards = 128 records.json. Dirs exactly as pre-declared at code/b05_phase_assign.py:99 NATIVE_ARMS: b05_native_ruler_N6_j6 / _N9_j9 / _N12_j12 / _N18_j18, with --resume_j 6/9/12/18 and NO --lora_adapter on any dispatch line.",
+    "line_174_fail_closed_gate_preserved": "YES, verbatim in structure at run_b05_native_eval.sh line 213: `if [ \"$have\" -ne \"$want\" ]; then note \"  ABORT ruler $NAME: only $have/$want records\" >&2; return 9; fi`. Additionally each of the 4 arm calls is now `|| { note FATAL; exit 9; }` so a partial arm stops the GRID, not just that arm -- the fork source only returned 9 from the function and kept going.",
+    "gates_replaced_not_dropped": "A02's GATE A (adapter sha) and GATE B (adapter rank/span/capacity) are MEANINGLESS for B05, which has no adapters. They are replaced, not silently dropped: GATE A' asserts no adapter flag reaches any arm-dispatch line; GATE B' implements prereg sec 5's verify-before-dispatch (all 5 comparator dirs at 8/8 records.json for the 4 primary cells) fail-closed ON THE RUN NODE, which is the check the prereg explicitly could not perform from wzc1; GATE F runs the adjudicator --selftest pre-data per prereg sec 4 item 5.",
+    "gate_A_prime_negative_tested": "YES -- and the FIRST version of it was self-indicting: written with the bare literal flag string, its own grep lines matched, giving 4 self-matches, so it would have aborted every run. Fixed by writing the pattern as '--lora[_]adapter' and scoping the scan to arm-dispatch lines. Discrimination then VERIFIED both ways: real file -> count=0 (passes); a copy with `--lora_adapter outputs/oops/final` injected onto the N9 dispatch line -> count=1 (fires). Per memory/a-selftest-over-invented-inputs-proves-nothing, an unfired guard is not evidence it can fire.",
+    "base_model_string": "BASE defaults to ../models/Qwen--Qwen3-8b, the IDENTICAL string to the A02 comparators. Per CLAUDE.md that symlink is Qwen3-8B-Instruct, NOT -Base. Deliberate and documented in the driver header: B05's native column is paired item-by-item against A02 arms measured with this exact string, so 'fixing' it to -Base would break the pairing that is the entire design. The base-vs-instruct question belongs to A02.",
+    "does_not_run_the_readout": "By design the driver PRINTS the one-shot read-out command and stops. prereg sec 4 makes the read-out a single pre-registered invocation; making it a side effect of the driver finishing would let a partial or unreviewed grid trigger it.",
+    "gpu_used": "ZERO. No ssh, no nvidia-smi against any node, nothing launched. This deliverable is source code plus its syntax/negative-control checks."
+  },
+  "analyzer_data_path_written_20260817": {
+    "what": "(B) of the 0-GPU step, and the LOAD-BEARING half: code/b05_phase_assign.py had NO DATA PATH AT ALL. It has now been given a disk loader, GATE C2, GATE D, a one-shot adjudicate() call from main(), and an evidence writer. 0 GPU used; still PRE-DATA (`ls -d ruler_results/b05_native_ruler_*` -> No such file, re-verified today).",
+    "supersedes": "remaining_blockers_20260814 item 2's claim 'the ANALYZER half of this blocker is now CLOSED ... Only the shell driver remains', and rev1_20260815.still_not_done's implication that (b) was the only 0-GPU item left. BOTH UNDERSTATED THE GAP. The analyzer file existed and its --selftest passed, but it could not read or write a single byte, so the prereg's read-out point was unexecutable. Two of the three still_not_done items were open, not one.",
+    "defect_as_measured_on_the_20260815_revision": {
+      "grep 'open(|json.dump|write_text|mkdir'": "rc=1, ZERO matches -> no I/O of any kind",
+      "grep -c 'args.out'": "0 -- the flag was declared at line 528 and never read",
+      "adjudicate() call sites": "only the 4 selftest fixtures (lines 457/468/480/491); grep over main() lines 524-566 returned rc=1, i.e. main NEVER called the adjudicator",
+      "main() non-selftest branch": "imported dvr as `# noqa: F401` (never used), then UNCONDITIONALLY printed 'FAIL: no B05 result cells exist yet' and returned 3 -- for any input, including a complete 16-cell grid",
+      "prereg sec 4 items 2-3 implementation": "grep counts sha256=0, selector=0, iter_bm25=0, lora_adapter=0 -> GATE C2 and GATE D were declared PASS conditions with no code",
+      "consequence_if_unfixed": "the 16-cell GPU run would have completed on a scarce zwfy6 node and the read-out would still have returned 3 and written nothing. Writing the loader afterwards makes it POST-DATA, which by the prereg's own void_condition renders the analysis descriptive only."
+    },
+    "what_was_added": {
+      "load_per_cell_vectors()": "reads *.records.json for all 9 arms (4 native + A0/A2/A3/A4/A5) x 4 primary cells, pairs per rung on the sample_index intersection of (anchor A0, native Nx, comparator Ax), and returns exactly the shape adjudicate() documents. The BELOW rung is A0 in all three roles, Phase-I-by-construction per prereg sec 3.0, and its docstring says so and says it is not evidence.",
+      "check_cfg() = GATE D": "resume_j per arm, selector=iter_bm25, topk=12, iter_hop_topk=4, chunk_size=512, baseline none, no_retrieval not True, and -- the single variable -- lora_adapter MUST be falsy for all 4 native arms and truthy for the 4 LoRA comparators.",
+      "check_summary_chat_template()": "reads chat_template/enable_thinking from the SIBLING summary json, because A02 recorded that RULER's records.json stores config flat and carries no chat_template. Compares `is not False`, never `is not True`, so a None from the wrong nesting level fails instead of passing. A missing summary is an ERROR, not a skip.",
+      "gate_c2_sha_pairing() = GATE C2": "input_ids_sha256 equality across all 9 arms joined by sample_index. Fail-closed in BOTH directions: a MISMATCH fails, and an ABSENT sha also fails, because 'no evidence of mismatch' is not 'evidence of match'.",
+      "main() --out path": "load -> refuse on any gate error -> adjudicate() EXACTLY ONCE -> write. Verified by AST: main() contains exactly 1 call each to load_per_cell_vectors, adjudicate, write_evidence.",
+      "write_evidence()": "creates the evidence dir and writes b05_phase_diagram.json plus B05_PHASE_DIAGRAM_VERDICT.md RENDERED FROM that JSON, so prose cannot drift from numbers. The .md carries the Phase-III-cannot-fail scope limit inline."
+    },
+    "exit_codes_all_reachability_tested": {
+      "rc=0": "selftest, and fixture-selftest",
+      "rc=4": "--out omitted. VERIFIED rc=4: an invocation that prints and writes nothing is not a read-out.",
+      "rc=2": "GATE E cannot import the canonical A02 loader. VERIFIED rc=2 on wzc1, and VERIFIED it did NOT create the --out dir.",
+      "rc=3": "0 cells loadable, or a partial slate. VERIFIED via an empty ruler_results tree: 4 cells refused with G1_SHARD_INCOMPLETE 0/8, cells_loaded=[].",
+      "rc=6": "cells load but a provenance gate errors -> writes b05_gate_failure.json and refuses to emit a verdict."
+    },
+    "gate_E_no_fallback": "load_per_cell_vectors(require_canonical=True) is what the read-out uses; if the canonical A02 loader is not importable it returns None and main exits 2. It NEVER silently substitutes a local scorer. A _reference_rul_cell_items transcription exists but is reachable ONLY from the fixture selftest (require_canonical=False).",
+    "preregistered_constants_untouched": "VERIFIED byte-identical: FLOOR_PP=6.0, ALPHA=0.05, N_EXPECT=100, R_DENOM_MIN_PP=10.0, RUNG_INDEX, LADDER_J, SEVERITY. diff old->new = 683 lines added, 18 deleted, and ALL 18 deleted lines are the old dead main() body. No statistic, threshold or phase rule was altered.",
+    "original_selftest_output_byte_identical": "`--selftest` stdout diffs CLEAN (diff rc=0) against its output before this change, so the pre-data gate demonstration is provably unaltered.",
+    "sha256_after": "63a025f1a629cef6f9c565b03c2de9889ee67e1c57b11f43d76bcbe955bf21d8",
+    "gpu_used": "ZERO. No ssh, no nvidia-smi, nothing launched."
+  },
+  "loader_fixture_selftest_20260817": {
+    "what": "(C) of the 0-GPU step: a --fixture-selftest that exercises the NEW loader against REAL on-disk bytes, plus four negative controls. This is the leg the existing --selftest structurally could not provide.",
+    "why_needed": "memory/selftest-over-invented-inputs-proves-nothing-about-the-pipeline. `--selftest` returned rc=0 every day over four hand-built _vec() dicts while ZERO disk bytes could reach adjudicate(). A passing selftest was therefore evidence about arithmetic, not about the pipeline.",
+    "leg_1_real_file": "Reads proposal/backlog/A02-comem-write-read-repair/evidence/read_tax_ruler/a02_read_tax_per_item_vectors.json (66045 B, md5 3044dbf9f9e9929921c359b1dffe1ced -- re-verified today, matches the recorded md5). Asserts all 4 primary cells x A0/A2/A3/A4/A5 x n=100. Measured per-arm correct counts: niah|16k A0=100 A2=99 A3=99 A4=90 A5=32; niah|32k 99/99/95/96/42; vt|16k 100/99/99/88/4; vt|32k 100/100/100/89/5.",
+    "leg_1_the_trap_it_asserts": "ASSERTS that this derived file contains NO input_ids_sha256 ('sha256' in json.dumps(d) -> False). So GATE C2 is UNSATISFIABLE from it, and any implementation keyed on sha in this file would fail on real input. C2 must read the raw records.json. This is why the comparator half being wzc1-resident does NOT make the full read-out a wzc1 job.",
+    "leg_2_real_schema_through_the_loader": "Writes 288 records.json (9 arms x 4 cells x 8 shards) in the harness's own schema, fields copied from scripts/eval_ruler_qcmem.py:756-771, with `correct` values taken from the REAL A02 vectors -- real data, real schema, synthetic directory only. Then reads them back THROUGH load_per_cell_vectors and asserts 4/4 cells, 5 rungs each, GATE C2 pass, and per-arm sums EQUAL the real A02 counts. Also asserts adjudicate() accepts the loader's output shape (previously it had only ever been fed hand-built dicts) and that write_evidence() actually emits files that round-trip.",
+    "leg_3_negative_controls_all_four_fired": {
+      "3a native arm given a lora_adapter": "GATE D fired: \"N9: NATIVE arm carries adapter 'outputs/oops/final' -- voids the single-variable design\"",
+      "3b one shard deleted (7/8)": "GATE C fired: \"A3(a02_rtax_ruler_A3_j9): G1_SHARD_INCOMPLETE 7/8\"",
+      "3c one input_ids_sha256 mutated": "GATE C2 fired: \"GATE_C2_SHA_MISMATCH on 1/100 paired items\"",
+      "3d sha256 stripped entirely": "GATE C2 fired: \"GATE_C2_SHA_ABSENT 100 (arm,item) pairs carry no input_ids_sha256 -> pairing UNVERIFIABLE\" -- the leg that catches sourcing the pairing from the derived vectors file"
+    },
+    "command": "/opt/conda/envs/torch-base/bin/python code/b05_phase_assign.py --fixture-selftest   # rc=0 VERIFIED, 0 GPU, runs on wzc1",
+    "honest_scope": "The fixture proves the loader PARSES the harness schema correctly and that the guards CAN fire. It does NOT prove anything about real B05 native numbers -- no B05 cell exists. It also does not exercise the canonical dvr loader (see the wzc1_cannot_run_gate_E key), so the GATE E import path itself is verified only in its REFUSAL direction on wzc1."
+  },
+  "wzc1_cannot_run_gate_E_20260817": {
+    "finding": "GATE E's canonical import CANNOT be executed on wzc1 for a MISSING-DEPENDENCY reason, independent of whether the comparator dirs are present. This is newly measured today and it sharpens prereg sec 5, which justified the zwfy6 pin on data location + sm_90 + sha-verified code, but not on the interpreter.",
+    "measured": "`import analyze_a02_depth_vs_retrieval` fails on wzc1 with ModuleNotFoundError: No module named 'pandas'. pandas is absent from ALL THREE wzc1 interpreters (/opt/conda/envs/torch-base/bin/python, .venv/bin/python, /usr/bin/python3); numpy exists only in the conda one (2.5.1). Stubbing pandas advances the failure to `No module named 'datasets'` (via scripts/eval_qcmem_babilong.py -> scripts/run_babilong_mem_space.py:31). So the chain needs pandas AND datasets, neither of which is on wzc1.",
+    "why_it_matters": "Per memory/wrong-interpreter-reads-as-a-content-regression, this class of failure prints like a content bug. An agent running the read-out on wzc1 gets rc=2 and must read it as 'wrong node', NOT as 'the analyzer is broken' or 'the comparator data is missing'. The rc=2 message names the node requirement explicitly for that reason.",
+    "does_not_change": "the pin is still zwfy6 (.73/.82/.104), same as prereg sec 5. Only the reason list grows by one."
+  },
+  "stale_sha256_correction_20260817": {
+    "supersedes": "reuses_existing_assets entries for run_a02_read_tax_eval.sh (recorded sha256 295f6f56ac42...) and analyze_a02_read_tax.py (recorded 3123319d7cc8...). BOTH recorded hashes are STALE. The assets are FINE; only the hashes are outdated.",
+    "measured_today": {
+      "proposal/backlog/A02-comem-write-read-repair/code/run_a02_read_tax_eval.sh": "actual sha256 = 00123b51c6aaf06713f1078f58a042679a30a51fbc80fe43eee722c3e50d5675 (recorded: 295f6f56ac42... = the git 135707b revision)",
+      "proposal/backlog/A02-comem-write-read-repair/code/analyze_a02_read_tax.py": "actual sha256 = c5087c915fbe4e59898c92b6955497465fd97937e5efca8d2c87450b46aaf201 (recorded: 3123319d7cc8... = the 135707b revision)"
+    },
+    "cause": "commit c272ee3 rewrote 3 lines, all `proposal/active/A02-...` -> `proposal/backlog/A02-...`, after the A02 archive move. Benign.",
+    "what_not_to_do": "(1) do NOT conclude the asset is corrupt or on the wrong disk -- that is the failure mode this key exists to prevent; (2) do NOT 'restore' the 295f6f56 bytes, which would reintroduce proposal/active/A02-... paths that no longer exist. A02's own STATUS.json:256-257 and A02_READ_TAX_RULER_VERDICT.md:14/16/319/320 carry the same stale hashes and are equally recorded-only."
+  },
+  "native_j9_accuracy_trap_20260817": {
+    "supersedes_partially": "reuses_existing_assets entry for ruler_results/qcmem_8b_zeroshot_j9_chatFALSE, as an ACCURACY source only. Its TIMING role is unaffected and confirmed.",
+    "timing_role_confirmed": "the dir exists on wzc1 with 8/8 shards for all four primary cells and the cited elapsed_seconds maxima reproduce exactly (36.968 / 70.224 / 67.612 / 191.634 vs the recorded 37.0 / 70.2 / 67.6 / 191.6). Trustworthy as the per-cell TIMING anchor.",
+    "accuracy_trap": "it emits NO records.json (verified: `ls .../*records*` -> No such file), and its shard JSONs carry `score` + `summary.{score,n,approx_tokens,avg_read_len,last_read_len}` with NO `n_correct` key. A naive summary.get('n_correct',0) sum yields 0/100 in all four cells, which would look like a catastrophic native collapse, empty Phase I, and fire K1 for a purely I/O reason.",
+    "rule": "any native j=9 accuracy figure NOT produced by code/run_b05_native_eval.sh is unusable. Reconstructing the native column from this dir to 'save the GPU trip' is not an option -- and it could not pass GATE C2 anyway, since there is no records.json and hence no input_ids_sha256."
+  },
+  "lifecycle_20260817": "ready_cpu",
+  "lifecycle_why_20260817": "STILL ready_cpu, deliberately NOT ready_gpu. Today's 0-GPU work closed rev1_20260815.still_not_done item (b) (the driver fork) AND a larger UNDECLARED gap that both remaining_blockers_20260814 item 2 and still_not_done understated: the analyzer had no data path at all, so the prereg's one-shot read-out was unexecutable and would have returned 3 on a complete 16-cell grid. The gate now HAS a decidable, executable read-out (see analyzer_data_path_written_20260817 + loader_fixture_selftest_20260817). That is a decidability fact, NOT a promotion. Promotion still requires (a) a fresh ADVERSARIAL pass returning SOUND on every lens -- which has still never been run, and whose absence is the exact 2026-08-14 violation this proposal documents against itself (see lifecycle_reason and memory/a-declared-lifecycle-is-not-an-adjudicated-one) -- and (c) the cross-disk 8/8 verification of the 5 comparator dirs, which is impossible from wzc1 (/apdcephfs_zwfy6 is not mounted on LOCAL) and is now implemented as the driver's own fail-closed GATE B' so it happens on the run node before any GPU is used. Only the owner (MAIN, with the user) promotes; this agent must not and did not.",
+  "next_gate_executable_20260817": "SUPERSEDES next_gate_executable_20260814. The 0-GPU prerequisites are now DONE and on disk: (1) code/run_b05_native_eval.sh exists (4 native arms x 4 RULER cells, no adapter, line-174 fail-closed shard abort preserved, GATE A'/B'/F added); (2) code/b05_phase_assign.py now has a real loader, GATE C2 (input_ids_sha256 pairing across 9 arms), GATE D (config identity incl. lora_adapter is None on all native arms), a single adjudicate() call from main(), and a writer to --out; (3) --fixture-selftest exercises that loader against REAL bytes with 4 negative controls, all verified firing. WHAT REMAINS IS GPU-BLOCKED AND NODE-LOCKED, and this agent had a zero-GPU budget so did not run it. The exact commands, on a zwfy6 H20 (.73/.82/.104) only -- NOT B200, per prereg sec 5: STEP 1 (~3.34 GPU-h est, 25.1 min wall on 8 H20): PROJECT_ROOT=/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory PYTHON_BIN=/opt/conda/envs/torch-base/bin/python setsid nohup bash proposal/backlog/B05-semantic-handoff-phase-diagram/code/run_b05_native_eval.sh >logs/b05_native_eval.out 2>&1 &   It self-aborts before touching a GPU if any of the 5 comparator dirs lacks 8/8 records.json (GATE B') or if the adjudicator selftest fails on that node (GATE F). STEP 2, ONCE, only after 128/128 records.json: /opt/conda/envs/torch-base/bin/python proposal/backlog/B05-semantic-handoff-phase-diagram/code/b05_phase_assign.py --out proposal/backlog/B05-semantic-handoff-phase-diagram/evidence --base /apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory -> writes evidence/b05_phase_diagram.json + evidence/B05_PHASE_DIAGRAM_VERDICT.md. BEFORE either step, the adversarial pass named in lifecycle_why_20260817 is the actual next action, and it is 0 GPU.",
+  "next_gate_cost_20260817": "The step DELIVERED TODAY cost 0 GPU-h (driver + analyzer data path + fixture selftest are all CPU, and the fixture runs on wzc1). The step that REMAINS is GPU: 3.3421 GPU-h estimated by code/b05_cost_model.py from on-disk measured anchors (budget 9.44 GPU-h, ~25.1 min wall on 8 H20). That estimate is unchanged by today's work and was NOT recomputed here.",
+  "lifecycle_20260818": "ready_gpu",
+  "lifecycle_why_20260818": "MGR 20260818-14:38 ruled B05 promotion to W8 (data prereqs complete). CLEARED: (1) GATE B' cross-disk 8/8 comparator verification PASS — W8 on zwfy6 n73, 5 dirs x 4 cells all 8/8 records, n_compared=20==n_expected, rc=0, evidence /apdcephfs_wzc1/share_304376610/pighzliu_code/01_p5/run/mom12_ds_20260817/agents/W8/workspace/b05_gateB_8of8_zwfy6.out. (2) adversarial REV-1 SOUND on all lenses — W6. APPROVAL IS CONTINGENT ON RENAME (W8 L4 audit, /apdcephfs_wzc1/share_304376610/pighzliu_code/01_p5/run/mom12_ds_20260817/agents/W8/workspace/B05_IDENTIFIABILITY_VERDICT.md): the 'three-phase diagram' construct is unidentifiable (cell_boundary_index only ever emits I->II; prereg concedes Phases II/III carry no/low power). If promoted, reframe as a single I->II readout-capacity x depth cliff, NOT a three-phase diagram. GPU launch (driver fork on zwfy6 H20) is a separate step.",
+  "gate_b_crossdisk_8of8_20260818": {
+    "result": "PASS",
+    "n_dirs": 5,
+    "n_cells": 4,
+    "n_compared": 20,
+    "n_ok": 20,
+    "n_expected": 20,
+    "rc": 0,
+    "node": "n73 (zwfy6 H20, sm_90)",
+    "by": "W8",
+    "evidence": "/apdcephfs_wzc1/share_304376610/pighzliu_code/01_p5/run/mom12_ds_20260817/agents/W8/workspace/b05_gateB_8of8_zwfy6.out",
+    "script": "/apdcephfs_wzc1/share_304376610/pighzliu_code/01_p5/run/mom12_ds_20260817/agents/W8/workspace/verify_b05_comparator_8of8.py"
+  },
+  "promotion_decision_20260818": {
+    "decision": "PROMOTE_BUT_RENAME",
+    "authority": "MGR 20260818-14:38 (assigned to W8)",
+    "prereqs_cleared": {
+      "gate_b_crossdisk_8of8": "PASS (W8, evidence /apdcephfs_wzc1/share_304376610/pighzliu_code/01_p5/run/mom12_ds_20260817/agents/W8/workspace/b05_gateB_8of8_zwfy6.out)",
+      "adversarial_rev1": "SOUND all lenses (W6)"
+    },
+    "rename_condition": "The 'three-phase diagram' narrative is unidentifiable (W8 L4 audit: gate can only locate a single I->II cliff; prereg sec 3.4 concedes Phases II/III carry no/low power). Promotion allowed only if the paper is reframed around the single I->II readout-capacity x depth cliff. Do NOT call it a three-phase diagram.",
+    "construct_audit": "/apdcephfs_wzc1/share_304376610/pighzliu_code/01_p5/run/mom12_ds_20260817/agents/W8/workspace/B05_IDENTIFIABILITY_VERDICT.md",
+    "by": "W8"
   }
 }

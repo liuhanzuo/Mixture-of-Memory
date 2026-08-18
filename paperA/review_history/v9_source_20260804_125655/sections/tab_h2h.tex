@@ -1,0 +1,57 @@
+% Full chat-template-free RULER comparison, n=100 per cell.
+\begin{table}[!ht]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+\textbf{Method} & \textbf{Task} & \textbf{8k} & \textbf{16k} & \textbf{32k} & \textbf{64k} & \textbf{128k} \\
+\midrule
+\multirow{3}{*}{\textbf{CoMem + LoRA}}
+& single-2 & 100 & 100 & 99 & 99 & 100 \\
+& multikey & 95 & 94 & 97 & 91 & 93 \\
+& var-track & 96.6 & 97.6 & 98.8 & 99.0 & 95.8 \\
+\midrule
+\multirow{3}{*}{CoMem frozen ($j{=}9$)}
+& single & 96 & 99 & 99 & 99 & 96 \\
+& multikey & 44 & 44 & 59 & 30 & 48 \\
+& var-track & 45 & 38.8 & 36.4 & 31.2 & 25.8 \\
+\midrule
+\multirow{3}{*}{KV-Direct}
+& single & 100 & 100 & 100 & 100 & 0 \\
+& multikey & 100 & 100 & 98 & 88 & 0 \\
+& var-track & 100 & 100 & 99.8 & 96.2 & 0 \\
+\midrule
+\multirow{3}{*}{InfLLM}
+& single & 100 & 100 & 92 & 61 & 57 \\
+& multikey & 100 & 79 & 65 & 45 & 20 \\
+& var-track & 100 & 96.8 & 90.6 & 81.8 & 79.2 \\
+\midrule
+\multirow{3}{*}{StreamingLLM}
+& single & 85 & 36 & 20 & 10 & 2 \\
+& multikey & 83 & 34 & 18 & 13 & 4 \\
+& var-track & 41.8 & 2.2 & 0.6 & 0.2 & 0.8 \\
+\midrule
+\multicolumn{7}{@{}l}{\emph{External persistent-memory reference (different backbone)}} \\
+\multirow{3}{*}{MemoryLLM$^{\dagger}$}
+& single & 29 & 40 & 37 & 21 & 21 \\
+& multikey & 28 & 24 & 25 & 12 & 10 \\
+& var-track & 0 & 1.2 & 0 & 0 & 0 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Full chat-template-free RULER comparison using official
+\texttt{string\_match\_all} ($n{=}100$ per cell). KV-Direct places the full
+context in the read with native RoPE and no YaRN; its 64k/128k cells are
+unextended stress references rather than a length-extended upper bound. CoMem
+keeps a bounded retrieved pack. This is \textbf{Cohort A}: every method uses
+\texttt{niah\_single\_2}, \texttt{niah\_multikey\_1}, and
+\texttt{variable\_tracking}, with $n{=}100$ and the official scorer. Its CoMem
+macro is 97.05. Cohort B instead uses \texttt{niah\_single\_3} to match the
+YaRN arm (Table~\ref{tab:scaling}) and yields 96.07; the cohorts are never pooled
+in a direct comparison. $^{\dagger}$MemoryLLM is the principal external
+persistent-memory reference and uses its released Llama-3-8B-chat checkpoint;
+its different backbone precludes matched attribution.}
+\label{tab:h2h}
+\end{table}

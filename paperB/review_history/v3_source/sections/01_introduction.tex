@@ -1,0 +1,78 @@
+\section{Introduction}
+\label{sec:intro}
+
+Removing transformer blocks and then continuing pretraining (CPT, often called
+``healing'') is an attractive route to smaller language models
+~\citep{gromov2024unreasonable,shortenedllama,men2024shortgpt,
+yang2024laco}. A pruned model can improve rapidly on held-out next-token loss,
+and endpoint perplexity is therefore a natural measure of whether retraining is
+working. It is not, however, a complete description of what the structural
+intervention removed or what CPT restored.
+
+Perplexity averages local prediction loss over a corpus. Factual recall,
+multiple-choice answer selection, generation, and task-specific interfaces
+probe different observables. Compression studies have documented that
+aggregate language-model metrics can miss changes in parametric knowledge,
+downstream behavior, or safety~\citep{costcompression,beyondperplexity,
+jaiswal2024truth}. Yet most depth-pruning work reports a small number of
+endpoints. Endpoint comparisons cannot distinguish slow recovery from a stable
+deficit, corpus drift from structural damage, or competence loss from failure
+to express an answer through a particular scoring interface.
+
+\paragraph{Research question.}
+We ask: \emph{what does continued pretraining restore after depth pruning, at
+what observed rate, and which controls are required to interpret the result?}
+We treat recovery as a multi-axis object---held-out likelihood, target
+capability, scoring interface, structural policy, and training budget---rather
+than a scalar certified by perplexity.
+
+\begin{figure*}[t]
+\centering
+\IfFileExists{figures/fig1_pruneheal_autofigure.pdf}
+  {\includegraphics[width=\textwidth]{figures/fig1_pruneheal_autofigure.pdf}}
+  {\includegraphics[width=\textwidth]{figures/fig1_concept_gptimage_corrected.pdf}}
+\caption{\textbf{Post-pruning recovery is multi-axis.} The principal recipe
+keeps 14 of 32 pretrained OLMo-2 blocks, appends two fresh blocks, and continues
+pretraining. At 200k steps, held-out PPL improves sharply but remains
+$1.428\times$ the base, while answer-letter MMLU recovers only 19.5\% of the
+base's above-chance margin. A different 16-layer construction, ShortGPT,
+reaches 63.0\%, showing that nominal depth does not determine one endpoint.
+Layer-wise readout markers are descriptive
+correlates, not causal storage boundaries.}
+\label{fig:concept}
+\end{figure*}
+
+We instantiate the study on OLMo-2-1124-7B~\citep{olmo2}. Prefix arms retain
+$k$ pretrained decoder blocks, append two randomly initialized blocks, and
+continue pretraining on a fixed Dolmino stream. The principal keep14 arm is
+tracked to 200k steps. Controls include the intact base, an unpruned model
+continued on the same corpus array and nominal schedule to a pre-registered
+25k plateau checkpoint, a
+frozen-prefix arm, a fully random same-shape model, and a non-contiguous
+ShortGPT-16 endpoint. Evaluation combines held-out likelihood, a broad zero-shot
+likelihood suite, answer-letter and complete-option MMLU, and no-retrieval
+PopQA, TriviaQA, and NQ-open.
+
+The central observation is bounded but robust across interfaces. keep14 reaches
+PPL 10.561, yet remains far below the intact model on answer-letter MMLU and
+all three closed-book tasks. Complete-option scoring narrows the MMLU gap,
+consistent with an answer-symbol or readout component, but the random-init
+content-score floor rules out interpreting that protocol as recovered subject
+knowledge. ShortGPT is substantially stronger on both PPL and MMLU, so the
+keep14 deficit is not a universal consequence of using 16 blocks. Coupled
+structural differences prevent a single-factor explanation.
+
+\paragraph{Contributions.}
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt]
+\item \textbf{Trajectory-level measurement.} We track likelihood and
+knowledge-sensitive behavior during post-depth-pruning CPT rather than
+evaluating only a final compressed endpoint.
+\item \textbf{Controls that separate interpretations.} Continued-full-model,
+same-shape initialization/adaptation, scoring-interface, policy, and
+closed-book controls distinguish corpus drift, fluency floors, answer format,
+and structural choice.
+\item \textbf{A reporting protocol.} We show why post-pruning likelihood,
+target capability, interface, exact structure, and recovery compute should be
+reported as separate axes. Layer-wise readouts provide a compatible but
+explicitly non-causal correlate.
+\end{itemize}

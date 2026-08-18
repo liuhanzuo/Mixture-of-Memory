@@ -1,0 +1,29 @@
+{
+  "output_name": "keep14_step200k_nqopen",
+  "n_shards": 8,
+  "add_bos": false,
+  "meta": {
+    "mode": "pruned",
+    "keep_front_layers": 14,
+    "n_fresh_layers": 2,
+    "num_hidden_layers": 16,
+    "ckpt_step": 200000,
+    "base_model": "allenai/OLMo-2-1124-7B",
+    "add_bos": false,
+    "max_new_tokens": 32,
+    "initialization": "inherited_front"
+  },
+  "tasks": {
+    "nq_open": {
+      "n": 3610,
+      "em": 0.059833795013850416,
+      "contains": 0.13434903047091412,
+      "f1": 0.12061761168903463,
+      "em_hits": 216,
+      "contains_hits": 485,
+      "f1_sum": 435.429578197415,
+      "majority_em": 0.005263157894736842,
+      "empty_em": 0.0
+    }
+  }
+}

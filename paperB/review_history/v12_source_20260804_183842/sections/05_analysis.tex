@@ -1,0 +1,55 @@
+\section{Additional Scope Checks}
+\label{sec:analysis}
+
+\subsection{Descriptive variation across MMLU groups}
+
+Across the standard broad MMLU groups, keep14 remains below the intact base and
+ShortGPT remains above keep14. The realized keep14 scores range from .294 on
+STEM to .377 on Other; ShortGPT improves STEM/humanities/social science/Other
+by 11.1/12.9/21.9/19.7 points but does not close the base gap. The advantage is
+therefore broad rather than driven by one group. The complete group and
+57-subject inventories remain in Appendix~\ref{app:mmlu-subjects}.
+
+\subsection{Construction effects beyond MMLU}
+
+The complete profile in Table~\ref{tab:downstream} shows that ShortGPT's
+advantage is not confined to MMLU. Relative to keep14 at displayed step 200k,
+it gains 4.1 points on HellaSwag, 3.8 on ARC-Challenge, and 9.1 on BoolQ; its
+core6 macro rises from .5938 to .6215. The gain is therefore broad, but highly
+target-dependent: the 15.5-point letter-MMLU difference is much larger than the
+2.8-point core6 difference, the 1.8-point content-MMLU difference, and the
+1.7/3.6/0.7-point closed-book gains on PopQA/TriviaQA/NQ-open.
+
+This profile strengthens the design lesson from the same-depth comparison.
+Construction choices do not simply translate every benchmark by a constant
+amount; they reshape the evaluation profile. Reporting one aggregate endpoint
+would hide both ShortGPT's broad benefit and the unusually large
+answer-letter-MMLU effect. Table~\ref{tab:downstream} reports all eleven
+multiple-choice/likelihood tasks and all available endpoint rows; the
+closed-book columns are in Table~\ref{tab:main-results}.
+
+\subsection{The shallow observations are not a depth law}
+The shallow keep8, keep10, and keep12 arms share the reported 200k-step budget
+with keep14. This makes the ladder a matched-step endpoint comparison, while
+unequal model depth still implies unequal FLOPs. It therefore supports a
+depth-conditioned endpoint contrast, not a compute-normalized ordering or a
+universal architectural threshold.
+
+Within keep8, several likelihood-style tasks and PPL improve over the observed
+interval while aggregate MMLU remains near chance. Together with the keep14
+trajectory, this identifies matched stopping-rule and compute-normalized depth
+experiments as the next step.
+
+\subsection{Scope checks do not constitute replications}
+A more compressed OLMo-2-1B prefix+fresh-tail run shows falling PPL with
+near-chance MMLU, and an existing Qwen3-8B endpoint is also near chance after
+200k. The 1B arm changes scale and retained fraction; the Qwen arm additionally
+changes architecture, corpus, and available evaluations. We include them as
+directional context only, not as matched replications or evidence of
+cross-family universality (Appendix Table~\ref{tab:app-crossfamily}).
+
+\subsection{Synthesis}
+Across these scope checks, the same audit logic holds: a target score must be
+interpreted together with its interface, construction, and training budget.
+The main OLMo-2-7B study supports this conclusion directly; the shallow, 1B,
+and Qwen observations indicate where matched replications would be most useful.

@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Comparison} & $\boldsymbol{n}$ & $\boldsymbol{\Delta}$ \textbf{(pp)} & \textbf{McNemar $p$} & \textbf{95\% CI (pp)} \\
+\midrule
+keep14 $-$ random init & 14,042 & +7.11 & $1.63\times10^{-46}$ & $[6.14, 8.09]$ \\
+keep14 $-$ frozen front & 14,042 & +5.50 & $6.99\times10^{-27}$ & $[4.51, 6.49]$ \\
+frozen front $-$ random init & 14,042 & +1.61 & $2.59\times10^{-3}$ & $[0.58, 2.64]$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Paired MMLU comparisons among the three 200k, 16-layer
+operating points.} $\Delta$ follows the row order and is computed from the
+aligned per-item rerun (keep14 .31797, frozen .26293, random .24683), which
+differs slightly from the separately rounded aggregate cells. McNemar uses an
+exact two-sided binomial test on discordant correctness pairs; 95\% confidence
+intervals use 10,000 paired bootstrap resamples with seed 1234. All intervals
+exclude zero.}
+\label{tab:app-paired}
+\end{table}

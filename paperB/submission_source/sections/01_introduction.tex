@@ -1,0 +1,82 @@
+\section{Introduction}
+\label{sec:intro}
+
+Removing transformer blocks and then continuing pretraining (CPT, often called
+``healing'') is an attractive route to smaller language models
+~\citep{gromov2024unreasonable,shortenedllama,men2024shortgpt,
+yang2024laco}. Held-out perplexity is a natural training signal, but using its
+improvement as evidence of target recovery makes a stronger measurement
+assumption: that likelihood and the target evaluation recover together after
+the structural intervention.
+
+Prior compression work already shows that aggregate language-model metrics can
+miss changes on knowledge-sensitive, downstream, or safety evaluations
+~\citep{costcompression,jaiswal2024truth,beyondperplexity}, while depth-pruning
+studies report recovery curves and loss--task gaps
+~\citep{gromov2024unreasonable,shortenedllama,minitron,iterabre}. We do not claim
+either phenomenon as new. We instead study proxy validity in one densely
+measured OLMo setting: \emph{does improvement in in-domain perplexity imply
+recovery on the measured knowledge-sensitive evaluations along the literal
+observed paths?}
+
+We instantiate the study on OLMo-2-1124-7B~\citep{olmo2}. The principal
+construction retains the first 14 of 32 pretrained blocks, appends two fresh
+blocks, and continues pretraining for 200k optimizer steps. Operating points
+include the intact base; full32 continued pretraining through an available 25k
+checkpoint; a frozen-prefix construction; a fully random same-shape model; and
+a non-contiguous ShortGPT-16 construction. Evaluation combines same-source
+held-out perplexity, answer-letter and complete-option MMLU, and no-retrieval
+PopQA, TriviaQA, and NQ-open.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig1_pruneheal_autofigure.pdf}
+\caption{\textbf{Proxy-validity view of the observed paths.}
+\textbf{Left:} the single keep14 run improves on both measured axes from 128k
+to 200k steps, while answer-letter MMLU remains far below the intact base.
+\textbf{Right:} endpoint and null operating points make three boundaries
+visible: random initialization has an answer-letter chance score but a high
+content-score floor; ShortGPT reaches a stronger endpoint under a coupled
+construction; and full32 ends at 25k, not 200k. PPL is evaluated on a
+same-source held-out Dolmino shard. Each trained construction is one run;
+token counts are nominal presentations. The figure supports proxy
+insufficiency of improvement alone on these literal paths, not a prospective
+threshold test or a causal, localization, deletion, or universal-dynamics
+claim.}
+\label{fig:proxy-validity}
+\end{figure*}
+
+Figure~\ref{fig:proxy-validity} summarizes the measurement result. In the
+principal run, in-domain PPL improves through 200k, but answer-letter MMLU and
+all three closed-book scores remain well below the base. Complete-option MMLU
+raises the apparent score, yet the random-init content baseline shows that this
+interface has a substantial non-target floor. ShortGPT is stronger on both PPL
+and MMLU, so the keep14 endpoint is construction-dependent rather than a
+property of nominal 16-layer depth. Because ShortGPT changes four structural
+factors together, and random/frozen change learning rate or trainable modules,
+these comparisons bound alternative explanations without isolating causes.
+
+\paragraph{Protocol boundaries at first use.}
+Every trained construction is a single run. full32 is observed only through
+25k, whereas the principal and same-shape endpoints use 200k. Prefix depths
+have unequal retained checkpoints selected after target metrics were inspected;
+there was no registered common stopping rule, and equal optimizer steps are not
+equal FLOPs across depths. ShortGPT couples selection, inherited count,
+final-block retention, and fresh-tail use. Random-init and frozen-front are
+operating points, not clean ablations. All reported PPL is in-domain on a
+disjoint shard from the same Dolmino/DCLM source.
+
+\paragraph{Contributions.}
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt]
+\item \textbf{A literal observed-path test of the improvement implication.} We
+jointly track in-domain likelihood and knowledge-sensitive evaluations without
+interpreting one training realization as a general recovery law or a test of
+every possible PPL threshold.
+\item \textbf{Operating points that bound alternatives.} A short-horizon intact
+branch, same-shape null points, two MMLU interfaces, closed-book generation, and
+a coupled ShortGPT construction constrain corpus-shift, interface, and
+construction-only accounts while keeping confounds visible.
+\item \textbf{A reporting recommendation, not a new pruning method.} The case
+motivates separate reporting of likelihood, target evaluation, interface,
+exact construction, budget/compute, and run-level uncertainty.
+\end{itemize}

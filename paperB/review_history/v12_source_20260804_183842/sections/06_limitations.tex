@@ -1,0 +1,42 @@
+\section*{Limitations}
+
+The principal keep14 path, ShortGPT, and the same-shape operating points are
+single training runs. Item-level bootstrap intervals and McNemar tests condition
+on fixed checkpoints; they do not measure variation from initialization, data
+order, optimization, or block selection. Training seeds were not explicitly
+set in the historical runs.
+
+full32 and keep14 are both reported at 200k, but each construction remains a
+single run and equal optimizer steps do not imply equal FLOPs. The shallow rows
+share the reported 200k-step and nominal-token budget with keep14, but the study
+does not match FLOPs across depths.
+Random-init changes LR and all initialization; Frozen changes the trainable
+set; ShortGPT changes four construction factors. These comparisons bound
+alternatives but do not identify causes.
+
+Letter and content MMLU simultaneously change prompt, candidate text,
+tokenization, and normalization. Paired interface artifacts exist for the
+14,042 MMLU items, but the comparison remains multi-factor. Closed-book
+evaluations report complete split sizes and exact normalization; ShortGPT is
+now evaluated on all three splits. Prompt-free per-item ShortGPT score records
+are released, but aligned records for every other closed-book arm were not
+consolidated, so we do not report paired closed-book intervals. OOD PPL covers
+WikiText-103 and PG-19, not a broad domain suite. The contamination scan is
+token-overlap evidence, not a guarantee that no semantic paraphrase or
+pretraining exposure exists; many short PopQA/NQ questions are undecidable
+under 13-grams, although their 8-gram flagged rates remain below 1\%.
+
+The study is English, mainly 7B, one model family, one mixture, and one
+prefix+fresh-tail recipe. It does not report latency, throughput, memory, or
+recovery FLOPs. Per-run and project-wide GPU-hours are unavailable because
+historical hardware/wall-time records were incomplete. Exact reproduction of
+keep14 is further blocked by an unrecorded within-epoch loader offset after a
+34.5k resume. These omissions cannot be repaired by writing alone.
+
+The anonymous artifact snapshot releases the available evaluator scripts,
+sanitized configs/manifests, aggregate summaries, prompt-free per-item MMLU
+artifacts, and paired-analysis outputs. The original evaluator revisions were
+local-only commits; the snapshot preserves their file contents, not public
+commit ancestry. It also cannot recover the historical training seed or lost
+loader offset. No layer-wise readout is used to explain the behavioral
+observations.

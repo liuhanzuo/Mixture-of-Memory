@@ -38,7 +38,24 @@ outcome: hold_in_backlog (needs 2nd family + mechanism-level hypothesis; narrow 
 
 ## Claim under test
 
-On a 6-rung damage ladder (`base + shortgpt16 + keep{14,12,10,8}`) of OLMo-2-7B, aggregate core6 degradation is accompanied by per-item acc_norm margin compression: **Spearman(core6, median_margin) = +1.00** and **Spearman(core6, frac<0.005) = −1.00**, both at n=6 exact-permutation lower bound p = 0.0028. General claim killed by Qwen3-8B replication (ρ=+0.43, p=0.42; ρ=−0.49, p=0.36). Remaining claim is OLMo-2-family-specific.
+On a 6-rung damage ladder (`base + shortgpt16 + keep{14,12,10,8}`) of OLMo-2-7B, aggregate core6 degradation is accompanied by per-item acc_norm margin compression: **Spearman(core6, median_margin) = +1.00** and **Spearman(core6, frac<0.005) = −1.00**, both at n=6 exact-permutation lower bound p = 0.0028. ~~General claim killed by Qwen3-8B replication (ρ=+0.43, p=0.42; ρ=−0.49, p=0.36).~~ Remaining claim is OLMo-2-family-specific.
+
+> **CORRECTION 2026-08-17 (0 GPU) — the struck sentence above.** The Qwen leg is
+> **`NON_MATCHED_INCONCLUSIVE`**, not a kill. `STATUS.json.kill_history[1]` downgraded
+> `GENERAL_CLAIM_KILLED` → `NON_MATCHED_INCONCLUSIVE` on **2026-08-10** because the Qwen
+> ladder confounds damage depth with training budget
+> (`DIRECTION_A_QWEN_LADDER_CONFOUND_ADDENDUM.md`). The two ρ values themselves are not
+> retracted — what is retracted is reading them as a *refutation*. Cross-family generality
+> is **UNTESTED, not refuted**, and Qwen is re-admitted as a candidate family via a
+> budget-matched ladder (`resurrection_conditions[0]`). The narrowing to OLMo-2-only stands
+> either way, so the `hold_in_backlog` verdict is unaffected. This discharges the first of
+> the two stale sentences the 2026-08-14 banner above flagged as actionable.
+>
+> **Also required whenever the +1.00 is quoted** (`kill_gate.mandatory_disclosure_on_any_report`):
+> Spearman(core6, heal_steps) on the SAME ladder, **with the ladder named** — **+0.6669 (wzc1)**
+> / **+0.8721 (zwfy6)** — plus σ̂ = 0.000541, R = 68.26, and the clause-5 φ. **φ is currently
+> UNDEFINED** (the G1 read-out has not been filled; `--readout-only` returns rc=3
+> `READOUT_ABSENT`). φ is *not* small and *not* large — it does not yet exist.
 
 ## Top 5 nearest candidates (venue-verified)
 
@@ -72,16 +89,30 @@ On a 6-rung damage ladder (`base + shortgpt16 + keep{14,12,10,8}`) of OLMo-2-7B,
 
 ## Differentiation table
 
-| Axis | Tropeano 2026 (TMLR) | Madaan 2024 (RegML-WS) | ShortGPT 2025 (Findings-ACL) | Shortened LLaMA (arXiv) | Fluid Bench (COLM 2025) | **B04 (OLMo-2-narrowed)** |
-|---|---|---|---|---|---|---|
-| Damage axis | attention-layer prune, no heal | seed / step | depth-prune, minimal heal | depth-prune + heal | none | depth-prune + heal, 6-rung |
-| Lens | ECE / Brier (aggregate calibration) | seed variance, monotonicity | aggregate accuracy | aggregate accuracy | IRT difficulty | **per-item acc_norm margin distribution** |
-| Metric | ECE, Brier, faithfulness | seed-variance, IRT-fail rate | MMLU %, other MC % | MMLU / commonsense % | IRT-adaptive score | **Spearman(core6, median_margin) & Spearman(core6, frac<threshold)** |
-| Item pool | 8 datasets (unspecified per-item lens) | MMLU inter alia | MMLU + reasoning | MMLU + commonsense | LM-eval-harness tasks | core6 (H+ARC-E+ARC-C+PIQA+OBQA+WG), N=17,195 pooled |
-| Statistic | descriptive shifts | descriptive | descriptive | descriptive | IRT posterior | **exact-permutation p at n=6 lower bound** |
-| Model scope | 5 LLMs, per-family aggregate | multiple LMs | LLaMA family | LLaMA | many | OLMo-2-7B only (Qwen replication failed) |
+> ⚠️ **REGENERATED 2026-08-17 (MAIN, 0 GPU).** The 2026-08-09 version of this table had
+> **no column for arXiv:2605.07271** (Shi et al., ICML 2026 regular), which row 0 of the
+> top-5 table identifies as the *nearest* candidate. A differentiation table missing its
+> nearest comparator cannot support the `hold_in_backlog` verdict it is cited for. The
+> 2605.07271 column is now added **as the leftmost comparator** (nearest first), and the
+> `Model scope` row's stale "Qwen replication failed" parenthetical is corrected.
+> This discharges `STATUS.json:318 related_work.actionable_0_gpu_followup`, whose other
+> half (the top-5 table) was already done on 2026-08-15.
+> The original 6-column table is preserved verbatim in git history; **the verdict does not
+> change**, but the residual it protects is now visibly narrower — see the ⚠️ row.
 
-The joint fingerprint **`{Spearman(core6, median_margin), Spearman(core6, frac<0.005)}` at exact-permutation lower bound p** on a `keepN + shortgpt16` prune-heal ladder is not covered by any of the above. Tropeano's ECE/Brier lens is the closest but is measurement-family disjoint (aggregate calibration ≠ per-item margin density), and Tropeano tests attention-only pruning without heal.
+| Axis | **Shi 2026 (ICML, 2605.07271) ← NEAREST** | Tropeano 2026 (TMLR) | Madaan 2024 (RegML-WS) | ShortGPT 2025 (Findings-ACL) | Shortened LLaMA (arXiv) | Fluid Bench (COLM 2025) | **B04 (OLMo-2-narrowed)** |
+|---|---|---|---|---|---|---|---|
+| Damage axis | layer prune, **no continued-pretrain heal** (greps: `heal`/`retrain`/`continued-pretrain` = 0; bounded SFT only) | attention-layer prune, no heal | seed / step | depth-prune, minimal heal | depth-prune + heal | none | depth-prune + heal, 6-rung |
+| Lens | **per-item MC "Decision Margin"** — gold minus best alternative, i.e. **the same lens** | ECE / Brier (aggregate calibration) | seed variance, monotonicity | aggregate accuracy | aggregate accuracy | IRT difficulty | **per-item acc_norm margin distribution** |
+| Metric | Decision Margin as a **layer-wise trajectory within one network** | ECE, Brier, faithfulness | seed-variance, IRT-fail rate | MMLU %, other MC % | MMLU / commonsense % | IRT-adaptive score | **Spearman(core6, median_margin) & Spearman(core6, frac<threshold)** |
+| Item pool | MC tasks on Llama3-8B / Llama2-7B / Qwen3-4B | 8 datasets (unspecified per-item lens) | MMLU inter alia | MMLU + reasoning | MMLU + commonsense | LM-eval-harness tasks | core6 (H+ARC-E+ARC-C+PIQA+OBQA+WG), N=17,195 pooled |
+| Statistic | descriptive collapse curves (greps: `spearman` = 0, `per-item` = 0) | descriptive shifts | descriptive | descriptive | descriptive | IRT posterior | **exact-permutation p at n=6 lower bound** |
+| Cross-checkpoint? | **No** — within-network across depth | no | across seeds/steps | no | no | no | **Yes** — across 6 healed checkpoints |
+| Noise floor measured? | not reported | no | seed variance (its own subject) | no | no | no | **σ̂ = 0.000541 from a held-fixed seed pair; R = 68.26** |
+| Model scope | Llama3-8B, Llama2-7B, Qwen3-4B | 5 LLMs, per-family aggregate | multiple LMs | LLaMA family | LLaMA | many | **OLMo-2-7B only (cross-family UNTESTED — the Qwen leg is `NON_MATCHED_INCONCLUSIVE`, not a failed replication; see the 2026-08-17 correction under "Claim under test")** |
+| ⚠️ Effect on B04's residual | **Costs B04 three must-not-claim items** (`STATUS.json:313`): (8) the per-item MC decision margin as a pruning lens, or that pruning compresses it; (9) damage/phase-dependent perturbation sensitivity as novel; (10) recovery-bounded-by-remaining-depth. **NOT a kill** — fails `kill_definition` clauses 1 and 3 (no heal ladder; no co-variation with aggregate score across checkpoints). | not a kill | not a kill | not a kill | not a kill | not a kill | **Residual after row 0: the margin as a cross-checkpoint RANK fingerprint on a prune-THEN-heal ladder against a measured noise floor, plus clause 5's heal-budget discrimination. Narrower than this file recorded on 2026-08-09.** |
+
+The joint fingerprint **`{Spearman(core6, median_margin), Spearman(core6, frac<0.005)}` at exact-permutation lower bound p** on a `keepN + shortgpt16` prune-heal ladder is not covered by any of the above. ~~Tropeano's ECE/Brier lens is the closest but is measurement-family disjoint~~ — **corrected 2026-08-17: Tropeano is no longer the closest.** Shi 2026 (2605.07271) is measurement-family *identical* (same per-item MC margin definition, same layer-pruning damage operation), and the differentiation now rests entirely on the axes marked in bold in its column: **no heal ladder, no cross-checkpoint rank statistic, no measured noise floor.** That is a narrower and more fragile residual than a disjoint-lens argument, and it is the honest one. Tropeano remains the closest *peer-reviewed-with-a-disjoint-lens* comparator, which is a weaker claim than the one struck here.
 
 ## MAIN independent verification (2026-08-09, after subagent delivery)
 

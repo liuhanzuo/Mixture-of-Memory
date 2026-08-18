@@ -1,0 +1,34 @@
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Store} & \textbf{$G{=}1$} & \textbf{$G{=}32$} &
+\textbf{$G{=}128$} & \textbf{$G{=}512$} \\
+\midrule
+32k, CPU-pinned & 8.9 & 9.2 & 10.9 & 94.0 \\
+32k, GPU-resident & 8.4 & 7.7 & 5.5 & $\infty$ \\
+128k, CPU-pinned & 27.6 & 29.7 & 37.4 & 520.1 \\
+128k, GPU-resident & 25.8 & 26.8 & 27.2 & 164.2 \\
+1M, CPU-pinned & 198.2 & 266.7 & 421.3 & 302.6 \\
+1M, GPU-resident & 180.2 & 183.0 & 190.6 & 574.7 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Measured repeated-query break-even $Q^\star$ over the full
+serving grid.}
+$G$ is generated tokens; a cell is the number of queries after which cumulative
+CoMem time is lower than matched $j{=}0$ raw-text replay. Both arms share
+selection, example, and pack; selection cancels in
+$Q^\star=(W_{\mathrm{CoMem}}-I_{j=0})/
+(T_{j=0}-T_{\mathrm{CoMem}})$. The 32k CPU cell uses
+$W_{\mathrm{CoMem}}{=}2.253$\,s and a 2.16\,ms raw-token index build.
+Values derive from three process medians and include store fetch, model Read,
+and decode. The 18 per-process records and aggregate are released with
+SHA-256 manifests. $\infty$ means CoMem's measured per-query time is not
+lower, so no finite query count amortizes its one-time Write in that cell.
+Large-$G$ values are sensitive because decode leaves a small per-query
+denominator; they are workload-specific measurements rather than a monotonic
+scaling law.}
+\label{tab:serving-crossover}
+\end{table}

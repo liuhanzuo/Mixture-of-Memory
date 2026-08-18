@@ -1,0 +1,29 @@
+{
+  "output_name": "fromscratch_step200k_nqopen",
+  "n_shards": 8,
+  "add_bos": false,
+  "meta": {
+    "mode": "pruned",
+    "keep_front_layers": 14,
+    "n_fresh_layers": 2,
+    "num_hidden_layers": 16,
+    "ckpt_step": 200000,
+    "base_model": "allenai/OLMo-2-1124-7B",
+    "add_bos": false,
+    "max_new_tokens": 32,
+    "initialization": "fully_random"
+  },
+  "tasks": {
+    "nq_open": {
+      "n": 3610,
+      "em": 0.06315789473684211,
+      "contains": 0.10664819944598337,
+      "f1": 0.12080555111810667,
+      "em_hits": 228,
+      "contains_hits": 385,
+      "f1_sum": 436.1080395363651,
+      "majority_em": 0.005263157894736842,
+      "empty_em": 0.0
+    }
+  }
+}

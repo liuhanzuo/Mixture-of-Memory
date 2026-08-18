@@ -1,0 +1,67 @@
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.20\textwidth}p{0.25\textwidth}p{0.48\textwidth}@{}}
+\toprule
+\textbf{Protocol item} & \textbf{Setting} & \textbf{Auditable detail} \\
+\midrule
+Quality cohort & 9 cells, $n{=}100$/cell &
+BABILong qa1/qa2 at 4k and 16k; LongEval at 8k and 16k;
+RULER \texttt{niah\_multikey\_1} at 8k and 16k; first 100 LoCoMo
+items. Each cell contributes one equally weighted accuracy mean. The retained
+LoCoMo slice is entirely conversation 0, so its 100 questions cannot support a
+conversation-cluster bootstrap. \\
+Generation/scoring & Greedy, no chat &
+BABILong: 20 tokens and official \texttt{compare\_answers};
+LongEval: 16 tokens and numeric exact match; RULER: 48 tokens and official
+\texttt{string\_match\_all}; LoCoMo diagnostic: 48 tokens and deterministic
+local substring/F1-threshold or abstention accuracy, not the GPT-4o headline
+judge. \\
+Calibration split & Latency only, disjoint &
+Three RULER multikey 32k documents at reserved indices 900--902
+(\texttt{PYTHONHASHSEED=0}, experiment seed 42), disjoint from quality indices
+0--99. Integer $k\in\{2,4,6,8,10,12,14,16,20,24\}$ is selected only by TTFT
+within $\pm5\%$ of the CoMem budget-12 anchor. Here $k$ is a maximum chunk
+budget; iterative BM25 may under-fill. \\
+Timing & One NVIDIA H20; bf16/SDPA &
+Three independent processes per $k$, five warmups and 20 repetitions each;
+reported TTFT is the median of process medians. It includes online selection,
+raw/residual fetch, sink/query Write, and model prefill to first logits; decode,
+one-time document Write, and index construction are excluded. BM25 replay
+budget 10 is 703.7\,ms versus CoMem 698.3\,ms (GPU) / 699.8\,ms (CPU);
+BGE replay is 697.8\,ms versus 700.5 / 702.2\,ms. \\
+Cell deltas: BM25 &
+CoMem(12) minus replay(10), points &
+qa1: $-6$ (4k), $-17$ (16k); qa2: $-3$, $-10$;
+LongEval: $-26$ (8k), $-28$ (16k); RULER: $-6$, $-9$;
+LoCoMo: $+1$. Aggregate $-11.56$. \\
+Cell deltas: BGE &
+CoMem(12) minus replay(10), points &
+qa1: $-5$ (4k), $-21$ (16k); qa2: $0$, $-23$;
+LongEval: $0$ (8k), $+16$ (16k); RULER: $+1$, $+19$;
+LoCoMo: $+4$. Aggregate $-1.00$. \\
+Dependence-aware inference &
+100,000 paired bootstrap replicates &
+\textbf{Stratified fixed-cell:} keep all nine cells and resample exactly
+$n{=}100$ pairs inside each cell; intervals are $[-14.33,-8.78]$ (BM25) and
+$[-4.56,2.56]$ (BGE). \textbf{Hierarchical:} resample nine cell labels, then
+resample $n{=}100$ pairs within every selected occurrence; intervals are
+$[-18.67,-5.11]$ and $[-10.67,8.33]$. \textbf{Leave-one-cell-out:}
+$[-13.13,-9.50]$ (all 9 negative) and $[-3.50,1.75]$ (7 negative, 2 positive).
+Deterministic base seed is 20260804. \\
+IID sensitivity & Original v5 analysis &
+Pool all 900 paired differences and resample 900 pairs:
+$[-14.44,-8.67]$ (BM25) and $[-4.67,2.67]$ (BGE). These intervals are retained
+for continuity but are not the task-mixture inference. \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Protocol-complete equal-latency audit and dependence-aware
+reanalysis.}
+Phase B intentionally uses frozen BGE for raw replay and iterative BM25 for
+CoMem, so it tests selector sensitivity rather than a same-pack depth effect.
+The reanalysis reads only saved per-example scores; it runs no model. The
+anonymous release contains score-only exports (no benchmark text, gold answers,
+or predictions), the script, result JSON, and SHA-256 manifests.}
+\label{tab:equal-latency-protocol}
+\end{table}

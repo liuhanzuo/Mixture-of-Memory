@@ -1,0 +1,10 @@
+{
+  "note": "paperA \u00a7P0.20 Phase B \u2014 dense-retriever equal-latency.",
+  "primary_anchor_diff_comem_minus_dense": -1.0,
+  "primary_anchor_95ci": [
+    -4.667,
+    2.667
+  ],
+  "k_dense_star_deploy": 10,
+  "verdict": "MIXED: dense-RAG ahead on point estimate but CI includes 0."
+}

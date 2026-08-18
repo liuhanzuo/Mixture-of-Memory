@@ -1,0 +1,17 @@
+{
+  "mode": "sanity",
+  "lora_sha256": "dd09cd17457c63578c0f38dab79b287ab5da6e3f14c119aedafec1c34400536f",
+  "lora_active_outside": 168,
+  "lora_active_inside_disable": 0,
+  "example0_read_len": {
+    "text_rag": 6560,
+    "comem": 6560,
+    "pack": 6560,
+    "n_selected": 12
+  },
+  "packed_ids_sha256": "71e44ba2303b91221d868259edfc77ad02bc088d572e8bda382b50ec0e3d6f73",
+  "calib_offset": 900,
+  "limit": 100,
+  "split_disjoint": true,
+  "fails": []
+}

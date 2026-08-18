@@ -1,0 +1,4 @@
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/399 [00:00<?, ?it/s]Loading weights: 100%|██████████| 399/399 [00:00<00:00, 14353.58it/s]
+[p0.13] loading LoRA adapter: outputs/qcmem_distill_qwen_j12_r32_4k/final
+[p1.8][manifest] lora_sha256=dd09cd17457c63578c0f38dab79b287ab5da6e3f14c119aedafec1c34400536f expected=dd09cd17457c63578c0f38dab79b287ab5da6e3f14c119aedafec1c34400536f match=True layers=[12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]

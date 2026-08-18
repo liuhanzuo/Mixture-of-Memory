@@ -1,0 +1,33 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.6pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Replay selector} & \textbf{$k_{\max}$} & \textbf{TTFT (ms)}
+& \textbf{Replay / CoMem} & \textbf{$\Delta$ (95\% CI)} \\
+\midrule
+Iterative BM25 & 10 & 703.7 & 64.78 / 53.22 &
+$-11.56$ $[-14.44,-8.67]$ \\
+Frozen BGE & 10 & 697.8 & 54.22 / 53.22 &
+$-1.00$ $[-4.67,2.67]$ \\
+CoMem anchor & 12 & 698.3--700.5 & \multicolumn{2}{c}{53.22} \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Equal-latency quality is selector-dependent; CoMem does not
+win either aggregate.}
+The online-latency calibration is disjoint from quality evaluation and freezes
+maximum budgets of 10 replay chunks and 12 CoMem chunks within a predeclared
+$\pm5\%$ band; selectors may under-fill. Quality
+is the equal-weight mean of nine task--length cells ($n{=}100$ each);
+$\Delta$ is CoMem minus replay, with 10,000 paired example bootstraps
+(seed 0). The BM25 comparison shares the selector ranking across arms.
+The BGE comparison uses frozen BGE for replay and the unchanged iterative-BM25
+CoMem deployment; its deployment TTFT charges offline-indexed query encoding
+and flat search. With cold online passage encoding, no tested integer budget
+matches the CoMem band. Appendix Table~\ref{tab:equal-latency-protocol} gives
+the complete cohort and protocol.}
+\label{tab:equal-latency}
+\end{table}

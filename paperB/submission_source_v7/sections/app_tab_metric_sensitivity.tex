@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llrrrrrrr@{}}
+\toprule
+\textbf{Task} & \textbf{metric} & \textbf{base} & \textbf{k8} & \textbf{k12} & \textbf{k14-p} & \textbf{k14-f} & \textbf{frozen} & \textbf{random} \\
+\midrule
+BoolQ & raw & .815 & .588 & .610 & .606 & .638 & .592 & .614 \\
+BoolQ & norm. & .753 & .620 & .657 & .682 & .689 & .700 & .619 \\
+\addlinespace[1pt]
+CSQA & raw & .665 & .442 & .508 & .506 & .499 & .453 & .450 \\
+CSQA & norm. & .652 & .405 & .471 & .479 & .476 & .467 & .405 \\
+\addlinespace[1pt]
+SIQA & raw & .502 & .400 & .415 & .441 & .434 & .414 & .416 \\
+SIQA & norm. & .547 & .431 & .460 & .474 & .474 & .451 & .443 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Raw versus character-normalized accuracy.} The normalized score divides candidate log-likelihood by the raw continuation's character count before selecting an answer. This is distinct from the token-normalized complete-option MMLU protocol in Table~\ref{tab:app-protocol-controls}. The main results report raw accuracy for BoolQ, CommonsenseQA, and SocialIQA. Normalization can materially change BoolQ and SIQA, so both views are reported here. k14-p/k14-f denote keep14 at 153.5k/200k; frozen-front and random init are the other 200k operating points.}
+\label{tab:app-metric-sensitivity}
+\end{table}

@@ -1,0 +1,17 @@
+\section*{Ethical Considerations}
+This work studies how model compression via layer pruning and continued
+pretraining affects evaluated capability; it does not add a safety mechanism and
+changes none of the underlying model's risks such as hallucination, biased
+generation, or unsafe completion. The observed PPL--MMLU dissociation carries a
+practical caution: a compressed model that looks healthy on aggregate
+language-modelling metrics may still perform poorly on a target benchmark, and
+deployments should evaluate the capabilities they intend to preserve rather than
+rely on perplexity alone.
+
+We collect no new human-subject data and recruit no annotators. All experiments
+use previously released artifacts---the OLMo-2 base model, the Dolmino corpus, and
+standard public benchmarks---under their respective licenses. Training and
+large-scale evaluation consume energy. We reuse a common training recipe and
+report checkpoint step explicitly rather than presenting unequal-step results as
+compute matched. Any release should preserve the licenses and usage restrictions
+of the underlying model, corpus, and benchmarks.

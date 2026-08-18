@@ -1,0 +1,41 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{The improvement result is narrower than ``PPL is useless.''}
+Perplexity remains the direct measure of the continuation objective and is
+essential for monitoring CPT. The result is instead about an implication:
+after this structural intervention, a lower in-domain PPL does not by itself
+imply recovery on MMLU or the tested closed-book tasks. A compressed model may
+therefore look healthier under the training-domain likelihood while still
+remaining unsuitable for a target use. We did not test a prospective absolute,
+relative-to-base, plateau, or calibrated PPL rule.
+
+\paragraph{Null baselines must travel with interface claims.}
+The random-init content score changes how the content interface should be read.
+Without that null point, keep14's larger content than letter score could be
+mistaken for target recovery. With it, the safer conclusion is that content
+scoring has a high baseline under this recipe and that interface choice
+materially changes the observed score. Neither interface is designated ground
+truth; agreement across independently motivated evaluations is more
+informative.
+
+\paragraph{Construction labels are part of the result.}
+Calling both keep14 and ShortGPT ``16-layer models'' hides inherited count,
+selected indices, final-block retention, and fresh-tail use. Their different
+endpoints show why exact construction must accompany quality claims. The
+present comparison cannot say which difference matters, and random/frozen
+likewise cannot isolate initialization or adaptation. Reporting these rows as
+operating points preserves their falsification value without converting them
+into causal ablations.
+
+\paragraph{Recommended reporting axes.}
+For post-intervention recovery, we recommend reporting:
+(1) in-domain and, when available, out-of-domain likelihood;
+(2) the target evaluation and its sample count;
+(3) prompt/scoring/generation interface and a relevant null baseline;
+(4) exact inherited/fresh structure and trainable modules;
+(5) steps, token presentations, realized compute, and stopping rule; and
+(6) independent training runs separately from item-level uncertainty.
+This is a case-study recommendation, not an empirically validated universal
+standard and not a substitute for latency, memory, or endpoint-quality
+frontiers.

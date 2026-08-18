@@ -1,0 +1,30 @@
+\begin{table*}[!t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4.2pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\textbf{Operating point} & \textbf{Stored object} & \textbf{Online depth} &
+\textbf{RULER}$\uparrow$ & \textbf{Read} & \textbf{Write} &
+\textbf{Store/token} \\
+\midrule
+Matched raw-text replay ($j{=}0$) & token IDs & 36 layers &
+99.19 & 931.9\,ms & per query & $\sim$4--8\,B \\
+CoMem + LoRA ($j{=}12$) & $h_{12}$ & 24 layers &
+96.07 & 664.4\,ms & once & 8,192\,B \\
+Continuous-prefix oracle & $h_{12}$ & 24 layers &
+99.19 & --- & per query & 8,192\,B \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Matched depth reuse delivers $1.403\times$ faster Read at a
+3.12-point quality cost.}
+All rows use the same paired 15-cell RULER-B cohort ($n{=}1{,}500$), selected
+pack, order, sink, mask, examples, and LoRA. The $j{=}0$--$j{=}12$ gap has
+paired-bootstrap 95\% CI $[2.36,3.93]$. Read latency uses an approximately
+6.5k-token pack from 16k source contexts and three process medians; selection,
+persistent I/O, reusable Write, and decode are excluded. The
+continuous-prefix oracle computes lower-layer states jointly with the selected
+pack and query, exactly recovering 99.19; it therefore shows that the upper
+24 layers can reproduce full replay when supplied compatible $h_{12}$ states.}
+\label{tab:core-tradeoff}
+\end{table*}

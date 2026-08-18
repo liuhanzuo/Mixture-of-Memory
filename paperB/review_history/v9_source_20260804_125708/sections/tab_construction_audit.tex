@@ -1,0 +1,26 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.8pt}
+\begin{tabular}{@{}lccrrr@{}}
+\toprule
+\textbf{Construction} & \textbf{Inherited} & \textbf{Fresh} &
+\textbf{PPL}$\downarrow$ & \textbf{MMLU-L} & \textbf{MMLU-C} \\
+\midrule
+keep14+fresh2 & 0--13 & 2 & 10.561 & .319 & .383 \\
+ShortGPT-16 & 0--12,16,17,31 & 0 & \textbf{9.780} & \textbf{.474} &
+\textbf{.401} \\
+\midrule
+ShortGPT gain & \multicolumn{2}{c}{same 16L / 200k} & $-0.781$ &
+$+15.5$ pp & $+1.8$ pp \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{What the same-depth contrast reveals.} Both models have 16
+blocks and are displayed at step 200k with the same peak LR; ShortGPT is
+15.5 letter-MMLU points and 1.8 content-MMLU points stronger. It jointly
+retains two more pretrained blocks, uses
+non-contiguous selection, preserves block 31, and removes the fresh tail. The
+contrast identifies construction as a first-class recovery variable and
+motivates a factorial follow-up over these four choices.}
+\label{tab:construction-audit}
+\end{table}

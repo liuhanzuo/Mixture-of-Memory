@@ -1,0 +1,51 @@
+Paper B v5 Figure 1 — proxy-validity redesign with AutoFigure-Edit asset workflow
+Date: 2026-08-03 (Asia/Shanghai)
+
+Required exact tool path:
+  /newcpfs/user/qixuan1/AutoFigure-Edit
+Resolved checkout:
+  paper_tools/AutoFigure-Edit
+Commit:
+  16f3749e9d512bdf7b7b55c162307bc289750b7a
+
+1. Deterministic editable-vector reconstruction from frozen Paper B results:
+  python paperB/scripts/build_fig1_pruneheal_autofigure.py
+  Outputs: pre_autofigure.svg / pre_autofigure.png
+
+2. Actual AutoFigure-Edit invocation from the user-specified exact path:
+  python /newcpfs/user/qixuan1/AutoFigure-Edit/autofigure2.py \
+    --input_figure_path paperB/figures/autofigure_run_v5/pre_autofigure.png \
+    --output_dir paperB/figures/autofigure_run_v5/exact_path_import \
+    --provider custom --base_url "$OPENAI_BASE_URL" \
+    --stop_after 1 --disable_auto_upscale
+  Log: 02_autofigure_exact_path_import.log
+  AutoFigure artifact: exact_path_import/figure.png
+  Result: EXIT_CODE=0; imported raster validated pixel-identical after RGB normalization.
+
+A one-iteration optional AutoFigure LLM optimization was attempted earlier and interrupted after
+an upstream request stalled; its failure log is retained as 02_autofigure_edit.log. It was not
+adopted. The final PDF/PNG/SVG are the validated editable-vector reconstruction, with the
+required AutoFigure import evidence above.
+
+No experiment was run. All plotted values are existing paper results.
+
+Post-review annotation and legibility fix:
+  - moved the chance .250 label to the left of the MMLU plot;
+  - raised the random .247 value label above the chance line;
+  - increased top-card metadata and bottom-callout font sizes for full-width
+    two-column rendering.
+
+Exact-path AutoFigure re-import after the fix:
+  python /newcpfs/user/qixuan1/AutoFigure-Edit/autofigure2.py \
+    --input_figure_path paperB/figures/autofigure_run_v5/postfix_pre_autofigure.png \
+    --output_dir paperB/figures/autofigure_run_v5/exact_path_import_postfix \
+    --provider custom --base_url "$OPENAI_BASE_URL" \
+    --stop_after 1 --disable_auto_upscale
+  Log: 05_autofigure_exact_path_reimport.log
+  Validation: 06_postfix_validation.log
+
+Final export note:
+  The validated SVG text font stack was changed from Liberation Sans to
+  Helvetica/Arial fallback before the final paper compile; geometry, labels,
+  values, and the exact-path imported raster were unchanged. Final exports are
+  copied into this run directory as final_figure.{svg,pdf,png}.

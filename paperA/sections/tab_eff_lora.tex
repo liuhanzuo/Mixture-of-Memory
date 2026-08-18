@@ -1,0 +1,23 @@
+% Same-platform LoRA overhead control; kept separate from the headline platform.
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{128k arm} & \textbf{Prefill speedup} & \textbf{Peak mem.} & \textbf{Decode ms/tok} \\
+\midrule
+Dense & 1.00$\times$ & 89.39\,GB & 21.85 \\
+CoMem, LoRA off & 3.23$\times$ & 18.29\,GB & 23.78 \\
+CoMem, LoRA on & \textbf{2.74$\times$} & \textbf{18.54\,GB} & 31.70 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Separate same-platform LoRA overhead control at 128k. Enabling the
+rank-32 adapter adds 0.25\,GB peak memory and about 18\% prefill time while
+preserving the fixed-read advantage. These speedup ratios are not compared
+numerically with Table~\ref{tab:eff}, which was measured on a different
+platform.}
+\label{tab:eff-lora}
+\end{table}

@@ -1,0 +1,37 @@
+\section*{Limitations}
+
+This is a measurement study of one principal OLMo-2-7B pruning recipe, not a new
+state-of-the-art compression method. keep14 and the same-shape controls are
+single training runs; item-level intervals quantify evaluation uncertainty, not
+training-seed variance. Shallower prefix arms stop at retained plateau
+checkpoints rather than a common 200k step, and the intact full32 control stops
+at 25k. Consequently, the depth ladder and full32 comparison are not
+step-, token-exposure-, or FLOP-matched long-budget counterfactuals.
+
+The fully random model uses a higher learning rate, while frozen-front changes
+the trainable parameter set. They are informative operating points rather than
+clean initialization or adaptation ablations. ShortGPT differs from keep14 in
+inherited block count, non-contiguous selection, final-block retention, and the
+absence of a fresh tail; its advantage cannot
+be attributed to any one of those factors. It shows only that the two coupled
+constructions yield different endpoints.
+
+Answer-letter and complete-option MMLU use different prompts and candidate
+scoring. Their gap is consistent with an interface component, but the
+random-init fluency floor prevents content accuracy from being interpreted as
+subject knowledge. Conversely, closed-book exact match depends on generation
+and normalization. We therefore rely on agreement across interfaces and
+datasets rather than designating one metric as ground truth.
+
+Layer-wise logit-lens and linear-probe thresholds are readout dependent. Their
+ordering is descriptive and neither localizes factual storage nor proves that
+removed layers contained the missing capability. The study covers English base
+models, one healing mixture, and primarily 7B scale; instruction tuning, other
+architectures, pruning policies, corpora, and longer budgets may produce
+different recovery trajectories.
+
+Held-out PPL is measured on a disjoint shard from the same Dolmino/DCLM source
+as healing. We do not report out-of-domain PPL or a benchmark-contamination
+audit, so the likelihood axis should be interpreted as in-domain distributional
+fit and the knowledge-sensitive results as observed benchmark behavior, not a
+clean estimate of newly recovered world knowledge.

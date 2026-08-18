@@ -1,0 +1,36 @@
+% Descriptive cross-benchmark scope table.
+\begin{table}[!t]
+\centering
+\small
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Method}
+& \textbf{RULER}$\uparrow$
+& \textbf{LongEval}$\uparrow$
+& \textbf{LongBench}$\uparrow$
+& \textbf{BABILong}$\uparrow$
+& \textbf{LoCoMo Judge}$\uparrow$ \\
+& 15-cell & 8k--128k & 6-QA F1 & qa1/2/5 macro & full set \\
+\midrule
+CoMem + LoRA ($j{=}12$)
+& 97.05 & 69.0 & 12.15 & 50.43 & 38.27 \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{Unmatched descriptive references; do not compare columns as a ranking}} \\
+KV-Direct
+& 78.80 & 65.2 & 12.17 & 63.00 & 34.59 \\
+InfLLM
+& 77.83 & 21.6 & 11.86 & 59.52 & 22.21 \\
+StreamingLLM
+& 23.37 & 30.8 & 11.11 & 48.14 & 25.63 \\
+MemoryLLM$^{\dagger}$
+& 16.55 & 13.6 & 9.01 & 30.00 & 16.11 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Cross-benchmark performance of CoMem and external references.}
+The RULER column uses one common 15-cell task set. External rows differ from
+CoMem in interface, context treatment, adaptation, and sometimes backbone, so
+they are descriptive rather than matched comparisons.
+$^{\dagger}$MemoryLLM uses a released 7B model.}
+\label{tab:overview}
+\end{table}

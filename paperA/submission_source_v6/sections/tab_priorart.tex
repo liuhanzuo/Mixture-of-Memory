@@ -1,0 +1,26 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lllll@{}}
+\toprule
+\textbf{Family} & \textbf{Persistent object} & \textbf{Composition / repair} &
+\textbf{Post-selection model work} & \textbf{Relation to CoMem} \\
+\midrule
+Text RAG~\citep{rag} & token IDs & concatenate retrieved text & all layers & matched $j{=}0$ endpoint \\
+Chunk-KV reuse~\citep{cacheblend,turborag,cachecraft} & per-layer KV & fuse / partially recompute & repair or decode & closest serving workload \\
+PIC / parallel encoding~\citep{epic,mepic,ape} & per-layer KV & position/boundary repair & selected repair or decode & independent modular chunks \\
+Learned modular KV~\citep{kvpacket,cartridgesbase,sempic} & learned per-layer KV & trained compiler/adapters & little/no document recompute & closest learned objects \\
+Activation replay~\citep{hcache,kvdirect} & activation or residual & restore/reconstruct state & replay suffix or KV & intermediate-state precedent \\
+\textbf{CoMem} & one depth-$j$ residual/token & pack selected residuals & execute layers $[j{:}L)$ & measured depth-reuse endpoint \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Positioning among reusable-context interfaces.} This taxonomy
+does not rank systems: the cited methods differ in backbone, training, workload,
+hardware, storage tier, and timing boundary. CoMem's specific object is one
+residual per token at a tunable depth; the empirical claim in this paper is the
+matched $j{=}0$ versus $j{=}12$ endpoint, not superiority over these families.}
+\label{tab:priorart}
+\end{table*}

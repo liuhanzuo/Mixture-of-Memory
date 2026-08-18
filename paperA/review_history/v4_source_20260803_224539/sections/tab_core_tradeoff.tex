@@ -1,0 +1,33 @@
+\begin{table*}[!t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4.2pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\textbf{Operating point} & \textbf{Stored object} & \textbf{Replay} &
+\textbf{RULER}$\uparrow$ & \textbf{Read} & \textbf{Write} &
+\textbf{Store/token} \\
+\midrule
+Matched raw-text replay ($j{=}0$) & token IDs & 36 layers &
+99.19 & 931.9\,ms & on query & $\sim$4--8\,B \\
+CoMem + LoRA ($j{=}12$) & $h_{12}$ & 24 layers &
+96.07 & 664.4\,ms & once & 8,192\,B \\
+Continuous-prefix control & $h_{12}$ & 24 layers &
+99.19 & --- & non-deployable & 8,192\,B \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{The central result is a matched depth-reuse frontier, not a
+cross-system ranking.}
+Quality uses the paired 15-cell RULER-B cohort ($n{=}1{,}500$); the
+$j{=}0$--$j{=}12$ gap is 3.12 points with paired-bootstrap 95\% CI
+$[2.36,3.93]$. Read latency uses the same LoRA and a fixed selected pack
+(mean approximately 6.5k tokens; nominal cap 6,657) from 16k source contexts
+(three process medians); retrieval, persistent I/O, reusable Write, and decode
+are excluded. The continuous-prefix control supplies layer-12 states from a
+single causal lower-layer forward and exactly matches raw-text replay, showing
+that upper-layer continuation can be faithful with compatible states. The
+control jointly restores document, cross-chunk, and query-side lower-layer
+interaction, so it is a fidelity ceiling rather than a single-factor
+attribution.}
+\label{tab:core-tradeoff}
+\end{table*}

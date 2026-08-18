@@ -1,0 +1,22 @@
+\begin{table}[!t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Lower-layer Write scope} & \textbf{local Read pos.} &
+\textbf{document-origin Read pos.} \\
+\midrule
+Chunk local & 92.5 & 88.0 \\
+Document contextual & 100.0 & 100.0 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Bounded context-scope $\times$ Read-position diagnosis.}
+Paired Qwen3-8B multikey macro over 8k/16k ($n{=}200$), with identical
+retrieval, LoRA, and upper-layer Read. Document context adds 7.5 points with
+local Read positions and 12.0 with document-origin positions; changing position
+alone lowers the chunk-local writer by 4.5 points. The $+4.5$ interaction means
+the factors are not additive. This attribution is limited to the displayed
+cohort.}
+\label{tab:context-position}
+\end{table}

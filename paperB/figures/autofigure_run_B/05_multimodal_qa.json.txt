@@ -1,0 +1,21 @@
+```json
+{
+  "verdict": "PASS",
+  "factual_checks": {
+    "shows_32L_base": true,
+    "shows_keep14_plus_2fresh": true,
+    "shows_CPT_or_healing": true,
+    "ppl_10_561_vs_7_398": true,
+    "ppl_tax_1_428x": true,
+    "says_ppl_improves_but_above_base": true,
+    "mmlu_0_319_vs_0_605": true,
+    "mmlu_recovery_19_5_percent": true,
+    "shortgpt_0_474": true,
+    "shortgpt_recovery_63_0_percent": true,
+    "probes_descriptive_not_causal": true
+  },
+  "readability_issues": [],
+  "factual_issues": [],
+  "concise_summary": "The figure effectively illustrates the pruning, regrowing, and healing process for a 32L base model, showing recovery gaps in perplexity and MMLU accuracy. It includes clear metrics for perplexity tax, recovery percentages, and descriptive probe markers."
+}
+```

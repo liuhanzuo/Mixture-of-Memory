@@ -1,0 +1,37 @@
+{
+  "output_name": "base_full",
+  "n_shards": 8,
+  "add_bos": false,
+  "meta": {
+    "mode": "base",
+    "num_hidden_layers": 32,
+    "base_model": "allenai/OLMo-2-1124-7B",
+    "add_bos": false,
+    "max_new_tokens": 32,
+    "initialization": "pretrained_base"
+  },
+  "tasks": {
+    "popqa": {
+      "n": 14267,
+      "em": 0.24749421742482652,
+      "contains": 0.257096796803813,
+      "f1": 0.29022030759187034,
+      "em_hits": 3531,
+      "contains_hits": 3668,
+      "f1_sum": 4140.573128413214,
+      "majority_em": 0.0229200252330553,
+      "empty_em": 0.0
+    },
+    "triviaqa": {
+      "n": 17944,
+      "em": 0.6354770396790014,
+      "contains": 0.6742086491306286,
+      "f1": 0.6842900887225425,
+      "em_hits": 11403,
+      "contains_hits": 12098,
+      "f1_sum": 12278.901352037303,
+      "majority_em": 0.0025635309852875612,
+      "empty_em": 0.0
+    }
+  }
+}

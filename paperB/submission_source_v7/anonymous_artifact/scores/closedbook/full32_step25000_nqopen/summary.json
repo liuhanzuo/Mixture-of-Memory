@@ -1,0 +1,29 @@
+{
+  "output_name": "full32_step25000_nqopen",
+  "n_shards": 8,
+  "add_bos": false,
+  "meta": {
+    "mode": "pruned",
+    "keep_front_layers": 32,
+    "n_fresh_layers": 0,
+    "num_hidden_layers": 32,
+    "ckpt_step": 25000,
+    "base_model": "allenai/OLMo-2-1124-7B",
+    "add_bos": false,
+    "max_new_tokens": 32,
+    "initialization": "inherited_front"
+  },
+  "tasks": {
+    "nq_open": {
+      "n": 3610,
+      "em": 0.15817174515235458,
+      "contains": 0.2443213296398892,
+      "f1": 0.2368613388716364,
+      "em_hits": 571,
+      "contains_hits": 882,
+      "f1_sum": 855.0694333266074,
+      "majority_em": 0.005263157894736842,
+      "empty_em": 0.0
+    }
+  }
+}

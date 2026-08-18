@@ -1,0 +1,29 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Store} & \textbf{$G{=}1$} & \textbf{$G{=}32$} &
+\textbf{$G{=}128$} & \textbf{$G{=}512$} \\
+\midrule
+32k, CPU-pinned & 8.9 & 9.2 & 10.9 & 94.0 \\
+32k, GPU-resident & 8.4 & 7.7 & 5.5 & --- \\
+128k, CPU-pinned & 27.6 & --- & --- & --- \\
+128k, GPU-resident & 25.8 & --- & --- & --- \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Measured repeated-query break-even $Q^\star$.}
+$G$ is generated tokens; a cell is the number of queries after which cumulative
+CoMem time is lower than matched $j{=}0$ raw-text replay. Both arms share
+selection, example, and pack; selection cancels in
+$Q^\star=(W_{\mathrm{CoMem}}-I_{j=0})/
+(T_{j=0}-T_{\mathrm{CoMem}})$. The 32k CPU cell uses
+$W_{\mathrm{CoMem}}{=}2.253$\,s and a 2.16\,ms raw-token index build.
+Values derive from three process medians and include store fetch, model Read,
+and decode; raw component times and dispersion are archived. ``---'' denotes an
+unavailable or non-finite retained cell.}
+\label{tab:serving-crossover}
+\end{table}

@@ -1,0 +1,156 @@
+\section{CoMem: Depth-Partitioned Computation Reuse}
+\label{sec:method}
+
+\subsection{Overview and three read pathways}
+CoMem partitions a decoder along depth (Figure~\ref{fig:teaser}): Write caches one
+intermediate residual tensor per chunk; Select retrieves a bounded subset; Read
+recomputes the upper layers with the query present. Ranges are half-open, and
+$h_j$ is the input to block $j$. The resumed computation is related to
+KV-Direct~\citep{kvdirect}, but adds shallow writes, a tunable split, and bounded
+external retrieval.
+
+\paragraph{Three read pathways.} Full context runs all $L$ layers over every
+token. Text RAG bounds the prompt but still runs all layers. Our matched
+$j{=}0$ raw-text replay control fixes CoMem's selector, pack, and mask while
+storing token IDs and replaying all layers. CoMem $j{=}12$ selects the same
+chunks, retrieves prewritten $h_{12}$, and runs only $[12{:}L)$. Both retrieved
+paths bound the token working set; only CoMem skips repeated lower-layer
+document computation, at the cost of residual storage and an approximate
+interface.
+
+\paragraph{Notation and storage.} Let the decoder have $L$ layers, width $d$,
+head width $d_{\mathrm{head}}$, split $j$, and chunk size $c$. CoMem stores
+$h_j\in\mathbb{R}^{c\times d}$. With a common dtype, its per-token storage
+relative to full KV is
+\begin{equation}
+\frac{\lvert h_j\rvert}{\lvert\mathrm{KV}\rvert}
+=\frac{d}{2L n_{\mathrm{kv}}d_{\mathrm{head}}}
+=\frac{n_{\mathrm{q}}}{2L n_{\mathrm{kv}}},
+\label{eq:store}
+\end{equation}
+where $n_{\mathrm{q}}$ and $n_{\mathrm{kv}}$ are the query- and KV-head counts,
+and $d=n_{\mathrm{q}}d_{\mathrm{head}}$.
+Qwen3-8B uses $d{=}4096$, $L{=}36$, $n_{\mathrm{q}}{=}32$, and
+$n_{\mathrm{kv}}{=}8$, yielding $1/18$ (8\,KB vs.\ 144\,KB per token in bf16).
+The residual store is about 1\,GiB at 128k tokens and 8.2\,GB at one million
+tokens: smaller than full KV, but roughly three orders of magnitude larger than
+token IDs or compressed text. Depth reuse is most attractive when this prepaid
+representation serves repeated queries.
+At read time we assemble a \emph{pack} whose length is fixed by $k$ and $c$,
+\begin{equation}
+\lvert\text{pack}\rvert=\text{sink}+k\!\cdot\!c+\text{query}\approx 6.7\,\mathrm{k},
+\label{eq:pack}
+\end{equation}
+for $k{=}12$, $c{=}512$, and---crucially---\emph{independent of the context
+length}.
+
+\paragraph{Why BM25?} The flagship uses iterative token-ID BM25 as a deliberately
+lightweight selector: it is training-free, deterministic, CPU-only, and requires
+no embedding model or neural forward. It is also well matched to the entity and
+key overlap in our diagnostics. This choice isolates the memory interface from a
+separately trained retriever; CoMem itself is selector-agnostic, and we do not
+claim that lexical retrieval is universally optimal. Appendix~\ref{app:ablations}
+compares BM25 with recency, reader-attention, oracle, and a frozen dense
+retriever and reports their scaling limits.
+
+\begin{algorithm}[t]
+\caption{CoMem: Write and Read}
+\label{algo:comem}
+\begin{algorithmic}[1]
+\REQUIRE backbone layers $[0{:}L)$, split $j$, chunk size $c$, top-$k$
+\STATE \textbf{Write} (streaming, once per context):
+\FOR{each $c$-token chunk $x$ in the context}
+  \STATE $h_j \leftarrow \mathrm{layers}_{[0{:}j)}(x)$ \COMMENT{chunk-local RoPE}
+  \STATE store $h_j$ under a unique document/chunk ID
+\ENDFOR
+\STATE \textbf{Read} (per query $q$):
+\STATE $S \leftarrow \textsc{Lexical-top-}k(q)$ \COMMENT{bounded top-12 flagship retrieval}
+\STATE $\mathrm{pack} \leftarrow [\,\mathrm{sink};\ \{h_j\}_{s\in S};\ h_j(q)\,]$ \COMMENT{fresh contiguous RoPE}
+\STATE $\mathrm{logits} \leftarrow \mathrm{layers}_{[j{:}L)}(\mathrm{pack})$ \COMMENT{full cross-pack attention}
+\RETURN next-token $\mathrm{logits}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Write: caching intermediate residuals}
+\label{subsec:write}
+The document is streamed in disjoint $c$-token chunks. Each chunk restarts
+rotary positions~\citep{roformer} at zero, runs through $[0{:}j)$, and writes
+$h_j$ to an external store under a unique document/chunk ID. Chunk-local positions make cached states reusable regardless
+of their original document offset. The Write cost is linear in context length
+and executes only $j$ layers. The hidden store and BM25 index also remain linear;
+only the model-side online Read is bounded.
+
+\paragraph{Overlap-Write.}
+Independent chunks omit lower-layer context that may be needed to form a
+composable residual. We therefore evaluate a deployable variant in which chunk
+$i$ is prefixed during Write by the final $w$ tokens preceding that chunk; only
+the residuals for the current $c$ tokens are persisted. The prefix is discarded,
+so persistent bytes/token, selected pack length, and Read/decode work are
+unchanged. Setting $w{=}0$ recovers the independent writer exactly. We evaluate
+this variant as a focused mechanism repair rather than as the flagship on every
+benchmark.
+
+\subsection{Depth split and self-distillation}
+\label{subsec:jknob}
+\paragraph{The $j$ knob.} Split depth controls prepaid Write work versus
+per-query Read work. At $j{=}0$, the matched raw-text replay control performs full
+recomputation and matches the stock forward within
+$\max|\Delta\mathrm{logit}|<10^{-4}$ on that same pack;
+at $j{=}L$, no upper layer is replayed. Intermediate $j$ trades cheaper Read for
+query-blind readout loss. Self-distillation enables the flagship operating point
+$j{=}12/36$. KV-Direct is the separate no-retrieval full-context arm.
+
+\paragraph{Self-distillation.} Following knowledge distillation and low-rank
+adaptation~\citep{distillation,lora}, we train a student at $j{=}12$ to match a
+frozen $j{=}0$ teacher on the teacher's
+top-64 logit support. Let $p$ and $q$ be their renormalized distributions on
+that support. The actual objective is the bidirectional KL
+\begin{equation}
+\mathcal L_{\mathrm{distill}}
+=0.6\,\mathrm{KL}(p\Vert q)+0.4\,\mathrm{KL}(q\Vert p),
+\label{eq:distill}
+\end{equation}
+with no auxiliary cross-entropy term. The canonical adapter trains rank-32 LoRA
+($\alpha{=}64$, zero dropout) on all attention and MLP
+projections in layers 12--35 of a frozen Qwen3-8B. Training uses 4,000 steps of
+8-GPU bf16 DDP (effective batch 8), AdamW with peak learning rate
+$8{\times}10^{-5}$, 100 warmup steps and cosine decay, on 2,048-token windows
+from the PG-19 training split~\citep{pg19}. No synthetic long-context examples,
+task supervision,
+retrieval, or CE loss is used. This pushes the usable cache depth deeper and
+transfers without benchmark-specific supervision across the evaluated tasks
+(\S\ref{sec:experiments}).
+
+The backbone remains frozen. The $j{=}12$ flagship uses this LoRA, while a
+shallower adapter-free arm isolates the inference architecture. Designing
+compressible cache points during pretraining is complementary and outside our
+scope.
+
+\subsection{Read: bounded retrieval and recompute}
+\label{subsec:read}
+
+\paragraph{The read pack.} A selector returns top-$k$ chunk indices. Their
+hiddens are ordered by document position and packed as
+$\texttt{[sink; selected }h_j\texttt{; query }h_j\texttt{]}$ with fresh,
+contiguous RoPE. Layers $[j{:}L)$ then run with full causal attention, allowing
+later chunks and the query to integrate earlier evidence. For fixed $k$ and $c$,
+model-side Read FLOPs and KV working memory are independent of stored-context
+length; Table~\ref{tab:crosschunk} tests the full-attention choice.
+
+The sink is the backbone's BOS token passed through layers $[0{:}j)$ as a
+one-token chunk. For generation, the query is first written with a lower-band KV
+cache, while the packed sink, selected states, and query are prefetched once
+through $[j{:}L)$ to create an upper-band cache. Each generated token then runs
+through $[0{:}j)$ at the next query-local position using the lower cache, and its
+result runs through $[j{:}L)$ at the next packed position using the upper cache;
+both position counters advance by one. The retrieved pack is never rerun per
+token. Decode work is therefore independent of stored-context length for a fixed
+pack and generated prefix. Appendix~\ref{app:efficiency} reports the generation
+timing path and component boundaries.
+
+\paragraph{Bounded lexical retrieval.} BM25~\citep{bm25} returns a bounded
+top-$k$ set. The flagship uses $k{=}12$, hop width four, and three automatic
+frontier-expansion
+rounds with deduplication. Oracle, recency, reader-attention, and wider retrieval
+are analysis-only controls reported in \S\ref{sec:experiments} and
+Appendix~\ref{app:ablations}.

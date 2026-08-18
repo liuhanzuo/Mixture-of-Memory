@@ -1,0 +1,64 @@
+AGG 32f951041a60753616f9ff922b77229004e8137f7b46dcadc2e7661e41f6300b  bench_results/cacheblend/aggregate.json
+SELFTEST
+Using the latest cached version of the dataset since RMT-team/babilong couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration '1k' at <DATASET_CACHE> (last modified on Sun May 10 15:16:49 2026).
+[mem_space-BABILong] Loaded RMT-team/babilong/1k with cache_dir=<PROJECT_ROOT>/.hf_cache/datasets
+[QCMem-BABILong] data preflight PASS qa5/1k: available=100, requested=100
+[QCMem-BABILong] model_path=models/Qwen3-8b-local
+[QCMem-BABILong] baseline=cacheblend (no_retrieval=False) resume_j=6 selector=bm25 topk=4 sink=bos chunk_size=512 dtype=torch.float32 attn_impl=sdpa
+`torch_dtype` is deprecated! Use `dtype` instead!
+
+Loading weights:   0%|          | 0/399 [00:00<?, ?it/s]
+Loading weights:   0%|          | 1/399 [00:03<21:03,  3.17s/it]
+Loading weights:  13%|█▎        | 50/399 [00:03<00:17, 19.73it/s]
+Loading weights:  15%|█▌        | 60/399 [00:03<00:14, 23.32it/s]
+Loading weights:  20%|██        | 81/399 [00:03<00:10, 30.92it/s]
+Loading weights:  26%|██▌       | 103/399 [00:04<00:07, 41.06it/s]
+Loading weights:  29%|██▊       | 114/399 [00:04<00:07, 39.87it/s]
+Loading weights:  31%|███▏      | 125/399 [00:04<00:06, 40.29it/s]
+Loading weights:  34%|███▍      | 136/399 [00:05<00:06, 39.63it/s]
+Loading weights:  37%|███▋      | 147/399 [00:05<00:06, 38.44it/s]
+Loading weights:  40%|███▉      | 158/399 [00:05<00:06, 38.15it/s]
+Loading weights:  42%|████▏     | 169/399 [00:05<00:05, 44.87it/s]
+Loading weights:  45%|████▌     | 180/399 [00:06<00:05, 42.24it/s]
+Loading weights:  48%|████▊     | 191/399 [00:06<00:05, 41.18it/s]
+Loading weights:  51%|█████     | 202/399 [00:06<00:04, 39.95it/s]
+Loading weights:  53%|█████▎    | 213/399 [00:06<00:04, 39.12it/s]
+Loading weights:  56%|█████▌    | 224/399 [00:07<00:04, 38.89it/s]
+Loading weights:  59%|█████▉    | 235/399 [00:07<00:03, 41.96it/s]
+Loading weights:  62%|██████▏   | 246/399 [00:07<00:03, 40.81it/s]
+Loading weights:  64%|██████▍   | 257/399 [00:08<00:03, 37.41it/s]
+Loading weights:  69%|██████▉   | 276/399 [00:08<00:02, 53.66it/s]
+Loading weights:  71%|███████   | 283/399 [00:08<00:02, 46.75it/s]
+Loading weights:  73%|███████▎  | 290/399 [00:08<00:02, 39.32it/s]
+Loading weights:  75%|███████▌  | 301/399 [00:09<00:02, 36.88it/s]
+Loading weights:  78%|███████▊  | 312/399 [00:09<00:02, 36.30it/s]
+Loading weights:  81%|████████  | 323/399 [00:09<00:01, 44.08it/s]
+Loading weights:  85%|████████▌ | 341/399 [00:09<00:00, 63.08it/s]
+Loading weights:  88%|████████▊ | 350/399 [00:10<00:00, 49.60it/s]
+Loading weights:  89%|████████▉ | 357/399 [00:10<00:00, 43.95it/s]
+Loading weights:  92%|█████████▏| 367/399 [00:10<00:00, 40.46it/s]
+Loading weights:  95%|█████████▍| 378/399 [00:10<00:00, 39.04it/s]
+Loading weights:  97%|█████████▋| 389/399 [00:11<00:00, 37.95it/s]
+Loading weights: 100%|██████████| 399/399 [00:11<00:00, 35.81it/s]
+========================================================================
+CacheBlend self-test (reindex exactness + r=1.0 == full prefill)
+========================================================================
+  model dtype=torch.float32, L=36, kv_bytes/tok=147456, strict=True
+  (A) reindex  max|dK|=3.052e-05  max|dV|=4.387e-05  PASS
+  (B) r=1.0 vs full prefill  max|logit diff|=2.813e-05  top1_agree=100.00%  R=all:True  PASS
+  (C) r=0.0 finite (no NaN): True  PASS
+------------------------------------------------------------------------
+CACHEBLEND SELF-TEST: ALL PASS
+========================================================================
+FILES 1733
+SCRIPT HASHES
+8376851e38c2d26e6253d0040244bbe5df3807aecbb7342544ca7061d41a2b89  scripts/_run_cacheblend_8gpu.sh
+67fd60e8f7bb31cc0bbc9612963429b209d35d6577e37dd091dc5760b21e0179  scripts/_run_cacheblend_locomo_8gpu.sh
+fb7d97b817bcd3b4182c2924dd1ec69d3d7d6ac964edc106b063cb35c0d64bc4  scripts/aggregate_cacheblend_143.py
+9adfe9a495af24dda2a06893457296b86fc4eaf8dce663ea3b00fbb37766f353  scripts/eval_qcmem_babilong.py
+38a8b4b2cc0761363e1b85c911033c1b8c66f2957592a3396551b22ac92e091a  scripts/eval_ruler_qcmem.py
+89e20763a214b053d33fa3bf0a0fb435ddc3479e97f282f20b2bcdb352762b23  scripts/eval_qcmem_locomo.py
+16cf0a4b1af11772d05ffe349c248878dfcbf18d9945a88920dcb1f03be86247  src/memory/qcmem/qcmem_model.py
+GIT
+2d98c5a14d2c5de9bf38e41b001909be19d64c7a

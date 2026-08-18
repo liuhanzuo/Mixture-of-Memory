@@ -1,0 +1,28 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4.0pt}
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+\textbf{Arm} & \textbf{Step} & \textbf{PPL}$\downarrow$ &
+\textbf{MMLU-L} & \textbf{MMLU-C} & \textbf{core6} &
+\textbf{HellaSwag} & \textbf{ARC-C} & \textbf{BoolQ} \\
+\midrule
+Base 32L & --- & 7.398 & .605 & .471 & .704 & .805 & .571 & .815 \\
+keep14+fresh2 & 200k & 10.561 & .319 & .383 & .594 & .645 & .438 & .638 \\
+ShortGPT-16 & 200k & \textbf{9.780} & \textbf{.474} & \textbf{.401} &
+\textbf{.621} & \textbf{.685} & \textbf{.476} & \textbf{.729} \\
+\midrule
+ShortGPT $-$ keep14 (pp) & --- & $-0.781$ & $+15.6$ & $+1.8$ &
+$+2.8$ & $+4.1$ & $+3.8$ & $+9.1$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Compact construction profile.} core6 is the unweighted macro
+over HellaSwag, ARC-Challenge/Easy, PIQA, WinoGrande, and OpenBookQA using the
+metrics defined in Table~\ref{tab:downstream}. At the same nominal
+16-layer depth and displayed 200k steps, ShortGPT improves every displayed
+target, but the gain ranges from 1.8 content-MMLU points to 15.6 letter-MMLU
+points. Its construction jointly changes inherited count, block selection,
+final-block retention, and fresh-tail use.}
+\label{tab:policy-endpoint}
+\end{table*}

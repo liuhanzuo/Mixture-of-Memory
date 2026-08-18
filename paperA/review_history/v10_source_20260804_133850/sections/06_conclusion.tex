@@ -1,0 +1,28 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+CoMem opens a new systems axis for repeated-query long-context inference:
+\emph{how much transformer depth should a reusable document object prepay?}
+Its single-residual interface makes that axis explicit, while the matched
+$j{=}0$ endpoint separates depth reuse from retrieval and packing. On
+Qwen3-8B, prepaying 12 of 36 layers yields a $1.403\times$ selected-pack Read
+speedup at a 3.12-point RULER cost; together with bounded selection, it produces
+a $64.9\times$ 128k online-prefill operating point. The accompanying storage,
+Write, and break-even measurements show when this trade becomes worthwhile in
+a repeated-query workload.
+
+The mechanism analysis turns the quality gap into an actionable design result.
+A continuous-prefix oracle recovers all 3.12 points, the context--position
+factorization identifies lower-layer document context as the dominant tested
+factor on multikey retrieval, and a 32-token overlap recovers 6.0 points without
+increasing persistent bytes or per-query Read. The equal-latency study adds an
+important boundary: BM25 raw replay remains decisively stronger, whereas the
+frozen-BGE comparison is unresolved, making selector quality part of the
+systems frontier rather than a hidden constant.
+
+These results establish transformer depth as a measurable and tunable dimension
+of reusable context, alongside selection budget, stored representation, and
+storage placement. CoMem supplies the interface and matched methodology needed
+to study that dimension; the next generation of reusable-context systems can
+combine it with stronger selectors, contextual writers, and PIC or learned
+modular-cache repair.

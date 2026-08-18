@@ -1,0 +1,64 @@
+\section{Introduction}
+\label{sec:intro}
+
+Removing transformer blocks and then continuing pretraining (CPT, often called
+``healing'') is an attractive route to smaller language models
+~\citep{gromov2024unreasonable,shortenedllama,men2024shortgpt,
+yang2024laco}. A pruned model can improve rapidly on held-out next-token loss,
+and endpoint perplexity is therefore a natural measure of whether retraining is
+working. It is not, however, a complete description of what the structural
+intervention removed or what CPT restored.
+
+Perplexity averages local prediction loss over a corpus. Factual recall,
+multiple-choice answer selection, generation, and task-specific interfaces
+probe different observables. Compression studies have documented that
+aggregate language-model metrics can miss changes in parametric knowledge,
+downstream behavior, or safety~\citep{costcompression,beyondperplexity,
+jaiswal2024truth}. Prior depth-pruning studies also report healing curves and
+loss--task dissociations~\citep{gromov2024unreasonable,shortenedllama,minitron,
+iterabre}. We do not claim either phenomenon as new. Instead, we ask what can be
+learned from one densely measured OLMo prune--regrow path when it is read
+alongside several imperfect but complementary controls.
+
+\paragraph{Research question.}
+We ask: \emph{what does continued pretraining restore in the observed OLMo
+prune--regrow runs, and which controls change the interpretation?}
+We treat recovery as a multi-axis object---held-out likelihood, target
+capability, scoring interface, exact construction, and training budget---rather
+than a scalar certified by perplexity.
+
+We instantiate this case study on OLMo-2-1124-7B~\citep{olmo2}. Prefix arms retain
+$k$ pretrained decoder blocks, append two randomly initialized blocks, and
+continue pretraining on a fixed Dolmino corpus array and nominal schedule. The principal keep14 arm is
+tracked to 200k steps. Controls include the intact base, an unpruned model
+continued on the same corpus array and nominal schedule to an available 25k
+checkpoint, a
+frozen-prefix arm, a fully random same-shape model, and a non-contiguous
+ShortGPT-16 endpoint. Evaluation combines held-out likelihood, a broad zero-shot
+likelihood suite, answer-letter and complete-option MMLU, and no-retrieval
+PopQA, TriviaQA, and NQ-open.
+
+The central observation is bounded and recurs across the tested interfaces. In
+this run, keep14 reaches
+PPL 10.561, yet remains far below the intact model on answer-letter MMLU and
+all three closed-book tasks. Complete-option scoring narrows the MMLU gap,
+consistent with an answer-symbol or readout component, but the random-init
+content-score floor argues against interpreting that protocol as recovered subject
+knowledge. ShortGPT is substantially stronger on both PPL and MMLU, so the
+keep14 endpoint is not shared by every tested 16-layer construction. Coupled
+structural differences prevent a single-factor explanation, and all central
+training comparisons are single realizations.
+
+\paragraph{Contributions.}
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt]
+\item \textbf{An OLMo prune--regrow recovery path.} We jointly track
+in-domain likelihood, answer-letter MMLU, and broader behavior over available
+checkpoints, with the single-run scope explicit.
+\item \textbf{A complementary control bundle.} An available short-horizon
+full32 branch, same-shape operating points, two MMLU interfaces, closed-book
+generation, and a coupled ShortGPT construction comparison delimit competing
+interpretations without claiming clean factor isolation.
+\item \textbf{A case-study reporting proposal.} The measurements motivate
+reporting likelihood, target capability, interface, exact construction, and
+recovery budget as separate axes; they do not validate a universal protocol.
+\end{itemize}

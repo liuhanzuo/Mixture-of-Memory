@@ -1,0 +1,25 @@
+% Persistent-store I/O tiers at the 16M-token stress point.
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrl@{}}
+\toprule
+\textbf{Backend} & \textbf{Write GB/s} & \textbf{Fetch ms} & \textbf{H2D ms} & \textbf{Peak QPS} & \textbf{16M outcome} \\
+\midrule
+GPU resident & OOM & -- & -- & -- & 128 GiB $>$ 95 GiB \\
+CPU pinned & 139.6 & 0.81 & 1.41 & 941 & 235 GB host \\
+Local NVMe & 2.45 & 13.42 & 0.91 & 264 & 2.18 GB host \\
+Network/CEPH & 1.66 & 79.20 & 1.20 & 42 & 2.19 GB host \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Measured persistent-store tiers at 16M tokens (128\,GiB of bf16
+$h_{12}$). Each query fetches the same 50.3\,MB top-12 pack; medians use seven
+repetitions after two warmups, and QPS is the best of 1/4/16 concurrent clients.
+GPU residence fits 8M tokens (64.98\,GB peak) but not 16M; off-GPU tiers retain
+store-size-independent transfer volume at increasing I/O latency. This
+microbenchmark times storage and transfer, not BM25 or model inference.}
+\label{tab:store-io}
+\end{table}

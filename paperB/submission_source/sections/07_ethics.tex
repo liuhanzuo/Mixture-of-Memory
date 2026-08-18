@@ -1,0 +1,14 @@
+\section*{Ethical Considerations}
+This work adds no safety mechanism and inherits the risks of the underlying
+model and data, including hallucination, biased generation, and unsafe
+completion. Its practical caution is measurement-related: a compressed model
+that improves on in-domain perplexity may still underperform on capabilities
+required by a deployment. Target evaluations and relevant null baselines should
+therefore be checked directly.
+
+We collect no new human-subject data and recruit no annotators. Experiments use
+released model, corpus, and benchmark artifacts under their upstream terms.
+Training and large-scale evaluation consume energy; incomplete historical
+records prevent a reliable GPU-hour total, so we do not invent one. Any public
+artifact should preserve upstream licenses and exclude benchmark text or model
+weights that cannot be redistributed.

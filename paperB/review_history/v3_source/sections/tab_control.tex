@@ -1,0 +1,21 @@
+% Matched-shape random-initialization operating point.
+% Source: PAPER_B_DATA.md secs. 3(d), 8.3.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Arm} & \textbf{Peak LR} & \textbf{PPL}$\downarrow$ & \textbf{MMLU} \\
+\midrule
+inherited, train all & $2\mathrm{e}{-5}$ & $10.561$ & $.3191$ \\
+inherited front frozen & $2\mathrm{e}{-5}$ & $12.797$ & $.2628$ \\
+fully random init, train all & $1\mathrm{e}{-4}$ & $11.498$ & $.2461$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Same-shape operating points at keep14+fresh2, all at 200k
+steps.} Random init does not isolate initialization because its learning rate
+also differs. Frozen-front is learning-rate matched to train-all but changes the
+set of trainable modules; neither comparison alone identifies a causal factor.}
+\label{tab:control}
+\end{table}

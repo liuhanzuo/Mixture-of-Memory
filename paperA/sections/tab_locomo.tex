@@ -1,0 +1,35 @@
+% LoCoMo chat-template-free scoring, n=1986.
+\begin{table}[!t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Method} & \textbf{Judge} & \textbf{Judge$_{1:4}$} & \textbf{F1} & \textbf{Substr. acc.} \\
+\midrule
+Raw replay ($j{=}0$) & 41.59 & 52.60 & 9.90 & 25.23 \\
+CoMem + LoRA ($j{=}12$) & 38.27 & 48.64 & 9.15 & 23.36 \\
+KV-Direct & 34.59 & 43.83 & 9.02 & 22.36 \\
+StreamingLLM & 25.63 & 31.04 & 7.67 & 13.75 \\
+InfLLM & 22.21 & 26.43 & 7.39 & 13.34 \\
+MemoryLLM$^{\dagger}$ & 16.11 & 20.65 & 5.91 & 9.52 \\
+\bottomrule
+\end{tabular}
+\caption{LoCoMo comparison on all 1,986 chat-template-free examples. The
+raw-replay row is the measured full-set $j{=}0$ reference rather than an
+overview aggregate duplicated into category cells.
+Judge$_{1:4}$ is GPT-4o accuracy on the 1,540 answerable items; the full Judge
+column folds in local abstention scoring for 446 adversarial items. F1 and
+substring accuracy are deterministic lexical diagnostics; semantic Judge is the
+primary metric. All rows use the same scoring protocol. The same-$j$ adapter effect is isolated in
+Table~\ref{tab:depth-tradeoff}. On paired answerable items, distilled CoMem
+exceeds KV-Direct by $4.81$ points (item-bootstrap 95\% CI $[2.34,7.34]$);
+a 10-conversation cluster bootstrap gives $[1.27,8.32]$ and 8/10 observed
+conversation differences favor CoMem. An independent DeepSeek-V3 audit
+preserves the ordering.
+$^{\dagger}$MemoryLLM is the external persistent-memory reference and uses its
+official chat-tuned Llama-3 checkpoint; its different backbone precludes matched
+attribution. The paper retains only its uniform no-chat evaluation and makes no
+native-chat sensitivity claim.}
+\label{tab:locomo}
+\end{table}

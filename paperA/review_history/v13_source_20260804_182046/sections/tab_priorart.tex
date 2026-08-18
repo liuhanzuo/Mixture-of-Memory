@@ -1,0 +1,30 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lllll@{}}
+\toprule
+\textbf{Family} & \textbf{Persistent object} & \textbf{Primary tunable axis} &
+\textbf{Post-selection / hit work} & \textbf{Difference from CoMem} \\
+\midrule
+Text RAG~\citep{rag} & token IDs & selection budget & all layers & matched $j{=}0$ endpoint \\
+Reusable representations~\citep{readonce,embeddingrecycling} & compressed/intermediate features & compression or adapter & downstream model/layers & fixed representation interface \\
+Semantic layer cache~\citep{llmcache} & activation bank at every layer & similarity threshold / layer policy & skip matched layer computation & semantic input reuse, no fixed document split \\
+Hidden-state restoration~\citep{hcache,kvdirect} & states across layers / checkpoints & I/O--reconstruction schedule & reconstruct layer-wise KV & restores standard per-layer state \\
+Chunk-KV / PIC~\citep{promptcache,blockattention,cacheblend,turborag,epic,mepic,ape} & per-layer KV & link/repair policy & repair or decode & full-depth KV object \\
+Learned modular KV~\citep{kvpacket,cartridgesbase,sempic} & learned per-layer KV & compiler/training/retrieval & little document recompute & full-depth learned object \\
+\textbf{CoMem} & one depth-$j$ residual/token & \textbf{split depth $j$} & execute layers $[j{:}L)$ & matched document-depth measurement \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Reusable-context interfaces expose different systems axes.}
+LLMCache supports semantically matched activation reuse at arbitrary layers via
+per-layer cache banks. CoMem studies a different conjunction: one persistent
+document residual at a chosen split, direct native-suffix execution, and a
+matched $j{=}0$ endpoint holding the evidence and Read interface fixed.
+Published systems use different experimental boundaries; Table~\ref{tab:cacheblend-baseline}
+adds a same-backbone minimal-faithful CacheBlend-style comparison, while this
+table positions the broader interface families.}
+\label{tab:priorart}
+\end{table*}

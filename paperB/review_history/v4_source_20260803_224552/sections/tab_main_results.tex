@@ -1,0 +1,34 @@
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4.2pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Operating point} & \textbf{PPL}$\downarrow$ & \textbf{MMLU letter} & \textbf{MMLU content} & \textbf{PopQA} & \textbf{TriviaQA} & \textbf{NQ-open} \\
+\midrule
+Full base (32L) & 7.398 & .605 & .471 & .257 & .636 & .205 \\
+Full32 continued@25k$^\dagger$ & 7.670 & .588 & .466 & .228 & .572 & .158 \\
+\midrule
+keep14 + fresh2, 200k & 10.561 & .319 & .383 & .142 & .294 & .060 \\
+ShortGPT-16, 200k & 9.780 & .474 & .401 & --- & --- & --- \\
+Frozen inherited front, 200k & 12.797 & .262 & .360 & .128 & .248 & .050 \\
+Fully random init, 200k & 11.498 & .247 & .360 & .111 & .209 & .063 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Likelihood and knowledge-sensitive evaluation recover
+differently in the observed OLMo operating points.} MMLU letter scores the answer symbol; MMLU content scores the
+complete option text using mean log-likelihood per continuation token, the
+reported content headline. PopQA reports normalized-answer containment;
+TriviaQA and NQ-open report exact match. Full32 continued pretraining stays near
+the base through 25k, whereas every tested half-depth point remains
+substantially below it. The random-init content score exposes a fluency floor,
+so content accuracy is not interpreted as recovered knowledge. Rows are single
+training runs; missing ShortGPT closed-book cells were not evaluated.
+$^\dagger$All full32 cells use the same intact 32-layer step-25k checkpoint,
+which is a short-horizon rather than 200k control. Letter values here are
+rounded headline aggregates; the common interface rerun in
+Table~\ref{tab:app-protocol-controls} differs slightly.}
+\label{tab:main-results}
+\end{table*}

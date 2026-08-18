@@ -1,0 +1,7 @@
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/399 [00:00<?, ?it/s]Loading weights: 100%|██████████| 399/399 [00:00<00:00, 14785.38it/s]
+[p0.13] loading LoRA adapter: outputs/qcmem_distill_qwen_j12_r32_4k/final
+[p1.8][serve] proc=0 tier=gpu store_L=32k (N=64 chunks) read_pack=32k task=niah_multikey_1 pack_read_len=6177 sel=[0, 1, 12, 13, 22, 23, 24, 33, 58, 59, 60, 61]
+[p1.8][serve] GATE2 store==recompute max_abs=0.0 PASS
+[p1.8][serve] wrote serve_32k_gpu_niah_multikey_1_proc0.json | G=1: comem[W=2.058s perq=802.6ms] j0[W=2.14ms perq=938.9ms] -> break-even Q*≈15.1 (per-query select adds equally to both)
+[p1.8][selfcheck] PASS (store==recompute + finite + pack-pairing gates)

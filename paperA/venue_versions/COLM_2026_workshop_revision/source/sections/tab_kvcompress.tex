@@ -1,0 +1,55 @@
+% Equal-retained-budget selected/compressed-KV baselines.
+\begin{table}[!t]
+\centering
+\small
+\setlength{\tabcolsep}{3.2pt}
+\begin{minipage}[t]{0.59\textwidth}
+\centering
+\textit{(a) Quality at a 6,657-token/KV budget}\\[-2pt]
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lccccr@{}}
+\toprule
+\textbf{Method} & \textbf{Native A} & \multicolumn{3}{c}{\textbf{Full-prompt 64k/128k}} & \textbf{LoCoMo} \\
+& \textbf{macro} & \textbf{single} & \textbf{multikey} & \textbf{tracking} & \textbf{F1/acc} \\
+\midrule
+CoMem+LoRA & \textbf{97.05} & 99/100 & 91/93 & 99.0/95.8 & 9.15/23.36 \\
+SnapKV & 72.33$^{\dagger}$ & 100/100 & 94/91 & 80.0/84.8 & 9.21/22.05 \\
+PyramidKV & 72.32$^{\dagger}$ & 100/100 & 93/89 & 88.6/86.8 & 9.13/22.10 \\
+\bottomrule
+\end{tabular}%
+}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.38\textwidth}
+\centering
+\textit{(b) Full-prefill systems cost on one H20}\\[-2pt]
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Method} & \textbf{Len.} & \textbf{ms} & \textbf{GB} & \textbf{ms/tok} \\
+\midrule
+SnapKV & 8k & 1,213 & 18.6 & 24.7 \\
+& 32k & 6,342 & 25.7 & 24.6 \\
+& 128k & 51,520 & 54.3 & 24.7 \\
+PyramidKV & 8k & 1,203 & 18.6 & 24.7 \\
+& 32k & 6,301 & 25.7 & 26.7 \\
+& 128k & 51,520 & 54.3 & 26.8 \\
+\bottomrule
+\end{tabular}%
+}
+\end{minipage}
+\caption{Selected/compressed-KV baselines at a similar retained-KV size but a
+different full-prefill boundary.
+Panel (a) uses RULER Cohort A and full-set LoCoMo lexical scoring. CoMem reads
+its bounded pack from the full store without YaRN; the SnapKV/PyramidKV 64k/128k
+columns use YaRN factor 4 and see the full prompt. $^{\dagger}$Their native
+15-cell macros include 64k/128k inputs left-truncated to the 40,960-token native
+window; within 8k--32k both score 99.96. Thus 72.33/72.32 are not
+common-native-support quality summaries. Panel (b) times full-prompt prefill,
+compression, and 64-token decode (median of three); the final column is decode
+latency. These methods must prefill the full prompt before eviction. CoMem's
+separate L20A cohort peaks at 18.54\,GB at 128k
+(Appendix~\ref{app:efficiency}); hardware differs, so we report no cross-table latency
+ratio.}
+\label{tab:kvcompress}
+\end{table}

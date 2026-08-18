@@ -1,0 +1,19 @@
+\begin{abstract}
+Repeated queries over shared documents repeatedly execute the same lower
+transformer layers. We introduce \textbf{CoMem}, which makes split depth $j$ an
+explicit reusable-context axis: write one depth-$j$ residual per token, select a
+bounded chunk set, and resume only layers $[j{:}L)$. Among document-reuse systems we are aware of, CoMem jointly makes split depth a
+tunable serving axis and isolates it with a matched $j{=}0$ endpoint that fixes
+the evidence and Read interface. On Qwen3-8B, $j{=}12$ reduces selected-pack
+Read from 931.9 to 664.4\,ms ($1.403\times$), with a 3.12-point RULER cost
+(95\% CI $[2.36,3.93]$); a continuous-prefix oracle recovers the full gap.
+Combined with bounded selection, CoMem reduces 128k online prefill from 71.37
+to 1.10\,s ($64.9\times$). Its 8\,KiB/token residual store breaks even after
+8.9--10.9 repeated 32k queries with CPU-pinned placement. A context--position
+factorization identifies missing lower-layer document context as the dominant
+tested multikey error; a 32-token overlap raises 92.5 to 98.5 without increasing
+persistent bytes or per-query Read. At equal latency, raw replay decisively wins
+with BM25, whereas its frozen-BGE edge is unresolved, exposing selector choice
+as a first-order frontier variable. CoMem opens transformer depth as a
+measurable, tunable dimension for repeated-query long-context serving.
+\end{abstract}

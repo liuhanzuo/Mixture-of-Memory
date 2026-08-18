@@ -1,0 +1,40 @@
+{
+  "output_name": "fromscratch_step200k",
+  "n_shards": 8,
+  "add_bos": false,
+  "meta": {
+    "mode": "pruned",
+    "keep_front_layers": 14,
+    "n_fresh_layers": 2,
+    "num_hidden_layers": 16,
+    "ckpt_step": 200000,
+    "base_model": "allenai/OLMo-2-1124-7B",
+    "add_bos": false,
+    "max_new_tokens": 32,
+    "initialization": "fully_random"
+  },
+  "tasks": {
+    "popqa": {
+      "n": 14267,
+      "em": 0.04892409055863181,
+      "contains": 0.11116562697133245,
+      "f1": 0.10160988472752278,
+      "em_hits": 698,
+      "contains_hits": 1586,
+      "f1_sum": 1449.6682254075674,
+      "majority_em": 0.0229200252330553,
+      "empty_em": 0.0
+    },
+    "triviaqa": {
+      "n": 17944,
+      "em": 0.2085934016941596,
+      "contains": 0.33520954079358,
+      "f1": 0.2982003193400001,
+      "em_hits": 3743,
+      "contains_hits": 6015,
+      "f1_sum": 5350.906530236961,
+      "majority_em": 0.0025635309852875612,
+      "empty_em": 0.0
+    }
+  }
+}

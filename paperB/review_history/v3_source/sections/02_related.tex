@@ -1,0 +1,50 @@
+\section{Related Work}
+\label{sec:related}
+
+We do not propose a new pruning criterion. Our object of study is the recovery
+trajectory after a structural intervention and the controls needed to interpret
+it. Table~\ref{tab:priorart} gives a compact positioning.
+
+\input{sections/tab_priorart}
+
+\paragraph{Selecting and removing depth.}
+ShortGPT and SLEB rank and remove redundant blocks
+~\citep{men2024shortgpt,song2024sleb}; LaCo merges adjacent layers
+~\citep{yang2024laco}; BlockPruner searches at attention/MLP-block granularity
+~\citep{blockpruner}. Other studies show that preferred removals depend on task
+and calibration choices~\citep{siddiqui2024deeper,lu2024reassessing,
+calibration2026}. These works optimize \emph{which} structure to retain. We
+instead measure what different retained structures recover under CPT.
+
+\paragraph{Retraining pruned models.}
+\citet{gromov2024unreasonable} remove contiguous deeper layers and show that
+post-healing autoregressive loss and downstream tasks can behave differently.
+Our narrower increment is to treat the recovery path itself as the analysis
+object and add same-corpus, same-shape, scoring-interface, construction, and
+closed-book controls. Shortened LLaMA directly
+compares CPT and LoRA after depth pruning~\citep{shortenedllama}. Sheared LLaMA,
+Minitron, compact-model distillation, and DRPruning combine pruning with data
+allocation or teacher supervision~\citep{xia2024sheared,minitron,
+muralidharan2024compact,deng2025drpruning}. Our prefix-plus-fresh-tail recipe is
+not proposed as a superior compression algorithm; it is a controlled setting in
+which to track recovery and contrast structural policies.
+
+\paragraph{Evaluating compression beyond perplexity.}
+The Cost of Compression studies how pruning and quantization affect parametric
+knowledge~\citep{costcompression}. \citet{jaiswal2024truth} show that low
+perplexity can coexist with large deficits on knowledge-intensive compressed-LM
+benchmarks, and \citet{beyondperplexity} document divergent safety effects.
+These studies motivate multi-dimensional evaluation. Our additional focus is
+temporal and causal-inference discipline: within-arm checkpoints, an intact
+same-corpus control, same-shape operating points, scoring-interface
+decomposition, and a construction comparison.
+
+\paragraph{Readout across depth.}
+Logit-lens and tuned-lens analyses decode intermediate predictions
+~\citep{nostalgebraist2020logitlens,tunedlens}; feed-forward memory,
+knowledge-neuron, and causal-tracing work connect particular computations to
+factual behavior~\citep{geva2021transformer,dai2022knowledge,
+meng2022locating}. DoLa and LayerSkip exploit differences in layer-wise
+predictions for decoding or early exit~\citep{chuang2024dola,layerskip}.
+We use readout depth only as a descriptive correlate. Neither a probe
+transition nor pruning damage identifies where knowledge is stored.

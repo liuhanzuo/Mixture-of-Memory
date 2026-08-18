@@ -304,55 +304,8 @@
       200000
     ],
     "denominator_guard_6sigma": 0.0032435306628854983,
-    "readout_census": {
-      "roots": [
-        {
-          "disk": "wzc1",
-          "root": "olmo2_downstream_results",
-          "searched": true,
-          "n_dirs_scanned": 45
-        },
-        {
-          "disk": "zwfy6",
-          "root": "/apdcephfs_zwfy6/share_304376610/pighzliu_code/Mixture-of-Memory/olmo2_downstream_results",
-          "searched": false,
-          "why": "not mounted from this node -> absence on this disk is NOT established here"
-        }
-      ],
-      "found": {
-        "200000": {
-          "dir": "olmo2_downstream_results/keep14_s1234_step200000_sv181",
-          "disk": "wzc1",
-          "ckpt": "outputs/olmo2_probe2_7B_keep14fresh2_seed1234/step200000.pt",
-          "median_margin": 0.10850000000000004,
-          "n_pooled": 17195
-        }
-      },
-      "absent_steps": [
-        25000,
-        50000,
-        100000,
-        128000,
-        153500,
-        175000
-      ]
-    },
-    "missing_per_grid": {
-      "GRID_I": [
-        100000,
-        128000,
-        153500,
-        175000
-      ],
-      "GRID_W": [
-        25000,
-        50000,
-        100000,
-        128000
-      ]
-    },
-    "verdict": "READOUT_ABSENT",
-    "why": "a named arm of a grid lacks a margin-computable eval dir. phi is UNDEFINED -- not small, not large. NON-PASS: an undefined ratio cannot license 244-2560 GPU-h.",
-    "blocks_spend": true
+    "verdict": "PROTOCOL_VIOLATION",
+    "why": "keep14_s1234_step25000_b04fill_MALFORMED_no_datasets_module_20260817/hellaswag SKIPPED",
+    "abort_detail": {}
   }
 }

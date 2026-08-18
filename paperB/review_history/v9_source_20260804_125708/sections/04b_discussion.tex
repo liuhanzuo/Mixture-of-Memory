@@ -1,0 +1,41 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{Recovery is a vector, not a loss threshold.}
+Perplexity remains the correct measure of the CPT objective, and the keep14
+trajectory shows that continued optimization also produces a real MMLU gain.
+What it does not provide is a certificate that a target behavior has returned.
+The intact-base gap, interface audit, and closed-book results show why recovery
+should be represented by a vector of measurements rather than by the direction
+of a single loss curve.
+
+\paragraph{Null baselines turn protocol sensitivity into evidence.}
+Without Random, the 6.48-point keep14 content gain could be read as revealing
+capability hidden by answer letters. The 11.28-point Random gain instead shows
+that much of this interface is attainable as option-text compatibility after
+training from scratch. This is a general evaluation principle: when a new
+interface is introduced to reveal latent performance, its null floor is part
+of the construct-validity test.
+
+\paragraph{The ShortGPT gap is a design target.}
+At the same nominal depth and displayed steps, ShortGPT's 15.5-point
+letter-MMLU advantage but only 1.8-point content-MMLU advantage over keep14 is
+not merely a warning about confounding; it identifies a productive next
+experiment. The comparison couples four factors. A
+factorial study should independently vary inherited count, contiguous versus
+BI selection, retention of the original final block, and fresh-tail insertion.
+The much smaller content-score gap further suggests that these choices
+may affect answer-interface calibration more strongly than option-text
+likelihood. This hypothesis is directly testable with the existing paired
+protocol.
+
+\paragraph{A practical recovery audit.}
+We recommend reporting six axes for post-intervention recovery:
+(1) in-domain and, when possible, out-of-domain likelihood;
+(2) target evaluations with sample counts;
+(3) prompt/scoring/generation interface and a relevant null baseline;
+(4) exact inherited/fresh structure and trainable modules;
+(5) steps, token presentations, compute, and stopping rule; and
+(6) training-run replication separately from item-level uncertainty.
+These axes make recovery claims comparable even when pruning algorithms,
+training budgets, and evaluation interfaces differ.

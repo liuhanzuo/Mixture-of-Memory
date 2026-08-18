@@ -1,0 +1,227 @@
+{
+  "primary_comem12_vs_dense_kstar_gpu_resident_deploy": {
+    "comem_k": 12,
+    "dense_k": 10,
+    "per_cell": {
+      "babilong/qa1/16k": {
+        "n": 100,
+        "comem": 17.0,
+        "dense_rag": 38.0,
+        "diff": -21.0
+      },
+      "babilong/qa1/4k": {
+        "n": 100,
+        "comem": 68.0,
+        "dense_rag": 73.0,
+        "diff": -5.0
+      },
+      "babilong/qa2/16k": {
+        "n": 100,
+        "comem": 8.0,
+        "dense_rag": 31.0,
+        "diff": -23.0
+      },
+      "babilong/qa2/4k": {
+        "n": 100,
+        "comem": 44.0,
+        "dense_rag": 44.0,
+        "diff": 0.0
+      },
+      "locomo/locomo/na": {
+        "n": 100,
+        "comem": 17.0,
+        "dense_rag": 13.0,
+        "diff": 4.0
+      },
+      "longeval/longeval/16k": {
+        "n": 100,
+        "comem": 70.0,
+        "dense_rag": 54.0,
+        "diff": 16.0
+      },
+      "longeval/longeval/8k": {
+        "n": 100,
+        "comem": 70.0,
+        "dense_rag": 70.0,
+        "diff": 0.0
+      },
+      "ruler/niah_multikey_1/16k": {
+        "n": 100,
+        "comem": 91.0,
+        "dense_rag": 72.0,
+        "diff": 19.0
+      },
+      "ruler/niah_multikey_1/8k": {
+        "n": 100,
+        "comem": 94.0,
+        "dense_rag": 93.0,
+        "diff": 1.0
+      }
+    },
+    "macro_comem": 53.22,
+    "macro_dense_rag": 54.22,
+    "macro_diff_comem_minus_dense": -1.0,
+    "paired_bootstrap_95ci": [
+      -4.667,
+      2.667
+    ],
+    "mcnemar": {
+      "comem_only_b": 139,
+      "dense_only_c": 148,
+      "both": 340,
+      "neither": 273,
+      "exact_two_sided_p": 0.6368426841662184
+    },
+    "n_examples": 900
+  },
+  "primary_comem12_vs_dense_kstar_cpu_pinned_deploy": {
+    "comem_k": 12,
+    "dense_k": 10,
+    "per_cell": {
+      "babilong/qa1/16k": {
+        "n": 100,
+        "comem": 17.0,
+        "dense_rag": 38.0,
+        "diff": -21.0
+      },
+      "babilong/qa1/4k": {
+        "n": 100,
+        "comem": 68.0,
+        "dense_rag": 73.0,
+        "diff": -5.0
+      },
+      "babilong/qa2/16k": {
+        "n": 100,
+        "comem": 8.0,
+        "dense_rag": 31.0,
+        "diff": -23.0
+      },
+      "babilong/qa2/4k": {
+        "n": 100,
+        "comem": 44.0,
+        "dense_rag": 44.0,
+        "diff": 0.0
+      },
+      "locomo/locomo/na": {
+        "n": 100,
+        "comem": 17.0,
+        "dense_rag": 13.0,
+        "diff": 4.0
+      },
+      "longeval/longeval/16k": {
+        "n": 100,
+        "comem": 70.0,
+        "dense_rag": 54.0,
+        "diff": 16.0
+      },
+      "longeval/longeval/8k": {
+        "n": 100,
+        "comem": 70.0,
+        "dense_rag": 70.0,
+        "diff": 0.0
+      },
+      "ruler/niah_multikey_1/16k": {
+        "n": 100,
+        "comem": 91.0,
+        "dense_rag": 72.0,
+        "diff": 19.0
+      },
+      "ruler/niah_multikey_1/8k": {
+        "n": 100,
+        "comem": 94.0,
+        "dense_rag": 93.0,
+        "diff": 1.0
+      }
+    },
+    "macro_comem": 53.22,
+    "macro_dense_rag": 54.22,
+    "macro_diff_comem_minus_dense": -1.0,
+    "paired_bootstrap_95ci": [
+      -4.667,
+      2.667
+    ],
+    "mcnemar": {
+      "comem_only_b": 139,
+      "dense_only_c": 148,
+      "both": 340,
+      "neither": 273,
+      "exact_two_sided_p": 0.6368426841662184
+    },
+    "n_examples": 900
+  },
+  "reference_k12_vs_k12": {
+    "comem_k": 12,
+    "dense_k": 12,
+    "per_cell": {
+      "babilong/qa1/16k": {
+        "n": 100,
+        "comem": 17.0,
+        "dense_rag": 45.0,
+        "diff": -28.0
+      },
+      "babilong/qa1/4k": {
+        "n": 100,
+        "comem": 68.0,
+        "dense_rag": 74.0,
+        "diff": -6.0
+      },
+      "babilong/qa2/16k": {
+        "n": 100,
+        "comem": 8.0,
+        "dense_rag": 30.0,
+        "diff": -22.0
+      },
+      "babilong/qa2/4k": {
+        "n": 100,
+        "comem": 44.0,
+        "dense_rag": 45.0,
+        "diff": -1.0
+      },
+      "locomo/locomo/na": {
+        "n": 100,
+        "comem": 17.0,
+        "dense_rag": 18.0,
+        "diff": -1.0
+      },
+      "longeval/longeval/16k": {
+        "n": 100,
+        "comem": 70.0,
+        "dense_rag": 57.0,
+        "diff": 13.0
+      },
+      "longeval/longeval/8k": {
+        "n": 100,
+        "comem": 70.0,
+        "dense_rag": 82.0,
+        "diff": -12.0
+      },
+      "ruler/niah_multikey_1/16k": {
+        "n": 100,
+        "comem": 91.0,
+        "dense_rag": 79.0,
+        "diff": 12.0
+      },
+      "ruler/niah_multikey_1/8k": {
+        "n": 100,
+        "comem": 94.0,
+        "dense_rag": 97.0,
+        "diff": -3.0
+      }
+    },
+    "macro_comem": 53.22,
+    "macro_dense_rag": 58.56,
+    "macro_diff_comem_minus_dense": -5.33,
+    "paired_bootstrap_95ci": [
+      -8.889,
+      -1.778
+    ],
+    "mcnemar": {
+      "comem_only_b": 109,
+      "dense_only_c": 157,
+      "both": 370,
+      "neither": 264,
+      "exact_two_sided_p": 0.0038717878800243817
+    },
+    "n_examples": 900
+  }
+}

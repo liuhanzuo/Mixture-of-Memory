@@ -1,0 +1,27 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Arm} & \textbf{Step} & \textbf{Inh./fresh} & \textbf{PPL}$\downarrow$ & \textbf{core6} & \textbf{MMLU} \\
+\midrule
+full base (32L) & --- & 32/0 & 7.398 & .7037 & .6053 \\
+keep8+fresh2 (10L) & 121k & 8/2 & 13.333 & .5238 & .2535 \\
+keep10+fresh2 (12L) & 83.5k & 10/2 & 12.816 & .5303 & .2718 \\
+keep12+fresh2 (14L) & 124k & 12/2 & 11.443 & .5669 & .2752 \\
+keep14+fresh2 (16L) & 200k & 14/2 & 10.561 & .5938 & .3191 \\
+ShortGPT-16 & 200k & 16/0 & \textbf{9.780} & \textbf{.6215} & \textbf{.4739} \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Available depth and policy endpoints.} core6
+averages six commonsense/reasoning tasks; Appendix Table~\ref{tab:downstream}
+gives all cells. ShortGPT retains layers $[0\text{--}12,16,17,31]$ and matches
+keep14 in total depth and completed 200k training, but differs in inherited
+count and fresh-tail construction. The prefix ladder is not compute matched:
+shallower runs use their retained plateau checkpoints, whose PPL was still
+decreasing.}
+\label{tab:policy-endpoint}
+\end{table}

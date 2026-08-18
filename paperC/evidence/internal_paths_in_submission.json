@@ -1,0 +1,99 @@
+{
+  "evidence_id": "E-PROV-01",
+  "created": "2026-08-15T20:44:16",
+  "what": "Internal repository paths printed in the SUBMITTED manuscript of round_03, and whether a blind reviewer can actually open each one.",
+  "n_files_with_internal_paths": 12,
+  "n_distinct_paths": 6,
+  "per_file": {
+    "sections/09_appendix.tex": [
+      "paperC/code/check\\_prose\\_vs\\_evidence.py",
+      "paperC/code/emit\\_tab\\_construct\\_nulls.py",
+      "paperC/evidence/floor\\_winners\\_curse\\_calibration.json",
+      "paperC/tcodex\\_out/EVIDENCE\\_PACK.md"
+    ],
+    "sections/tab_claims.tex": [
+      "paperC/tcodex\\_out/EVIDENCE\\_PACK.md"
+    ],
+    "sections/tab_construct_nulls.tex": [
+      "paperC/code/emit\\_tab\\_construct\\_nulls.py",
+      "paperC/code/emit_tab_construct_nulls.py",
+      "paperC/evidence/floor\\_winners\\_curse\\_calibration.json",
+      "paperC/evidence/floor_winners_curse_calibration.json"
+    ],
+    "sections/tab_conventions.tex": [
+      "paperC/tcodex\\_out/EVIDENCE\\_PACK.md"
+    ],
+    "sections/tab_integrity.tex": [
+      "paperC/tcodex\\_out/EVIDENCE\\_PACK.md"
+    ],
+    "sections/tab_mmlupro.tex": [
+      "paperC/tcodex\\_out/EVIDENCE\\_PACK.md"
+    ],
+    "sections/tab_nulls.tex": [
+      "paperC/evidence/floor\\_winners\\_curse\\_calibration.json",
+      "paperC/tcodex\\_out/EVIDENCE\\_PACK.md"
+    ],
+    "sections/tab_power.tex": [
+      "paperC/tcodex\\_out/EVIDENCE\\_PACK.md"
+    ],
+    "sections/tab_two_nulls.tex": [
+      "paperC/tcodex\\_out/EVIDENCE\\_PACK.md"
+    ],
+    "sections/tab_v2_alternatives.tex": [
+      "paperC/tcodex\\_out/EVIDENCE\\_PACK.md"
+    ],
+    "sections/tab_v2_full.tex": [
+      "paperC/tcodex\\_out/EVIDENCE\\_PACK.md"
+    ],
+    "sections/tab_v2_resort.tex": [
+      "paperC/tcodex\\_out/EVIDENCE\\_PACK.md"
+    ]
+  },
+  "path_resolution": [
+    {
+      "path_as_printed": "paperC/code/check\\_prose\\_vs\\_evidence.py",
+      "exists_in_repo": false,
+      "readable_by_reviewer_from_snapshot": false
+    },
+    {
+      "path_as_printed": "paperC/code/emit\\_tab\\_construct\\_nulls.py",
+      "exists_in_repo": false,
+      "readable_by_reviewer_from_snapshot": false
+    },
+    {
+      "path_as_printed": "paperC/code/emit_tab_construct_nulls.py",
+      "exists_in_repo": true,
+      "readable_by_reviewer_from_snapshot": false
+    },
+    {
+      "path_as_printed": "paperC/evidence/floor\\_winners\\_curse\\_calibration.json",
+      "exists_in_repo": false,
+      "readable_by_reviewer_from_snapshot": false
+    },
+    {
+      "path_as_printed": "paperC/evidence/floor_winners_curse_calibration.json",
+      "exists_in_repo": true,
+      "readable_by_reviewer_from_snapshot": false
+    },
+    {
+      "path_as_printed": "paperC/tcodex\\_out/EVIDENCE\\_PACK.md",
+      "exists_in_repo": false,
+      "readable_by_reviewer_from_snapshot": false
+    }
+  ],
+  "anonymity_check": {
+    "searched_for": [
+      "author surname",
+      "institution",
+      "tencent",
+      "github.com",
+      "anonymous.4open"
+    ],
+    "result": "CLEAN -- 0 hits. ICLR double-blind anonymity is not breached by these paths; they are repo-internal provenance pointers, not author identifiers.",
+    "caveat": "a determined reviewer could infer that the work sits in a monorepo whose paper directories are named paperA/paperB/paperC. That is weak signal and does not identify authors."
+  },
+  "assessment": "NOT an anonymity breach and NOT a blindness breach. It IS a provenance-presentation defect: the captions cite files (chiefly paperC/tcodex_out/EVIDENCE_PACK.md) that are deliberately EXCLUDED from the reviewer snapshot by freeze_round.py's blindness rule, so every such pointer is dangling from the reviewer's side. A caption that says 'source: <file you cannot see>' gives the reviewer no way to check the number and reads as unverifiable.",
+  "recommended_fix": "Replace repo-internal paths in captions with either (a) the stable evidence ID from evidence/claim_evidence_map.tsv, or (b) a short description of the derivation, and put the full path mapping in ONE appendix table (or the reproducibility statement) so the artifact stays auditable without pointing at unreadable files. Do NOT simply delete the provenance -- that would trade an auditable-but-dangling pointer for no pointer at all.",
+  "why_no_gate_caught_this": "latexmk cannot know a \\texttt{} path is unreadable by a third party; check_numbers.py binds NUMBERS to evidence but does not audit prose PATHS; freeze_round.py correctly excluded the files but does not rewrite references to them. The three gates are each individually right and jointly blind to this.",
+  "severity": "major (presentation/provenance), not critical (no number is wrong)"
+}

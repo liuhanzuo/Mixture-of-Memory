@@ -1,0 +1,14 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We introduced a multi-interface audit for post-depth-pruning recovery and
+applied it to OLMo-2-7B. It yields four concrete findings: keep14 improves but
+retains a 28.6-point MMLU deficit; its 6.48-point content-interface gain is
+smaller than the 11.28-point random-null gain; the target gap recurs across
+three closed-book QA datasets; and ShortGPT is 15.5 MMLU points stronger at the
+same nominal depth and step budget. The full32 branch supplies a much
+closer-to-base short-horizon reference. These results make recovery claims more
+informative by separating likelihood, target behavior, interface,
+construction, budget, and uncertainty. This audit is complementary to better
+pruning and healing algorithms: it specifies the evidence needed to show what
+they actually recover.

@@ -1,0 +1,118 @@
+\section{Results}
+\label{sec:experiments}
+
+\subsection{Finding 1: likelihood recovery overstates target recovery}
+\input{sections/tab_main_results}
+\input{sections/tab_trajectory_audit}
+\input{sections/tab_downstream}
+
+Tables~\ref{tab:main-results} and \ref{tab:trajectory-audit} give the central
+result and its within-path uncertainty.
+Along the single keep14 path, PPL falls to 10.561 by 200k steps while
+answer-letter MMLU reaches .3184, versus .6054 for the intact base. The
+closed-book endpoints remain lower as well: .142 versus .257 on PopQA, .294
+versus .636 on TriviaQA, and .060 versus .205 on NQ-open. These evaluations do
+not exhaust capability, but jointly show a persistent target gap across one
+likelihood-based recognition task and three free-generation datasets.
+
+The trajectory result is not ``no learning'': the same-item snapshot moves
+.30117$\rightarrow$.31797, a 1.68-point gain with a 95\% item-bootstrap CI of
+$[1.08,2.29]$. The measurement
+finding is sharper: the statistically detectable gain closes only a small
+fraction of the 30.42-point deficit present at 128k, leaving 28.74 points at
+200k. A loss curve and a significance test therefore answer different
+questions from recovery to the intact target.
+
+\paragraph{The intact continued-pretraining reference.}
+At 25k, full32 is 3.7\% above the base in PPL and lower by 1.8/0.4 points on
+letter/content MMLU. Its PopQA, TriviaQA, and NQ-open deficits are
+2.9/6.4/4.7 points, versus 11.6/34.2/14.5 points for keep14 at 200k. Thus the
+intact endpoint is closer to the base than the compressed
+endpoint. This makes an immediate same-corpus shift an incomplete explanation
+for the large keep14 gap, while the absent full32@200k remains an important limitation.
+
+\subsection{Finding 2: interface gains require a null floor}
+\input{sections/tab_interface_audit}
+
+Table~\ref{tab:interface-audit} evaluates both MMLU interfaces on exactly the
+same items. The same endpoint snapshot is used in
+Tables~\ref{tab:trajectory-audit} and~\ref{tab:downstream}.
+Complete-option scoring raises the paired snapshot to .3832, but it
+raises Random more, from answer-letter chance (.247) to .360. Frozen and Random
+then become nearly indistinguishable under content scoring despite a
+statistically significant 1.54-point letter-score gap
+(Table~\ref{tab:paired-operating-points}). This reversal changes the interpretation
+of the interface gain: complete-option likelihood captures useful option-text
+compatibility, but its high random floor prevents it from certifying inherited
+target recovery by itself.
+
+\paragraph{The gap recurs under open generation.}
+The base--keep14 deficit is also 11.6 points on PopQA
+($n{=}14{,}267$), 34.2 on TriviaQA ($n{=}17{,}944$), and 14.5 on NQ-open
+($n{=}3{,}610$), using a shared zero-shot, no-retrieval
+\texttt{Question:/Answer:} protocol. The recurrence across letter scoring,
+complete-option scoring, and free generation is stronger evidence than any
+single interface alone.
+
+\input{sections/tab_ood_audit}
+
+\paragraph{The likelihood tax also transfers out of domain.}
+Table~\ref{tab:ood-audit} preserves the Base/full32/ShortGPT/keep14 ordering on
+WikiText-103 and PG-19; Random and Frozen exchange the last two positions on
+PG-19. For keep14, the PPL ratio to base is $1.43\times$ in-domain,
+$1.93\times$ on WikiText-103, and $1.52\times$ on PG-19, so in-domain PPL does
+not hide an OOD reversal. A token $13$-/$8$-gram scan of the exact 15.505B-token
+continuation stream flags only 1.90/3.45\% of MMLU, 0.79/1.38\% of TriviaQA,
+0.03/0.66\% of NQ-open, and 0/0.07\% of PopQA at 0.80 containment. Removing
+flagged MMLU items changes the keep14--Random gap from 7.14 to 7.03/6.95 points.
+The completed closed-book rescore is equally stable: across all seven evaluated
+arms, strict-clean TriviaQA/NQ-open scores move by at most 0.15 points; the
+principal ordering is stable, while low-score tail order can vary by task.
+PopQA has zero flagged items.
+
+\subsection{Finding 3: construction determines the recovery endpoint}
+\input{sections/tab_construction_audit}
+
+\paragraph{What the ShortGPT contrast reveals.}
+At the same nominal 16-layer depth and displayed 200k steps, ShortGPT reaches
+PPL 9.780 and exceeds keep14 by 15.6 points on letter MMLU but only 1.8 points
+on content MMLU (Table~\ref{tab:construction-audit}). The contrast jointly
+changes four factors: inherited-block count, contiguous versus BI-based
+selection, retention of original block 31, and fresh-tail use.
+This pattern suggests two testable explanations. First, preserving pretrained
+blocks---especially the original final block---may retain an interface for
+answer-letter decisions that two fresh tail blocks must relearn. Second,
+non-contiguous selection may preserve complementary transformations that a
+contiguous prefix omits. The current contrast changes all four factors
+together, so it motivates a factorial experiment rather than selecting one
+explanation. Its immediate design lesson is nonetheless clear: ``16 layers''
+is not a sufficient model specification for recovery.
+Table~\ref{tab:downstream} also places both constructions against the intact
+full32 endpoint: full32 remains substantially stronger on MMLU and most
+likelihood/MC tasks, so the ShortGPT contrast concerns relative recovery among
+compressed constructions rather than recovery to intact performance.
+
+\paragraph{ShortGPT improves closed-book QA without closing the gap.}
+ShortGPT reaches .159/.330/.067 on PopQA containment, TriviaQA EM, and NQ-open
+EM, versus .142/.294/.060 for keep14. Its stronger endpoint therefore extends
+beyond answer letters, yet remains far below the base (.257/.636/.205) and
+full32 (.228/.572/.158).
+
+\paragraph{Same-shape operating points add a second design lesson.}
+Frozen has worse PPL than Random but higher answer-letter MMLU, whereas both
+score .360 under the content interface. Across realized checkpoints, keep14
+beats Random by 7.14 points and Frozen by 5.60 points on paired MMLU
+(95\% CIs $[6.17,8.10]$ and $[4.63,6.59]$). These values are recomputed from
+the same per-item files used by the interface audit. Initialization, trainable modules,
+and learning rate must therefore accompany endpoint scores; a shape label and
+PPL value are not enough to reconstruct the recovery condition.
+\input{sections/tab_paired_operating_points}
+
+Table~\ref{tab:paired-operating-points} makes the evaluation contrast explicit.
+The same per-item snapshot is used for the interface, paired, and contamination
+analyses.
+The inherited prefix contributes measurable answer-letter signal beyond both
+same-shape null points, but the content interface largely erases the
+Frozen--Random distinction. This is exactly why recovery audits need both a
+paired target comparison and a null-calibrated interface comparison: either
+view alone would hide part of the result.

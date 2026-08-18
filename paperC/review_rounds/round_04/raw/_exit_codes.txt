@@ -1,0 +1,11 @@
+rc=1 id=X6-codex-adversary model=gpt-5.3-codex
+rc=1 id=X5-codex-repro model=gpt-5.4
+rc=1 id=X4-codex-clarity model=gpt-5.5
+rc=137 id=X3-codex-stats model=gpt-5.6-luna
+rc=137 id=X2-codex-soundness model=gpt-5.6-terra
+rc=0 id=X6-codex-adversary model=gpt-5.6-sol
+rc=0 id=X3-codex-stats model=gpt-5.6-sol
+rc=0 id=X5-codex-repro model=gpt-5.6-sol
+rc=0 id=X4-codex-clarity model=gpt-5.6-sol
+rc=0 id=X2-codex-soundness model=gpt-5.6-sol
+rc=0 id=X1-codex-novelty model=gpt-5.6-sol

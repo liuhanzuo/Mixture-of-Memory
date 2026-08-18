@@ -1,0 +1,29 @@
+% Frozen Qwen3-family LoCoMo audit at RULER-derived conservative safe splits.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Model} & \textbf{Safe $j$} & \textbf{$j/L$} & \textbf{No chat} & \textbf{Chat} \\
+\midrule
+Qwen3-0.6B & 2  & 0.07 & 11.48 & 20.49 \\
+Qwen3-1.7B & 3  & 0.11 & 17.42 & 26.44 \\
+Qwen3-4B   & 9  & 0.25 & 24.07 & 32.02 \\
+Qwen3-8B   & 9  & 0.25 & 32.38 & 31.52 \\
+Qwen3-14B  & 13 & 0.325 & 28.80 & 39.58 \\
+Qwen3-32B  & 27 & 0.42 & \textbf{51.81} & \textbf{48.89} \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Frozen CoMem transfers across the Qwen3 family on LoCoMo.}
+Each integer split is a conservative readout-safe point selected from RULER,
+independently of LoCoMo; it is not the 50\% readout-crash boundary in
+Table~\ref{tab:depth}. Values are full-set GPT-4o Judge accuracy (\%) over all
+1,986 questions. Both protocols use iterative BM25 (top-12, hop width 4),
+512-token chunks, a BOS sink, greedy decoding, and a 512-token generation cap;
+the chat column is a template-sensitivity control. The 14B no-chat dip reflects
+unusually long chain-of-thought trajectories that delay the final answer; the
+chat template mitigates this behavior. Scores improve strongly with scale but
+are not strictly monotone.}
+\label{tab:locomo-scale}
+\end{table}

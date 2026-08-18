@@ -1,0 +1,60 @@
+% CoMem — anonymous COLM 2026 workshop revision.
+% Compile in an isolated build directory; see BUILD.md.
+
+\documentclass{article}
+\usepackage[submission]{colm2026_conference}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{placeins}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{lineno}
+
+\definecolor{darkblue}{rgb}{0,0,0.5}
+\hypersetup{
+  colorlinks=true,
+  citecolor=darkblue,
+  linkcolor=darkblue,
+  urlcolor=darkblue
+}
+
+\title{CoMem: Reusing Transformer Depth across Queries with
+Persistent Intermediate Residuals}
+
+\author{Anonymous authors}
+
+\begin{document}
+\ifcolmsubmission
+  \linenumbers
+\fi
+\maketitle
+
+\input{sections/00_abstract}
+\input{sections/01_introduction}
+\input{sections/02_related}
+\input{sections/03_motivation}
+\input{sections/04_methodology}
+\input{sections/05_experiments}
+\FloatBarrier
+\input{sections/06_conclusion}
+\input{sections/07_limitations}
+\input{sections/07_ethics}
+
+\bibliography{qcmem}
+\bibliographystyle{colm2026_conference}
+
+\clearpage
+\appendix
+\raggedbottom
+\input{sections/08_appendix}
+\input{sections/08_statistics_appendix}
+
+\end{document}

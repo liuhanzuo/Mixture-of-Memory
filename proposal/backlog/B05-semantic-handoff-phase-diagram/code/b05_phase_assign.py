@@ -521,11 +521,606 @@ def selftest_gate():
           f"R={det['recovery_fraction']} at a 60pp denominator.  OK")
 
 
+# ====================================================================== #
+# THE DATA PATH.  Added 2026-08-17, still PRE-DATA (verified at write
+# time: `ls -d ruler_results/b05_native_ruler_*` -> No such file, 0 cells).
+#
+# WHY THIS SECTION EXISTS
+# -----------------------
+# Everything above was written pre-data and its --selftest passed, so this
+# file LOOKED finished.  It was not: it had no way to read a byte off disk.
+# Measured on the 2026-08-15 revision:
+#     grep -n 'open(\|json.dump\|write_text\|mkdir'  -> rc=1, ZERO matches
+#     grep -c 'args.out'                             -> 0 (declared, never used)
+#     awk 'NR>=524,NR<=566' | grep adjudicate        -> rc=1 (main never called it)
+# main() unconditionally printed "FAIL: no B05 result cells exist yet" and
+# returned 3, for ANY input.  So the prereg's read-out point -- "exactly one
+# invocation of code/b05_phase_assign.py --out <evidence_dir>" -- was
+# UNEXECUTABLE: it would have returned 3 and written nothing even with all 16
+# cells present.  Discovering that after the GPU run would have forced the
+# loader to be written POST-DATA, which by the prereg's own void_condition
+# makes the whole analysis descriptive only.  Hence: written now, pre-data.
+#
+# GATE C2 and GATE D were likewise named as PASS conditions by prereg sec 4
+# items 2-3 but had no implementation here (grep counts in the 2026-08-15
+# revision: sha256=0, selector=0, iter_bm25=0, lora_adapter=0).  Both are
+# implemented below, fail-closed.
+# ====================================================================== #
+
+N_SHARD_EXPECT = 8          # prereg sec 1; must match the A02 comparators
+
+# prereg sec 1 / GATE D: the protocol invariants every cell must satisfy.
+EXPECT_SELECTOR = "iter_bm25"
+EXPECT_TOPK = 12
+EXPECT_ITER_HOP_TOPK = 4
+EXPECT_CHUNK = 512
+
+# arm -> expected resume_j.  The four native arms plus the five comparators
+# form the 9-arm set prereg sec 4 item 2 requires C2 pairing across.
+ARM_RESUME_J = {"N6": 6, "N9": 9, "N12": 12, "N18": 18,
+                "A0": 0, "A2": 6, "A3": 9, "A4": 12, "A5": 18}
+# Comparator arms carry a Read-LoRA; native arms must carry NONE.  That single
+# difference IS the experiment, so it is asserted rather than assumed.
+ARM_WANTS_ADAPTER = {"N6": False, "N9": False, "N12": False, "N18": False,
+                     "A0": False,          # j=0 ceiling anchor, no adapter
+                     "A2": True, "A3": True, "A4": True, "A5": True}
+ARM_ORDER_9 = ["A0", "N6", "A2", "N9", "A3", "N12", "A4", "N18", "A5"]
+
+# native arm -> its paired comparator, from NATIVE_ARMS above (single source).
+NATIVE_TO_COMPARATOR = {k: v[1] for k, v in NATIVE_ARMS.items()}
+RUNG_TO_NATIVE = {v[0]: k for k, v in NATIVE_ARMS.items()}   # "6"->"N6" ...
+
+
+def _reference_rul_cell_items(arm_dir, task, length, nshard=N_SHARD_EXPECT):
+    """Reference reader, used ONLY by the fixture selftest when the canonical
+    A02 loader is not importable (see GATE E note in load_per_cell_vectors).
+
+    Deliberately a line-for-line transcription of
+    analyze_a02_depth_vs_retrieval.rul_cell_items so that any divergence is a
+    visible diff rather than a silent metric reimplementation.  It is NEVER
+    used on the real read-out path -- that path requires the canonical import.
+    """
+    import glob as _glob
+    files = sorted(_glob.glob(str(Path(arm_dir) /
+                   f"{task}_{length}_shard*of{nshard}.records.json")))
+    if len(files) != nshard:
+        return None, None, f"G1_SHARD_INCOMPLETE {len(files)}/{nshard}"
+    out, cfg = {}, None
+    for fp in files:
+        with open(fp) as fh:
+            d = json.load(fh)
+        cfg = d
+        for r in d.get("records", []):
+            out[int(r["sample_index"])] = (int(r["correct"]),
+                                           r.get("input_ids_sha256"))
+    return out, cfg, None
+
+
+def check_cfg(arm, cfg, errs, where):
+    """GATE D (prereg sec 4 item 3): config identity, read from the level each
+    field actually lives at.
+
+    A02 recorded the structural fact this depends on: RULER stores its config
+    FLAT at the top of *.records.json and carries NO chat_template (that lives
+    in the sibling summary *.json).  So chat_template is NOT checked here; it is
+    checked in check_summary_chat_template() against the sibling file, and the
+    comparison is `is not False` -- never `is not True`, which would pass on a
+    None from the wrong nesting level.
+    """
+    if not cfg:
+        errs.append(f"{where}/{arm}: no records cfg")
+        return
+    if cfg.get("resume_j") != ARM_RESUME_J[arm]:
+        errs.append(f"{where}/{arm}: resume_j={cfg.get('resume_j')!r} "
+                    f"!= {ARM_RESUME_J[arm]}")
+    if cfg.get("selector") != EXPECT_SELECTOR:
+        errs.append(f"{where}/{arm}: selector={cfg.get('selector')!r} "
+                    f"!= {EXPECT_SELECTOR!r}")
+    if cfg.get("topk") != EXPECT_TOPK:
+        errs.append(f"{where}/{arm}: topk={cfg.get('topk')!r} != {EXPECT_TOPK}")
+    if cfg.get("iter_hop_topk") != EXPECT_ITER_HOP_TOPK:
+        errs.append(f"{where}/{arm}: iter_hop_topk={cfg.get('iter_hop_topk')!r} "
+                    f"!= {EXPECT_ITER_HOP_TOPK}")
+    if cfg.get("chunk_size") != EXPECT_CHUNK:
+        errs.append(f"{where}/{arm}: chunk_size={cfg.get('chunk_size')!r} "
+                    f"!= {EXPECT_CHUNK}")
+    if cfg.get("baseline") not in (None, "none"):
+        errs.append(f"{where}/{arm}: baseline={cfg.get('baseline')!r} != none")
+    if cfg.get("no_retrieval") is True:
+        errs.append(f"{where}/{arm}: no_retrieval=True (must retrieve)")
+    lora = cfg.get("lora_adapter")
+    if ARM_WANTS_ADAPTER[arm]:
+        if not lora:
+            errs.append(f"{where}/{arm}: expected a Read-LoRA, got {lora!r}")
+    else:
+        # ★ THE SINGLE VARIABLE.  A native arm with an adapter is not a native
+        # readout; it is a second copy of the comparator, and every delta
+        # computed from it would be ~0 for a purely procedural reason.
+        if lora:
+            errs.append(f"{where}/{arm}: NATIVE arm carries adapter {lora!r} "
+                        f"-- voids the single-variable design")
+
+
+def check_summary_chat_template(arm, summary, errs, where):
+    """GATE D, chat-template half.  `chat_template` and `enable_thinking` live
+    in the sibling summary json, not in records.json (A02's recorded finding).
+    Absent summary is an ERROR, not a pass: silently skipping it is how a
+    chat=True cell would enter a chat=False table."""
+    if not summary:
+        errs.append(f"{where}/{arm}: no summary json (cannot verify chat_template)")
+        return
+    if summary.get("chat_template") is not False:
+        errs.append(f"{where}/{arm}: chat_template="
+                    f"{summary.get('chat_template')!r} must be False")
+    if summary.get("enable_thinking") is not False:
+        errs.append(f"{where}/{arm}: enable_thinking="
+                    f"{summary.get('enable_thinking')!r} must be False")
+
+
+def _summary_for(arm_dir, task, length, nshard=N_SHARD_EXPECT):
+    import glob as _glob
+    fs = sorted(_glob.glob(str(Path(arm_dir) /
+                f"{task}_{length}_shard0of{nshard}.json")))
+    if not fs:
+        return {}
+    with open(fs[0]) as fh:
+        return json.load(fh)
+
+
+def gate_c2_sha_pairing(items_by_arm, arms, where, errs):
+    """GATE C2 (prereg sec 4 item 2): input_ids_sha256 equality across all arms,
+    joined by sample_index.
+
+    FAIL-CLOSED IN BOTH DIRECTIONS, and the second one matters:
+      * a MISMATCH means two arms saw different prompts -> unpaired, fail.
+      * a MISSING sha means the identity was never recorded -> the gate cannot
+        be evaluated, which is ALSO a failure.  "No evidence of mismatch" is
+        not "evidence of match".  This is what catches an attempt to source the
+        comparator half from A02's derived per-item vectors file, which is
+        verified to contain no sha256 at all.
+    """
+    common = None
+    for a in arms:
+        ks = set(items_by_arm[a])
+        common = ks if common is None else (common & ks)
+    common = sorted(common or [])
+    n_mismatch, n_missing, examples = 0, 0, []
+    for i in common:
+        shas = {}
+        for a in arms:
+            s = items_by_arm[a][i][1]
+            if not s:
+                n_missing += 1
+                if len(examples) < 5:
+                    examples.append({"cell": where, "sample_index": i,
+                                     "arm": a, "problem": "sha256 ABSENT"})
+                continue
+            shas[a] = s
+        if len(set(shas.values())) > 1:
+            n_mismatch += 1
+            if len(examples) < 5:
+                examples.append({"cell": where, "sample_index": i,
+                                 "problem": "sha256 MISMATCH", **shas})
+    if n_mismatch:
+        errs.append(f"{where}: GATE_C2_SHA_MISMATCH on {n_mismatch}/{len(common)} "
+                    f"paired items")
+    if n_missing:
+        errs.append(f"{where}: GATE_C2_SHA_ABSENT {n_missing} (arm,item) pairs "
+                    f"carry no input_ids_sha256 -> pairing UNVERIFIABLE")
+    return {"n_common": len(common), "n_sha_mismatch": n_mismatch,
+            "n_sha_absent": n_missing, "examples": examples,
+            "passed": bool(not n_mismatch and not n_missing and common)}
+
+
+def load_per_cell_vectors(base, nshard=N_SHARD_EXPECT, reader=None,
+                          require_canonical=True):
+    """★ THE MISSING DATA PATH.  Build adjudicate()'s input from disk.
+
+    Returns (per_cell_vectors, report).  per_cell_vectors is exactly the shape
+    adjudicate() documents:
+        per_cell_vectors[(task, length)][rung_key][arm] -> list of 0/1
+    with rung_key in {"BELOW","6","9","12","18"} and arm in
+    {"anchor","native","lora"}.
+
+    PAIRING IS PER CELL AND PER RUNG, on the intersection of sample_index
+    present in all three of (anchor A0, native Nx, comparator Ax).  Vectors are
+    emitted in the sorted-common-index order, so position k is the same item in
+    all three -- which is what makes the paired McNemar legitimate.
+
+    THE "BELOW" RUNG is A0 in all three roles.  That is Phase I by construction
+    and the prereg says so at RUNG_INDEX (sec 3.0): it is EXCLUDED from every
+    phase-non-emptiness test and exists only to anchor the monotonicity check,
+    which is undefined without a known-Phase-I left endpoint.  It is not
+    evidence and must never be reported as a result.
+
+    GATE E (prereg sec 4 item 4): the per-item scorer is IMPORTED from
+    analyze_a02_depth_vs_retrieval, never reimplemented.  `require_canonical`
+    exists ONLY for the fixture selftest, which may run on a node where that
+    module's dependencies (pandas, datasets) are absent; the real read-out path
+    calls this with require_canonical=True and refuses to proceed otherwise.
+    """
+    report = {"errors": [], "refused": [], "gate_c2": {}, "cells_loaded": [],
+              "gate_e": None, "base": str(base)}
+    if reader is None:
+        code = Path(base) / "proposal/backlog/A02-comem-write-read-repair/code"
+        for p in (str(base), str(code), str(Path(base) / "scripts")):
+            if p not in sys.path:
+                sys.path.insert(0, p)
+        try:
+            import analyze_a02_depth_vs_retrieval as dvr
+            reader = dvr.rul_cell_items
+            report["gate_e"] = f"PASS canonical loader imported from {code}"
+        except Exception as e:                      # noqa: BLE001
+            if require_canonical:
+                report["errors"].append(
+                    f"GATE_E_FAIL cannot import the canonical A02 loaders from "
+                    f"{code}: {type(e).__name__}: {e}")
+                return None, report
+            reader = _reference_rul_cell_items
+            report["gate_e"] = (f"SUBSTITUTE reference reader "
+                                f"({type(e).__name__}: {e}) -- fixture only")
+
+    base = Path(base)
+    pcv = {}
+    for task, length in PRIMARY_CELLS:
+        ck = f"ruler|{task}|{length}"
+        # --- load every arm this cell needs, refusing incomplete ones --------
+        items, cfgs, sums, bad = {}, {}, {}, []
+        for arm in ARM_ORDER_9:
+            sub = (NATIVE_ARMS[arm][2] if arm in NATIVE_ARMS
+                   else COMPARATOR_DIRS[arm])
+            d = base / "ruler_results" / sub
+            it, cfg, err = reader(d, task, length, nshard)
+            if err or it is None:
+                bad.append(f"{arm}({sub}): {err or 'no items'}")
+                continue
+            if len(it) != N_EXPECT:
+                bad.append(f"{arm}({sub}): n={len(it)} != {N_EXPECT}")
+                continue
+            nonbin = [k for k, v in it.items() if int(v[0]) not in (0, 1)]
+            if nonbin:
+                bad.append(f"{arm}({sub}): {len(nonbin)} non-binary correct")
+                continue
+            items[arm], cfgs[arm] = it, cfg
+            sums[arm] = _summary_for(d, task, length, nshard)
+        if bad:
+            report["refused"].append({"cell": ck, "reasons": bad})
+            report["errors"].append(f"{ck}: GATE_C_REFUSED -- " + "; ".join(bad))
+            continue
+
+        # --- GATE D on every arm of this cell -------------------------------
+        for arm in ARM_ORDER_9:
+            check_cfg(arm, cfgs[arm], report["errors"], ck)
+            check_summary_chat_template(arm, sums[arm], report["errors"], ck)
+
+        # --- GATE C2 across all 9 arms of this cell -------------------------
+        report["gate_c2"][ck] = gate_c2_sha_pairing(
+            items, ARM_ORDER_9, ck, report["errors"])
+
+        # --- build the ladder ----------------------------------------------
+        d_cell = {}
+        # BELOW: A0 in all three roles (Phase I by construction; see docstring)
+        a0 = items["A0"]
+        idx0 = sorted(a0)
+        v0 = [int(a0[i][0]) for i in idx0]
+        d_cell["BELOW"] = {"anchor": v0, "native": list(v0), "lora": list(v0)}
+        for rk in ("6", "9", "12", "18"):
+            nat_arm = RUNG_TO_NATIVE[rk]
+            lor_arm = NATIVE_TO_COMPARATOR[nat_arm]
+            common = sorted(set(items["A0"]) & set(items[nat_arm])
+                            & set(items[lor_arm]))
+            if len(common) != N_EXPECT:
+                report["errors"].append(
+                    f"{ck}/{rk}: paired intersection {len(common)} != "
+                    f"{N_EXPECT} across (A0, {nat_arm}, {lor_arm})")
+            d_cell[rk] = {
+                "anchor": [int(items["A0"][i][0]) for i in common],
+                "native": [int(items[nat_arm][i][0]) for i in common],
+                "lora": [int(items[lor_arm][i][0]) for i in common],
+            }
+        pcv[(task, length)] = d_cell
+        report["cells_loaded"].append(ck)
+    return pcv, report
+
+
+def write_evidence(out_dir, decision, report, meta):
+    """★ THE MISSING WRITER.  prereg sec 4: the read-out is `--out <dir>`.
+
+    Emits the machine-readable evidence JSON plus a short verdict .md RENDERED
+    FROM THAT JSON (never typed by hand), so the prose cannot drift from the
+    numbers.  Returns the two paths.
+    """
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    ev = out / "b05_phase_diagram.json"
+    payload = {"meta": meta, "load_report": report, "decision": decision}
+    with open(ev, "w") as fh:
+        json.dump(payload, fh, indent=2, sort_keys=False)
+
+    L = ["# B05 PHASE DIAGRAM — VERDICT",
+         "",
+         "Rendered FROM `b05_phase_diagram.json` by "
+         "`b05_phase_assign.py:write_evidence`. Do not hand-edit.",
+         "",
+         f"- prereg: `{decision.get('prereg')}`",
+         f"- test: {decision.get('test')}  floor={decision.get('floor_pp')} pp  "
+         f"alpha={decision.get('alpha')}",
+         f"- cells loaded: {len(report.get('cells_loaded', []))} / "
+         f"{len(PRIMARY_CELLS)}",
+         "",
+         "## Kill gate",
+         "",
+         f"- **kill_gate_fired: {decision.get('kill_gate_fired')}**",
+         f"- verdict: {decision.get('verdict')}",
+         f"- clauses: {decision.get('clauses')}",
+         ""]
+    for r in decision.get("kill_gate_reasons", []):
+        L.append(f"  - FIRED: {r}")
+    L += ["",
+          "## Rung labels (>=3 of 4 cells)",
+          "",
+          "| rung | j | label | counts |",
+          "|---|---|---|---|"]
+    for rk, v in decision.get("rungs", {}).items():
+        L.append(f"| {rk} | {v.get('j')} | {v.get('label')} | {v.get('counts')} |")
+    L += ["",
+          f"- phases non-empty over j in {LADDER_J}: "
+          f"{decision.get('phase_nonempty')}",
+          f"- monotone cells: {decision.get('n_monotone_cells')} / "
+          f"{len(PRIMARY_CELLS)}",
+          f"- cross-task boundary gap (rung indices): "
+          f"{decision.get('crosstask_gap_rung_indices')}",
+          "",
+          "## Scope limits carried from the prereg (read before quoting this)",
+          "",
+          "- The `BELOW` rung is A0 vs A0, i.e. **Phase I by construction**. It "
+          "anchors the monotonicity check and is excluded from every "
+          "phase-non-emptiness test. It is not a result.",
+          "- prereg sec 3.4 / STATUS honest_power_disclosure: Phase III cannot "
+          "realistically fail, because the comparator arm A5 (j=18) is already "
+          "near-dead in 4/4 primary cells. A passing K1 is therefore **not** "
+          "three independently earned phases; the discriminating question is "
+          "whether Phase I survives at j=6.",
+          ""]
+    md = out / "B05_PHASE_DIAGRAM_VERDICT.md"
+    md.write_text("\n".join(L))
+    return ev, md
+
+
+def selftest_loader_against_real_files(base):
+    """★ FIXTURE SELFTEST over REAL on-disk bytes.  0 GPU.  Returns an rc.
+
+    WHY THIS IS SEPARATE FROM --selftest, and why --selftest was not enough:
+    `--selftest` passes (rc=0) over four hand-built `_vec()` dicts.  It passed
+    every day while ZERO disk bytes could reach adjudicate(), because the loader
+    did not exist.  Per
+    memory/selftest-over-invented-inputs-proves-nothing-about-the-pipeline, a
+    gate needs a test that walks real I/O -- and one that injects data which
+    LOOKS complete but is subtly wrong.
+
+    Three legs, each an assertion about the loader, not about the statistics:
+
+      LEG 1  REAL COMPARATOR FILE.  A02's per-item vectors file is on wzc1 and
+             is the anchor/LoRA half of all 16 cells.  We assert its structure
+             matches what the loader needs AND that it carries NO
+             input_ids_sha256 -- so a C2 implementation keyed on sha in THIS
+             file would be unimplementable.  That is the point: C2 must read
+             the raw records.json, never this derived file.
+
+      LEG 2  SYNTHETIC records.json IN THE REAL HARNESS SCHEMA, written to a
+             temp dir and read back THROUGH the loader.  Correctness values are
+             taken from the REAL A02 vectors file, so the bytes are real data in
+             a real schema; only the directory is synthetic.  This is the leg
+             that would have caught "the loader does not exist".
+
+      LEG 3  NEGATIVE CONTROLS.  Each must FAIL:
+               3a  a native arm carrying a lora_adapter   -> GATE D fires
+               3b  one shard deleted (7/8)                -> GATE C refuses
+               3c  a mutated input_ids_sha256 in one arm  -> GATE C2 fires
+               3d  sha256 stripped entirely               -> GATE C2 fires
+                   (ABSENT is a failure, not a pass -- this is the trap that
+                    catches sourcing the pairing from the derived file)
+    """
+    import glob as _glob
+    import shutil
+    import tempfile
+
+    base = Path(base)
+    rc = 0
+    print("== B05 LOADER FIXTURE SELFTEST (real bytes, 0 GPU) ==")
+
+    # ---------------- LEG 1: the real A02 per-item vectors file -------------
+    vec_p = (Path("/apdcephfs_wzc1/share_304376610/pighzliu_code/"
+                  "Mixture-of-Memory") /
+             "proposal/backlog/A02-comem-write-read-repair/evidence/"
+             "read_tax_ruler/a02_read_tax_per_item_vectors.json")
+    if not vec_p.exists():
+        print(f"LEG 1 SKIP: {vec_p} not on this disk")
+        return 1
+    with open(vec_p) as fh:
+        vecs = json.load(fh)["ruler"]
+    print(f"LEG 1: read {vec_p.name} ({vec_p.stat().st_size} B)")
+    real_correct = {}
+    for task, length in PRIMARY_CELLS:
+        ck = f"ruler|{task}|{length}"
+        assert ck in vecs, f"LEG 1: {ck} missing from the real vectors file"
+        e = vecs[ck]
+        idx, pac = e["common_idx"], e["per_arm_correct"]
+        assert len(idx) == N_EXPECT, f"LEG 1 {ck}: {len(idx)} != {N_EXPECT}"
+        for a in ("A0", "A2", "A3", "A4", "A5"):
+            assert a in pac and len(pac[a]) == N_EXPECT, f"LEG 1 {ck}: bad {a}"
+        real_correct[(task, length)] = (idx, pac)
+        print(f"   {ck}: n={len(idx)} "
+              + " ".join(f"{a}={sum(pac[a])}" for a in
+                         ("A0", "A2", "A3", "A4", "A5")))
+    # THE TRAP, asserted rather than assumed:
+    has_sha = "sha256" in json.dumps(vecs)
+    assert not has_sha, "LEG 1: expected NO sha256 in the derived vectors file"
+    print("   ASSERTED: the derived vectors file carries NO input_ids_sha256, "
+          "so GATE C2 CANNOT be satisfied from it -- C2 must read records.json.")
+
+    # ---------------- LEG 2: real schema, read back through the loader ------
+    tmp = Path(tempfile.mkdtemp(prefix="b05_fixture_"))
+    try:
+        def _write_arm(root, sub, arm, mutate=None, drop_shard=None,
+                       strip_sha=False, lora=None):
+            """Write 4 cells x nshard records.json in the harness's own schema
+            (fields copied from scripts/eval_ruler_qcmem.py:756-771)."""
+            d = root / "ruler_results" / sub
+            d.mkdir(parents=True, exist_ok=True)
+            for task, length in PRIMARY_CELLS:
+                idx, pac = real_correct[(task, length)]
+                src_arm = "A0" if arm in ("A0",) else (
+                    arm if arm in pac else
+                    {"N6": "A2", "N9": "A3", "N12": "A4",
+                     "N18": "A5"}.get(arm, "A0"))
+                for s in range(N_SHARD_EXPECT):
+                    if drop_shard is not None and s == drop_shard:
+                        continue
+                    recs = []
+                    for pos, i in enumerate(idx):
+                        if pos % N_SHARD_EXPECT != s:
+                            continue
+                        sha = None if strip_sha else f"sha_{task}_{length}_{i}"
+                        if mutate is not None and mutate == (task, length, i):
+                            sha = "sha_MUTATED"
+                        recs.append({
+                            "sample_index": int(i),
+                            "input_ids_sha256": sha,
+                            "target": "x", "output": "x",
+                            "recall": float(pac[src_arm][pos]),
+                            "correct": int(pac[src_arm][pos]),
+                            "n_tok": 6657,
+                        })
+                    tag = f"_shard{s}of{N_SHARD_EXPECT}"
+                    with open(d / f"{task}_{length}{tag}.records.json", "w") as f:
+                        json.dump({
+                            "task": task, "length": length,
+                            "sharding": {"num_shards": N_SHARD_EXPECT,
+                                         "shard_index": s},
+                            "resume_j": ARM_RESUME_J[arm],
+                            "selector": EXPECT_SELECTOR,
+                            "topk": EXPECT_TOPK,
+                            "iter_hop_topk": EXPECT_ITER_HOP_TOPK,
+                            "iter_rounds": 4,
+                            "chunk_size": EXPECT_CHUNK,
+                            "lora_adapter": (
+                                lora if lora is not None else
+                                ("outputs/fixture_adapter/final"
+                                 if ARM_WANTS_ADAPTER[arm] else None)),
+                            "baseline": "none", "seed": 42,
+                            "pythonhashseed": "0",
+                            "records": recs,
+                        }, f)
+                    with open(d / f"{task}_{length}{tag}.json", "w") as f:
+                        json.dump({"status": "completed",
+                                   "task": task, "length": length,
+                                   "chat_template": False,
+                                   "enable_thinking": False,
+                                   "score": 0.0}, f)
+
+        def _build(root, **kw):
+            for arm in ARM_ORDER_9:
+                sub = (NATIVE_ARMS[arm][2] if arm in NATIVE_ARMS
+                       else COMPARATOR_DIRS[arm])
+                _write_arm(root, sub, arm, **(kw.get(arm) or {}))
+
+        good = tmp / "good"
+        _build(good)
+        n_files = len(_glob.glob(str(good / "ruler_results" / "*" / "*.records.json")))
+        print(f"LEG 2: wrote {n_files} records.json in the harness schema "
+              f"(9 arms x 4 cells x {N_SHARD_EXPECT} shards)")
+        pcv, rep = load_per_cell_vectors(good, require_canonical=False)
+        assert pcv is not None, rep["errors"]
+        assert not rep["errors"], f"LEG 2 unexpected errors: {rep['errors'][:5]}"
+        assert len(rep["cells_loaded"]) == len(PRIMARY_CELLS), rep["cells_loaded"]
+        for ck, g in rep["gate_c2"].items():
+            assert g["passed"], (ck, g)
+            assert g["n_common"] == N_EXPECT, (ck, g)
+        # the loaded vectors must equal the REAL per-arm counts
+        for task, length in PRIMARY_CELLS:
+            idx, pac = real_correct[(task, length)]
+            d = pcv[(task, length)]
+            assert sum(d["BELOW"]["anchor"]) == sum(pac["A0"]), (task, length)
+            for rk, comp in (("6", "A2"), ("9", "A3"),
+                             ("12", "A4"), ("18", "A5")):
+                assert len(d[rk]["native"]) == N_EXPECT, (rk, len(d[rk]["native"]))
+                assert sum(d[rk]["lora"]) == sum(pac[comp]), (task, length, rk)
+                assert sum(d[rk]["native"]) == sum(pac[comp]), (task, length, rk)
+        print("   loader returned 4/4 cells, 5 rungs each, GATE C2 pass, "
+              "and per-arm sums equal the real A02 counts.  OK")
+
+        # adjudicate() must accept the loader's output shape.  This is the join
+        # that was previously untested: adjudicate had only ever been fed
+        # hand-built dicts.
+        dec = adjudicate(pcv)
+        assert "kill_gate_fired" in dec and "rungs" in dec, dec.keys()
+        assert len(dec["rungs"]) == len(RUNG_INDEX), dec["rungs"].keys()
+        print(f"   adjudicate() accepted the loader output: "
+              f"kill_gate_fired={dec['kill_gate_fired']}, "
+              f"phases={dec['phase_nonempty']}")
+
+        # and the writer must actually produce files
+        outd = tmp / "evidence_out"
+        ev, md = write_evidence(outd, dec, rep, {"fixture": True})
+        assert ev.exists() and ev.stat().st_size > 0, ev
+        assert md.exists() and md.stat().st_size > 0, md
+        with open(ev) as fh:
+            back = json.load(fh)
+        assert back["decision"]["kill_gate_fired"] == dec["kill_gate_fired"]
+        print(f"   writer emitted {ev.name} ({ev.stat().st_size} B) + "
+              f"{md.name} ({md.stat().st_size} B), and the JSON round-trips.  OK")
+
+        # ---------------- LEG 3: negative controls -------------------------
+        def _expect_fail(name, kw, needle):
+            root = tmp / ("bad_" + name)
+            _build(root, **kw)
+            p, r = load_per_cell_vectors(root, require_canonical=False)
+            hit = [e for e in r["errors"] if needle in e]
+            if not hit:
+                print(f"   3{name} DID NOT FAIL -- guard is blind. "
+                      f"errors={r['errors'][:3]}")
+                return False
+            print(f"   3{name} correctly REFUSED: {hit[0][:110]}")
+            return True
+
+        ok = True
+        ok &= _expect_fail("a", {"N9": {"lora": "outputs/oops/final"}},
+                           "NATIVE arm carries adapter")
+        ok &= _expect_fail("b", {"A3": {"drop_shard": 5}},
+                           "G1_SHARD_INCOMPLETE")
+        mut = ("niah_multikey_1", "16k", real_correct[
+            ("niah_multikey_1", "16k")][0][0])
+        ok &= _expect_fail("c", {"N12": {"mutate": mut}},
+                           "GATE_C2_SHA_MISMATCH")
+        ok &= _expect_fail("d", {"N6": {"strip_sha": True}},
+                           "GATE_C2_SHA_ABSENT")
+        if not ok:
+            print("LEG 3 FAILED: at least one guard cannot fire.")
+            rc = 1
+        else:
+            print("LEG 3: all four negative controls fired.  OK")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+    print("\nFIXTURE SELFTEST " + ("PASS" if rc == 0 else "FAIL") +
+          " -- the loader was exercised against real correctness data in the "
+          "real harness schema, adjudicate() accepted its output, the writer "
+          "produced files, and each provenance guard was shown to fire.")
+    return rc
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--selftest", action="store_true",
                     help="run the pre-data gate selftest (needs no B05 data)")
+    ap.add_argument("--fixture-selftest", action="store_true",
+                    help="exercise the LOADER against REAL on-disk bytes "
+                         "(0 GPU). Distinct from --selftest, which only uses "
+                         "hand-built dicts and therefore proves nothing about "
+                         "the disk path.")
     ap.add_argument("--out", default=None, help="evidence dir to write into")
+    ap.add_argument("--nshard", type=int, default=N_SHARD_EXPECT)
     ap.add_argument("--base", default=os.environ.get(
         "B05_BASE", "/apdcephfs_zwfy6/share_304376610/pighzliu_code/"
                     "Mixture-of-Memory"))
@@ -539,27 +1134,97 @@ def main():
               "three kill clauses has a demonstrated triggering result.")
         return 0
 
-    # Loading real cells requires the A02 loaders, which live on zwfy6 next to
-    # the comparator result dirs.  GATE E: import them, never reimplement.
-    base = Path(args.base)
-    code = base / "proposal/backlog/A02-comem-write-read-repair/code"
-    for p in (str(base), str(code), str(base / "scripts")):
-        if p not in sys.path:
-            sys.path.insert(0, p)
-    try:
-        import analyze_a02_depth_vs_retrieval as dvr  # noqa: F401
-    except Exception as e:
-        print(f"FAIL: cannot import the canonical A02 loaders from {code}: {e}",
+    if args.fixture_selftest:
+        return selftest_loader_against_real_files(args.base)
+
+    if not args.out:
+        print("FAIL: --out <evidence_dir> is required. prereg sec 4 makes the "
+              "read-out exactly one invocation that WRITES an evidence dir; an "
+              "invocation that prints and writes nothing is not a read-out.",
               file=sys.stderr)
+        return 4
+
+    # ---- prereg sec 4: load, gate, adjudicate ONCE, write. ------------------
+    # GATE E is enforced inside load_per_cell_vectors (require_canonical=True):
+    # the per-item scorer is IMPORTED from analyze_a02_depth_vs_retrieval, and
+    # if that import fails we refuse rather than falling back to a local
+    # reimplementation. On wzc1 the import fails for a MISSING-DEPENDENCY
+    # reason (no pandas / no datasets, measured 2026-08-17), which is exactly
+    # why prereg sec 5 pins the analyzer to a zwfy6 H20 node.
+    pcv, report = load_per_cell_vectors(args.base, nshard=args.nshard,
+                                        require_canonical=True)
+    if pcv is None:
+        for e in report["errors"]:
+            print(f"FAIL: {e}", file=sys.stderr)
         print("This analyzer must run on a zwfy6 node (.73/.82/.104) where the "
-              "comparator dirs and loaders live.  See prereg sec 5.",
-              file=sys.stderr)
+              "comparator dirs and the canonical loaders live. See prereg "
+              "sec 5.", file=sys.stderr)
         return 2
-    print("FAIL: no B05 result cells exist yet.  Run the driver first; this "
-          "analyzer is the READ-OUT and by prereg sec 4 it executes exactly "
-          "once, after all 16 cells pass the completeness gates.",
-          file=sys.stderr)
-    return 3
+
+    if not report["cells_loaded"]:
+        print("FAIL: zero B05 primary cells could be loaded. Run the driver "
+              "(code/run_b05_native_eval.sh) first; by prereg sec 4 this "
+              "analyzer is the READ-OUT and executes exactly once, after all "
+              "16 cells pass the completeness gates.", file=sys.stderr)
+        for e in report["errors"][:20]:
+            print(f"  {e}", file=sys.stderr)
+        return 3
+
+    # A partial grid must not be adjudicated: the >=3-of-4 CELL->RUNG rule and
+    # the K1 non-emptiness count are both defined over the FULL 4-cell slate,
+    # and a missing cell silently lowers what "3 of 4" means.
+    if len(report["cells_loaded"]) != len(PRIMARY_CELLS):
+        print(f"FAIL: only {len(report['cells_loaded'])}/{len(PRIMARY_CELLS)} "
+              f"primary cells loaded; the gate is defined over the full slate.",
+              file=sys.stderr)
+        for e in report["errors"][:20]:
+            print(f"  {e}", file=sys.stderr)
+        return 3
+
+    gate_errors = list(report["errors"])
+    if gate_errors:
+        # Fail-closed: prereg sec 4 requires conditions 1-5 to PASS *before*
+        # the phase assignment is produced. Emitting a verdict alongside failed
+        # provenance gates is how an unpaired or chat=True cell would end up in
+        # a headline.
+        print(f"FAIL: {len(gate_errors)} completeness/provenance gate error(s); "
+              f"refusing to adjudicate.", file=sys.stderr)
+        for e in gate_errors[:40]:
+            print(f"  {e}", file=sys.stderr)
+        out = Path(args.out)
+        out.mkdir(parents=True, exist_ok=True)
+        with open(out / "b05_gate_failure.json", "w") as fh:
+            json.dump({"gate_errors": gate_errors, "load_report": report},
+                      fh, indent=2)
+        print(f"wrote {out / 'b05_gate_failure.json'}", file=sys.stderr)
+        return 6
+
+    decision = adjudicate(pcv)          # ★ called EXACTLY ONCE (prereg sec 4)
+    meta = {
+        "produced_by": "code/b05_phase_assign.py --out",
+        "prereg": "PHASE_SEPARATION_PREREG.md sec 4 (one-shot read-out)",
+        "base": str(args.base),
+        "nshard": args.nshard,
+        "n_expect_per_cell": N_EXPECT,
+        "arms_paired_for_gate_c2": ARM_ORDER_9,
+        "native_arms": {k: v[2] for k, v in NATIVE_ARMS.items()},
+        "comparator_dirs": COMPARATOR_DIRS,
+        "adjudicate_invocations": 1,
+    }
+    ev, md = write_evidence(args.out, decision, report, meta)
+    print(f"cells loaded : {len(report['cells_loaded'])}/{len(PRIMARY_CELLS)}")
+    print(f"GATE E       : {report['gate_e']}")
+    for ck, g in report["gate_c2"].items():
+        print(f"GATE C2 {ck}: n_common={g['n_common']} "
+              f"mismatch={g['n_sha_mismatch']} absent={g['n_sha_absent']} "
+              f"passed={g['passed']}")
+    print(f"kill_gate_fired = {decision['kill_gate_fired']}")
+    for r in decision["kill_gate_reasons"]:
+        print(f"  FIRED: {r}")
+    print(f"verdict: {decision['verdict']}")
+    print(f"wrote {ev}")
+    print(f"wrote {md}")
+    return 0
 
 
 if __name__ == "__main__":

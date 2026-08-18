@@ -1,0 +1,24 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{ShortGPT point} & \textbf{PPL} & \textbf{core6} & \textbf{MMLU} \\
+\midrule
+step 0 & 401.124 & --- & .2620 \\
+step 200k & \textbf{9.780} & \textbf{.6215} & \textbf{.4739} \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Non-contiguous ShortGPT endpoint.} For block $i$, selection
+uses $\mathrm{BI}_i=1-\mathbb{E}_{x,t}\cos(h^{(i)}_{\mathrm{in}},
+h^{(i)}_{\mathrm{out}})$ over 128 evenly spaced Dolmino windows
+($262{,}144$ tokens), retaining the 16 highest-BI blocks
+$[0\text{--}12,16,17,31]$. No evaluation task is used for selection and no
+fresh tail is appended. \texttt{core6} is the unweighted macro-average of
+HellaSwag, ARC-Challenge, ARC-Easy, PIQA, and OpenBookQA
+character-normalized accuracy plus WinoGrande raw accuracy. The unhealed
+construction is initially degenerate; the 200k endpoint is one run and is not
+a selection-only ablation.}
+\label{tab:app-shortgpt}
+\end{table}

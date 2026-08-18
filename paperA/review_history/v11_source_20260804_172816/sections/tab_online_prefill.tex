@@ -1,0 +1,28 @@
+% Select-first online-prefill cohort at 8k--128k.
+\begin{table}[!t]
+\centering
+\small
+\setlength{\tabcolsep}{3.5pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Length} & \shortstack{\textbf{Dense}\\\textbf{prefill}} & \shortstack{\textbf{CoMem}\\\textbf{prefill}} & \textbf{Speedup} & \shortstack{\textbf{Dense}\\\textbf{peak}} & \shortstack{\textbf{CoMem}\\\textbf{peak}} \\
+\midrule
+8k   & 1.20\,s  & 1.05\,s & 1.14$\times$ & 18.8\,GB & 18.7\,GB \\
+32k  & 7.33\,s  & 1.06\,s & 6.92$\times$ & 25.0\,GB & 18.7\,GB \\
+128k & 71.37\,s & 1.10\,s & \textbf{64.9$\times$} & 50.0\,GB & \textbf{18.7\,GB} \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Bounded selection plus depth reuse yields a $64.9\times$
+128k online-prefill operating point.}
+Measurements use one H20, Qwen3-8B, bf16/SDPA, and the median of three runs
+after one warmup. Dense is the stock, LoRA-off Qwen3 path and processes the
+complete source; CoMem reads a fixed
+6,657-token top-12 pack with its rank-32 LoRA. The persistent store is already
+built, so these values isolate the store-ready online path and exclude one-time
+Write and external-store fetch. The matched incremental depth effect is the
+separate $1.403\times$ result in Table~\ref{tab:core-tradeoff}; the
+Write-inclusive same-adapter L20A cohort appears in Table~\ref{tab:eff}.}
+\label{tab:online-prefill}
+\end{table}

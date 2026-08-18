@@ -1,0 +1,139 @@
+{
+  "reviews": [
+    {
+      "file": "paperA/review_history/v4_strict_1_GPT56.md",
+      "mode": "strict",
+      "soundness": 3.5,
+      "excitement": 3.5,
+      "overall": 3.0,
+      "confidence": 4.5,
+      "reproducibility": 3.5
+    },
+    {
+      "file": "paperA/review_history/v4_strict_2_GPT56.md",
+      "mode": "strict",
+      "soundness": 3.5,
+      "excitement": 3.0,
+      "overall": 3.0,
+      "confidence": 4.5,
+      "reproducibility": 3.5
+    },
+    {
+      "file": "paperA/review_history/v4_strict_3_GPT56.md",
+      "mode": "strict",
+      "soundness": 3.0,
+      "excitement": 3.0,
+      "overall": 2.5,
+      "confidence": 4.0,
+      "reproducibility": 3.5
+    },
+    {
+      "file": "paperA/review_history/v4_normal_1_GPT56.md",
+      "mode": "normal",
+      "soundness": 3.5,
+      "excitement": 3.5,
+      "overall": 3.5,
+      "confidence": 4.0,
+      "reproducibility": 3.5
+    },
+    {
+      "file": "paperA/review_history/v4_normal_2_GPT56.md",
+      "mode": "normal",
+      "soundness": 4.0,
+      "excitement": 3.5,
+      "overall": 3.5,
+      "confidence": 4.0,
+      "reproducibility": 4.0
+    },
+    {
+      "file": "paperA/review_history/v4_normal_3_GPT56.md",
+      "mode": "normal",
+      "soundness": 3.5,
+      "excitement": 3.5,
+      "overall": 3.5,
+      "confidence": 4.0,
+      "reproducibility": 3.5
+    }
+  ],
+  "strict": {
+    "soundness": {
+      "mean": 3.333,
+      "min": 3.0,
+      "max": 3.5
+    },
+    "excitement": {
+      "mean": 3.167,
+      "min": 3.0,
+      "max": 3.5
+    },
+    "overall": {
+      "mean": 2.833,
+      "min": 2.5,
+      "max": 3.0
+    },
+    "confidence": {
+      "mean": 4.333,
+      "min": 4.0,
+      "max": 4.5
+    },
+    "reproducibility": {
+      "mean": 3.5,
+      "min": 3.5,
+      "max": 3.5
+    }
+  },
+  "normal": {
+    "soundness": {
+      "mean": 3.667,
+      "min": 3.5,
+      "max": 4.0
+    },
+    "excitement": {
+      "mean": 3.5,
+      "min": 3.5,
+      "max": 3.5
+    },
+    "overall": {
+      "mean": 3.5,
+      "min": 3.5,
+      "max": 3.5
+    },
+    "confidence": {
+      "mean": 4.0,
+      "min": 4.0,
+      "max": 4.0
+    },
+    "reproducibility": {
+      "mean": 3.667,
+      "min": 3.5,
+      "max": 4.0
+    }
+  },
+  "all_six": {
+    "soundness": {
+      "mean": 3.5,
+      "min": 3.0,
+      "max": 4.0
+    },
+    "excitement": {
+      "mean": 3.333,
+      "min": 3.0,
+      "max": 3.5
+    },
+    "overall": {
+      "mean": 3.167,
+      "min": 2.5,
+      "max": 3.5
+    },
+    "confidence": {
+      "mean": 4.167,
+      "min": 4.0,
+      "max": 4.5
+    },
+    "reproducibility": {
+      "mean": 3.583,
+      "min": 3.5,
+      "max": 4.0
+    }
+  }
+}

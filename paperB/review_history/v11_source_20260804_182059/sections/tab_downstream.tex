@@ -1,0 +1,39 @@
+% Downstream zero-shot MC + MMLU per arm (7B).
+% Source: PAPER_B_DATA.md secs. 3(b), 8.1--8.2.
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{@{}llccccccccccc@{}}
+\toprule
+\textbf{Arm} & \textbf{step} & \textbf{MMLU} & \textbf{HS} &
+\textbf{ARC-C} & \textbf{ARC-E} & \textbf{PIQA} & \textbf{WinoG} &
+\textbf{OBQA} & \textbf{LAMB.} & \textbf{BoolQ} & \textbf{CSQA} &
+\textbf{SIQA} \\
+\midrule
+7B base full (32L)       & ---    & \textbf{.6053} & .805 & .571 & .829 & .811 & .744 & .462 & .732 & .815 & .665 & .502 \\
+keep8 (10L)              & 200k & \textbf{.2535} & .517 & .360 & .652 & .717 & .531 & .366 & .446 & .595 & .452 & .398 \\
+keep10 (12L)             & 200k & \textbf{.2718} & .547 & .366 & .644 & .726 & .542 & .356 & .496 & .609 & .454 & .415 \\
+keep12 (14L)             & 200k & \textbf{.2752} & .599 & .394 & .689 & .737 & .607 & .376 & .535 & .587 & .496 & .410 \\
+keep14 (16L)             & 200k & \textbf{.3191} & .645 & .438 & .705 & .745 & .626 & .404 & .577 & .638 & .499 & .434 \\
+ShortGPT-16              & 200k & \textbf{.4739} & .685 & .476 & .746 & .758 & .655 & .408 & .619 & .729 & .534 & .442 \\
+frozen-front (16L)       & 200k & \textbf{.2628} & .595 & .381 & .666 & .724 & .646 & .366 & .513 & .592 & .453 & .414 \\
+fully random-init (16L)  & 200k & \textbf{.2461} & .578 & .414 & .697 & .733 & .545 & .384 & .484 & .614 & .450 & .416 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Complete 11-task checkpoint and endpoint profile.}
+MMLU here is the independently merged downstream snapshot (.3191 for keep14 at
+200k); Table~\ref{tab:interface-audit} reports a separate paired
+dual-interface rerun (.3184).
+\texttt{acc\_norm} is used for HS, ARC-C/E, PIQA, and OBQA; raw accuracy is
+used for MMLU, WinoG, LAMBADA, BoolQ, CSQA, and SIQA. Here
+\texttt{acc\_norm} means accuracy from \emph{character-normalized} candidate
+log-likelihood. Appendix Table~\ref{tab:app-metric-sensitivity} reports raw
+and character-normalized sensitivity for the final three tasks. Abbreviations: HS = HellaSwag;
+ARC-C/E = ARC-Challenge/Easy; WinoG = WinoGrande; OBQA = OpenBookQA; LAMB. =
+LAMBADA; CSQA = CommonsenseQA; SIQA = SocialIQA. ShortGPT improves every
+reported task over the keep14 endpoint, but the gain ranges from 0.4 points on
+OBQA to 15.5 on MMLU. All trained endpoint rows are reported at step 200k; the separate keep14
+trajectory appears in Table~\ref{tab:trajectory-audit}.}
+\label{tab:downstream}
+\end{table*}

@@ -1,0 +1,63 @@
+\section{CoMem}
+\label{sec:method}
+
+\paragraph{Interface.}
+Let a decoder have $L$ layers and width $d$, with half-open layer ranges and
+$h_j$ denoting the input to block $j$. \textsc{Write} divides a document into
+$c$-token chunks, runs each through $[0{:}j)$ with positions restarted at zero,
+and stores $h_j\in\mathbb{R}^{c\times d}$. \textsc{Select} returns top-$k$
+chunk IDs. \textsc{Read} orders them by document position, assigns fresh
+contiguous positions to $[\mathrm{BOS};\,\{h_j\};\,h_j(q)]$, and runs
+$[j{:}L)$ with full causal cross-pack attention. For $j{=}0$, the same path
+stores token IDs and executes all layers, giving the matched endpoint of the
+depth axis.
+
+\paragraph{Storage and bounded model work.}
+With head width $d_{\mathrm{head}}$, query-head count $n_{\mathrm q}$, and
+KV-head count $n_{\mathrm{kv}}$, residual-to-full-KV bytes/token at a common
+dtype are
+\begin{equation}
+\frac{\lvert h_j\rvert}{\lvert\mathrm{KV}\rvert}
+=\frac{d}{2L n_{\mathrm{kv}}d_{\mathrm{head}}}
+=\frac{n_{\mathrm{q}}}{2L n_{\mathrm{kv}}},
+\label{eq:store}
+\end{equation}
+using $d=n_{\mathrm q}d_{\mathrm{head}}$. For Qwen3-8B this is $1/18$:
+8\,KiB rather than 144\,KiB/token in bf16. It is about 1\,GiB at 128k
+tokens---far larger than text, so reuse is essential. The model-side Read length
+is $\mathrm{sink}+kc+\mathrm{query}$ (nominally 6,657 tokens for
+$k{=}12,c{=}512$), independent of stored-context length. The persistent store,
+index, and selector are not bounded.
+
+\paragraph{Overlap-Write.}
+Independent writes omit lower-layer left context. For the diagnostic variant,
+chunk $i$ is prefixed by its preceding $w$ tokens during Write, but only the
+current $c$ residuals are stored. Thus persistent bytes, selected-pack length,
+and per-query Read/decode are unchanged; Write work and edit invalidation grow.
+This is a tested repair on one diagnostic, not the default for the full suite.
+
+\paragraph{Self-distillation.}
+Following knowledge distillation and low-rank adaptation
+~\citep{distillation,lora}, a $j{=}12$ student matches a frozen $j{=}0$ teacher
+on the teacher's top-64 logit support. For renormalized teacher and student
+distributions $p$ and $q$, respectively,
+\begin{equation}
+\mathcal L_{\mathrm{distill}}
+=0.6\,\mathrm{KL}(p\Vert q)+0.4\,\mathrm{KL}(q\Vert p),
+\label{eq:distill}
+\end{equation}
+with no cross-entropy term. The rank-32 LoRA ($\alpha{=}64$, zero dropout)
+updates attention and MLP projections in layers 12--35; the Qwen3-8B backbone
+stays frozen. Training uses 4,000 bf16 DDP steps on 2,048-token PG-19 windows
+~\citep{pg19}, without benchmark supervision, retrieval, or synthetic
+long-context data. Full optimizer and artifact details are in the appendix.
+
+\paragraph{Selection and generation.}
+The flagship selector is deterministic token-ID BM25~\citep{bm25}, chosen to
+avoid a separately trained retriever. It uses top-12, hop width four, and three
+frontier-expansion rounds: round 1 scores the question; later rounds concatenate
+tokens from newly selected chunks, score unselected chunks, and break ties by
+document index. Frozen dense retrieval is reported only as a diagnostic. During
+generation, lower layers cache the query/generation prefix and upper layers
+cache the selected pack; the retrieved pack is not rerun for each output token.
+Exact masks, positions, and timing boundaries appear in the appendix.

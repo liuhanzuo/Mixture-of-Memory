@@ -1,0 +1,24 @@
+{
+  "description": "Directional Qwen3-8B cross-family endpoint used in the paper appendix.",
+  "protocol": {
+    "base_model": "Qwen/Qwen3-8B",
+    "prompting": "base LM, chat template disabled, no BOS",
+    "healing_corpus": "SlimPajama",
+    "healing_steps": 200000,
+    "seed": 42,
+    "note": "This endpoint is not compute-, corpus-, or depth-ratio-matched to the OLMo-2 study."
+  },
+  "arms": {
+    "base_full_36L": {
+      "depth": 36,
+      "ppl": 11.42,
+      "mmlu_answer_letter": 0.7297
+    },
+    "prefix12_fresh2_14L": {
+      "depth": 14,
+      "depth_fraction": 0.3889,
+      "ppl": 23.49,
+      "mmlu_answer_letter": 0.2495
+    }
+  }
+}

@@ -1,0 +1,74 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\paragraph{Setup.}
+The principal model is frozen Qwen3-8B~\citep{qwen3}, with $j{=}12$,
+512-token chunks, iterative BM25 top-12, a BOS sink, and the rank-32 LoRA.
+Prompting is plain text without chat templates. We evaluate RULER
+~\citep{ruler}, BABILong~\citep{babilong}, LongEval~\citep{longchat}, six
+LongBench QA datasets~\citep{longbench}, and all 1,986 LoCoMo questions
+~\citep{locomo}. Appendices~\ref{app:tasks} and~\ref{app:statistics} give
+complete cells, prompts, sample counts, uncertainty, and integrity checks. We keep four
+timing boundaries separate: selected-pack model Read, store-ready online
+prefill, Write-inclusive pipeline, and external index/store cost.
+
+\subsection{Matched depth reuse}
+\input{sections/tab_core_tradeoff}
+
+Table~\ref{tab:core-tradeoff} is the central comparison. Raw-text replay
+($j{=}0$) and CoMem receive the same selected chunks in the same order and use
+the same sink, mask, examples, and LoRA. Skipping the lower 12 layers reduces
+fixed-pack Read from 931.9 to 664.4\,ms ($1.403\times$), but lowers the RULER
+macro from 99.19 to 96.07. CoMem is therefore not quality preserving. The
+continuous-prefix control exactly matches $j{=}0$, showing that upper-layer
+continuation can reproduce replay when supplied compatible states. Because it
+jointly restores document, cross-chunk, and query-side lower-layer interaction,
+the control is a fidelity ceiling rather than a single-factor explanation.
+
+The same quality ordering largely holds outside RULER: matched $j{=}0$ scores
+97.2 versus 69.0 on LongEval, 41.59 versus 38.27 on LoCoMo, and 12.31 versus
+12.15 on six LongBench QA datasets; task-level BABILong results are mixed. We
+therefore use these tables as scope checks, not a heterogeneous leaderboard.
+
+\subsection{Amortization and the negative frontier}
+\input{sections/tab_serving_crossover}
+
+The residual store costs 8,192 bytes/token and must first be written. In the
+write-once serving harness, CoMem overtakes matched raw replay after 8--11
+queries at 32k for generated lengths up to 128 tokens; the 512-token CPU case
+moves to 94 queries because decode dominates. At 128k and one generated token,
+break-even is 25.8/27.6 queries for GPU/CPU placement. Each value follows the
+displayed measured-time equation and includes fetch, model Read, and decode;
+for one-off or weakly reused documents, raw text is cheaper.
+
+\input{sections/tab_equal_latency}
+
+We then ask whether cheaper replay can buy enough extra evidence to improve
+quality at equal online latency. A latency-only calibration chooses raw-text
+top-10 versus CoMem top-12; on the held-out cohort, raw replay leads by 11.56
+points. This is the paper's decision-relevant negative result: saved lower-layer
+compute does not compensate for residual-interface loss in this setting.
+
+\subsection{Bounded diagnosis}
+\input{sections/tab_context_position}
+\input{sections/tab_write_context}
+
+Holding retrieval, adapter, and upper-layer Read fixed, the $2{\times}2$
+diagnostic separates lower-layer attention scope from Read positions.
+Document-contextual Write closes the gap under either position convention;
+document-origin positions alone make chunk-local states 4.5 points worse. The
+$+4.5$ interaction precludes an additive attribution, but bounds a major tested
+failure to the Write representation rather than position remapping.
+
+Overlap-Write turns this control into a local deployable intervention:
+$w{=}32$ raises 92.5 to 98.5 and $w{=}128$ to 99.0 while preserving stored
+bytes and per-query work. Its measured wall-clock overhead exceeds the
+theoretical FLOP ratios, and it is evaluated only on this paired synthetic
+cohort. We therefore claim a bounded diagnosis, not a universal repair.
+
+\paragraph{Secondary scope checks.}
+A frozen BGE-large-en-v1.5 diagnostic shows that retrieval recall can instead be
+the bottleneck (Appendix~\ref{app:ablations}). Store-ready dense-prefill and
+Write-inclusive measurements, synthetic 128k stress tests, and cross-scale/MoE
+ports are reported in the appendix. They support bounded-read operation and
+implementation portability, but do not alter the matched frontier above.

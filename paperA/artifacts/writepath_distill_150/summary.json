@@ -1,0 +1,35 @@
+{
+  "task": "P1.10 / task 150: trained chunk-local Write diagnostic",
+  "date": "2026-08-04",
+  "model": "Qwen3-8B",
+  "resume_j": 12,
+  "cohort": {
+    "task": "RULER niah_multikey_1",
+    "lengths": ["8k", "16k"],
+    "n_per_length": 100,
+    "n_pooled": 200,
+    "selector": "iter_bm25",
+    "topk": 12,
+    "chat_template": false
+  },
+  "baselines": {
+    "raw_replay_j0": 100.0,
+    "chunk_local_write": 92.5,
+    "document_context_write_oracle": 100.0
+  },
+  "trained_write_lora": {
+    "layers": "0..11",
+    "read_lora_layers": "12..35",
+    "disjoint_adapters": true,
+    "step1000_macro": 98.0,
+    "step1500_macro": 99.0,
+    "step2000_macro": 98.5,
+    "selected_checkpoint": "step2000",
+    "selected_macro": 98.5
+  },
+  "paired_tests": {
+    "step2000_trained_vs_chunk_local_mcnemar_p": 0.0005,
+    "step2000_oracle_vs_trained_mcnemar_p": 0.25
+  },
+  "interpretation": "A lower-layer Write LoRA recovers 6.0 of the 7.5 point local Write gap on the paired synthetic diagnostic. The remaining difference to the document-context oracle is not significant on n=200. This is a diagnostic upper-bound/control, not a natural-task or end-to-end deployment result."
+}

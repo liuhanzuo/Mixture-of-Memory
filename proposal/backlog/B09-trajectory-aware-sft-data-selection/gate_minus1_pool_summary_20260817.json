@@ -1,0 +1,313 @@
+{
+  "_what": "B09 GATE -1 next_action item 2: the FLAT CANDIDATE POOL, emitted with PROPOSAL section 1's columns under the decomposition PRE-REGISTERED in B09_GATE_MINUS1_PREREG.md sec 3.",
+  "computed_at": "2026-08-17T13:10:17.240596+08:00",
+  "pool_path": "data/agent_traj/derived/B09_candidate_pool_tool_structured_20260817.parquet",
+  "pool_rows_U": 278358,
+  "pool_groups_G_traj_id": 9116,
+  "parent_tasks_instance_id": 5215,
+  "repo_families": 128,
+  "columns": [
+    "traj_id",
+    "instance_id",
+    "repo_family",
+    "task_strategy",
+    "model",
+    "resolved",
+    "step_index",
+    "action_ordinal",
+    "message_type",
+    "tool_name",
+    "n_tool_calls",
+    "c_i_chars",
+    "c_i_tokest",
+    "has_thought",
+    "n_turns_in_traj",
+    "n_actions_in_traj",
+    "position_frac",
+    "is_final_action",
+    "prereg_fold"
+  ],
+  "source_rows_read": 24100,
+  "source_rows_excluded_bare": 14984,
+  "exclusion_rate_pct": 62.1743,
+  "rows_per_group": {
+    "min": 3,
+    "max": 151,
+    "mean": 30.5351,
+    "gini": 0.332907
+  },
+  "turns_per_traj": {
+    "min": 7,
+    "max": 303,
+    "mean": 62.0702
+  },
+  "instance_rollouts": {
+    "n_instances": 5215,
+    "n_with_more_than_1_rollout": 1764,
+    "max": 13,
+    "n_with_MIXED_resolved_outcome": 474
+  },
+  "tool_name_counts": {
+    "str_replace_editor": 156137,
+    "bash": 107050,
+    "submit": 14333
+  },
+  "message_type_counts": {
+    "action": 278358
+  },
+  "task_strategy_traj_counts": {
+    "pr": 4311,
+    "lm_rewrite": 1718,
+    "func_pm": 1284,
+    "combine_module": 827,
+    "combine_file": 698,
+    "numeric": 197,
+    "other:1a8bd2f7": 54,
+    "func_basic": 27
+  },
+  "instance_ids_without_a_dot": 0,
+  "other_suffix_samples": {},
+  "repo_family_top20_by_traj": [
+    [
+      "getmoto__moto",
+      748
+    ],
+    [
+      "pandas-dev__pandas",
+      570
+    ],
+    [
+      "Project-MONAI__MONAI",
+      556
+    ],
+    [
+      "iterative__dvc",
+      447
+    ],
+    [
+      "conan-io__conan",
+      336
+    ],
+    [
+      "pydantic__pydantic",
+      283
+    ],
+    [
+      "dask__dask",
+      278
+    ],
+    [
+      "pygments__pygments",
+      184
+    ],
+    [
+      "facebookresearch__hydra",
+      163
+    ],
+    [
+      "pylint-dev__astroid",
+      146
+    ],
+    [
+      "oauthlib__oauthlib",
+      145
+    ],
+    [
+      "python__mypy",
+      144
+    ],
+    [
+      "pyupio__safety",
+      140
+    ],
+    [
+      "cantools__cantools",
+      134
+    ],
+    [
+      "sunpy__sunpy",
+      128
+    ],
+    [
+      "encode__starlette",
+      119
+    ],
+    [
+      "tox-dev__pipdeptree",
+      116
+    ],
+    [
+      "python-trio__trio",
+      115
+    ],
+    [
+      "scanny__python-pptx",
+      112
+    ],
+    [
+      "lepture__mistune",
+      105
+    ]
+  ],
+  "repo_family_size_hist": {
+    "1": 2,
+    "3": 1,
+    "5": 5,
+    "7": 1,
+    "8": 1,
+    "9": 3,
+    "11": 1,
+    "13": 2,
+    "14": 1,
+    "15": 3,
+    "19": 2,
+    "21": 1,
+    "22": 3,
+    "23": 1,
+    "26": 3,
+    "27": 2,
+    "28": 2,
+    "29": 5,
+    "30": 1,
+    "31": 1,
+    "32": 1,
+    "33": 3,
+    "34": 4,
+    "35": 4,
+    "36": 4,
+    "37": 2,
+    "38": 1,
+    "41": 3,
+    "42": 5,
+    "43": 3,
+    "44": 1,
+    "45": 4,
+    "47": 1,
+    "49": 1,
+    "50": 1,
+    "51": 1,
+    "52": 4,
+    "53": 1,
+    "54": 1,
+    "56": 1,
+    "58": 1,
+    "59": 1,
+    "60": 1,
+    "61": 2,
+    "62": 1,
+    "64": 3,
+    "66": 1,
+    "67": 1,
+    "68": 2,
+    "69": 1,
+    "82": 1,
+    "83": 1,
+    "85": 1,
+    "88": 1,
+    "94": 1,
+    "97": 1,
+    "100": 1,
+    "105": 1,
+    "112": 1,
+    "115": 1,
+    "116": 1,
+    "119": 1,
+    "128": 1,
+    "134": 1,
+    "140": 1,
+    "144": 1,
+    "145": 1,
+    "146": 1,
+    "163": 1,
+    "184": 1,
+    "278": 1,
+    "283": 1,
+    "336": 1,
+    "447": 1,
+    "556": 1,
+    "570": 1,
+    "748": 1
+  },
+  "prereg_K5_folds": {
+    "fold0": {
+      "n_families": 25,
+      "n_traj": 1823
+    },
+    "fold1": {
+      "n_families": 25,
+      "n_traj": 1823
+    },
+    "fold2": {
+      "n_families": 25,
+      "n_traj": 1823
+    },
+    "fold3": {
+      "n_families": 26,
+      "n_traj": 1823
+    },
+    "fold4": {
+      "n_families": 27,
+      "n_traj": 1824
+    }
+  },
+  "prereg_K5_fold_members_head": {
+    "fold0": [
+      "HIPS__autograd",
+      "adrienverge__yamllint",
+      "agronholm__typeguard",
+      "borntyping__python-colorlog",
+      "bottlepy__bottle",
+      "buriy__python-readability",
+      "cantools__cantools",
+      "erikrose__parsimonious"
+    ],
+    "fold1": [
+      "PyCQA__flake8",
+      "amueller__word_cloud",
+      "benoitc__gunicorn",
+      "burnash__gspread",
+      "cloudpipe__cloudpickle",
+      "django__channels",
+      "django__daphne",
+      "facebookresearch__hydra"
+    ],
+    "fold2": [
+      "Cog-Creators__Red-DiscordBot",
+      "Knio__dominate",
+      "Project-MONAI__MONAI",
+      "alecthomas__voluptuous",
+      "andialbrecht__sqlparse",
+      "cool-RR__PySnooper",
+      "dbader__schedule",
+      "facebookresearch__fvcore"
+    ],
+    "fold3": [
+      "Mimino666__langdetect",
+      "Suor__funcy",
+      "dask__dask",
+      "datamade__usaddress",
+      "davidhalter__parso",
+      "django-money__django-money",
+      "encode__starlette",
+      "facelessuser__soupsieve"
+    ],
+    "fold4": [
+      "agronholm__exceptiongroup",
+      "alanjds__drf-nested-routers",
+      "arrow-py__arrow",
+      "chardet__chardet",
+      "cknd__stackprinter",
+      "conan-io__conan",
+      "cookiecutter__cookiecutter",
+      "gawel__pyquery"
+    ]
+  },
+  "c_i_note": "c_i_chars is an EXACT character count of the assistant turn's loss-bearing text (thought + content + action + tool-call arguments). c_i_tokest = c_i_chars/3.6 is a HEURISTIC, NOT a tokenizer count. Any fixed-target-token budget must re-derive c_i with the student model's own tokenizer.",
+  "c_i_chars_summary": {
+    "min": 8,
+    "max": 129923,
+    "mean": 1378.75,
+    "total": 383785824
+  },
+  "gpu_used": "none"
+}

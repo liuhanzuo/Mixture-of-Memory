@@ -1,0 +1,40 @@
+{
+  "output_name": "shortgpt16_step200k",
+  "n_shards": 8,
+  "add_bos": false,
+  "meta": {
+    "mode": "pruned",
+    "keep_front_layers": 16,
+    "n_fresh_layers": 0,
+    "num_hidden_layers": 16,
+    "ckpt_step": 200000,
+    "base_model": "allenai/OLMo-2-1124-7B",
+    "add_bos": false,
+    "max_new_tokens": 32,
+    "initialization": "inherited_front"
+  },
+  "tasks": {
+    "popqa": {
+      "n": 14267,
+      "em": 0.07268521763510198,
+      "contains": 0.15854769748370365,
+      "f1": 0.12460554196596903,
+      "em_hits": 1037,
+      "contains_hits": 2262,
+      "f1_sum": 1777.74726722848,
+      "majority_em": 0.0229200252330553,
+      "empty_em": 0.0
+    },
+    "triviaqa": {
+      "n": 17944,
+      "em": 0.3300824788230049,
+      "contains": 0.45993089612126614,
+      "f1": 0.40528593511083666,
+      "em_hits": 5923,
+      "contains_hits": 8253,
+      "f1_sum": 7272.450819628853,
+      "majority_em": 0.0025635309852875612,
+      "empty_em": 0.0
+    }
+  }
+}

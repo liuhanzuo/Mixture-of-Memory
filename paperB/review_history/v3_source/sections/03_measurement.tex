@@ -1,0 +1,23 @@
+\section{Recovery as a Multi-Axis Measurement}
+\label{sec:observation}
+
+Perplexity aggregates token-level negative log-likelihood over a corpus. A
+knowledge-sensitive task instead asks whether a particular answer can be
+selected or generated under a task interface. CPT can therefore improve the
+former without changing the latter at the same observed rate. This does not make
+perplexity uninformative; it means that distributional fit is not a certificate
+for every behavior after a structural intervention.
+
+This distinction motivates three study choices. First, we retain within-arm
+checkpoints because a single endpoint cannot distinguish delayed from absent
+change over the observed budget. Second, answer-letter and complete-option
+scoring are reported separately because they mix competence and readout
+differently. Third, we compare structural constructions because the same nominal
+depth need not imply the same inherited computation. These are measurement
+requirements, not a causal theory of where capability resides.
+
+Layer-wise probes provide supplementary context: on intact OLMo-2-7B, frozen
+semantic classifiers become readable early, MMLU answer-letter readout rises
+near layers 18--19, and exact next-token agreement saturates at the top. Because
+these quantities use different probes and thresholds, we treat their ordering
+as descriptive only; full results are in Appendix~\ref{app:mechanism}.

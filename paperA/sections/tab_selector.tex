@@ -1,0 +1,33 @@
+% Single-pass selector ablation, RULER n=100, no chat template.
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+\textbf{Task} & \textbf{Len} & \textbf{BM25} & \textbf{Recency} & \textbf{ReaderAttn} & \textbf{Oracle} \\
+\midrule
+\multirow{3}{*}{niah\_single}   & 8k  & 100 & 100 & 100 & 100 \\
+                                & 16k & 100 & 100 & 100 & 100 \\
+                                & 32k & 100 & 82  & 73  & 100 \\
+\midrule
+\multirow{3}{*}{niah\_multikey} & 8k  & 99 & 98 & 97 & 100 \\
+                                & 16k & 99 & 88 & 90 & 100 \\
+                                & 32k & 99 & 54 & 60 & 100 \\
+\midrule
+\multirow{3}{*}{var-track}      & 8k  & 99.4 & 99.2 & 99.8 & N/A \\
+                                & 16k & 92.6 & 92.4 & 92.4 & N/A \\
+                                & 32k & 32.0 & 41.2 & 27.8 & N/A \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Single-pass selector sweep on RULER ($n{=}100$) without a chat
+template; each entry is the peak over $k\in\{4,8,12,16,24\}$. Oracle retrieval
+keeps both needle tasks at 100, showing that their long-range gap is selection
+rather than readout loss. The variable-tracking rows belong to this specific
+selector-sweep configuration and should not be conflated with the focused
+top-12 flagship in Table~\ref{tab:slm}. Oracle is undefined for a multi-chunk
+reference chain and is therefore not reported there.}
+\label{tab:selector}
+\end{table}

@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="910"
+ viewBox="0 0 1800 910" role="img" aria-labelledby="title desc">
+<title id="title">Perplexity improvement alone does not imply target recovery</title>
+<desc id="desc">Two-panel proxy-validity figure. Panel A shows the single keep14 observed trajectory at 128k, 153.5k, and 200k steps. Panel B shows endpoint and null operating points, including a random-init content-score floor, a coupled ShortGPT construction, and a 200k full32 reference.</desc>
+<style>
+  .title { font-family: "Liberation Sans", "Arial", sans-serif; font-size: 38px; font-weight: 700; fill: #182230; }
+  .subtitle { font-family: "Liberation Sans", "Arial", sans-serif; font-size: 26px; fill: #475467; }
+  .panel { font-family: "Liberation Sans", "Arial", sans-serif; font-size: 30px; font-weight: 700; fill: #182230; }
+  .body { font-family: "Liberation Sans", "Arial", sans-serif; font-size: 27px; fill: #344054; }
+  .small { font-family: "Liberation Sans", "Arial", sans-serif; font-size: 25px; fill: #475467; }
+  .tiny { font-family: "Liberation Sans", "Arial", sans-serif; font-size: 25px; fill: #667085; }
+  .axis { font-family: "Liberation Sans", "Arial", sans-serif; font-size: 25px; fill: #667085; }
+  .axisStrong { font-family: "Liberation Sans", "Arial", sans-serif; font-size: 25px; font-weight: 700; fill: #344054; }
+  .value { font-family: "Liberation Sans", "Arial", sans-serif; font-size: 25px; font-weight: 700; fill: #182230; }
+  .chip { font-family: "Liberation Sans", "Arial", sans-serif; font-size: 25px; font-weight: 700; }
+</style>
+<rect width="1800" height="910" fill="#FFFFFF"/>
+<text x="60" y="57" class="title" text-anchor="start">PPL improvement alone does not imply target recovery</text>
+<text x="60" y="94" class="subtitle" text-anchor="start">Observed OLMo-2-7B paths · one run per construction · same-source Dolmino PPL</text>
+<rect x="45" y="120" width="770" height="700" fill="#FBFCFE" stroke="#D0D5DD" stroke-width="2" rx="14"/>
+<rect x="840" y="120" width="915" height="700" fill="#FBFCFE" stroke="#D0D5DD" stroke-width="2" rx="14"/>
+<text x="72" y="166" class="panel" text-anchor="start" fill="#175CD3">A</text>
+<text x="113" y="166" class="panel" text-anchor="start">Literal keep14 path</text>
+<text x="867" y="166" class="panel" text-anchor="start" fill="#B54708">B</text>
+<text x="908" y="166" class="panel" text-anchor="start">Endpoints and null points</text>
+<line x1="150" y1="610" x2="700" y2="610" stroke="#667085" stroke-width="2"/>
+<line x1="150" y1="265" x2="150" y2="610" stroke="#667085" stroke-width="2"/>
+<line x1="700" y1="265" x2="700" y2="610" stroke="#98A2B3" stroke-width="2"/>
+<line x1="143" y1="610.0" x2="150" y2="610.0" stroke="#667085" stroke-width="1.5"/>
+<line x1="150" y1="610.0" x2="700" y2="610.0" stroke="#EAECF0" stroke-width="1"/>
+<text x="137" y="615.0" class="axis" text-anchor="end">10.5</text>
+<line x1="143" y1="523.7500000000003" x2="150" y2="523.7500000000003" stroke="#667085" stroke-width="1.5"/>
+<line x1="150" y1="523.7500000000003" x2="700" y2="523.7500000000003" stroke="#EAECF0" stroke-width="1"/>
+<text x="137" y="528.7500000000003" class="axis" text-anchor="end">10.6</text>
+<line x1="143" y1="437.5000000000006" x2="150" y2="437.5000000000006" stroke="#667085" stroke-width="1.5"/>
+<line x1="150" y1="437.5000000000006" x2="700" y2="437.5000000000006" stroke="#EAECF0" stroke-width="1"/>
+<text x="137" y="442.5000000000006" class="axis" text-anchor="end">10.7</text>
+<line x1="143" y1="351.2499999999994" x2="150" y2="351.2499999999994" stroke="#667085" stroke-width="1.5"/>
+<line x1="150" y1="351.2499999999994" x2="700" y2="351.2499999999994" stroke="#EAECF0" stroke-width="1"/>
+<text x="137" y="356.2499999999994" class="axis" text-anchor="end">10.8</text>
+<line x1="143" y1="264.9999999999997" x2="150" y2="264.9999999999997" stroke="#667085" stroke-width="1.5"/>
+<line x1="150" y1="264.9999999999997" x2="700" y2="264.9999999999997" stroke="#EAECF0" stroke-width="1"/>
+<text x="137" y="269.9999999999997" class="axis" text-anchor="end">10.9</text>
+<line x1="700" y1="610.0" x2="707" y2="610.0" stroke="#667085" stroke-width="1.5"/>
+<text x="713" y="615.0" class="axis" text-anchor="start">0.25</text>
+<line x1="700" y1="523.7499999999999" x2="707" y2="523.7499999999999" stroke="#667085" stroke-width="1.5"/>
+<text x="713" y="528.7499999999999" class="axis" text-anchor="start">0.27</text>
+<line x1="700" y1="437.5000000000001" x2="707" y2="437.5000000000001" stroke="#667085" stroke-width="1.5"/>
+<text x="713" y="442.5000000000001" class="axis" text-anchor="start">0.29</text>
+<line x1="700" y1="351.25" x2="707" y2="351.25" stroke="#667085" stroke-width="1.5"/>
+<text x="713" y="356.25" class="axis" text-anchor="start">0.31</text>
+<line x1="700" y1="264.99999999999994" x2="707" y2="264.99999999999994" stroke="#667085" stroke-width="1.5"/>
+<text x="713" y="269.99999999999994" class="axis" text-anchor="start">0.33</text>
+<text x="83" y="438" class="axisStrong" text-anchor="middle" transform="rotate(-90 83 438)">in-domain PPL ↓</text>
+<text x="770" y="438" class="axisStrong" text-anchor="middle" transform="rotate(90 770 438)">MMLU letter ↑</text>
+<text x="425" y="682" class="axisStrong" text-anchor="middle">CPT step · nominal token presentations</text>
+<line x1="150.0" y1="610" x2="150.0" y2="617" stroke="#667085" stroke-width="1.5"/>
+<text x="150.0" y="644" class="axis" text-anchor="middle">128k · 33.6B</text>
+<line x1="344.7916666666667" y1="610" x2="344.7916666666667" y2="617" stroke="#667085" stroke-width="1.5"/>
+<text x="344.7916666666667" y="644" class="axis" text-anchor="middle">153.5k · 40.2B</text>
+<line x1="700.0" y1="610" x2="700.0" y2="617" stroke="#667085" stroke-width="1.5"/>
+<text x="700.0" y="644" class="axis" text-anchor="middle">200k · 52.4B</text>
+<polyline points="150.0,328.82499999999953 344.7916666666667,443.53750000000036 700.0,557.3875" fill="none" stroke="#175CD3" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="150.0,389.19999999999993 344.7916666666667,340.9 700.0,312.00625" fill="none" stroke="#D92D20" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="10 7"/>
+<circle cx="150.0" cy="328.82499999999953" r="8" fill="#175CD3" stroke="#FFFFFF" stroke-width="2"/>
+<text x="150.0" y="314.82499999999953" class="value" text-anchor="middle" fill="#175CD3">10.826</text>
+<circle cx="344.7916666666667" cy="443.53750000000036" r="8" fill="#175CD3" stroke="#FFFFFF" stroke-width="2"/>
+<text x="344.7916666666667" y="429.53750000000036" class="value" text-anchor="middle" fill="#175CD3">10.693</text>
+<circle cx="700.0" cy="557.3875" r="8" fill="#175CD3" stroke="#FFFFFF" stroke-width="2"/>
+<text x="700.0" y="543.3875" class="value" text-anchor="middle" fill="#175CD3">10.561</text>
+<rect x="143.0" y="382.19999999999993" width="14" height="14" rx="2" fill="#D92D20" stroke="#FFFFFF" stroke-width="2"/>
+<text x="150.0" y="416.19999999999993" class="value" text-anchor="middle" fill="#B42318">0.301</text>
+<rect x="337.7916666666667" y="333.9" width="14" height="14" rx="2" fill="#D92D20" stroke="#FFFFFF" stroke-width="2"/>
+<text x="344.7916666666667" y="367.9" class="value" text-anchor="middle" fill="#B42318">0.312</text>
+<rect x="693.0" y="305.00625" width="14" height="14" rx="2" fill="#D92D20" stroke="#FFFFFF" stroke-width="2"/>
+<text x="700.0" y="339.00625" class="value" text-anchor="middle" fill="#B42318">0.319</text>
+<line x1="150" y1="610" x2="700" y2="610" stroke="#98A2B3" stroke-width="1.5" stroke-dasharray="6 6"/>
+<text x="696" y="601" class="tiny" text-anchor="end">chance .250</text>
+<rect x="105" y="194" width="250" height="48" fill="#EFF8FF" stroke="#B2DDFF" stroke-width="1.5" rx="24"/>
+<text x="230" y="226" class="chip" text-anchor="middle" fill="#175CD3">PPL 10.826 → 10.561</text>
+<rect x="375" y="194" width="235" height="48" fill="#FEF3F2" stroke="#FECDCA" stroke-width="1.5" rx="24"/>
+<text x="492" y="226" class="chip" text-anchor="middle" fill="#B42318">MMLU .301 → .319</text>
+<rect x="630" y="194" width="145" height="48" fill="#F2F4F7" stroke="#D0D5DD" stroke-width="1.5" rx="24"/>
+<text x="702" y="226" class="chip" text-anchor="middle" fill="#475467">base .605</text>
+<text x="82" y="744" class="body" text-anchor="start" fill="#344054" font-weight="700"><tspan x="82" dy="0">PPL improves, but MMLU remains 28.6 points below base.</tspan></text>
+<text x="875" y="210" class="small" text-anchor="start">base/full32: 32L · others: 16L · all trained endpoints: 200k</text>
+<text x="887" y="248" class="axisStrong" text-anchor="start">in-domain PPL ↓</text>
+<line x1="1000" y1="435" x2="1695" y2="435" stroke="#98A2B3" stroke-width="1.5"/>
+<rect x="1025" y="424.40806451612906" width="52" height="10.591935483870959" fill="#344054" stroke="#344054" stroke-width="0" rx="4"/>
+<text x="1051" y="415.40806451612906" class="tiny" text-anchor="middle" fill="#344054" font-weight="700">7.398</text>
+<text x="1051" y="464" class="tiny" text-anchor="middle">base</text>
+<rect x="1137" y="417.1693548387097" width="52" height="17.83064516129032" fill="#667085" stroke="#667085" stroke-width="0" rx="4"/>
+<text x="1163" y="408.1693548387097" class="tiny" text-anchor="middle" fill="#667085" font-weight="700">7.670</text>
+<text x="1163" y="464" class="tiny" text-anchor="middle">full32</text>
+<rect x="1249" y="340.23145161290324" width="52" height="94.76854838709677" fill="#175CD3" stroke="#175CD3" stroke-width="0" rx="4"/>
+<text x="1275" y="331.23145161290324" class="tiny" text-anchor="middle" fill="#175CD3" font-weight="700">10.561</text>
+<text x="1275" y="464" class="tiny" text-anchor="middle">keep14</text>
+<rect x="1361" y="361.0161290322581" width="52" height="73.98387096774191" fill="#EAAA08" stroke="#EAAA08" stroke-width="0" rx="4"/>
+<text x="1387" y="352.0161290322581" class="tiny" text-anchor="middle" fill="#EAAA08" font-weight="700">9.780</text>
+<text x="1387" y="464" class="tiny" text-anchor="middle">ShortGPT</text>
+<rect x="1473" y="280.725" width="52" height="154.275" fill="#7F56D9" stroke="#7F56D9" stroke-width="0" rx="4"/>
+<text x="1499" y="271.725" class="tiny" text-anchor="middle" fill="#7F56D9" font-weight="700">12.797</text>
+<text x="1499" y="464" class="tiny" text-anchor="middle">frozen</text>
+<rect x="1585" y="315.2951612903226" width="52" height="119.7048387096774" fill="#12B76A" stroke="#12B76A" stroke-width="0" rx="4"/>
+<text x="1611" y="306.2951612903226" class="tiny" text-anchor="middle" fill="#12B76A" font-weight="700">11.498</text>
+<text x="1611" y="464" class="tiny" text-anchor="middle">random</text>
+<text x="980" y="440" class="axis" text-anchor="end">7</text>
+<text x="980" y="275" class="axis" text-anchor="end">13</text>
+<text x="887" y="512" class="axisStrong" text-anchor="start">MMLU answer-letter accuracy ↑</text>
+<line x1="1000" y1="680" x2="1695" y2="680" stroke="#98A2B3" stroke-width="1.5"/>
+<rect x="1025" y="540.7236842105264" width="52" height="139.27631578947367" fill="#344054" stroke="#344054" stroke-width="0" rx="4"/>
+<text x="1051" y="532.7236842105264" class="tiny" text-anchor="middle" fill="#344054" font-weight="700">0.605</text>
+<text x="1051" y="709" class="tiny" text-anchor="middle">base</text>
+<rect x="1137" y="547.2105263157895" width="52" height="132.78947368421052" fill="#667085" stroke="#667085" stroke-width="0" rx="4"/>
+<text x="1163" y="539.2105263157895" class="tiny" text-anchor="middle" fill="#667085" font-weight="700">0.588</text>
+<text x="1163" y="709" class="tiny" text-anchor="middle">full32</text>
+<rect x="1249" y="649.8552631578947" width="52" height="30.144736842105267" fill="#175CD3" stroke="#175CD3" stroke-width="0" rx="4"/>
+<text x="1275" y="641.8552631578947" class="tiny" text-anchor="middle" fill="#175CD3" font-weight="700">0.319</text>
+<text x="1275" y="709" class="tiny" text-anchor="middle">keep14</text>
+<rect x="1361" y="590.7105263157895" width="52" height="89.28947368421052" fill="#EAAA08" stroke="#EAAA08" stroke-width="0" rx="4"/>
+<text x="1387" y="582.7105263157895" class="tiny" text-anchor="middle" fill="#EAAA08" font-weight="700">0.474</text>
+<text x="1387" y="709" class="tiny" text-anchor="middle">ShortGPT</text>
+<rect x="1473" y="671.6052631578947" width="52" height="8.39473684210527" fill="#7F56D9" stroke="#7F56D9" stroke-width="0" rx="4"/>
+<text x="1499" y="663.6052631578947" class="tiny" text-anchor="middle" fill="#7F56D9" font-weight="700">0.262</text>
+<text x="1499" y="709" class="tiny" text-anchor="middle">frozen</text>
+<rect x="1585" y="677.328947368421" width="52" height="2.6710526315789496" fill="#12B76A" stroke="#12B76A" stroke-width="0" rx="4"/>
+<text x="1611" y="655.328947368421" class="tiny" text-anchor="middle" fill="#12B76A" font-weight="700">0.247</text>
+<text x="1611" y="709" class="tiny" text-anchor="middle">random</text>
+<line x1="1000" y1="676.1842105263158" x2="1695" y2="676.1842105263158" stroke="#98A2B3" stroke-width="1.3" stroke-dasharray="5 5"/>
+<text x="992" y="669.1842105263158" class="tiny" text-anchor="end">chance .250</text>
+<rect x="875" y="735" width="285" height="70" fill="#FEF3F2" stroke="#FDA29B" stroke-width="1.5" rx="9"/>
+<text x="1017" y="763" class="small" text-anchor="middle" fill="#B42318" font-weight="700"><tspan x="1017" dy="0">Random: letter .247</tspan><tspan x="1017" dy="29">content .360</tspan></text>
+<rect x="1175" y="735" width="285" height="70" fill="#FFFAEB" stroke="#FEC84B" stroke-width="1.5" rx="9"/>
+<text x="1317" y="763" class="small" text-anchor="middle" fill="#B54708" font-weight="700"><tspan x="1317" dy="0">ShortGPT: stronger</tspan><tspan x="1317" dy="29">coupled construction</tspan></text>
+<rect x="1475" y="735" width="250" height="70" fill="#F2F4F7" stroke="#D0D5DD" stroke-width="1.5" rx="9"/>
+<text x="1600" y="763" class="small" text-anchor="middle" fill="#475467" font-weight="700"><tspan x="1600" dy="0">full32: intact 200k</tspan><tspan x="1600" dy="29">same reported step budget</tspan></text>
+<rect x="45" y="840" width="1710" height="52" fill="#F8FAFC" stroke="#D0D5DD" stroke-width="1.5" rx="9"/>
+<text x="70" y="875" class="body" text-anchor="start" fill="#344054" font-weight="700">Supported: PPL improvement alone does not imply target recovery on these observed paths.</text>
+</svg>

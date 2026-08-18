@@ -179,5 +179,230 @@
     "recommended_fix": "Resolve NOVELTY_VERDICT_KEYS and NEXT_GATE_COST_KEYS by dated PATTERN, newest first, undated last -- i.e. the same treatment _DATED_LIFECYCLE and _DATED_LIFECYCLE_WHY already received on 2026-08-17. Per the file's own reasoning this is safe for GATES and COSTS (a newer gate still has to pass _is_unspec; a newer cost still has to state what the NEXT step costs) and unsafe only for BLOCKERS, which is why blockers use discharge pointers instead.",
     "NOT_DONE_and_why": "I did NOT edit ready_queue.py. It re-scores all 15 proposals and must not land as a side effect of a B06/B09 novelty task. This is a 0-GPU follow-up for someone with an adversarial pass on the whole queue. Until then, ANY agent appending a dated key to ANY STATUS.json must also append the undated sibling the reader can actually see, and must VERIFY with python3 proposal/ready_queue.py rather than assuming the append landed.",
     "gpu_used": "none"
+  },
+  "gate_minus1_prereg_20260817": {
+    "_what": "GATE -1 next_action item 5 (the section 4.3 / H3 re-scope from benchmark-holdout to repo-family holdout) is DONE and is on disk.",
+    "path": "proposal/backlog/B09-trajectory-aware-sft-data-selection/B09_GATE_MINUS1_PREREG.md",
+    "_why_this_key_exists": "next_action item 5 named no path, and repo convention (B07_SERVING_GATE_PREREG.md, B08_LEG1_GATE_PREREG.md, A04_*_PREREG.md) is the only thing that fixed the filename. No tool reads a PREREG automatically, so without this pointer the artifact is invisible to the next agent.",
+    "written_at": "2026-08-17T12:51:55+0800",
+    "_ordering_evidence": "Written BEFORE any parquet existed. Measured immediately before writing: `ls -la data/agent_traj` -> 'No such file or directory' (rc=2); `ls B09dir | grep -i prereg` -> rc=1 no match. Item 5 is 5th of 6 in the reading order, so the natural execution order would have made it retrospective; it was deliberately done first. Falsifier stated in the file itself: if any data/agent_traj/*.parquet has an mtime EARLIER than the PREREG's, the pre-registration is void.",
+    "registered_decisions": [
+      "section 4.3 setting 2 'Strict benchmark-OOD' -> 'Strict repo-family-OOD' for all B09 work on this corpus, because the only 4/4-field licenced corpus is single-benchmark (B=1) so benchmark holdout is undefined.",
+      "repo_family(instance_id) := instance_id.split('.',1)[0], with four blind contingency rules for no-dot / case-and-dash variants / bare-integer / small families.",
+      "K=5 folds over repo_family (the number section 4.3 itself names), families assigned greedily by descending trajectory count, seed 0. Fallback: if distinct families < 5, K=that number and report the weakening; if < 3, H3 is UNTESTABLE on this corpus and must be reported so rather than moved to a third substitute axis.",
+      "task_strategy holdout (pr_ / lm_rewrite / func_pm / numeric) is registered as SECONDARY and EXPLORATORY and may NOT be substituted for the primary repo-family result if that result is unfavourable.",
+      "GROUP g(i)=traj_id (one rollout); ROW = a decision TURN extracted from the messages JSON; PARENT TASK = instance_id; HOLDOUT UNIT = repo_family. See group_variable_correction_20260817.",
+      "The structured/bare exclusion rate must be reported as a first-class number wherever pool size is reported, and crosstabbed against `model` and `resolved` before it is called benign."
+    ],
+    "_the_weaker_claim_this_licenses": "A positive result under repo-family holdout does NOT license 'generalises out of distribution'. It licenses 'generalises to unseen repositories within SWE-style Python repair'. Repo-family holdout varies the codebase, idioms, test harness and dependency surface but holds constant the benchmark, task format, agent scaffold, observation format and the 3-verb tool vocabulary.",
+    "gpu_used": "none"
+  },
+  "gate_minus1_download_and_assertions_20260817": {
+    "_what": "GATE -1 next_action items 1 AND the download are DONE. The tool split is on disk on wzc1 and all five provenance assertions PASS on the parquet.",
+    "_supersedes": "The clause 'that download HAS NOT BEEN RUN: the candidate pool is still absent from both physical disks' in lifecycle_why_20260817, and PROPOSAL.md line 168's 'Candidate U | 100K candidate pool | visible'. Both were TRUE when written (verified: data/agent_traj did not exist at 2026-08-17T04:51Z, rc=2). The raw corpus now exists; the DERIVED pool is a separate key.",
+    "landed_at": "data/agent_traj/ on wzc1 (/apdcephfs_wzc1/share_304376610/pighzliu_code/Mixture-of-Memory/data/agent_traj/)",
+    "shards": "tool-0000{0..7}-of-00008.parquet, 8 files, du -sb == 1077271863 B == the /tree sum exactly. All 8 have PAR1 at both head and tail.",
+    "sha256": {
+      "tool-00000-of-00008.parquet": "ac76e9efe75978f83d4daec98a55604587dd58b0f1509364893b8778cbf5b487",
+      "tool-00001-of-00008.parquet": "2d3a4fcdb89bf4ec4485a1abc41d92645a446d115705cbe882dd5fe148afec3a",
+      "tool-00002-of-00008.parquet": "13a95587cfc2fac8e2d6130b25167c02362add1cf969888574328a49dc8ad319",
+      "tool-00003-of-00008.parquet": "677831f640fb14e5b7bc02fd2aa729c05cd2068750777eaf877084de03157594",
+      "tool-00004-of-00008.parquet": "e41ffbd3f9d1571917ac5b9f4d0108ded4799d9776f597a054203467135a5715",
+      "tool-00005-of-00008.parquet": "487a3a6bc8d00c4d2e6ace23da10a82c03349ada8b0f6758d5abf8c7f7fa61d4",
+      "tool-00006-of-00008.parquet": "c20d2fc45e67af5d5c6d4c91ca7dfeac69cbaf40442bc2bfe7bac528a99e4b59",
+      "tool-00007-of-00008.parquet": "29b684a990ec25345e9c7ade1b8287a6e41fa7fbabd4734f45420ed29280c868"
+    },
+    "provenance_at_download": "repo sha 08e109b4a59eaeebf80e4675cd125d42e7ac99a4, cardData.license=mit, gated=False (re-fetched live, http=200). /splits == [tool, xml, ticks] -- 'train' is NOT a declared split, confirming download_trap; train-* is 1052703887 B of unreachable dead weight and was NOT downloaded.",
+    "download_cost": "8 shards in 55.7 s wall through hy-proxy.woa.com:3128 (~19 MB/s), not the ~5 min the feasibility estimate projected from 8 MiB range-GET trials. 0 GPU.",
+    "ASSERTIONS_ALL_PASS": true,
+    "assertions": {
+      "n_rows": "24100 == 24100 PASS",
+      "resolved_true": "9427 == 9427 PASS",
+      "resolved_false": "14673 == 14673 PASS",
+      "both_message_type_and_tool_calls, substring method": "9116 == 9116 PASS",
+      "both_message_type_and_tool_calls, PARSED method": "9116 == 9116 PASS"
+    },
+    "_both_methods_computed_deliberately": "next_action item 1 says 'recompute rows with both message_type and tool_calls == 9116. If any differs, STOP' but does NOT say which method is canonical -- and it cannot be a column projection, because /info features are exactly 6 (messages, instance_id, resolved, model, traj_id, patch) and `messages` is dtype string. Confirmed against the LOCAL parquet schema: messages:string. So both were computed: substring-on-raw-string (HF LIKE semantics) and json.loads-then-key-test. Both give 9116. parse_failures == 0 over all 24100 rows.",
+    "evidence_json": "proposal/backlog/B09-trajectory-aware-sft-data-selection/gate_minus1_assertions_20260817.json",
+    "evidence_script": "proposal/backlog/B09-trajectory-aware-sft-data-selection/gate_minus1_assert.py",
+    "gpu_used": "none"
+  },
+  "sql_like_underscore_wildcard_20260817": {
+    "_what": "A number in GATE_MINUS1_FEASIBILITY_20260816.md sec 3.1 is an ARTEFACT of SQL LIKE semantics, and I can now say exactly which and why. This does NOT change the verdict; it changes one row of the table and its interpretation.",
+    "the_discrepancy": "sec 3.1 reports 'rows containing message_type == 9285 (38.53%)' from /filter \"messages\" LIKE '%message_type%'. Recomputed on the parquet: a LITERAL substring 'message_type' occurs in only 9176 rows, and the PARSED key message_type in only 9116.",
+    "root_cause": "In SQL LIKE, `_` is a SINGLE-CHARACTER WILDCARD. So '%message_type%' matches 'message type', 'message.type', 'message(type' etc. Reproduced EXACTLY by treating the pattern as the regex `message.type`: 9285 locally == 9285 on HF. The extra matches are prose in observation `content` fields: 'message type' x102, 'message(type' x6, 'message.type' x5.",
+    "the_four_HF_numbers_reproduced_locally": {
+      "LIKE '%message_type%' (regex message.type)": "9285 local == 9285 HF",
+      "LIKE '%\"message_type\"%' (regex \"message.type\")": "9116 local == 9116 HF",
+      "LIKE '%tool_calls%' (regex tool.calls)": "9116 local == 9116 HF",
+      "LIKE mt AND NOT LIKE tc": "169 local == 169 HF"
+    },
+    "_so_the_169_is_also_an_artefact": "sec 3.1 says 'The 9285 vs 9116 gap (169 rows) is real, not rounding: 169 rows carry message_type but no tool_calls -- plausibly trajectories that emitted no tool call.' That interpretation is WRONG. Measured: the number of rows with the PARSED key message_type but not tool_calls is ZERO -- parsed message_type == parsed tool_calls == parsed 'thought' == 9116, exactly the same row set. The 169 rows are rows whose observation text happens to contain 'message type' as English prose. There is no subpopulation of 'trajectories that emitted no tool call'.",
+    "_why_this_matters_and_why_it_does_not": "It does not weaken the GATE -1 verdict: the operative subset was always the 9116, and 9116 is confirmed three independent ways. It DOES mean any future check must use the quoted form or parse. It also means the corpus is CLEANER than reported: the structured/bare split is exactly binary at 9116/14984, with no 169-row grey zone.",
+    "_i_disagree_with_the_scout_here": "The dispatching scout reported '0/48 disagreement between substring and parsed for both markers' from a 48-row sample and concluded 'the substring shortcut is safe'. At FULL SPLIT the unquoted substring disagrees with parsed on 60 rows (all 60 are the marker appearing inside an observation `content` value, e.g. 'OBSERVATION: ... cat -n /testbed/mido/midifiles/midifiles.py ... def read_message'). A 48-row sample had ~0.25% expected hits, so seeing 0 was likely and proves nothing. For tool_calls the substring IS safe (0 disagreements over 24100).",
+    "gpu_used": "none"
+  },
+  "gate_minus1_pool_emitted_20260817": {
+    "_what": "GATE -1 next_action item 2 is DONE. The FLAT CANDIDATE POOL exists on disk with all of PROPOSAL section 1's required columns.",
+    "pool_path": "data/agent_traj/derived/B09_candidate_pool_tool_structured_20260817.parquet",
+    "_the_path_matters": "The gate specified no filename for the derived pool. This key IS the record of where it is; without it the next agent cannot find it. 1571509 B, zstd parquet, 278358 rows x 19 columns.",
+    "builder": "proposal/backlog/B09-trajectory-aware-sft-data-selection/gate_minus1_build_pool.py",
+    "summary_json": "proposal/backlog/B09-trajectory-aware-sft-data-selection/gate_minus1_pool_summary_20260817.json",
+    "scale": {
+      "U_rows_decision_turns": 278358,
+      "G_groups_traj_id": 9116,
+      "parent_tasks_instance_id": 5215,
+      "repo_families": 128,
+      "_vs_PROPOSAL_targets": "PROPOSAL section 1 wants |G| ~= 10000 and |U| ~= 100000. Measured |G|=9116 (8.8% under) and |U|=278358 (2.78x over). So the pool is LARGER than the proposal assumed on the row axis, and the |S|=5000 budget is 1.80% of U rather than 5%."
+    },
+    "columns": [
+      "traj_id (g(i))",
+      "instance_id",
+      "repo_family",
+      "task_strategy",
+      "model",
+      "resolved",
+      "step_index",
+      "action_ordinal",
+      "message_type (t(i))",
+      "tool_name",
+      "n_tool_calls",
+      "c_i_chars",
+      "c_i_tokest",
+      "has_thought",
+      "n_turns_in_traj",
+      "n_actions_in_traj",
+      "position_frac",
+      "is_final_action",
+      "prereg_fold"
+    ],
+    "_group_structure_is_NOT_degenerate": "This was risk #1 and it is now settled by measurement. rows_per_group: min 3, max 151, mean 30.54, Gini 0.3329. Had the row been the parquet row, every group would have size 1 and kill_criteria #1 would fire structurally. traj_id is unique in ALL 24100 parquet rows (0 duplicates, full split) -- so the PREREG's decomposition (row = decision TURN) is not a preference, it is forced.",
+    "sibling_structure": {
+      "instances_with_more_than_1_rollout": 1764,
+      "max_rollouts_in_structured_subset": 13,
+      "instances_with_MIXED_resolved_outcome": 474,
+      "_why_474_matters": "PROPOSAL section 5's branch-verified decision credit needs sibling rollouts of ONE instance with DIFFERING resolved outcomes. 474 such instances exist in the structured subset. That is the substrate the 2026-08-10 verdict said Tulu-3 could not provide, and it is now counted, not assumed."
+    },
+    "holdout_materialised": {
+      "prereg_fold": "K=5, assigned by the PREREG sec 2.2 rule (greedy on descending trajectory count, seed 0), written as a COLUMN so no consumer can silently re-derive a different partition.",
+      "groups_per_fold": "1823/1823/1823/1823/1824",
+      "rows_per_fold": "60236/52320/52919/53105/59778",
+      "VERIFIED": "0 traj_id and 0 instance_id straddle a fold boundary -- section 4.1's requirement that all rows of a trajectory AND all rollouts of an instance stay in one partition holds by construction, because repo_family coarsens instance_id.",
+      "K5_precondition": "128 distinct repo_family values >= 5, so the PREREG's K=5 stands and neither the K<5 nor the H3-UNTESTABLE fallback is triggered."
+    },
+    "tool_family_distribution": {
+      "str_replace_editor": 156137,
+      "bash": 107050,
+      "submit": 14333,
+      "_note": "3 verbs only, as the feasibility audit predicted. Section 5 Stage 5's tool-coverage term is near-degenerate on this corpus; that is a real limitation, recorded in the PREREG."
+    },
+    "c_i_caveat": "c_i_chars is an EXACT character count of the assistant turn's loss-bearing text (thought + content + action + tool-call arguments): min 8, max 129923, mean 1378.75, total 383785824. c_i_tokest = c_i_chars/3.6 is a DECLARED HEURISTIC, not a tokenizer count. Any fixed-target-token budget (section 9 H2, section 10) MUST re-derive c_i with the student model's own tokenizer. Do not cite c_i_tokest as a token count.",
+    "gpu_used": "none"
+  },
+  "prereg_rule_correction_20260817": {
+    "_what": "One of the two axis rules I PRE-REGISTERED blind was WRONG, in the direction the PREREG anticipated. Reporting it because the PREREG (sec 6.2) says such a rule 'may be revised ONLY by a dated superseding record that states what was seen and why the blind rule failed'. This is that record.",
+    "_supersedes": "B09_GATE_MINUS1_PREREG.md sec 2.3's task_strategy definition ONLY. Sections 2.1 (repo_family), 2.2 (K=5), 2.4 (what holdout binds) and 3 (the group decomposition) are all UNCHANGED and were confirmed by measurement.",
+    "what_the_prereg_guessed": "instance_id = '<repo>.<strategy-suffix>', so task_strategy reads the segment after the FIRST dot. It was registered on 10 instance_id strings quoted in GATE_MINUS1_FEASIBILITY_20260816.md sec 3.1, e.g. 'MONAI.pr_7187', 'schedule.6', 'starlette.lm_rewrite__wq8ip1tf'.",
+    "what_is_actually_on_disk": "instance_id = '<owner>__<repo>.<commit8>.<strategy>' -- 5177/5215 have exactly 2 dots, 38 have 3. e.g. 'Project-MONAI__MONAI.a09c1f08.pr_7187', 'Cog-Creators__Red-DiscordBot.33e0eac7.combine_file__1tzqbvbn', 'lincolnloop__python-qrcode.456b01d4.182'.",
+    "the_failure_and_its_size": "The blind rule read segment [1] = the COMMIT HASH, so it returned 'other' for 9116/9116 trajectories. The secondary axis was a CONSTANT -- a silently degenerate variable, not a wrong-but-usable one. Corrected to segment [2], the axis has 8 levels: pr 4311, lm_rewrite 1718, func_pm 1284, combine_module 827, combine_file 698, numeric 197, other:1a8bd2f7 54, func_basic 27 (trajectory counts). Note combine_file/combine_module/func_basic were NOT in the PREREG's enumeration at all.",
+    "_why_the_ten_reference_strings_were_misleading": "None of the 10 exists VERBATIM in the corpus (checked all 10 against the 10637 distinct instance_id of the full split: 0 exact matches). They are ABBREVIATIONS -- owner prefix dropped and commit hash removed. 9 of 10 resolve uniquely by suffix (e.g. '...pr_7187' -> 'Project-MONAI__MONAI.a09c1f08.pr_7187'); 'func_pm_ctrl_shuffle' has 0 matches even by suffix. So the feasibility audit's rollout-count table is about REAL instances but its id strings are not copy-pasteable, and a rule inferred from their shape was bound to be wrong.",
+    "_repo_family_survived_by_luck_not_by_design": "split-on-FIRST-dot happens to yield exactly 'owner__repo' (128 families, e.g. getmoto__moto 25558 rows, pandas-dev__pandas 15336), which IS the intended primary unit. The same rule that broke the secondary axis produced the right answer for the primary one. I am flagging that because it means the PRIMARY axis was not validated by my having reasoned correctly.",
+    "_direction_of_the_correction": "This correction makes B09's position BETTER (a degenerate secondary axis becomes an 8-level one), which is exactly the direction that deserves extra scrutiny. It does not touch the primary H3 result, which is not yet computed.",
+    "gpu_used": "none"
+  },
+  "structure_exclusion_crosstab_20260817": {
+    "_what": "The PREREG sec 4 requires the structured/bare exclusion be reported as a first-class number AND crosstabbed against `model` and `resolved` BEFORE being called benign. Done. It is NOT benign on the model axis.",
+    "exclusion_rate": "14984/24100 = 62.174% of the tool split is EXCLUDED (plain-chat rows with no message_type and no tool_calls). 9116/24100 = 37.826% retained.",
+    "by_model_structure_rate": {
+      "gpt-4o-2024-08-06": "528/634 = 83.28% structured",
+      "claude-3-5-sonnet-20241022": "2714/5751 = 47.19% structured",
+      "claude-3-7-sonnet-20250219": "5874/17715 = 33.16% structured",
+      "_VERDICT": "NOT BENIGN. A 2.51x spread in structure rate across generator models means the structured subset is a MODEL-REWEIGHTED sample: gpt-4o is 2.63% of the split but 5.79% of the pool, and claude-3-7-sonnet is 73.51% of the split but 64.44% of the pool. Any claim about 'the SWE-smith tool split' computed on this pool is really about a scaffold-and-model-reweighted subset, and B09 must say so in the write-up. This is a hidden confound for every downstream selector comparison and it is exactly what the PREREG demanded be checked before the exclusion was waved through."
+    },
+    "by_resolved": {
+      "structured subset": "3452/9116 = 37.87% resolved",
+      "bare subset": "5975/14984 = 39.88% resolved",
+      "whole split": "9427/24100 = 39.12% resolved",
+      "_VERDICT": "BENIGN on this axis -- a 2.01pp difference. The exclusion is not outcome-selective, so success/failure balance is preserved. Both classes remain well populated (3452 resolved / 5664 unresolved)."
+    },
+    "_the_honest_framing": "Two axes checked; one clean, one not. The corpus is usable, but it must be described as 'the SWE-agent-formatted 37.8% of the SWE-smith tool split, whose model mix differs from the parent split' and not as 'the SWE-smith tool split'.",
+    "gpu_used": "none"
+  },
+  "gate_minus1_result_20260817": {
+    "_what": "GATE -1 VERDICT: DISCHARGED. 5 of the 6 next_action items are done; item 3 is the next step and is also 0 GPU.",
+    "items_done": {
+      "download to data/agent_traj/ on wzc1": "DONE -- 8 shards, 1077271863 B, sha256 recorded in gate_minus1_download_and_assertions_20260817",
+      "item 1 ASSERT n_rows / resolved / 9116": "DONE -- 5/5 assertions PASS, by BOTH substring and parsed methods",
+      "item 2 emit flat pool with PROPOSAL sec 1 columns": "DONE -- 278358 rows x 19 cols, path in gate_minus1_pool_emitted_20260817",
+      "item 4/5 PRE-REGISTER the sec 4.3 / H3 re-scope": "DONE and done FIRST, before the parquet was parsed -- B09_GATE_MINUS1_PREREG.md, pointer in gate_minus1_prereg_20260817",
+      "do NOT download data/train-*": "OBSERVED -- /splits confirms train is undeclared; not downloaded",
+      "do NOT substitute tulu3_general_*": "OBSERVED -- untouched"
+    },
+    "item_remaining": "item 3 = next_gate[1], the verbatim-kept Phase-0 audit, which the feasibility doc explicitly ordered AFTER items 1-2. It is 0 GPU. See next_gate_executable_20260817.",
+    "_what_this_does_NOT_establish": [
+      "It does NOT make B09 promotable and does NOT change lifecycle to ready_gpu. Only MAIN with the user promotes.",
+      "It does NOT run next_gate[1]. Gini over rows-per-group (0.3329) fell out for free, but near-duplicate rate, the within-fold distribution audit and the cap=1/2/inf availability analysis are NOT done.",
+      "It does NOT validate c_i as a token count -- c_i_tokest is a declared chars/3.6 heuristic and no tokenizer was loaded.",
+      "It does NOT test H3 or any hypothesis. It built the substrate one could test them on.",
+      "It does NOT resolve the single-benchmark limitation (B=1). The PREREG concedes that in advance rather than fixing it; no corpus in the audited set fixes it."
+    ],
+    "gpu_used": "none -- network + CPU only. No node was touched, no nvidia-smi run, no ssh."
+  },
+  "next_gate_executable_20260817": {
+    "_why_this_key_exists": "B09 had NO dated-executable slot at all: measured dated_executable_keys(doc,'next_gate') == [] and dated_executable_keys(doc,'kill_gate') == [], so ready_queue.py fell back to the raw next_gate LIST whose element [0] is the GATE -1 prose -- a gate that is now discharged. This key is the operationalised replacement and, per _DATED_EXECUTABLE_RE, wins over that list.",
+    "_supersedes": "next_gate[0] (the GATE -1 blocking prose). GATE -1 is DISCHARGED as of 2026-08-17; see gate_minus1_result_20260817. next_gate[1..7] are unchanged and still correct.",
+    "gate": "next_gate[1] VERBATIM: 'audit trajectory expansion, sibling redundancy, token distribution, and benchmark imbalance'. Now executable because the pool exists.",
+    "inputs_on_disk": {
+      "pool": "data/agent_traj/derived/B09_candidate_pool_tool_structured_20260817.parquet (278358 x 19)",
+      "raw": "data/agent_traj/tool-0000{0..7}-of-00008.parquet (8 shards, 1077271863 B)",
+      "prereg": "proposal/backlog/B09-trajectory-aware-sft-data-selection/B09_GATE_MINUS1_PREREG.md"
+    },
+    "executable_readout": [
+      "(a) trajectory expansion: rows-per-group Gini ALREADY computed = 0.3329 (min 3 / max 151 / mean 30.54). PASS/FAIL threshold is NOT pre-registered -- register one before interpreting it.",
+      "(b) sibling redundancy: near-duplicate rate over the 278358 assistant turns (MinHash or exact-hash on c_i text), reported WITHIN repo_family so cross-family dedup does not mask within-instance duplication. 1764 instances have >1 rollout; 474 have mixed resolved outcomes.",
+      "(c) token distribution: recompute c_i with a REAL tokenizer and report the c_i distribution per decision type and per tool_name. c_i_tokest (chars/3.6) is a placeholder and must not be reported as tokens.",
+      "(d) benchmark imbalance: with B=1 this is repo_family imbalance. Measured already: 128 families, top family getmoto__moto = 25558/278358 rows = 9.18%, smallest families have 1 trajectory. Report the Lorenz curve and state whether the prereg K=5 folds are balanced enough to support paired comparison.",
+      "(e) cap availability: for cap in {1,2,inf} report how many rows survive a per-traj_id cap of min(3, ceil(0.3T)) and whether |S|=5000 is still reachable within each fold."
+    ],
+    "decidable": true,
+    "_decidable_means": "The inputs are on disk and every quantity above is computable with pyarrow alone. It does NOT mean a pass/fail threshold exists -- (a) and (d) currently have NO pre-registered threshold, and inventing one after seeing 0.3329 would be exactly the post-hoc move the PREREG exists to stop. Registering thresholds is itself a 0-GPU prerequisite.",
+    "cost": "0 GPU, CPU only.",
+    "interpreter_note": "Requires pyarrow. It was NOT installed on any of the five interpreters; `pip install pyarrow` (needs http_proxy=hy-proxy.woa.com:3128) put pyarrow 25.0.1 into /opt/conda/envs/torch-base/bin/python on LOCAL only. Any other node needs the same install first.",
+    "gpu_used": "none"
+  },
+  "next_gate_gpu_20260817_b": {
+    "_supersedes": "next_gate_gpu_20260817 and the undated next_gate_gpu, both of which say the next gate is the GATE -1 download. That download is DONE (2026-08-17), so those values now describe a discharged gate. This key states what the NEXT step costs.",
+    "_deliberately_states_only_the_next_step": "ready_queue.py:_next_gate_is_free scans this value for _FREE_MARKERS. A value that narrated the history of the just-discharged free gate would re-pin the proposal it was meant to release (the measured B12 failure mode). So there is no sentence here about what GATE -1 cost.",
+    "cost": "0 GPU. The next step is next_gate[1], the verbatim-kept Phase-0 audit, run over data/agent_traj/derived/B09_candidate_pool_tool_structured_20260817.parquet: near-duplicate / MinHash rate, decision-type and tool distribution within repo_family x prereg_fold, cap=1/2/inf availability under the parent cap, and a real-tokenizer recompute of c_i. All of it is CPU over a 1.5 MB parquet plus a tokenizer load. Every gate AFTER that one (selector implementation, the fixed-target-token three-seed SFT pilot) DOES need cards, and B09 must not take a card until next_gate[1] has run and its verdict is on disk.",
+    "gpu_used": "none"
+  },
+  "lifecycle_20260817_b": "ready_cpu",
+  "lifecycle_why_20260817_b": "STILL ready_cpu, but for a DIFFERENT and later reason than lifecycle_why_20260817, which this supersedes. That key said the actionable work was the 6-item GATE -1 download+derive list and that 'the candidate pool is still absent from both physical disks'. That was true when written (measured 2026-08-17T04:51Z: ls data/agent_traj -> No such file or directory). It is no longer true. GATE -1 is DISCHARGED: the tool split is on wzc1 (8 shards, 1077271863 B, sha256 recorded), all 5 provenance assertions PASS, the flat candidate pool is emitted at data/agent_traj/derived/B09_candidate_pool_tool_structured_20260817.parquet (278358 decision turns over 9116 trajectories, all PROPOSAL sec 1 columns), and the sec 4.3 / H3 re-scope was PRE-registered BEFORE the parquet was parsed (mtime 12:53:29 vs first shard 12:55). The remaining work is next_gate[1], the verbatim-kept Phase-0 audit, which is CPU only -- see next_gate_executable_20260817 for its five executable read-outs and next_gate_gpu_20260817_b for its cost. DO NOT promote to ready_gpu on the strength of this: two read-outs of next_gate[1] have NO pre-registered pass/fail threshold yet, and a threshold chosen after seeing Gini=0.3329 would be post-hoc. Also note two things that would otherwise be discovered late: the corpus is single-benchmark (B=1, so H3 is scoped to repo-family holdout and the claim is weaker than PROPOSAL.md wrote), and the usable subset is a model-reweighted 37.8% of the split (structure rate 83.28% gpt-4o vs 33.16% claude-3-7-sonnet, a 2.51x spread) -- see structure_exclusion_crosstab_20260817.",
+  "next_gate_gpu_20260817_c": "0 GPU, CPU only. The next step is next_gate[1], the verbatim-kept Phase-0 audit, run over data/agent_traj/derived/B09_candidate_pool_tool_structured_20260817.parquet (278358 rows): near-duplicate rate within repo_family, decision-type and tool distribution per repo_family x prereg_fold, repo_family imbalance, cap=1/2/inf availability under the per-trajectory cap, and a real-tokenizer recompute of c_i. It needs pyarrow plus a tokenizer, no card. Gates AFTER it (selector implementation, the fixed-target-token three-seed SFT pilot) DO need GPU; B09 must not take a card until next_gate[1]'s verdict is on disk AND the two currently-unregistered pass/fail thresholds are pre-registered. Full rationale in next_gate_gpu_20260817_b.",
+  "reader_cost_key_type_defect_20260817": {
+    "_what": "I made a reader-visibility mistake and am recording it rather than quietly fixing it, because the same mistake is cheap to repeat.",
+    "the_mistake": "I wrote next_gate_gpu_20260817_b as a JSON OBJECT (so it could carry _supersedes and a rationale field). Its key matches _DATED_COST_RE fine -- verified True -- but dated_cost_keys() additionally filters `isinstance(doc.get(k), str)`, so a dict-valued dated cost key is DROPPED. Measured immediately after appending: dated_cost_keys(doc) == ['next_gate_gpu_20260817'] and _next_gate_is_free(doc) still returned the STALE value describing the already-discharged 1.0 GiB download.",
+    "why_the_filter_exists": "ready_queue.py's own docstring says the non-empty-string filter is load-bearing because the caller takes only dated[0], so a blank dated key would SHADOW a good undated one. A dict is neither blank nor readable, so it shadows nothing but is itself unreadable.",
+    "the_fix_applied": "Appended next_gate_gpu_20260817_c as a plain STRING. Verified it sorts above next_gate_gpu_20260817 under reverse sort (the '_c' suffix wins), so dated_cost_keys()[0] now resolves to it.",
+    "_i_did_NOT_edit_ready_queue.py": "Deliberately. It was already fixed at commit 408a418 (2026-08-17 06:30:40) to resolve dated key families by pattern, and STATUS.json's own reader_dated_slot_defect_20260817 -- which says the fix is 'NOT_DONE' -- is STALE: measured on the file on disk, dated_cost_keys and novelty_verdict_keys both resolve their 08-17 keys. Editing that file would re-score all 15 proposals as a side effect of a B09 task.",
+    "_generalisation": "A dated key is only visible if BOTH its name matches the regex AND its value has the type the reader's filter demands. Checking the regex alone is not checking visibility. The right test is to call the reader function, which is what caught this.",
+    "gpu_used": "none"
+  },
+  "queue_readback_20260817": {
+    "_what": "How proposal/ready_queue.py actually reads this change, measured after the append (rule: a declared key that the reader cannot see is not a deliverable).",
+    "verified_reader_resolution": {
+      "dated_executable_keys(doc,'next_gate')": "['next_gate_executable_20260817'] -- was [] before, so the reader no longer falls back to next_gate[0], the discharged GATE -1 prose.",
+      "dated_cost_keys(doc)": "['next_gate_gpu_20260817_c', 'next_gate_gpu_20260817'] -- [0] is the new one.",
+      "_next_gate_is_free(doc)": "returns \"next_gate_gpu_20260817_c: 0 GPU, CPU only. The next step is next_gate[1]...\" -- i.e. the CURRENT step's cost, not the discharged download's.",
+      "lifecycle resolution": "lifecycle_20260817_b wins by reverse date-sort over lifecycle_20260817; both remain on disk.",
+      "queue line": "B09 prints under ready_cpu with why = the new lifecycle_why_20260817_b and gate[next_gate_executable_20260817]."
+    },
+    "lifecycle_unchanged_on_purpose": "ready_cpu -> ready_cpu. B09 was NOT moved to ready_gpu; promotion is MAIN's and the user's call.",
+    "_summary_line_moved_but_NOT_because_of_B09": "The queue SUMMARY went from '0 ready_gpu, 8 ready_cpu, 3 needs_prior_gate' to '1 ready_gpu, 8 ready_cpu, 2 needs_prior_gate' during this run. The proposal that moved is B01-semantic-bottleneck-memory-ready-models, NOT B09. Cause: a CONCURRENT agent advanced HEAD by three commits while I worked (4e96d42 -> 58ff2d2 -> 6260eab -> 2320a9b 'experiment(B01): discharge the d_bottle persist blocker'), which discharged B01's blocking_dependency. Verified I am not the cause: git status shows B01's directory clean and identical to HEAD (git diff --stat empty, no untracked files), and the only proposal file I wrote is B09's STATUS.json. Recording this because 'the queue changed after my edit' would otherwise read as my doing.",
+    "residual_queue_warnings_on_B09": {
+      "'! no gpu_cost_estimate'": "TRUE and NOT fixed by me. B09 has no gpu_cost_estimate dict. I deliberately did not invent one: the downstream SFT pilot's GPU-h is unknown until next_gate[1] fixes |S|, the cap and the real token budget, and a fabricated estimate is worse than a visible gap.",
+      "'1 STALE ABSENCE ASSERTION' (B09/RELATED_WORK.md)": "PRE-EXISTING and a GUARD FALSE POSITIVE. Verified: the flagged text is at byte ~16864 inside novelty_verdict_20260817._the_premise_of_the_task_that_produced_this_was_false, whose sentence is 'The dispatch said RELATED_WORK.md does not exist here and asked for it to be written. It has existed since 2026-08-15 (33942 B)' -- the record is REFUTING the stale claim. The guard's REFUTED_NEARBY alternation does not contain 'has existed since'. Confirmed pre-existing by extracting HEAD's copy of STATUS.json: the sentence is present there, and my 13 added keys are additive (0 removed, 0 modified) and none mentions RELATED_WORK.md. RELATED_WORK.md is on disk, 33942 B, 2026-08-15. I did NOT rewrite it and did NOT add a cosmetic key to silence the guard. Widening REFUTED_NEARBY / SUPERSEDING_KEY is a queue-wide change and is out of scope for B09."
+    },
+    "gpu_used": "none"
   }
 }

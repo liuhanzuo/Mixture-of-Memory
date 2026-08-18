@@ -1,0 +1,70 @@
+\section{Related Work}
+\label{sec:related}
+
+We do not propose a pruning criterion or claim recovery-path analysis itself as
+new. Our contribution is an OLMo prune--regrow case study with a particular
+combination of controls and evaluation interfaces. Table~\ref{tab:priorart}
+positions that combination against the nearest work.
+
+\input{sections/tab_priorart}
+
+\paragraph{Selecting and removing depth.}
+ShortGPT and SLEB rank and remove redundant blocks
+~\citep{men2024shortgpt,song2024sleb}; LaCo merges adjacent layers
+~\citep{yang2024laco}; BlockPruner searches at attention/MLP-block granularity
+~\citep{blockpruner}. Other studies show that preferred removals depend on task
+and calibration choices~\citep{siddiqui2024deeper,lu2024reassessing,
+calibration2026}. These works optimize \emph{which} structure to retain. We
+instead measure what different retained structures recover under CPT.
+
+\paragraph{Recovery paths and retraining controls.}
+\citet{gromov2024unreasonable} are the closest antecedent for post-healing
+loss--task dissociation after removing deeper layers. Shortened LLaMA reports
+CPT learning curves and compares CPT, LoRA, and pruned versus scratch
+initialization~\citep{shortenedllama}. Minitron likewise studies retraining
+trajectories, iterative pruning, task behavior, and initialization choices
+within a structured-pruning/distillation pipeline~\citep{minitron}.
+IteRABRe explicitly alternates block removal and recovery, plotting task-family
+trajectories and weak MMLU recovery~\citep{iterabre}. Thus neither trajectories
+nor ``beyond perplexity'' evaluation originate here.
+
+Our narrower increment is the joint diagnostic package in one OLMo
+prune--regrow setting: an available same-corpus intact branch, same-shape
+operating points, answer-letter versus complete-option MMLU, closed-book
+generation, and a coupled construction comparison. PASER is complementary: it
+selects post-training data to make pruned-model recovery more efficient rather
+than using recovery measurements primarily for diagnosis~\citep{paser}.
+Sheared LLaMA, compact-model distillation, and DRPruning integrate pruning with
+data allocation, distillation, or robust training~\citep{xia2024sheared,
+muralidharan2024compact,deng2025drpruning}. Our prefix-plus-fresh-tail recipe is
+not presented as competitive with these recovery algorithms.
+
+\paragraph{Repair and concurrent work.}
+LinearPatch and Prune\&Comp attribute part of layer-pruning damage to
+cross-layer interface or magnitude mismatch and repair it with lightweight
+transformations or compensation~\citep{linearpatch,prunecomp}. A decision-
+transition analysis studies where post-pruning performance collapse appears
+~\citep{decisioncollapse}. SlimQwen and ShortOPD appeared within three months of
+this manuscript version and are treated as concurrent work
+~\citep{slimqwen,shortopd}; they further cover matched-token initialization,
+progressive recovery, and recognition/generation behavior. These methods and
+analyses reinforce the limited novelty claim: the present paper contributes a
+measurement case study and control combination, not a new recovery mechanism.
+
+\paragraph{Evaluating compression beyond perplexity.}
+The Cost of Compression studies how pruning and quantization affect parametric
+knowledge~\citep{costcompression}. \citet{jaiswal2024truth} show that low
+perplexity can coexist with large deficits on knowledge-intensive compressed-LM
+benchmarks, and \citet{beyondperplexity} document divergent safety effects.
+These studies motivate multi-dimensional evaluation. Our additional focus is
+bookkeeping within one case study: within-arm checkpoints, an available intact
+same-corpus branch, same-shape operating points, scoring-interface comparison,
+closed-book generation, and an explicitly confounded construction comparison.
+Fragile Knowledge, Robust Instruction-Following reports selective capability
+effects under width pruning~\citep{fragileknowledge}; it is adjacent evidence
+that compression can preserve some interfaces while damaging others.
+Multiple-choice evaluations are themselves interface-sensitive: first-token
+letter probabilities can disagree with generated text, leaderboard rankings
+change with evaluation details, and MMLU varies under answer reordering
+~\citep{myanswerisc,benchmarktargets,answerorder}. Our content protocol is a
+diagnostic within this broader literature, not a clean isolation of knowledge.

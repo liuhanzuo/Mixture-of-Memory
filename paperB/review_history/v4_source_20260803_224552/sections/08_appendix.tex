@@ -1,0 +1,228 @@
+\section{Complete Results}
+\label{app:complete-results}
+
+The main paper emphasizes an observed-budget, single-run recovery gap. This
+appendix reports all consolidated checkpoints, including the qualitative 1B
+comparison, within-arm trajectories, and chance-adjusted summaries.
+
+\subsection{Held-out perplexity checkpoints}
+\label{app:ppl}
+\input{sections/app_tab_ppl}
+\input{sections/app_tab_shortgpt}
+
+Table~\ref{tab:app-ppl} distinguishes progressing checkpoints from true
+endpoints. The fully random-init arm is a random language model with the same
+$16$-layer architecture: its decoder blocks, embedding, final norm, and output
+head are initialized without OLMo-2 weights. It uses a different learning rate,
+so it is a budgeted operating point rather than an initialization-only ablation.
+Table~\ref{tab:app-shortgpt} reports both immediate damage and the healed
+non-contiguous endpoint. Its 16 retained layers are selected by cosine block
+influence on 128 Dolmino windows and include the original final layer.
+
+\subsection{Within-architecture training trajectories}
+\label{app:trajectories}
+\input{sections/app_tab_keep8}
+
+The complete 11-task keep8 trajectory in Table~\ref{tab:app-keep8} gives a
+within-arm view over available checkpoints. From 44k to 121k, most reported
+tasks improve, while aggregate MMLU changes from .2463 to .2535 and remains near
+chance. Because no common per-item 44k prediction set or replicated training run is
+available, we use this only as descriptive evidence against a uniform late gain
+over the observed interval, not against recovery after more training.
+
+\input{sections/app_tab_1b}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_1b_trajectory.pdf}
+\caption{\textbf{Qualitative OLMo-2-1B trajectory.} PPL and several ordinary
+tasks improve while MMLU stays near chance over the observed keep7 interval.}
+\label{fig:app-1b}
+\end{figure}
+
+The OLMo-2-0425-1B arm shows the same qualitative separation
+(Figure~\ref{fig:app-1b}; Tables~\ref{tab:app-1b-core}--\ref{tab:app-1b-know}):
+PPL falls $17.619\to15.628$ and HellaSwag/ARC-Easy/PIQA improve, while MMLU is
+$.2495/.2558/.2529/.2480$. Because this is one more-compressed arm from the same
+model family with a weaker base, we treat it as qualitative context, not an
+independent replication.
+
+\input{sections/app_tab_crossfamily}
+
+\subsection{Capability recovery and continued healing}
+\label{app:recovery}
+\input{sections/tab_downstream}
+\input{sections/app_tab_recovery}
+\input{sections/app_tab_mmlu}
+\input{sections/app_tab_postapex}
+\input{sections/app_tab_metric_sensitivity}
+\input{sections/app_tab_paired}
+\input{sections/app_tab_protocol_controls}
+
+Table~\ref{tab:app-recovery} exposes why a single average benchmark score would
+be misleading. Fully random initialization nearly matches inherited keep14 on
+ARC-Easy, PIQA, and BoolQ, but inherited initialization retains more signal on
+WinoGrande, MMLU, and several other downstream tasks. The late-healing
+comparison in Table~\ref{tab:app-postapex} shows no broad rollback through
+$200$k: from $153.5$k to $200$k, PPL improves by $0.132$ while MMLU gains only
+$0.67$ points and most other metrics move by less than one point.
+Table~\ref{tab:app-metric-sensitivity} additionally exposes raw and
+continuation-length-normalized scoring for BoolQ, CommonsenseQA, and SocialIQA,
+whose options have unequal lengths; the main tables consistently use raw
+accuracy for these tasks. Tables~\ref{tab:app-protocol-controls} and
+\ref{tab:app-closedbook} report the complete MMLU interface control and the
+zero-shot closed-book results used in the main analysis.
+Table~\ref{tab:app-paired} uses a common per-item MMLU rerun for the three
+same-shape 200k operating points. All pairwise intervals exclude zero, but these
+are evaluation-item intervals rather than training-seed uncertainty and the
+rerun aggregates differ slightly from separately reported headline cells.
+
+The confidence intervals in Table~\ref{tab:app-mmlu-ci} distinguish the
+available checkpoints conditionally: keep8 and fully random init include
+chance, while keep10, keep12, and keep14 are above it. These are not
+between-training-run intervals. The subject-group table below describes
+heterogeneity rather than testing domain-specific effects.
+
+\subsection{MMLU subject-group results}
+\label{app:mmlu-subjects}
+\input{sections/app_tab_mmlu_groups}
+
+Table~\ref{tab:app-mmlu-groups} quantifies the broad-domain pattern. The inherited keep14 model is strongest in
+social science and the heterogeneous ``Other'' group, whereas science, technology, engineering, and mathematics (STEM) and humanities
+remain closer to chance. Table~\ref{tab:app-mmlu-full}, placed at the
+end of the appendix as two side-by-side panels, reports every one of the 57
+subjects at the $153.5$k and final $200$k keep14 checkpoints.
+
+\section{Evaluation and Reproducibility Details}
+\label{app:repro}
+
+\subsection{Data, optimization, and architecture reconstruction}
+
+All training uses English-language OLMo-2/Dolmino artifacts. The OLMo-2
+checkpoint and Dolmino release are used under their published research licenses;
+the evaluation datasets retain their upstream terms and are not redistributed
+with our artifacts. Experiments ran on 8-GPU H20 or B200 nodes depending on the
+arm. The principal keep14 run used 200k optimizer steps; the full32 branch has
+an available 25k checkpoint, and shallower prefix arms use the literal latest
+retained checkpoints stated in the tables. These were not selected by a
+registered common stopping rule. Because exploratory
+and failed runs were not logged uniformly, we cannot provide an exact
+project-wide GPU-hour total. We therefore report per-run hardware and steps
+rather than an unreliable aggregate.
+
+Healing uses the DataComp for Language Models (DCLM) portion of
+\texttt{dolmino-mix-1124}, tokenized into $2048$-token windows with the OLMo-2
+tokenizer. The training array is disjoint from the fixed validation shard of
+$4096$ windows. All main arms use effective batch size $128$ and a cosine
+schedule after $150$ warmup steps. In the executed distributed runs, all
+parameters in inherited arms use peak/minimum learning rates
+$2\times10^{-5}/2\times10^{-6}$; the fully random-init arm uses
+$10^{-4}/10^{-5}$ for all parameters. We use AdamW with $\beta_1{=}0.9$,
+$\beta_2{=}0.95$, $\epsilon{=}10^{-8}$, weight decay $0.1$ on matrix parameters
+and zero on vectors, and global gradient-norm clipping at $1.0$. Parameters and
+optimizer states use 32-bit floating point (fp32), while forward passes use
+bfloat16 (bf16) automatic mixed precision; gradient checkpointing is enabled.
+The maximum is $200$k optimizer steps. No BABILong or other synthetic task data
+is mixed into healing.
+
+Runs do not set an explicit random seed, so the exact fresh initialization and
+initial shuffle are not reproducible from the command line alone. The keep14 run
+resumed once from step $34.5$k with model, optimizer, and pseudorandom-number
+generator states restored. The checkpoint did not store the within-epoch
+data-loader offset, so the resumed iterator restarted that epoch's distributed
+shuffle; token counts in this paper are therefore nominal presentations rather
+than claims about unique examples.
+
+For each inherited arm, launch-time checks require exact equality between the
+base and transplanted front blocks, embedding, final norm, and language-model
+(LM) vocabulary output head
+($\max|\theta_{\mathrm{arm}}-\theta_{\mathrm{base}}|=0$). Fresh-block norms are
+initialized to one and fresh query projections have standard deviation $0.02$.
+Evaluation reconstructs the pruned architecture from checkpoint metadata and
+the saved parameter-state dictionary, then loads every tensor strictly. The
+keep14 models have $4.060$B parameters.
+
+\subsection{Likelihood scoring and dataset sizes}
+\input{sections/app_tab_eval}
+
+For PopQA, TriviaQA, and NQ-open, evaluation is zero-shot and uses no retrieval.
+The prompt is \texttt{Question: \{q\}\textbackslash nAnswer:}; generation is
+greedy with no chat template or inserted BOS and a maximum of 32 new tokens.
+The prediction is the first completion line. Answers are lowercased, stripped
+of punctuation/articles/extra whitespace, and scored against all available
+aliases. PopQA's headline is normalized-answer containment; TriviaQA and
+NQ-open use exact match. We additionally retain exact match, containment, and
+token F1 for sensitivity analysis.
+
+For each multiple-choice candidate, the evaluator concatenates context and
+continuation, supplies the candidate tokens to the model, and sums their
+conditional log probabilities. This teacher-forced scoring never uses free
+generation. For the broad likelihood suite, \texttt{acc\_norm} follows the
+task harness's continuation-length convention. The separate MMLU content
+protocol reports both summed log-likelihood and mean log-likelihood per
+continuation token; the latter is the content headline. WinoGrande uses its standard cloze format, in which each
+candidate fills the blank in the supplied sentence.
+MMLU candidates are answer letters under a fixed subject-description prompt.
+LAMBADA reports whether the entire final-word continuation is the greedy
+token sequence.
+
+\paragraph{Evaluation integrity.}
+Perplexity is merged as
+$\exp(\sum_g\mathrm{NLL}_g/\sum_g n_g)$ over eight shards, where
+$\mathrm{NLL}_g$ is shard $g$'s summed negative log-likelihood and $n_g$ is its
+token count; we never average per-shard perplexities. At keep14 steps $128$k, $153.5$k, and $200$k,
+independent recomputation from all shard files reproduces every PPL and downstream cell to
+$10^{-9}$. All evaluated task cells have zero NaNs and full sample counts.
+BoolQ contains the same two overlength passages in every run containing BoolQ;
+they are truncated
+consistently and still scored. No other task is truncated. The full 7B base reproduces expected
+OLMo-2 reference values (HellaSwag $.805$, MMLU $.6053$, LAMBADA $.732$), and
+the 1B base similarly reproduces its expected range.
+
+\section{Supplementary Layer-wise Readout Background}
+\label{app:mechanism}
+
+This section is not part of the evidence for the recovery-path claims. It
+documents exploratory readouts on intact models to provide background only;
+the thresholds use different datasets, probes, and definitions and are neither
+replicated mechanism estimates nor causal storage localizations.
+The analysis follows logit- and tuned-lens work
+~\citep{nostalgebraist2020logitlens,tunedlens}, alongside descriptive work on
+feed-forward memory, knowledge neurons, causal tracing, contrastive decoding,
+and early exit~\citep{geva2021transformer,dai2022knowledge,meng2022locating,
+chuang2024dola,layerskip}.
+
+\input{sections/tab_mechanism}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_two_depths.pdf}
+\caption{\textbf{Probe-dependent readout depths on OLMo-2-7B.} The shaded band
+marks prefix cuts used by the available behavioral points. Thresholds use
+different readouts and are descriptive; they are neither directly comparable
+causal boundaries nor locations of stored knowledge.}
+\label{fig:twodepths}
+\end{figure}
+
+\input{sections/app_tab_logitlens_full}
+
+The MMLU logit lens uses $1{,}000$ MMLU test questions. At each layerwise
+hidden-state depth, the final-prompt-position hidden state is passed through the
+model's final normalization and output head; accuracy is the argmax among the
+letter tokens \{A,B,C,D\}. We define onset as the first layer exceeding chance
+by $.05$ and sat$_{95}$ as the first layer reaching $95\%$ of the top-layer
+above-chance signal. On OLMo these occur at layers 18 and 19, while sat$_{99}$
+is reached at layer 27. Complete OLMo and supplemental Qwen values appear in
+Table~\ref{tab:app-logitlens-full}.
+
+An exploratory same-model OLMo probe adds frozen linear classifiers for WiC,
+SST-2, and RTE at every depth plus exact next-token top-1 agreement with the
+final layer.
+Their final-layer-relative sat$_{95}$ depths are layers 1, 5, and 1, giving a
+mean of $2.33/32=0.073L$; because intermediate probes can outperform the final
+layer, this is a readout heuristic rather than a causal semantic boundary.
+Next-token agreement reaches sat$_{95}$ only at layer 32 ($1.000L$). These
+descriptive thresholds form the ordering semantic $<$ MMLU $<$ next-token under
+the stated definitions, but they are not used to explain keep14 or ShortGPT.
+
+\input{sections/app_tab_mmlu_full}

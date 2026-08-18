@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Paper A Figure 1: CoMem Write–Select–Read.
+  Manual editable-vector reconstruction after AutoFigure-Edit stage-1 import.
+  No raster image is embedded in this SVG.
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1600" height="900" viewBox="0 0 1600 900"
+     role="img" aria-labelledby="figure-title figure-desc"
+     shape-rendering="geometricPrecision">
+  <title id="figure-title">CoMem Write–Select–Read architecture</title>
+  <desc id="figure-desc">Context chunks are written once to a persistent split-depth store, a query selects a bounded top-k subset, and the selected cached residuals resume only the upper transformer layers. The figure compares raw-text j equals zero replay with cached h sub j continuation and includes an overlap-Write context variant.</desc>
+  <defs>
+    <style>
+      text {
+        font-family: "Liberation Sans", "DejaVu Sans", Arial, Helvetica, sans-serif;
+      }
+    </style>
+    <marker id="arrow-navy" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#17324D"/>
+    </marker>
+    <marker id="arrow-write" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#4C78A8"/>
+    </marker>
+    <marker id="arrow-select" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#2A9D8F"/>
+    </marker>
+    <marker id="arrow-query" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#D97757"/>
+    </marker>
+    <marker id="arrow-gray" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#7B8794"/>
+    </marker>
+  </defs>
+<rect x="0" y="0" width="1600" height="900" rx="0" fill="#FFFFFF" stroke="none" stroke-width="0"/>
+<g id="header">
+<text x="800.0" y="35" fill="#17324D" font-size="30" font-weight="700" text-anchor="middle">CoMem: persistent Write – bounded Select – depth-reused Read</text>
+<text x="800.0" y="63" fill="#5E6E7E" font-size="21" font-weight="500" text-anchor="middle">Write each context chunk once; every query touches only a fixed top-k pack.</text>
+</g>
+<rect x="10" y="78" width="1580" height="267" rx="14" fill="#FBFCFD" stroke="#D5DEE5" stroke-width="1.2"/>
+<rect x="10" y="354" width="1580" height="166" rx="14" fill="#FCFDFD" stroke="#D5DEE5" stroke-width="1.2"/>
+<rect x="10" y="529" width="1580" height="306" rx="14" fill="#FBFCFD" stroke="#D5DEE5" stroke-width="1.2"/>
+<line x1="160" y1="87" x2="160" y2="827" stroke="#D5DEE5" stroke-width="1.6"/>
+<g id="stage-write">
+<circle cx="45" cy="115" r="22" fill="#FFFFFF" stroke="#4C78A8" stroke-width="2.6"/>
+<text x="45" y="123" fill="#4C78A8" font-size="25" font-weight="700" text-anchor="middle">1</text>
+<text x="78" y="123" fill="#17324D" font-size="30" font-weight="700" text-anchor="start">WRITE</text>
+<text x="25" y="158" fill="#5E6E7E" font-size="21" font-weight="500" text-anchor="start">once / context</text>
+<text x="180" y="104" fill="#17324D" font-size="23" font-weight="700" text-anchor="start">Independent chunk writes (c = 512; chunk-local positions)</text>
+<rect x="195" y="121" width="135" height="43" rx="8" fill="#FFFFFF" stroke="#4C78A8" stroke-width="1.8"/>
+<text x="262.5" y="149.98" fill="#243746" font-size="22" font-weight="600" text-anchor="middle">chunk x₁</text>
+<line x1="262.5" y1="165" x2="262.5" y2="184" stroke="#4C78A8" stroke-width="2.2" marker-end="url(#arrow-write)"/>
+<rect x="195" y="187" width="135" height="51" rx="9" fill="#EAF2F8" stroke="#4C78A8" stroke-width="2"/>
+<text x="262.5" y="209" fill="#17324D" font-size="20" font-weight="650" text-anchor="middle">
+<tspan x="262.5" dy="0.0">lower layers</tspan>
+<tspan x="262.5" dy="21.6">[0 : j)</tspan>
+</text>
+<line x1="262.5" y1="239" x2="262.5" y2="268" stroke="#4C78A8" stroke-width="2.2" marker-end="url(#arrow-write)"/>
+<rect x="355" y="121" width="135" height="43" rx="8" fill="#FFFFFF" stroke="#4C78A8" stroke-width="1.8"/>
+<text x="422.5" y="149.98" fill="#243746" font-size="22" font-weight="600" text-anchor="middle">chunk x₂</text>
+<line x1="422.5" y1="165" x2="422.5" y2="184" stroke="#4C78A8" stroke-width="2.2" marker-end="url(#arrow-write)"/>
+<rect x="355" y="187" width="135" height="51" rx="9" fill="#EAF2F8" stroke="#4C78A8" stroke-width="2"/>
+<text x="422.5" y="209" fill="#17324D" font-size="20" font-weight="650" text-anchor="middle">
+<tspan x="422.5" dy="0.0">lower layers</tspan>
+<tspan x="422.5" dy="21.6">[0 : j)</tspan>
+</text>
+<line x1="422.5" y1="239" x2="422.5" y2="268" stroke="#4C78A8" stroke-width="2.2" marker-end="url(#arrow-write)"/>
+<rect x="675" y="121" width="135" height="43" rx="8" fill="#FFFFFF" stroke="#4C78A8" stroke-width="1.8"/>
+<text x="742.5" y="149.98" fill="#243746" font-size="22" font-weight="600" text-anchor="middle">chunk x_N</text>
+<line x1="742.5" y1="165" x2="742.5" y2="184" stroke="#4C78A8" stroke-width="2.2" marker-end="url(#arrow-write)"/>
+<rect x="675" y="187" width="135" height="51" rx="9" fill="#EAF2F8" stroke="#4C78A8" stroke-width="2"/>
+<text x="742.5" y="209" fill="#17324D" font-size="20" font-weight="650" text-anchor="middle">
+<tspan x="742.5" dy="0.0">lower layers</tspan>
+<tspan x="742.5" dy="21.6">[0 : j)</tspan>
+</text>
+<line x1="742.5" y1="239" x2="742.5" y2="268" stroke="#4C78A8" stroke-width="2.2" marker-end="url(#arrow-write)"/>
+<text x="590" y="151" fill="#5E6E7E" font-size="32" font-weight="700" text-anchor="middle">⋯</text>
+<text x="590" y="217" fill="#5E6E7E" font-size="32" font-weight="700" text-anchor="middle">⋯</text>
+<rect x="175" y="268" width="650" height="61" rx="11" fill="#EAF2F8" stroke="#4C78A8" stroke-width="2"/>
+<text x="190" y="290" fill="#17324D" font-size="19" font-weight="700" text-anchor="start">
+<tspan x="190" dy="0.0">persistent</tspan>
+<tspan x="190" dy="19.9">store</tspan>
+</text>
+<rect x="300" y="281" width="120" height="35" rx="8" fill="#FFFFFF" stroke="#4C78A8" stroke-width="1.8"/>
+<text x="360.0" y="305.3" fill="#243746" font-size="20" font-weight="500" text-anchor="middle">h_j(x₁)</text>
+<rect x="435" y="281" width="120" height="35" rx="8" fill="#FFFFFF" stroke="#4C78A8" stroke-width="1.8"/>
+<text x="495.0" y="305.3" fill="#243746" font-size="20" font-weight="500" text-anchor="middle">h_j(x₂)</text>
+<text x="585" y="307" fill="#5E6E7E" font-size="28" font-weight="700" text-anchor="middle">⋯</text>
+<rect x="625" y="281" width="140" height="35" rx="8" fill="#FFFFFF" stroke="#4C78A8" stroke-width="1.8"/>
+<text x="695.0" y="305.3" fill="#243746" font-size="20" font-weight="500" text-anchor="middle">h_j(x_N)</text>
+<text x="790" y="307" fill="#4C78A8" font-size="18" font-weight="700" text-anchor="middle">reused</text>
+<g id="overlap-write-variant">
+<rect x="846" y="91" width="420" height="239" rx="12" fill="#FFFFFF" stroke="#D97757" stroke-width="1.8" stroke-dasharray="7 5"/>
+<text x="862" y="119" fill="#D97757" font-size="23" font-weight="700" text-anchor="start">Overlap-Write context variant</text>
+<text x="862" y="143" fill="#5E6E7E" font-size="18.5" font-weight="500" text-anchor="start">prepend document-left context; cache only the target chunk</text>
+<rect x="865" y="160" width="176" height="49" rx="8" fill="#FFFFFF" stroke="#D97757" stroke-width="1.8"/>
+<rect x="865" y="160" width="61" height="49" rx="8" fill="#FCEFEA" stroke="#D97757" stroke-width="1.2"/>
+<text x="895" y="190" fill="#D97757" font-size="18" font-weight="650" text-anchor="middle">left w</text>
+<text x="983" y="190" fill="#17324D" font-size="20" font-weight="650" text-anchor="middle">chunk x_t</text>
+<line x1="1047" y1="184" x2="1074" y2="184" stroke="#D97757" stroke-width="2.2" marker-end="url(#arrow-query)"/>
+<rect x="1081" y="160" width="161" height="49" rx="8" fill="#EAF2F8" stroke="#4C78A8" stroke-width="1.8"/>
+<text x="1161.5" y="181" fill="#17324D" font-size="17.5" font-weight="650" text-anchor="middle">
+<tspan x="1161.5" dy="0.0">lower [0 : j)</tspan>
+<tspan x="1161.5" dy="18.9">over w + c tokens</tspan>
+</text>
+<line x1="1161" y1="211" x2="1161" y2="232" stroke="#4C78A8" stroke-width="2.2" marker-end="url(#arrow-write)"/>
+<rect x="1042" y="235" width="200" height="47" rx="8" fill="#F7F9FB" stroke="#9AABB8" stroke-width="1.5"/>
+<rect x="1042" y="235" width="67" height="47" rx="8" fill="#F1F3F5" stroke="#9AABB8" stroke-width="1.1"/>
+<line x1="1051" y1="243" x2="1100" y2="273" stroke="#D97757" stroke-width="2.0"/>
+<line x1="1100" y1="243" x2="1051" y2="273" stroke="#D97757" stroke-width="2.0"/>
+<text x="1075" y="302" fill="#D97757" font-size="17.5" font-weight="650" text-anchor="middle">discard prefix</text>
+<rect x="1109" y="235" width="133" height="47" rx="8" fill="#E7F5F3" stroke="#2A9D8F" stroke-width="1.5"/>
+<text x="1176" y="265" fill="#2A9D8F" font-size="18" font-weight="700" text-anchor="middle">cache h_j(x_t)</text>
+<text x="1056" y="319" fill="#5E6E7E" font-size="17.5" font-weight="600" text-anchor="middle">Longer one-time Write; identical store bytes and Read pack.</text>
+</g>
+<g id="split-depth-inset">
+<rect x="1281" y="91" width="294" height="239" rx="12" fill="#FFFFFF" stroke="#17324D" stroke-width="1.8"/>
+<text x="1428" y="119" fill="#17324D" font-size="23" font-weight="700" text-anchor="middle">Split j controls reuse</text>
+<text x="1301" y="146" fill="#5E6E7E" font-size="19" font-weight="700" text-anchor="middle">L</text>
+<rect x="1320" y="132" width="230" height="63" rx="8" fill="#E7F5F3" stroke="#2A9D8F" stroke-width="1.8"/>
+<text x="1435" y="157" fill="#17324D" font-size="19" font-weight="650" text-anchor="middle">
+<tspan x="1435" dy="0.0">upper layers [j : L)</tspan>
+<tspan x="1435" dy="20.5">run per query</tspan>
+</text>
+<line x1="1301" y1="195" x2="1558" y2="195" stroke="#17324D" stroke-width="2.3"/>
+<rect x="1288" y="182" width="32" height="27" rx="13" fill="#17324D" stroke="#17324D" stroke-width="1.8"/>
+<text x="1304.0" y="201.62" fill="#FFFFFF" font-size="18" font-weight="700" text-anchor="middle">j</text>
+<rect x="1320" y="203" width="230" height="58" rx="8" fill="#EAF2F8" stroke="#4C78A8" stroke-width="1.8"/>
+<text x="1435" y="226" fill="#17324D" font-size="19" font-weight="650" text-anchor="middle">
+<tspan x="1435" dy="0.0">lower layers [0 : j)</tspan>
+<tspan x="1435" dy="20.5">prepaid once</tspan>
+</text>
+<text x="1301" y="263" fill="#5E6E7E" font-size="19" font-weight="700" text-anchor="middle">0</text>
+<text x="1298" y="290" fill="#D97757" font-size="18" font-weight="700" text-anchor="start">j = 0</text>
+<text x="1354" y="290" fill="#243746" font-size="18" font-weight="500" text-anchor="start">raw IDs → replay [0 : L)</text>
+<text x="1298" y="316" fill="#4C78A8" font-size="18" font-weight="700" text-anchor="start">j &gt; 0</text>
+<text x="1354" y="316" fill="#243746" font-size="18" font-weight="500" text-anchor="start">cached h_j → resume [j : L)</text>
+</g>
+</g>
+<g id="stage-select">
+<circle cx="45" cy="391" r="22" fill="#FFFFFF" stroke="#2A9D8F" stroke-width="2.6"/>
+<text x="45" y="399" fill="#2A9D8F" font-size="25" font-weight="700" text-anchor="middle">2</text>
+<text x="78" y="399" fill="#17324D" font-size="30" font-weight="700" text-anchor="start">SELECT</text>
+<text x="25" y="434" fill="#5E6E7E" font-size="21" font-weight="500" text-anchor="start">per query</text>
+<rect x="184" y="394" width="132" height="62" rx="8" fill="#FCEFEA" stroke="#D97757" stroke-width="1.8"/>
+<text x="250.0" y="433.16" fill="#D97757" font-size="24" font-weight="700" text-anchor="middle">query q</text>
+<line x1="322" y1="425" x2="359" y2="425" stroke="#D97757" stroke-width="2.2" marker-end="url(#arrow-query)"/>
+<rect x="367" y="381" width="270" height="91" rx="11" fill="#E7F5F3" stroke="#2A9D8F" stroke-width="2.1"/>
+<text x="502" y="410" fill="#17324D" font-size="21" font-weight="650" text-anchor="middle">
+<tspan x="502" dy="0.0">query-conditioned selector</tspan>
+<tspan x="502" dy="24.8">BM25 flagship; selector-agnostic</tspan>
+</text>
+<line x1="644" y1="425" x2="680" y2="425" stroke="#2A9D8F" stroke-width="2.2" marker-end="url(#arrow-select)"/>
+<rect x="688" y="375" width="515" height="104" rx="11" fill="#FFFFFF" stroke="#9AABB8" stroke-width="1.8"/>
+<text x="704" y="400" fill="#5E6E7E" font-size="20" font-weight="650" text-anchor="start">rank keys across N stored chunks</text>
+<rect x="707" y="416" width="55" height="43" rx="8" fill="#E7F5F3" stroke="#2A9D8F" stroke-width="1.8"/>
+<text x="734.5" y="444.3" fill="#2A9D8F" font-size="20" font-weight="700" text-anchor="middle">s1</text>
+<rect x="773" y="416" width="55" height="43" rx="8" fill="#F1F3F5" stroke="#9AABB8" stroke-width="1.8"/>
+<text x="800.5" y="444.3" fill="#5E6E7E" font-size="20" font-weight="500" text-anchor="middle">s2</text>
+<rect x="839" y="416" width="55" height="43" rx="8" fill="#F1F3F5" stroke="#9AABB8" stroke-width="1.8"/>
+<text x="866.5" y="444.3" fill="#5E6E7E" font-size="20" font-weight="500" text-anchor="middle">s3</text>
+<rect x="905" y="416" width="55" height="43" rx="8" fill="#E7F5F3" stroke="#2A9D8F" stroke-width="1.8"/>
+<text x="932.5" y="444.3" fill="#2A9D8F" font-size="20" font-weight="700" text-anchor="middle">s4</text>
+<rect x="971" y="416" width="55" height="43" rx="8" fill="#F1F3F5" stroke="#9AABB8" stroke-width="1.8"/>
+<text x="998.5" y="444.3" fill="#5E6E7E" font-size="20" font-weight="500" text-anchor="middle">s5</text>
+<rect x="1037" y="416" width="55" height="43" rx="8" fill="#F1F3F5" stroke="#9AABB8" stroke-width="1.8"/>
+<text x="1064.5" y="444.3" fill="#5E6E7E" font-size="20" font-weight="500" text-anchor="middle">s6</text>
+<rect x="1103" y="416" width="55" height="43" rx="8" fill="#E7F5F3" stroke="#2A9D8F" stroke-width="1.8"/>
+<text x="1130.5" y="444.3" fill="#2A9D8F" font-size="20" font-weight="700" text-anchor="middle">s7</text>
+<line x1="1210" y1="425" x2="1243" y2="425" stroke="#2A9D8F" stroke-width="2.2" marker-end="url(#arrow-select)"/>
+<text x="1227" y="405" fill="#2A9D8F" font-size="18" font-weight="700" text-anchor="middle">top-k</text>
+<rect x="1252" y="375" width="314" height="104" rx="11" fill="#E7F5F3" stroke="#2A9D8F" stroke-width="2.1"/>
+<text x="1409" y="401" fill="#17324D" font-size="21" font-weight="700" text-anchor="middle">bounded result (k fixed)</text>
+<rect x="1274" y="416" width="67" height="42" rx="8" fill="#FFFFFF" stroke="#2A9D8F" stroke-width="1.8"/>
+<text x="1307.5" y="443.8" fill="#2A9D8F" font-size="20" font-weight="700" text-anchor="middle">s₁</text>
+<rect x="1351" y="416" width="67" height="42" rx="8" fill="#FFFFFF" stroke="#2A9D8F" stroke-width="1.8"/>
+<text x="1384.5" y="443.8" fill="#2A9D8F" font-size="20" font-weight="700" text-anchor="middle">s₂</text>
+<text x="1440" y="447" fill="#5E6E7E" font-size="27" font-weight="700" text-anchor="middle">⋯</text>
+<rect x="1471" y="416" width="72" height="42" rx="8" fill="#FFFFFF" stroke="#2A9D8F" stroke-width="1.8"/>
+<text x="1507.0" y="443.8" fill="#2A9D8F" font-size="20" font-weight="700" text-anchor="middle">s_k</text>
+<text x="1030" y="505" fill="#2A9D8F" font-size="22" font-weight="700" text-anchor="middle">Read length = sink + k · c + query  —  independent of stored-context length N</text>
+</g>
+<g id="stage-read">
+<circle cx="45" cy="567" r="22" fill="#FFFFFF" stroke="#C9952E" stroke-width="2.6"/>
+<text x="45" y="575" fill="#C9952E" font-size="25" font-weight="700" text-anchor="middle">3</text>
+<text x="78" y="575" fill="#17324D" font-size="30" font-weight="700" text-anchor="start">READ</text>
+<text x="25" y="610" fill="#5E6E7E" font-size="21" font-weight="500" text-anchor="start">per query</text>
+<text x="182" y="559" fill="#17324D" font-size="22" font-weight="700" text-anchor="start">Same selected chunk IDs and causal pack; only the split endpoint changes</text>
+<path d="M1409 480 L1409 543 L803 543" fill="none" stroke="#2A9D8F" stroke-width="2.0" stroke-dasharray="6 5" marker-end="url(#arrow-select)"/>
+<text x="1120" y="536" fill="#2A9D8F" font-size="18.5" font-weight="650" text-anchor="middle">selected IDs in document order</text>
+<rect x="183" y="596" width="156" height="48" rx="8" fill="#FCEFEA" stroke="#D97757" stroke-width="1.8"/>
+<text x="261.0" y="627.14" fill="#D97757" font-size="21" font-weight="700" text-anchor="middle">j = 0 control</text>
+<text x="183" y="670" fill="#5E6E7E" font-size="20" font-weight="650" text-anchor="start">raw-text replay</text>
+<rect x="183" y="713" width="156" height="48" rx="8" fill="#EAF2F8" stroke="#4C78A8" stroke-width="1.8"/>
+<text x="261.0" y="744.14" fill="#4C78A8" font-size="21" font-weight="700" text-anchor="middle">j &gt; 0 CoMem</text>
+<text x="183" y="787" fill="#5E6E7E" font-size="20" font-weight="650" text-anchor="start">cached continuation</text>
+<rect x="360" y="582" width="445" height="78" rx="10" fill="#FFFFFF" stroke="#D97757" stroke-width="1.9"/>
+<text x="582.5" y="610" fill="#D97757" font-size="20" font-weight="700" text-anchor="middle">packed raw token IDs / text</text>
+<text x="582.5" y="642" fill="#243746" font-size="21" font-weight="600" text-anchor="middle">[ BOS  |  x(s₁)  |  x(s₂)  |  ···  |  x(s_k)  |  q ]</text>
+<line x1="813" y1="621" x2="847" y2="621" stroke="#D97757" stroke-width="2.2" marker-end="url(#arrow-query)"/>
+<rect x="855" y="582" width="385" height="78" rx="10" fill="#F1F3F5" stroke="#7B8794" stroke-width="2"/>
+<text x="1047.5" y="611" fill="#17324D" font-size="21" font-weight="700" text-anchor="middle">
+<tspan x="1047.5" dy="0.0">full decoder [0 : L)</tspan>
+<tspan x="1047.5" dy="24.6">recompute all layers every query</tspan>
+</text>
+<rect x="360" y="698" width="445" height="89" rx="10" fill="#EAF2F8" stroke="#4C78A8" stroke-width="2.1"/>
+<text x="582.5" y="726" fill="#4C78A8" font-size="20" font-weight="700" text-anchor="middle">packed residual states</text>
+<text x="582.5" y="756" fill="#243746" font-size="20.5" font-weight="650" text-anchor="middle">[ h_j(BOS) | h_j(s₁) | ··· | h_j(s_k) | h_j(q) ]</text>
+<text x="582.5" y="779" fill="#5E6E7E" font-size="17.5" font-weight="600" text-anchor="middle">query q traverses lower [0 : j) once</text>
+<rect x="855" y="707" width="135" height="70" rx="9" fill="#FFFFFF" stroke="#4C78A8" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.72"/>
+<text x="922.5" y="733" fill="#4C78A8" font-size="17.5" font-weight="650" text-anchor="middle">
+<tspan x="922.5" dy="0.0">lower [0 : j)</tspan>
+<tspan x="922.5" dy="19.2">already prepaid</tspan>
+</text>
+<path d="M813 742 C850 742, 982 692, 1012 708" fill="none" stroke="#2A9D8F" stroke-width="2.4" marker-end="url(#arrow-select)"/>
+<text x="922" y="688" fill="#2A9D8F" font-size="18" font-weight="700" text-anchor="middle">direct continuation at h_j</text>
+<rect x="1017" y="698" width="223" height="89" rx="10" fill="#E7F5F3" stroke="#2A9D8F" stroke-width="2.2"/>
+<text x="1128.5" y="728" fill="#17324D" font-size="19.5" font-weight="700" text-anchor="middle">
+<tspan x="1128.5" dy="0.0">upper layers [j : L)</tspan>
+<tspan x="1128.5" dy="23.0">full causal cross-pack attention</tspan>
+</text>
+<rect x="1324" y="626" width="232" height="101" rx="12" fill="#FBF4DF" stroke="#C9952E" stroke-width="2.1"/>
+<text x="1440" y="665" fill="#17324D" font-size="23" font-weight="700" text-anchor="middle">
+<tspan x="1440" dy="0.0">logits / answer</tspan>
+<tspan x="1440" dy="27.1">same output interface</tspan>
+</text>
+<path d="M1247 621 L1285 621 L1285 651 L1316 651" fill="none" stroke="#7B8794" stroke-width="2.2" marker-end="url(#arrow-gray)"/>
+<path d="M1247 742 L1285 742 L1285 701 L1316 701" fill="none" stroke="#2A9D8F" stroke-width="2.4" marker-end="url(#arrow-select)"/>
+<rect x="360" y="800" width="880" height="25" rx="12" fill="#E7F5F3" stroke="#2A9D8F" stroke-width="1.4"/>
+<text x="800" y="819" fill="#2A9D8F" font-size="18.5" font-weight="700" text-anchor="middle">CoMem skips repeated lower-layer document compute; only the bounded top-k pack enters Read.</text>
+</g>
+</svg>

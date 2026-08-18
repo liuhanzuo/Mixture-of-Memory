@@ -1,0 +1,29 @@
+% Same-platform Qwen3-8B pipeline prefill and peak memory, flagship LoRA enabled, bf16/SDPA on L20A.
+\begin{table}[!t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.3pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Length} & \shortstack{\textbf{Full}\\\textbf{time}} & \shortstack{\textbf{CoMem}\\\textbf{time}} & \textbf{Speedup} & \shortstack{\textbf{Full}\\\textbf{mem.}} & \shortstack{\textbf{CoMem}\\\textbf{mem.}} \\
+\midrule
+8k   & 0.165\,s & 0.309\,s & 0.53$\times$ & 19.92\,GB & 17.60\,GB \\
+16k  & 0.356\,s & 0.441\,s & 0.81$\times$ & 24.55\,GB & 17.67\,GB \\
+32k  & 0.826\,s & 0.681\,s & 1.21$\times$ & 33.82\,GB & 17.79\,GB \\
+64k  & 2.104\,s & 1.200\,s & 1.75$\times$ & 52.34\,GB & 18.04\,GB \\
+128k & 6.035\,s & 2.202\,s & \textbf{2.74$\times$} & 89.39\,GB & \textbf{18.54\,GB} \\
+\bottomrule
+\end{tabular}
+\caption{Same-platform Qwen3-8B pipeline efficiency with the same distilled rank-32 LoRA
+attached to both paths (one NVIDIA L20A, 183\,GB HBM, bf16/SDPA, median of three). This
+is a separate cohort from the stock-dense H20 measurements in
+Tables~\ref{tab:online-prefill} and~\ref{tab:pareto}. ``Full''
+processes the entire context; ``CoMem'' includes document Write, CPU retrieval,
+query Write, and upper-layer Read over the selected pack, but excludes one-time
+BM25 index construction and external-store I/O. Table~\ref{tab:pareto} fixes the
+retrieved pack but compares unadapted $j{=}0$ with adapted $j{=}12$, isolating
+the operating-point trade-off. The select-first online path is reported
+separately in Table~\ref{tab:online-prefill}; it assumes a prewritten store and
+is not mixed with these full-pipeline component measurements.}
+\label{tab:eff}
+\end{table}

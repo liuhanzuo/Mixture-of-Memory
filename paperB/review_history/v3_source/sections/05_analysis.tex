@@ -1,0 +1,79 @@
+\section{Analysis}
+\label{sec:analysis}
+
+\subsection{Recovery varies across knowledge domains}
+\begin{figure*}[t]
+\centering
+\includegraphics[width=.86\textwidth]{figures/fig_domain_recovery.pdf}
+\caption{\textbf{MMLU recovery is heterogeneous across broad domains.}
+Accuracy is sample weighted over the standard four MMLU groups. Recovery is
+chance adjusted, $(a-0.25)/(a_{\mathrm{base}}-0.25)$. Full32 remains close to
+the base in every group; ShortGPT consistently exceeds keep14, but neither
+half-depth arm closes the intact-model gap.}
+\label{fig:domain-recovery}
+\end{figure*}
+
+Figure~\ref{fig:domain-recovery} separates absolute accuracy from recovery
+relative to each group's base margin. keep14 is strongest on the heterogeneous
+Other group (.377; 29.1\% chance-adjusted recovery) and weakest on STEM (.294;
+15.6\%) and Humanities (.299; 16.2\%). Social Science has higher raw accuracy
+(.335) but only 18.6\% recovery because its base is much stronger. ShortGPT
+improves every group, most notably Other (.574) and Social Science (.554), yet
+still remains below full32.
+
+Subject-level examples show that the pattern is not a single-domain artifact.
+Among high-sample subjects, keep14 retains relatively more on miscellaneous
+($n{=}783$: .457 versus .803 base) and marketing ($n{=}234$: .440 versus .825),
+but little on professional law ($n{=}1{,}534$: .272 versus .460) and high-school
+statistics ($n{=}216$: .213 versus .514). These examples are descriptive: group
+membership mixes base difficulty, answer format, corpus exposure, factual recall,
+and reasoning. They do not establish that a particular knowledge type is stored
+in the removed blocks.
+
+\subsection{Prefix depth interacts with observed healing}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_keep8_falsification.pdf}
+\caption{\textbf{The shallow keep8 arm improves in likelihood and ordinary tasks
+through the early 44k trajectory.} The separate paired 45k--121k comparison in
+the text finds no detectable MMLU change.}
+\label{fig:keep8}
+\end{figure}
+
+keep8 and keep14 provide complementary within-arm trajectories. keep8's PPL
+falls smoothly, but a paired 45k--121k comparison finds no significant MMLU
+change ($+0.24$ points, 95\% CI $[-0.51,0.98]$). keep14 instead gains
+1.68 MMLU points from 128k to 200k (95\% CI $[1.08,2.29]$) while PPL improves
+by 0.265 (Figure~\ref{fig:keep14-trajectory}). The gain is statistically
+detectable but leaves a large gap to the base. This is evidence that observed
+recovery rate depends on inherited depth within the prefix recipe; it is not a
+claim about eventual convergence under unlimited compute.
+
+\subsection{What makes ShortGPT different?}
+\input{sections/tab_policy_endpoint}
+
+ShortGPT and keep14 end at 16 blocks and complete the same 200k target budget,
+but differ along four coupled dimensions: ShortGPT inherits 16 rather than 14
+pretrained blocks, selects them non-contiguously, retains original block 31, and
+uses no fresh tail. keep14 retains a contiguous prefix and appends two randomly
+initialized blocks. Embeddings, final normalization, and output heads are copied
+from the same base and therefore do not explain the difference.
+
+The resulting endpoint gap is large: ShortGPT reaches .474 MMLU versus .319 for
+keep14 while also obtaining lower PPL. Thus nominal depth alone does not
+determine the observed endpoint across these constructions. It does \emph{not} show
+that block 31 is uniquely responsible, that non-contiguous selection is optimal,
+or that fresh tails are harmful. Additional matched structures would be needed
+to test these hypotheses separately.
+
+\subsection{Generality beyond the principal OLMo-2 setting}
+A more compressed OLMo-2-1B arm exhibits the same qualitative pattern of falling
+PPL with near-chance MMLU, providing same-family context rather than an
+independent replication. An existing Qwen3-8B endpoint supplies a limited
+cross-family check: a 14/36-layer prefix+fresh-tail model remains at .2495 MMLU
+after 200k steps, compared with .7297 for its base (Appendix
+Table~\ref{tab:app-crossfamily}). Qwen retains a smaller depth fraction than the
+OLMo keep14 recipe (39\% versus 44\%), which is one plausible contributor to its
+larger deficit, but the corpus, architecture, and missing content/closed-book
+controls prevent attribution. We therefore treat Qwen as directional evidence,
+not a matched replication.

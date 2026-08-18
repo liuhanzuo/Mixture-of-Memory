@@ -1,0 +1,20 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+CoMem makes transformer depth an explicit cross-query reuse axis: contexts are
+written to intermediate residuals, a bounded set is selected per query, and only
+the upper layers are resumed. The contribution is a matched internal
+operating-point measurement, not a
+claim of free compression or a leaderboard win. With identical evidence and
+adapter, $j{=}12$ yields $1.403\times$ faster model Read at a 3.12-point RULER
+cost, and its 8\,KiB/token store pays off only after repeated queries. At equal
+online latency, iterative-BM25 raw replay is substantially more accurate,
+whereas frozen-BGE replay is statistically tied; CoMem wins neither aggregate.
+A paired
+context--position factorization further localizes one synthetic multikey gap to
+the lower-layer Write representation, and overlap recovers most of that local
+gap without enlarging the store or Read work. The next decisive step is a
+same-backbone, end-to-end comparison with PIC and learned modular-KV systems,
+plus natural-task validation of contextual writing. Until then, CoMem should be
+read as a transparent internal measurement of a depth-reuse design point with
+a bounded diagnosis.

@@ -1,0 +1,307 @@
+\begin{thebibliography}{39}
+\providecommand{\natexlab}[1]{#1}
+
+\bibitem[{Belrose et~al.(2023)Belrose, Ostrovsky, McKinney, Furman, Smith,
+  Halawi, Biderman, and Steinhardt}]{tunedlens}
+Nora Belrose, Igor Ostrovsky, Lev McKinney, Zach Furman, Logan Smith, Danny
+  Halawi, Stella Biderman, and Jacob Steinhardt. 2023.
+\newblock \href {https://arxiv.org/abs/2303.08112} {Eliciting latent
+  predictions from transformers with the tuned lens}.
+\newblock \emph{arXiv preprint arXiv:2303.08112}.
+
+\bibitem[{Bisk et~al.(2020)Bisk, Zellers, Le~Bras, Gao, and Choi}]{piqa}
+Yonatan Bisk, Rowan Zellers, Ronan Le~Bras, Jianfeng Gao, and Yejin Choi. 2020.
+\newblock {PIQA}: Reasoning about physical commonsense in natural language.
+\newblock In \emph{AAAI Conference on Artificial Intelligence}.
+
+\bibitem[{Chuang et~al.(2024)Chuang, Xie, Luo, Kim, Glass, and
+  He}]{chuang2024dola}
+Yung-Sung Chuang, Yujia Xie, Hongyin Luo, Yoon Kim, James Glass, and Pengcheng
+  He. 2024.
+\newblock {DoLa}: Decoding by contrasting layers improves factuality in large
+  language models.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}.
+
+\bibitem[{Clark et~al.(2019)Clark, Lee, Chang, Kwiatkowski, Collins, and
+  Toutanova}]{boolq}
+Christopher Clark, Kenton Lee, Ming-Wei Chang, Tom Kwiatkowski, Michael
+  Collins, and Kristina Toutanova. 2019.
+\newblock {BoolQ}: Exploring the surprising difficulty of natural yes/no
+  questions.
+\newblock In \emph{Conference of the North American Chapter of the Association
+  for Computational Linguistics (NAACL)}.
+
+\bibitem[{Clark et~al.(2018)Clark, Cowhey, Etzioni, Khot, Sabharwal, Schoenick,
+  and Tafjord}]{arc}
+Peter Clark, Isaac Cowhey, Oren Etzioni, Tushar Khot, Ashish Sabharwal, Carissa
+  Schoenick, and Oyvind Tafjord. 2018.
+\newblock Think you have solved question answering? try {ARC}, the {AI2}
+  reasoning challenge.
+\newblock \emph{arXiv preprint arXiv:1803.05457}.
+
+\bibitem[{Dai et~al.(2022)Dai, Dong, Hao, Sui, Chang, and
+  Wei}]{dai2022knowledge}
+Damai Dai, Li~Dong, Yaru Hao, Zhifang Sui, Baobao Chang, and Furu Wei. 2022.
+\newblock Knowledge neurons in pretrained transformers.
+\newblock In \emph{Annual Meeting of the Association for Computational
+  Linguistics (ACL)}.
+
+\bibitem[{Deng et~al.(2025)Deng, Jiao, Liu, Li, Zhang, and
+  Tu}]{deng2025drpruning}
+Hexuan Deng, Wenxiang Jiao, Xuebo Liu, Jing Li, Min Zhang, and Zhaopeng Tu.
+  2025.
+\newblock {DRPruning}: Efficient large language model pruning through
+  distributionally robust optimization.
+\newblock In \emph{Annual Meeting of the Association for Computational
+  Linguistics (ACL)}.
+
+\bibitem[{Elhoushi et~al.(2024)Elhoushi, Shrivastava, Liskovich, Hosmer, Wasti,
+  Lai, Mahmoud, Acun, Agarwal, Roman, Aly, Chen, and Wu}]{layerskip}
+Mostafa Elhoushi, Akshat Shrivastava, Diana Liskovich, Basil Hosmer, Bram
+  Wasti, Liangzhen Lai, Anas Mahmoud, Bilge Acun, Saurabh Agarwal, Ahmed Roman,
+  Ahmed~A. Aly, Beidi Chen, and Carole-Jean Wu. 2024.
+\newblock \href {https://doi.org/10.18653/v1/2024.acl-long.681} {{LayerSkip}:
+  Enabling early exit inference and self-speculative decoding}.
+\newblock In \emph{Proceedings of the 62nd Annual Meeting of the Association
+  for Computational Linguistics}.
+
+\bibitem[{Geva et~al.(2021)Geva, Schuster, Berant, and
+  Levy}]{geva2021transformer}
+Mor Geva, Roei Schuster, Jonathan Berant, and Omer Levy. 2021.
+\newblock Transformer feed-forward layers are key-value memories.
+\newblock In \emph{Conference on Empirical Methods in Natural Language
+  Processing (EMNLP)}.
+
+\bibitem[{Gromov et~al.(2025)Gromov, Tirumala, Shapourian, Glorioso, and
+  Roberts}]{gromov2024unreasonable}
+Andrey Gromov, Kushal Tirumala, Hassan Shapourian, Paolo Glorioso, and
+  Daniel~A. Roberts. 2025.
+\newblock \href {https://arxiv.org/abs/2403.17887} {The unreasonable
+  ineffectiveness of the deeper layers}.
+\newblock In \emph{International Conference on Learning Representations}.
+
+\bibitem[{Hendrycks et~al.(2021)Hendrycks, Burns, Basart, Zou, Mazeika, Song,
+  and Steinhardt}]{hendrycks2021mmlu}
+Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn
+  Song, and Jacob Steinhardt. 2021.
+\newblock Measuring massive multitask language understanding.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}.
+
+\bibitem[{Jaiswal et~al.(2024)Jaiswal, Gan, Du, Zhang, Wang, and
+  Yang}]{jaiswal2024truth}
+Ajay Jaiswal, Zhe Gan, Xianzhi Du, Bowen Zhang, Zhangyang Wang, and Yinfei
+  Yang. 2024.
+\newblock Compressing {LLM}s: The truth is rarely pure and never simple.
+\newblock In \emph{International Conference on Learning Representations}.
+
+\bibitem[{Joshi et~al.(2017)Joshi, Choi, Weld, and
+  Zettlemoyer}]{joshi2017triviaqa}
+Mandar Joshi, Eunsol Choi, Daniel Weld, and Luke Zettlemoyer. 2017.
+\newblock {TriviaQA}: A large scale distantly supervised challenge dataset for
+  reading comprehension.
+\newblock In \emph{Annual Meeting of the Association for Computational
+  Linguistics (ACL)}.
+
+\bibitem[{Kim et~al.(2024)Kim, Kim, Kim, Castells, Choi, Shin, and
+  Song}]{shortenedllama}
+Bo-Kyeong Kim, Geonmin Kim, Tae-Ho Kim, Thibault Castells, Shinkook Choi, Junho
+  Shin, and Hyoung-Kyu Song. 2024.
+\newblock \href {https://arxiv.org/abs/2402.02834} {Shortened {LLaMA}: Depth
+  pruning for large language models with comparison of retraining methods}.
+\newblock \emph{arXiv preprint arXiv:2402.02834}.
+
+\bibitem[{Kim et~al.(2026)Kim, Yun, Kim, Cho, Lim, and Lee}]{calibration2026}
+Minkyu Kim, Vincent-Daniel Yun, Youngrae Kim, Suin Cho, Woosang Lim, and Sunwoo
+  Lee. 2026.
+\newblock \href {https://arxiv.org/abs/2604.24938} {Rethinking layer
+  redundancy: Calibration matters more than search in {LLM} depth pruning}.
+\newblock \emph{arXiv preprint arXiv:2604.24938}.
+
+\bibitem[{Kwiatkowski et~al.(2019)Kwiatkowski, Palomaki, Redfield, Collins,
+  Parikh, Alberti, Epstein, Polosukhin, Devlin, Lee, Toutanova, Jones, Kelcey,
+  Chang, Dai, Uszkoreit, Le, and Petrov}]{kwiatkowski2019natural}
+Tom Kwiatkowski, Jennimaria Palomaki, Olivia Redfield, Michael Collins, Ankur
+  Parikh, Chris Alberti, Danielle Epstein, Illia Polosukhin, Jacob Devlin,
+  Kenton Lee, Kristina Toutanova, Llion Jones, Matthew Kelcey, Ming-Wei Chang,
+  Andrew~M. Dai, Jakob Uszkoreit, Quoc Le, and Slav Petrov. 2019.
+\newblock Natural questions: A benchmark for question answering research.
+\newblock \emph{Transactions of the Association for Computational Linguistics},
+  7:453--466.
+
+\bibitem[{Lu et~al.(2024)Lu, Cheng, Fang, Wang, Wei, Xu, Xuan, Yang, and
+  Zhu}]{lu2024reassessing}
+Yao Lu, Hao Cheng, Yujie Fang, Zeyu Wang, Jiaheng Wei, Dongwei Xu, Qi~Xuan,
+  Xiaoniu Yang, and Zhaowei Zhu. 2024.
+\newblock Reassessing layer pruning in {LLMs}: New insights and methods.
+\newblock \emph{arXiv preprint arXiv:2411.15558}.
+
+\bibitem[{Mallen et~al.(2023)Mallen, Asai, Zhong, Das, Khashabi, and
+  Hajishirzi}]{mallen2023popqa}
+Alex Mallen, Akari Asai, Victor Zhong, Rajarshi Das, Daniel Khashabi, and
+  Hannaneh Hajishirzi. 2023.
+\newblock When not to trust language models: Investigating effectiveness of
+  parametric and non-parametric memories.
+\newblock In \emph{Annual Meeting of the Association for Computational
+  Linguistics (ACL)}.
+
+\bibitem[{Men et~al.(2024)Men, Xu, Zhang, Wang, Lin, Lu, Han, and
+  Chen}]{men2024shortgpt}
+Xin Men, Mingyu Xu, Qingyu Zhang, Bingning Wang, Hongyu Lin, Yaojie Lu, Xianpei
+  Han, and Weipeng Chen. 2024.
+\newblock {ShortGPT}: Layers in large language models are more redundant than
+  you expect.
+\newblock \emph{arXiv preprint arXiv:2403.03853}.
+
+\bibitem[{Meng et~al.(2022)Meng, Bau, Andonian, and
+  Belinkov}]{meng2022locating}
+Kevin Meng, David Bau, Alex Andonian, and Yonatan Belinkov. 2022.
+\newblock Locating and editing factual associations in {GPT}.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}.
+
+\bibitem[{Mihaylov et~al.(2018)Mihaylov, Clark, Khot, and
+  Sabharwal}]{openbookqa}
+Todor Mihaylov, Peter Clark, Tushar Khot, and Ashish Sabharwal. 2018.
+\newblock Can a suit of armor conduct electricity? a new dataset for open book
+  question answering.
+\newblock In \emph{Conference on Empirical Methods in Natural Language
+  Processing (EMNLP)}.
+
+\bibitem[{Muralidharan et~al.(2024)Muralidharan, Sreenivas, Joshi, Chochowski,
+  Patwary, Shoeybi, Catanzaro, Kautz, and Molchanov}]{muralidharan2024compact}
+Saurav Muralidharan, Sharath~Turuvekere Sreenivas, Raviraj Joshi, Marcin
+  Chochowski, Mostofa Patwary, Mohammad Shoeybi, Bryan Catanzaro, Jan Kautz,
+  and Pavlo Molchanov. 2024.
+\newblock Compact language models via pruning and knowledge distillation.
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}.
+
+\bibitem[{Namburi et~al.(2023)Namburi, Sreedhar, Srinivasan, and
+  Sala}]{costcompression}
+Satya Sai~Srinath Namburi, Makesh Sreedhar, Srinath Srinivasan, and Frederic
+  Sala. 2023.
+\newblock \href {https://doi.org/10.18653/v1/2023.findings-emnlp.349} {The cost
+  of compression: Investigating the impact of compression on parametric
+  knowledge in language models}.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  EMNLP 2023}.
+
+\bibitem[{nostalgebraist(2020)}]{nostalgebraist2020logitlens}
+nostalgebraist. 2020.
+\newblock Interpreting {GPT}: The logit lens.
+\newblock LessWrong.
+\newblock
+  \url{https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens}.
+
+\bibitem[{{OLMo Team} et~al.(2025){OLMo Team}, Walsh, Soldaini, Groeneveld
+  et~al.}]{olmo2}
+{OLMo Team}, Pete Walsh, Luca Soldaini, Dirk Groeneveld, et~al. 2025.
+\newblock {2 OLMo 2 Furious}.
+\newblock \emph{arXiv preprint arXiv:2501.00656}.
+
+\bibitem[{Paperno et~al.(2016)Paperno, Kruszewski, Lazaridou, Pham, Bernardi,
+  Pezzelle, Baroni, Boleda, and Fern{\'a}ndez}]{lambada}
+Denis Paperno, Germ{\'a}n Kruszewski, Angeliki Lazaridou, Quan~Ngoc Pham,
+  Raffaella Bernardi, Sandro Pezzelle, Marco Baroni, Gemma Boleda, and Raquel
+  Fern{\'a}ndez. 2016.
+\newblock The {LAMBADA} dataset: Word prediction requiring a broad discourse
+  context.
+\newblock In \emph{Annual Meeting of the Association for Computational
+  Linguistics (ACL)}.
+
+\bibitem[{Sakaguchi et~al.(2021)Sakaguchi, Le~Bras, Bhagavatula, and
+  Choi}]{winogrande}
+Keisuke Sakaguchi, Ronan Le~Bras, Chandra Bhagavatula, and Yejin Choi. 2021.
+\newblock {WinoGrande}: An adversarial {Winograd} schema challenge at scale.
+\newblock \emph{Communications of the ACM}.
+
+\bibitem[{Sap et~al.(2019)Sap, Rashkin, Chen, Le~Bras, and Choi}]{socialiqa}
+Maarten Sap, Hannah Rashkin, Derek Chen, Ronan Le~Bras, and Yejin Choi. 2019.
+\newblock {SocialIQA}: Commonsense reasoning about social interactions.
+\newblock In \emph{Conference on Empirical Methods in Natural Language
+  Processing (EMNLP)}.
+
+\bibitem[{Siddiqui et~al.(2024)Siddiqui, Dong, Heinrich, Breuel, Kautz,
+  Krueger, and Molchanov}]{siddiqui2024deeper}
+Shoaib~Ahmed Siddiqui, Xin Dong, Greg Heinrich, Thomas Breuel, Jan Kautz, David
+  Krueger, and Pavlo Molchanov. 2024.
+\newblock A deeper look at depth pruning of {LLMs}.
+\newblock \emph{arXiv preprint arXiv:2407.16286}.
+
+\bibitem[{Soldaini et~al.(2024)Soldaini, Kinney, Bhagia et~al.}]{dolma}
+Luca Soldaini, Rodney Kinney, Akshita Bhagia, et~al. 2024.
+\newblock {Dolma}: An open corpus of three trillion tokens for language model
+  pretraining research.
+\newblock \emph{arXiv preprint arXiv:2402.00159}.
+
+\bibitem[{Song et~al.(2024)Song, Oh, Kim, Kim, Kim, and Kim}]{song2024sleb}
+Jiwon Song, Kyungseok Oh, Taesu Kim, Hyungjun Kim, Yulhwa Kim, and Jae-Joon
+  Kim. 2024.
+\newblock {SLEB}: Streamlining {LLMs} through redundancy verification and
+  elimination of transformer blocks.
+\newblock In \emph{International Conference on Machine Learning (ICML)}.
+
+\bibitem[{Sreenivas et~al.(2024)Sreenivas, Muralidharan, Joshi, Chochowski,
+  Mahabaleshwarkar, Shen, Zeng, Chen, Suhara, Diao, Chen, Chen, Ross, Olabiyi,
+  Aithal, Kuchaiev, Korzekwa, Molchanov, Patwary, Shoeybi, Kautz, and
+  Catanzaro}]{minitron}
+Sharath~Turuvekere Sreenivas, Saurav Muralidharan, Raviraj Joshi, Marcin
+  Chochowski, Ameya~Sunil Mahabaleshwarkar, Gerald Shen, Jiaqi Zeng, Zijia
+  Chen, Yoshi Suhara, Shizhe Diao, Chenhan~Yu Chen, Wei-Chun Chen, Hayley Ross,
+  Oluwatobi Olabiyi, Ashwath Aithal, Oleksii Kuchaiev, Daniel Korzekwa, Pavlo
+  Molchanov, Mostofa Patwary, and 3 others. 2024.
+\newblock \href {https://arxiv.org/abs/2408.11796} {{LLM} pruning and
+  distillation in practice: The minitron approach}.
+\newblock \emph{arXiv preprint arXiv:2408.11796}.
+
+\bibitem[{Talmor et~al.(2019)Talmor, Herzig, Lourie, and
+  Berant}]{commonsenseqa}
+Alon Talmor, Jonathan Herzig, Nicholas Lourie, and Jonathan Berant. 2019.
+\newblock {CommonsenseQA}: A question answering challenge targeting commonsense
+  knowledge.
+\newblock In \emph{Conference of the North American Chapter of the Association
+  for Computational Linguistics (NAACL)}.
+
+\bibitem[{Xia et~al.(2024)Xia, Gao, Zeng, and Chen}]{xia2024sheared}
+Mengzhou Xia, Tianyu Gao, Zhiyuan Zeng, and Danqi Chen. 2024.
+\newblock {Sheared LLaMA}: Accelerating language model pre-training via
+  structured pruning.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}.
+
+\bibitem[{Xu et~al.(2024)Xu, Gupta, Li, Bentham, and
+  Srikumar}]{beyondperplexity}
+Zhichao Xu, Ashim Gupta, Tao Li, Oliver Bentham, and Vivek Srikumar. 2024.
+\newblock \href {https://doi.org/10.18653/v1/2024.findings-emnlp.901} {Beyond
+  perplexity: Multi-dimensional safety evaluation of {LLM} compression}.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  EMNLP 2024}.
+
+\bibitem[{Yang et~al.(2025)}]{qwen3}
+An~Yang et~al. 2025.
+\newblock {Qwen3} technical report.
+\newblock \emph{arXiv preprint arXiv:2505.09388}.
+
+\bibitem[{Yang et~al.(2024)Yang, Cao, and Zhao}]{yang2024laco}
+Yifei Yang, Zouying Cao, and Hai Zhao. 2024.
+\newblock {LaCo}: Large language model pruning via layer collapse.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  EMNLP}.
+
+\bibitem[{Zellers et~al.(2019)Zellers, Holtzman, Bisk, Farhadi, and
+  Choi}]{hellaswag}
+Rowan Zellers, Ari Holtzman, Yonatan Bisk, Ali Farhadi, and Yejin Choi. 2019.
+\newblock {HellaSwag}: Can a machine really finish your sentence?
+\newblock In \emph{Annual Meeting of the Association for Computational
+  Linguistics (ACL)}.
+
+\bibitem[{Zhong et~al.(2025)Zhong, Wan, Chen, Quan, and Li}]{blockpruner}
+Longguang Zhong, Fanqi Wan, Ruijun Chen, Xiaojun Quan, and Liangzhi Li. 2025.
+\newblock \href {https://doi.org/10.18653/v1/2025.findings-acl.262}
+  {{BlockPruner}: Fine-grained pruning for large language models}.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  ACL 2025}, pages 5065--5080.
+
+\end{thebibliography}

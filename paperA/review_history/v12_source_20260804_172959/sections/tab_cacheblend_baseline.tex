@@ -1,0 +1,32 @@
+\begin{table}[!t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Method / recompute} & \textbf{RULER} & \textbf{BABI-qa5} &
+\textbf{LoCoMo} & \textbf{Store/tok.} \\
+\midrule
+CacheBlend-style, $r{=}0$    & 67.80 & 49.33 & 17.07 & 144\,KiB \\
+CacheBlend-style, $r{=}.10$  & 72.57 & 48.50 & 16.77 & 144\,KiB \\
+CacheBlend-style, $r{=}.15$  & 73.78 & 49.83 & 17.07 & 144\,KiB \\
+CacheBlend-style, $r{=}.18$  & \textbf{74.70} & 49.17 & \textbf{17.37} & 144\,KiB \\
+\midrule
+CoMem ($j{=}12$) & \textbf{97.05} & \textbf{68.67} & \textbf{23.36} & \textbf{8\,KiB} \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Same-backbone full-depth chunk-KV comparison.}
+The CacheBlend-style baseline implements independently prefetched 36-layer KV,
+global RoPE reindexing, and selective token recomputation at ratio $r$; a
+real-model self-test makes $r{=}1$ match full prefill. All rows use Qwen3-8B,
+512-token chunks, iterative-BM25 top-12, plain-text prompting, and the same
+scorers. RULER is the 12-cell 4k--32k Cohort-A macro ($n{=}100$/cell);
+BABI-qa5 is the six-cell 0k--16k mean ($n{=}100$/cell); LoCoMo is substring
+accuracy on all 1,986 questions. CacheBlend-style is training-free, whereas
+CoMem uses its distilled rank-32 adapter. Full-depth bf16 GQA KV costs
+147,456 bytes/token, exactly $18\times$ CoMem's 8,192-byte residual.
+The BABILong host evaluator records its default \texttt{resume\_j=6}, but the
+CacheBlend-style path itself caches and executes all 36 layers; this field is
+not a baseline split.}
+\label{tab:cacheblend-baseline}
+\end{table}

@@ -1,0 +1,42 @@
+% Fixed-read store scaling and evidence-budget boundary.
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Store} & \textbf{NIAH rec.} & \textbf{NIAH score} &
+\textbf{VT rec.} & \textbf{VT score} \\
+\midrule
+128k & 1.00 & 100 & 1.00 & 18 \\
+256k & 1.00 & 100 & 1.00 & 34 \\
+512k & 1.00 & 100 & 1.00 & 40 \\
+1M   & 1.00 & 100 & 1.00 & 54 \\
+2M   & 1.00 & 90  & 1.00 & 38 \\
+4M   & 1.00 & 100 & 1.00 & 34 \\
+\bottomrule
+\end{tabular}
+
+\vspace{3pt}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Store} & \textbf{Read tokens} & \textbf{BM25 (ms)} \\
+\midrule
+128k & 6,211 / 6,463 & 80 / 20 \\
+256k & 6,209 / 6,463 & 164 / 39 \\
+512k & 6,209 / 6,464 & 328 / 81 \\
+1M   & 6,209 / 6,463 & 697 / 170 \\
+2M   & 6,211 / 6,463 & 1,407 / 357 \\
+4M   & 6,208 / 6,463 & 2,852 / 725 \\
+\bottomrule
+\end{tabular}
+\caption{Store scaling with a fixed top-12 read. Values separated by ``/'' are
+single-evidence NIAH / five-link variable tracking (VT). Evidence recall
+($n{=}20$) stays perfect and the model read stays about 6.2--6.5k tokens from
+128k to 4M stored tokens; BM25 lookup grows approximately linearly. Generation
+scores use $n{=}10$ and reveal that VT reasoning remains noisy even when all
+five evidence chunks are retrieved. At 128k, increasing required VT evidence
+from 12 to 16/24/32 gives recall 1.0 to 0.75/0.50/0.375, exactly
+$\min(1,12/E)$.}
+\label{tab:store-scaling}
+\end{table}

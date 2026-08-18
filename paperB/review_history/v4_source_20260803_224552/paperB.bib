@@ -1,0 +1,400 @@
+% paperB.bib — references for Paper B (prune-then-heal depth study).
+
+% ---------------- base model, corpus, benchmarks ----------------
+
+@article{olmo2,
+  title={{2 OLMo 2 Furious}},
+  author={{OLMo Team} and Walsh, Pete and Soldaini, Luca and Groeneveld, Dirk and others},
+  journal={arXiv preprint arXiv:2501.00656},
+  year={2025}
+}
+
+% dolmino-mix-1124 is released with OLMo 2; Dolma is the parent corpus/tooling.
+@article{dolma,
+  title={{Dolma}: An Open Corpus of Three Trillion Tokens for Language Model Pretraining Research},
+  author={Soldaini, Luca and Kinney, Rodney and Bhagia, Akshita and others},
+  journal={arXiv preprint arXiv:2402.00159},
+  year={2024}
+}
+
+@inproceedings{hendrycks2021mmlu,
+  title={Measuring Massive Multitask Language Understanding},
+  author={Hendrycks, Dan and Burns, Collin and Basart, Steven and Zou, Andy and Mazeika, Mantas and Song, Dawn and Steinhardt, Jacob},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2021}
+}
+
+@inproceedings{mallen2023popqa,
+  title={When Not to Trust Language Models: Investigating Effectiveness of Parametric and Non-Parametric Memories},
+  author={Mallen, Alex and Asai, Akari and Zhong, Victor and Das, Rajarshi and Khashabi, Daniel and Hajishirzi, Hannaneh},
+  booktitle={Annual Meeting of the Association for Computational Linguistics (ACL)},
+  year={2023}
+}
+
+@inproceedings{joshi2017triviaqa,
+  title={{TriviaQA}: A Large Scale Distantly Supervised Challenge Dataset for Reading Comprehension},
+  author={Joshi, Mandar and Choi, Eunsol and Weld, Daniel and Zettlemoyer, Luke},
+  booktitle={Annual Meeting of the Association for Computational Linguistics (ACL)},
+  year={2017}
+}
+
+@article{kwiatkowski2019natural,
+  title={Natural Questions: A Benchmark for Question Answering Research},
+  author={Kwiatkowski, Tom and Palomaki, Jennimaria and Redfield, Olivia and Collins, Michael and Parikh, Ankur and Alberti, Chris and Epstein, Danielle and Polosukhin, Illia and Devlin, Jacob and Lee, Kenton and Toutanova, Kristina and Jones, Llion and Kelcey, Matthew and Chang, Ming-Wei and Dai, Andrew M. and Uszkoreit, Jakob and Le, Quoc and Petrov, Slav},
+  journal={Transactions of the Association for Computational Linguistics},
+  volume={7},
+  pages={453--466},
+  year={2019}
+}
+
+@inproceedings{hellaswag,
+  title={{HellaSwag}: Can a Machine Really Finish Your Sentence?},
+  author={Zellers, Rowan and Holtzman, Ari and Bisk, Yonatan and Farhadi, Ali and Choi, Yejin},
+  booktitle={Annual Meeting of the Association for Computational Linguistics (ACL)},
+  year={2019}
+}
+
+@article{arc,
+  title={Think You Have Solved Question Answering? Try {ARC}, the {AI2} Reasoning Challenge},
+  author={Clark, Peter and Cowhey, Isaac and Etzioni, Oren and Khot, Tushar and Sabharwal, Ashish and Schoenick, Carissa and Tafjord, Oyvind},
+  journal={arXiv preprint arXiv:1803.05457},
+  year={2018}
+}
+
+@article{winogrande,
+  title={{WinoGrande}: An Adversarial {Winograd} Schema Challenge at Scale},
+  author={Sakaguchi, Keisuke and Le Bras, Ronan and Bhagavatula, Chandra and Choi, Yejin},
+  journal={Communications of the ACM},
+  year={2021}
+}
+
+@inproceedings{piqa,
+  title={{PIQA}: Reasoning about Physical Commonsense in Natural Language},
+  author={Bisk, Yonatan and Zellers, Rowan and Le Bras, Ronan and Gao, Jianfeng and Choi, Yejin},
+  booktitle={AAAI Conference on Artificial Intelligence},
+  year={2020}
+}
+
+@inproceedings{lambada,
+  title={The {LAMBADA} Dataset: Word Prediction Requiring a Broad Discourse Context},
+  author={Paperno, Denis and Kruszewski, Germ{\'a}n and Lazaridou, Angeliki and Pham, Quan Ngoc and Bernardi, Raffaella and Pezzelle, Sandro and Baroni, Marco and Boleda, Gemma and Fern{\'a}ndez, Raquel},
+  booktitle={Annual Meeting of the Association for Computational Linguistics (ACL)},
+  year={2016}
+}
+
+@inproceedings{boolq,
+  title={{BoolQ}: Exploring the Surprising Difficulty of Natural Yes/No Questions},
+  author={Clark, Christopher and Lee, Kenton and Chang, Ming-Wei and Kwiatkowski, Tom and Collins, Michael and Toutanova, Kristina},
+  booktitle={Conference of the North American Chapter of the Association for Computational Linguistics (NAACL)},
+  year={2019}
+}
+
+@inproceedings{openbookqa,
+  title={Can a Suit of Armor Conduct Electricity? A New Dataset for Open Book Question Answering},
+  author={Mihaylov, Todor and Clark, Peter and Khot, Tushar and Sabharwal, Ashish},
+  booktitle={Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year={2018}
+}
+
+@inproceedings{commonsenseqa,
+  title={{CommonsenseQA}: A Question Answering Challenge Targeting Commonsense Knowledge},
+  author={Talmor, Alon and Herzig, Jonathan and Lourie, Nicholas and Berant, Jonathan},
+  booktitle={Conference of the North American Chapter of the Association for Computational Linguistics (NAACL)},
+  year={2019}
+}
+
+@inproceedings{socialiqa,
+  title={{SocialIQA}: Commonsense Reasoning about Social Interactions},
+  author={Sap, Maarten and Rashkin, Hannah and Chen, Derek and Le Bras, Ronan and Choi, Yejin},
+  booktitle={Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year={2019}
+}
+
+% ---------------- layer pruning / drop / depth up-scaling ----------------
+
+@inproceedings{gromov2024unreasonable,
+  title={The Unreasonable Ineffectiveness of the Deeper Layers},
+  author={Gromov, Andrey and Tirumala, Kushal and Shapourian, Hassan and Glorioso, Paolo and Roberts, Daniel A.},
+  booktitle={International Conference on Learning Representations},
+  year={2025},
+  eprint={2403.17887},
+  archivePrefix={arXiv}
+}
+
+@article{men2024shortgpt,
+  title={{ShortGPT}: Layers in Large Language Models are More Redundant Than You Expect},
+  author={Men, Xin and Xu, Mingyu and Zhang, Qingyu and Wang, Bingning and Lin, Hongyu and Lu, Yaojie and Han, Xianpei and Chen, Weipeng},
+  journal={arXiv preprint arXiv:2403.03853},
+  year={2024}
+}
+
+@article{shortenedllama,
+  title={Shortened {LLaMA}: Depth Pruning for Large Language Models with Comparison of Retraining Methods},
+  author={Kim, Bo-Kyeong and Kim, Geonmin and Kim, Tae-Ho and Castells, Thibault and Choi, Shinkook and Shin, Junho and Song, Hyoung-Kyu},
+  journal={arXiv preprint arXiv:2402.02834},
+  year={2024},
+  eprint={2402.02834},
+  archivePrefix={arXiv}
+}
+
+@article{paser,
+  title={{PASER}: Post-Training Data Selection for Efficient Pruned Large Language Model Recovery},
+  author={He, Bowei and Yin, Lihao and Zhen, Hui-Ling and Zhang, Xiaokun and Yuan, Mingxuan and Ma, Chen},
+  journal={arXiv preprint arXiv:2502.12594},
+  year={2025},
+  eprint={2502.12594},
+  archivePrefix={arXiv}
+}
+
+@article{iterabre,
+  title={{IteRABRe}: Iterative Recovery-Aided Block Reduction},
+  author={Wibowo, Haryo Akbarianto and Song, Haiyue and Tanaka, Hideki and Utiyama, Masao and Aji, Alham Fikri and Dabre, Raj},
+  journal={arXiv preprint arXiv:2503.06291},
+  year={2025},
+  eprint={2503.06291},
+  archivePrefix={arXiv}
+}
+
+@inproceedings{linearpatch,
+  title={A Simple Linear Patch Revives Layer-Pruned Large Language Models},
+  author={Chen, Xinrui and Bai, Haoli and Yuan, Tao and Liu, Ruikang and Zhao, Kang and Yu, Xianzhi and Hou, Lu and Guan, Tian and He, Yonghong and Yuan, Chun},
+  booktitle={Advances in Neural Information Processing Systems},
+  year={2025},
+  eprint={2505.24680},
+  archivePrefix={arXiv}
+}
+
+@inproceedings{prunecomp,
+  title={Prune\&Comp: Free Lunch for Layer-Pruned {LLM}s via Iterative Pruning with Magnitude Compensation},
+  author={Chen, Xinrui and Zhang, Hongxing and Zeng, Fanyi and Wei, Yongxian and Wang, Yizhi and Ling, Xitong and Li, Guanghao and Yuan, Chun},
+  booktitle={AAAI Conference on Artificial Intelligence},
+  year={2026},
+  eprint={2507.18212},
+  archivePrefix={arXiv}
+}
+
+@article{decisioncollapse,
+  title={Understanding Performance Collapse in Layer-Pruned Large Language Models via Decision Representation Transitions},
+  author={Shi, Boyu and Liu, Chang and Gao, ChuanBao and Yang, Xu and Geng, Xin},
+  journal={arXiv preprint arXiv:2605.07271},
+  year={2026},
+  eprint={2605.07271},
+  archivePrefix={arXiv}
+}
+
+@article{slimqwen,
+  title={{SlimQwen}: Exploring the Pruning and Distillation in Large {MoE} Model Pre-training},
+  author={Tang, Shengkun and Wang, Zekun and Zheng, Bo and Wang, Liangyu and Men, Rui and Zhang, Siqi and Yuan, Xiulong and Qiu, Zihan and Shen, Zhiqiang and Liu, Dayiheng},
+  journal={arXiv preprint arXiv:2605.08738},
+  year={2026},
+  eprint={2605.08738},
+  archivePrefix={arXiv}
+}
+
+@article{shortopd,
+  title={{ShortOPD}: Recovering Pruned {LLM}s with Short-to-Long On-Policy Distillation},
+  author={Zhang, Qingyu and Yuan, Qianhao and Lin, Hongyu and Lu, Yaojie and Han, Xianpei and Sun, Le and Li, Xiang and Xu, Ming and Li, Jiarui and Zhao, Xiuyin},
+  journal={arXiv preprint arXiv:2607.13124},
+  year={2026},
+  eprint={2607.13124},
+  archivePrefix={arXiv}
+}
+
+@article{fragileknowledge,
+  title={Fragile Knowledge, Robust Instruction-Following: The Width Pruning Dichotomy in {Llama}-3.2},
+  author={Martra, Pere},
+  journal={arXiv preprint arXiv:2512.22671},
+  year={2025},
+  eprint={2512.22671},
+  archivePrefix={arXiv}
+}
+
+@inproceedings{myanswerisc,
+  title={{``My Answer is C''}: First-Token Probabilities Do Not Match Text Answers in Instruction-Tuned Language Models},
+  author={Wang, Xinpeng and Ma, Bolei and Hu, Chengzhi and Weber-Genzel, Leon and R{\"o}ttger, Paul and Kreuter, Frauke and Hovy, Dirk and Plank, Barbara},
+  booktitle={Findings of the Association for Computational Linguistics: ACL 2024},
+  year={2024},
+  doi={10.18653/v1/2024.findings-acl.441}
+}
+
+@inproceedings{benchmarktargets,
+  title={When Benchmarks Are Targets: Revealing the Sensitivity of Large Language Model Leaderboards},
+  author={Alzahrani, Norah and Alyahya, Hisham Abdullah and Alnumay, Yazeed and Alrashed, Sultan and Alsubaie, Shaykhah and Almushaykeh, Yusef and Mirza, Faisal and Alotaibi, Nouf and Altwairesh, Nora and Alowisheq, Areeb and Bari, M. Saiful and Khan, Haidar},
+  booktitle={Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics},
+  year={2024},
+  doi={10.18653/v1/2024.acl-long.744}
+}
+
+@article{answerorder,
+  title={Changing Answer Order Can Decrease {MMLU} Accuracy},
+  author={Gupta, Vipul and Pantoja, David and Ross, Candace and Williams, Adina and Ung, Megan},
+  journal={arXiv preprint arXiv:2406.19470},
+  year={2024},
+  eprint={2406.19470},
+  archivePrefix={arXiv}
+}
+
+@inproceedings{song2024sleb,
+  title={{SLEB}: Streamlining {LLMs} through Redundancy Verification and Elimination of Transformer Blocks},
+  author={Song, Jiwon and Oh, Kyungseok and Kim, Taesu and Kim, Hyungjun and Kim, Yulhwa and Kim, Jae-Joon},
+  booktitle={International Conference on Machine Learning (ICML)},
+  year={2024}
+}
+
+@inproceedings{yang2024laco,
+  title={{LaCo}: Large Language Model Pruning via Layer Collapse},
+  author={Yang, Yifei and Cao, Zouying and Zhao, Hai},
+  booktitle={Findings of the Association for Computational Linguistics: EMNLP},
+  year={2024}
+}
+
+@article{siddiqui2024deeper,
+  title={A Deeper Look at Depth Pruning of {LLMs}},
+  author={Siddiqui, Shoaib Ahmed and Dong, Xin and Heinrich, Greg and Breuel, Thomas and Kautz, Jan and Krueger, David and Molchanov, Pavlo},
+  journal={arXiv preprint arXiv:2407.16286},
+  year={2024}
+}
+
+@article{lu2024reassessing,
+  title={Reassessing Layer Pruning in {LLMs}: New Insights and Methods},
+  author={Lu, Yao and Cheng, Hao and Fang, Yujie and Wang, Zeyu and Wei, Jiaheng and Xu, Dongwei and Xuan, Qi and Yang, Xiaoniu and Zhu, Zhaowei},
+  journal={arXiv preprint arXiv:2411.15558},
+  year={2024}
+}
+
+@inproceedings{xia2024sheared,
+  title={{Sheared LLaMA}: Accelerating Language Model Pre-Training via Structured Pruning},
+  author={Xia, Mengzhou and Gao, Tianyu and Zeng, Zhiyuan and Chen, Danqi},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2024}
+}
+
+@inproceedings{muralidharan2024compact,
+  title={Compact Language Models via Pruning and Knowledge Distillation},
+  author={Muralidharan, Saurav and Sreenivas, Sharath Turuvekere and Joshi, Raviraj and Chochowski, Marcin and Patwary, Mostofa and Shoeybi, Mohammad and Catanzaro, Bryan and Kautz, Jan and Molchanov, Pavlo},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
+  year={2024}
+}
+
+@inproceedings{deng2025drpruning,
+  title={{DRPruning}: Efficient Large Language Model Pruning through Distributionally Robust Optimization},
+  author={Deng, Hexuan and Jiao, Wenxiang and Liu, Xuebo and Li, Jing and Zhang, Min and Tu, Zhaopeng},
+  booktitle={Annual Meeting of the Association for Computational Linguistics (ACL)},
+  year={2025}
+}
+
+@inproceedings{blockpruner,
+  title={{BlockPruner}: Fine-grained Pruning for Large Language Models},
+  author={Zhong, Longguang and Wan, Fanqi and Chen, Ruijun and Quan, Xiaojun and Li, Liangzhi},
+  booktitle={Findings of the Association for Computational Linguistics: ACL 2025},
+  pages={5065--5080},
+  year={2025},
+  doi={10.18653/v1/2025.findings-acl.262}
+}
+
+@article{minitron,
+  title={{LLM} Pruning and Distillation in Practice: The Minitron Approach},
+  author={Sreenivas, Sharath Turuvekere and Muralidharan, Saurav and Joshi, Raviraj and Chochowski, Marcin and Mahabaleshwarkar, Ameya Sunil and Shen, Gerald and Zeng, Jiaqi and Chen, Zijia and Suhara, Yoshi and Diao, Shizhe and Chen, Chenhan Yu and Chen, Wei-Chun and Ross, Hayley and Olabiyi, Oluwatobi and Aithal, Ashwath and Kuchaiev, Oleksii and Korzekwa, Daniel and Molchanov, Pavlo and Patwary, Mostofa and Shoeybi, Mohammad and Kautz, Jan and Catanzaro, Bryan},
+  journal={arXiv preprint arXiv:2408.11796},
+  year={2024},
+  eprint={2408.11796},
+  archivePrefix={arXiv}
+}
+
+@article{calibration2026,
+  title={Rethinking Layer Redundancy: Calibration Matters More Than Search in {LLM} Depth Pruning},
+  author={Kim, Minkyu and Yun, Vincent-Daniel and Kim, Youngrae and Cho, Suin and Lim, Woosang and Lee, Sunwoo},
+  journal={arXiv preprint arXiv:2604.24938},
+  year={2026},
+  eprint={2604.24938},
+  archivePrefix={arXiv}
+}
+
+@inproceedings{costcompression,
+  title={The Cost of Compression: Investigating the Impact of Compression on Parametric Knowledge in Language Models},
+  author={Namburi, Satya Sai Srinath and Sreedhar, Makesh and Srinivasan, Srinath and Sala, Frederic},
+  booktitle={Findings of the Association for Computational Linguistics: EMNLP 2023},
+  year={2023},
+  doi={10.18653/v1/2023.findings-emnlp.349}
+}
+
+@inproceedings{beyondperplexity,
+  title={Beyond Perplexity: Multi-dimensional Safety Evaluation of {LLM} Compression},
+  author={Xu, Zhichao and Gupta, Ashim and Li, Tao and Bentham, Oliver and Srikumar, Vivek},
+  booktitle={Findings of the Association for Computational Linguistics: EMNLP 2024},
+  year={2024},
+  doi={10.18653/v1/2024.findings-emnlp.901}
+}
+
+@inproceedings{jaiswal2024truth,
+  title={Compressing {LLM}s: The Truth Is Rarely Pure and Never Simple},
+  author={Jaiswal, Ajay and Gan, Zhe and Du, Xianzhi and Zhang, Bowen and Wang, Zhangyang and Yang, Yinfei},
+  booktitle={International Conference on Learning Representations},
+  year={2024}
+}
+
+% ---------------- knowledge localization ----------------
+
+@inproceedings{meng2022locating,
+  title={Locating and Editing Factual Associations in {GPT}},
+  author={Meng, Kevin and Bau, David and Andonian, Alex and Belinkov, Yonatan},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
+  year={2022}
+}
+
+@inproceedings{geva2021transformer,
+  title={Transformer Feed-Forward Layers Are Key-Value Memories},
+  author={Geva, Mor and Schuster, Roei and Berant, Jonathan and Levy, Omer},
+  booktitle={Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year={2021}
+}
+
+@inproceedings{dai2022knowledge,
+  title={Knowledge Neurons in Pretrained Transformers},
+  author={Dai, Damai and Dong, Li and Hao, Yaru and Sui, Zhifang and Chang, Baobao and Wei, Furu},
+  booktitle={Annual Meeting of the Association for Computational Linguistics (ACL)},
+  year={2022}
+}
+
+% ---------------- logit lens / stages of inference / layer readout ----------------
+
+@misc{nostalgebraist2020logitlens,
+  title={Interpreting {GPT}: The Logit Lens},
+  author={nostalgebraist},
+  year={2020},
+  howpublished={LessWrong},
+  note={\url{https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens}}
+}
+
+@article{tunedlens,
+  title={Eliciting Latent Predictions from Transformers with the Tuned Lens},
+  author={Belrose, Nora and Ostrovsky, Igor and McKinney, Lev and Furman, Zach and Smith, Logan and Halawi, Danny and Biderman, Stella and Steinhardt, Jacob},
+  journal={arXiv preprint arXiv:2303.08112},
+  year={2023},
+  eprint={2303.08112},
+  archivePrefix={arXiv}
+}
+
+@inproceedings{chuang2024dola,
+  title={{DoLa}: Decoding by Contrasting Layers Improves Factuality in Large Language Models},
+  author={Chuang, Yung-Sung and Xie, Yujia and Luo, Hongyin and Kim, Yoon and Glass, James and He, Pengcheng},
+  booktitle={International Conference on Learning Representations (ICLR)},
+  year={2024}
+}
+
+@inproceedings{layerskip,
+  title={{LayerSkip}: Enabling Early Exit Inference and Self-Speculative Decoding},
+  author={Elhoushi, Mostafa and Shrivastava, Akshat and Liskovich, Diana and Hosmer, Basil and Wasti, Bram and Lai, Liangzhen and Mahmoud, Anas and Acun, Bilge and Agarwal, Saurabh and Roman, Ahmed and Aly, Ahmed A. and Chen, Beidi and Wu, Carole-Jean},
+  booktitle={Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics},
+  year={2024},
+  doi={10.18653/v1/2024.acl-long.681}
+}
+
+% ---------------- backbones (cross-model probe references) ----------------
+
+@article{qwen3,
+  title={{Qwen3} Technical Report},
+  author={Yang, An and others},
+  journal={arXiv preprint arXiv:2505.09388},
+  year={2025}
+}

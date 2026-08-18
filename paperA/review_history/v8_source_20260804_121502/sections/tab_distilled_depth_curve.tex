@@ -1,0 +1,28 @@
+% Per-depth distilled quality--latency curve.
+\begin{table*}[!t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}rrrrrrrc@{}}
+\toprule
+\textbf{Split $j$} & \textbf{LoRA params} & \textbf{RULER B} & \textbf{Full $-$ deployed (95\% CI)} & \textbf{LoCoMo} & \textbf{Read (ms)} & \textbf{Read speedup} & \textbf{Write (ms)} \\
+\midrule
+6  & 72.745M & 98.29 & $0.91$ $[0.49,1.39]$ & 40.38 & 830.3 & $1.166\times$ & 133.4 \\
+9  & 65.470M & 97.55 & $1.65$ $[1.04,2.31]$ & 39.02 & 748.3 & $1.273\times$ & 196.9 \\
+12 & 58.196M & 96.07 & $3.12$ $[2.36,3.93]$ & 38.27 & 664.4 & $1.403\times$ & --- \\
+18 & 43.647M & 55.41 & $43.79$ $[41.77,45.85]$ & 28.65 & 499.5 & $1.807\times$ & 390.3 \\
+\bottomrule
+\end{tabular}
+\caption{Multi-depth deployment curve. Each split has a separately trained rank-32
+adapter on layers $[j{:}36)$ under the same data order, seed, steps, optimizer,
+and KL recipe. RULER uses Cohort B ($n{=}1{,}500$ paired examples); gap CIs are
+paired bootstrap intervals against full replay with that depth's adapter, and
+all McNemar tests reject equality ($p\leq3.05\times10^{-5}$). LoCoMo reports the
+full-set GPT-4o judge point estimate ($n{=}1{,}986$). Read/Write use a fixed 16k
+same-pack input and three process medians; retrieval, I/O, and decode are
+excluded, and total latency remains decode-dominated. The matched fixed-pack
+Write value was not retained for the earlier $j{=}12$ artifact. Adapter spans
+and parameter counts differ, so this is not a training-compute-matched depth
+ablation.}
+\label{tab:distilled-depth-curve}
+\end{table*}

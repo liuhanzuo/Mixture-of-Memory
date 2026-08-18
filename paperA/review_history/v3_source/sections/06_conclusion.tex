@@ -1,0 +1,16 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+CoMem makes transformer depth an explicit cross-query reuse axis: contexts are
+written to intermediate residuals, a bounded set is selected per query, and only
+the upper layers are resumed. The resulting benefit is a frontier, not a free
+compression. On a matched evidence pack, depth reuse speeds model Read by
+$1.403\times$ while costing 3.12 RULER points; its one-time Write amortizes only
+after repeated queries. Much larger full-context speedups arise when this
+depth reuse is combined with bounded selection. On a paired multikey
+diagnostic, controlled Write variants show that missing lower-layer document
+context is a major source of fidelity loss: a small overlap restores most of
+that gap without enlarging persistent storage or per-query Read. At equal online latency, however, raw-text replay
+still wins on our mixed diagnostic cohort. These results establish persistent
+intermediate residuals as a useful systems design point and identify contextual
+writing as a promising interface direction for future memory systems.

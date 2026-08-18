@@ -1,0 +1,43 @@
+\section{Depth-Dependent Correlates of Recovery}
+\label{sec:observation}
+
+\subsection{Likelihood and capability are different observables}
+Perplexity aggregates token-level negative log-likelihood over a corpus. A
+knowledge-sensitive task instead asks whether a particular answer can be
+selected or generated under a task interface. Healing can therefore improve the
+former without changing the latter at the same rate. This is not a claim that
+perplexity is uninformative; it is a claim that improvement alone need not imply
+recovery of every behavior after a structural intervention.
+
+\subsection{Readability changes across depth}
+\input{sections/tab_mechanism}
+
+On the intact OLMo-2-7B model, a final-head logit lens keeps MMLU answer letters
+near chance through layer 17 and rises sharply at layers 18--19. Frozen semantic
+classifiers become readable much earlier, while exact next-token agreement with
+the final layer saturates only at the top. Figure~\ref{fig:twodepths} summarizes
+this probe-dependent ordering.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_two_depths.pdf}
+\caption{\textbf{Probe-dependent readout depths on OLMo-2-7B.} The shaded band
+marks prefix cuts used by the available behavioral frontier. Thresholds use
+different readouts and are descriptive; they are neither directly comparable
+causal boundaries nor locations of stored knowledge.}
+\label{fig:twodepths}
+\end{figure}
+
+These probe-dependent readout depths are descriptive correlates, not causal
+boundaries. They motivate measuring recovery at multiple behavioral levels
+rather than assuming a single depth threshold, but they do not predict which
+capabilities will return after pruning.
+
+\subsection{Implications for interpreting recovery}
+The observations clarify three choices in the preceding study design. First,
+recovery is tracked along training because a single endpoint cannot distinguish
+delayed from absent change. Second, answer-letter and complete-option scoring are
+reported separately because they mix competence and readout differently. Third,
+pruning policy is varied because preserving selected upper blocks can change the
+result even at the same final depth. These are interpretation requirements, not
+a causal theory of where capability resides.

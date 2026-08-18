@@ -1,0 +1,1530 @@
+\relax 
+\bibstyle{acl_natbib}
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand*\HyPL@Entry[1]{}
+\citation{rag,xu2024retrievallong}
+\citation{cacheblend,turborag,epic,cachecraft,kvpacket}
+\HyPL@Entry{0<</S/D>>}
+\def\@LN@column{1}
+\@LN{0}{0}
+\@LN{1}{0}
+\@LN{2}{0}
+\@LN{3}{0}
+\@LN{4}{0}
+\@LN{5}{0}
+\@LN{6}{0}
+\@LN{7}{0}
+\@LN{8}{0}
+\@LN{9}{0}
+\@LN{10}{0}
+\@LN{11}{0}
+\@LN{12}{0}
+\@LN{13}{0}
+\@LN{14}{0}
+\@LN{15}{0}
+\@LN{16}{0}
+\@LN{17}{0}
+\@LN{18}{0}
+\@LN{19}{0}
+\@LN{20}{0}
+\@LN{21}{0}
+\@LN{22}{0}
+\@LN{23}{0}
+\@LN{24}{0}
+\@LN{25}{0}
+\@LN{26}{0}
+\@LN{27}{0}
+\@LN{28}{0}
+\@LN{29}{0}
+\@LN{30}{0}
+\@LN{31}{0}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
+\@LN{32}{0}
+\@LN{33}{0}
+\@LN{34}{0}
+\@LN{35}{0}
+\@LN{36}{0}
+\@LN{37}{0}
+\@LN{38}{0}
+\@LN{39}{0}
+\@LN{40}{0}
+\@LN{41}{0}
+\def\@LN@column{2}
+\@LN{42}{0}
+\@LN{43}{0}
+\@writefile{toc}{\contentsline {paragraph}{Workload contract.}{1}{section*.2}\protected@file@percent }
+\@LN{44}{0}
+\@LN{45}{0}
+\@LN{46}{0}
+\@LN{47}{0}
+\@LN{48}{0}
+\@LN{49}{0}
+\@LN{50}{0}
+\@LN{51}{0}
+\@LN{52}{0}
+\@LN{53}{0}
+\@LN{54}{0}
+\@LN{55}{0}
+\@LN{56}{0}
+\@LN{57}{0}
+\@LN{58}{0}
+\@LN{59}{0}
+\@LN{60}{0}
+\@LN{61}{0}
+\@LN{62}{0}
+\@LN{63}{0}
+\@LN{64}{0}
+\@LN{65}{0}
+\@LN{66}{0}
+\@LN{67}{0}
+\@LN{68}{0}
+\@LN{69}{0}
+\@LN{70}{0}
+\@LN{71}{0}
+\@LN{72}{0}
+\@LN{73}{0}
+\@LN{74}{0}
+\@LN{75}{0}
+\@LN{76}{0}
+\@LN{77}{0}
+\@LN{78}{0}
+\@LN{79}{0}
+\@LN{80}{0}
+\@LN{81}{0}
+\citation{rag}
+\citation{cacheblend,turborag,cachecraft}
+\citation{epic,mepic,ape}
+\citation{kvpacket,cartridgesbase,sempic}
+\citation{hcache,kvdirect}
+\citation{cacheblend,turborag,ragcache,cachecraft}
+\citation{epic,mepic,ape}
+\citation{fusionrag}
+\citation{kvpacket,cartridgesbase}
+\citation{cartridges,sempic}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {CoMem treats transformer depth as a cross-query reuse axis.} \textsc  {Write} stores one intermediate residual per token, \textsc  {Select} retrieves a fixed working set, and \textsc  {Read} resumes the upper layers with the query present. The matched $j{=}0$ path retrieves the same chunks, order, sink, and mask as raw text but recomputes every layer. The reported $1.403\times $ is this matched depth effect; larger dense-to-bounded speedups also include selection. A small left-overlap is evaluated as a focused repair for missing lower-layer document context.}}{2}{figure.caption.1}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:teaser}{{1}{2}{\textbf {CoMem treats transformer depth as a cross-query reuse axis.} \textsc {Write} stores one intermediate residual per token, \textsc {Select} retrieves a fixed working set, and \textsc {Read} resumes the upper layers with the query present. The matched $j{=}0$ path retrieves the same chunks, order, sink, and mask as raw text but recomputes every layer. The reported $1.403\times $ is this matched depth effect; larger dense-to-bounded speedups also include selection. A small left-overlap is evaluated as a focused repair for missing lower-layer document context}{figure.caption.1}{}}
+\def\@LN@column{1}
+\@LN{82}{1}
+\@LN{83}{1}
+\@LN{84}{1}
+\@LN{85}{1}
+\@LN{86}{1}
+\@LN{87}{1}
+\@LN{88}{1}
+\@LN{89}{1}
+\@LN{90}{1}
+\@LN{91}{1}
+\@LN{92}{1}
+\@LN{93}{1}
+\@LN{94}{1}
+\@LN{95}{1}
+\@LN{96}{1}
+\@LN{97}{1}
+\@LN{98}{1}
+\@LN{99}{1}
+\@LN{100}{1}
+\@LN{101}{1}
+\@LN{102}{1}
+\@LN{103}{1}
+\@writefile{toc}{\contentsline {paragraph}{Contributions.}{2}{section*.3}\protected@file@percent }
+\@LN{104}{1}
+\@LN{105}{1}
+\@LN{106}{1}
+\@LN{107}{1}
+\def\@LN@column{2}
+\@LN{108}{1}
+\@LN{109}{1}
+\@LN{110}{1}
+\@LN{111}{1}
+\@LN{112}{1}
+\@LN{113}{1}
+\@LN{114}{1}
+\@LN{115}{1}
+\@LN{116}{1}
+\@LN{117}{1}
+\@LN{118}{1}
+\@LN{119}{1}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{2}{2}{Related Work}{section.2}{}}
+\@LN{120}{1}
+\@LN{121}{1}
+\@LN{122}{1}
+\@writefile{toc}{\contentsline {paragraph}{PIC and modular document caches.}{2}{section*.5}\protected@file@percent }
+\@LN{123}{1}
+\@LN{124}{1}
+\@LN{125}{1}
+\@LN{126}{1}
+\@LN{127}{1}
+\@LN{128}{1}
+\@LN{129}{1}
+\@LN{130}{1}
+\@LN{131}{1}
+\citation{readonce,embeddingrecycling}
+\citation{hcache,kvdirect,ilre,reform}
+\citation{gemfilter}
+\citation{streamingllm,h2o,snapkv,pyramidkv,minicache}
+\citation{memoryllm,longmem,xccache}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces \textbf  {Positioning among reusable-context interfaces.} This taxonomy does not rank systems: the cited methods differ in backbone, training, workload, hardware, storage tier, and timing boundary. CoMem's specific object is one residual per token at a tunable depth; the empirical claim in this paper is the matched $j{=}0$ versus $j{=}12$ endpoint, not superiority over these families.}}{3}{table.caption.4}\protected@file@percent }
+\newlabel{tab:priorart}{{1}{3}{\textbf {Positioning among reusable-context interfaces.} This taxonomy does not rank systems: the cited methods differ in backbone, training, workload, hardware, storage tier, and timing boundary. CoMem's specific object is one residual per token at a tunable depth; the empirical claim in this paper is the matched $j{=}0$ versus $j{=}12$ endpoint, not superiority over these families}{table.caption.4}{}}
+\def\@LN@column{1}
+\@LN{132}{2}
+\@LN{133}{2}
+\@LN{134}{2}
+\@LN{135}{2}
+\@LN{136}{2}
+\@LN{137}{2}
+\@LN{138}{2}
+\@LN{139}{2}
+\@LN{140}{2}
+\@LN{141}{2}
+\@LN{142}{2}
+\@LN{143}{2}
+\@LN{144}{2}
+\@LN{145}{2}
+\@LN{146}{2}
+\@LN{147}{2}
+\@LN{148}{2}
+\@LN{149}{2}
+\@LN{150}{2}
+\@LN{151}{2}
+\@LN{152}{2}
+\@LN{153}{2}
+\@writefile{toc}{\contentsline {paragraph}{Intermediate-state reuse and token reduction.}{3}{section*.6}\protected@file@percent }
+\@LN{154}{2}
+\@LN{155}{2}
+\@LN{156}{2}
+\@LN{157}{2}
+\@LN{158}{2}
+\@LN{159}{2}
+\@LN{160}{2}
+\@LN{161}{2}
+\@LN{162}{2}
+\@LN{163}{2}
+\@LN{164}{2}
+\@LN{165}{2}
+\@LN{166}{2}
+\@LN{167}{2}
+\@LN{168}{2}
+\@LN{169}{2}
+\@LN{170}{2}
+\@LN{171}{2}
+\def\@LN@column{2}
+\@writefile{toc}{\contentsline {paragraph}{External memory and the matched endpoint.}{3}{section*.7}\protected@file@percent }
+\@LN{172}{2}
+\@LN{173}{2}
+\@LN{174}{2}
+\@LN{175}{2}
+\@LN{176}{2}
+\@LN{177}{2}
+\@LN{178}{2}
+\@LN{179}{2}
+\@LN{180}{2}
+\@LN{181}{2}
+\@LN{182}{2}
+\@LN{183}{2}
+\@writefile{toc}{\contentsline {paragraph}{Scope of the contribution.}{3}{section*.8}\protected@file@percent }
+\@LN{184}{2}
+\@LN{185}{2}
+\@LN{186}{2}
+\@LN{187}{2}
+\@LN{188}{2}
+\@LN{189}{2}
+\@LN{190}{2}
+\@LN{191}{2}
+\@LN{192}{2}
+\@LN{193}{2}
+\@LN{194}{2}
+\@LN{195}{2}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Why Reuse Model Depth?}{3}{section.3}\protected@file@percent }
+\newlabel{sec:motivation}{{3}{3}{Why Reuse Model Depth?}{section.3}{}}
+\@LN{196}{2}
+\@LN{197}{2}
+\@LN{198}{2}
+\@LN{199}{2}
+\@LN{200}{2}
+\@LN{201}{2}
+\@LN{202}{2}
+\@LN{203}{2}
+\@LN{204}{2}
+\@LN{205}{2}
+\@LN{206}{2}
+\@LN{207}{2}
+\@LN{208}{2}
+\@LN{209}{2}
+\@LN{210}{2}
+\@LN{211}{2}
+\citation{distillation,lora}
+\citation{pg19}
+\citation{bm25}
+\def\@LN@column{1}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {Intermediate accessibility motivates, but does not validate, depth reuse.} Frozen probes become informative before native LM-head readout, but both measures are protocol-dependent; definitions and controls are in Appendix~\ref {app:ablations}.}}{4}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:depth}{{2}{4}{\textbf {Intermediate accessibility motivates, but does not validate, depth reuse.} Frozen probes become informative before native LM-head readout, but both measures are protocol-dependent; definitions and controls are in Appendix~\ref {app:ablations}}{figure.caption.9}{}}
+\@LN{212}{3}
+\@LN{213}{3}
+\@LN{214}{3}
+\@LN{215}{3}
+\@LN{216}{3}
+\@LN{217}{3}
+\@LN{218}{3}
+\@LN{219}{3}
+\@LN{220}{3}
+\@LN{221}{3}
+\@LN{222}{3}
+\@LN{223}{3}
+\@writefile{toc}{\contentsline {section}{\numberline {4}CoMem}{4}{section.4}\protected@file@percent }
+\newlabel{sec:method}{{4}{4}{CoMem}{section.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{Interface.}{4}{section*.10}\protected@file@percent }
+\@LN{224}{3}
+\@LN{225}{3}
+\@LN{226}{3}
+\@LN{227}{3}
+\@LN{228}{3}
+\@LN{229}{3}
+\@LN{230}{3}
+\@LN{231}{3}
+\@LN{232}{3}
+\@LN{233}{3}
+\@LN{234}{3}
+\@LN{235}{3}
+\@writefile{toc}{\contentsline {paragraph}{Storage and bounded model work.}{4}{section*.11}\protected@file@percent }
+\@LN{236}{3}
+\@LN{237}{3}
+\@LN{238}{3}
+\@LN{239}{3}
+\newlabel{eq:store}{{1}{4}{Storage and bounded model work}{equation.1}{}}
+\@LN{240}{3}
+\@LN{241}{3}
+\@LN{242}{3}
+\@LN{243}{3}
+\@LN{244}{3}
+\def\@LN@column{2}
+\@LN{245}{3}
+\@LN{246}{3}
+\@LN{247}{3}
+\@LN{248}{3}
+\@writefile{toc}{\contentsline {paragraph}{Overlap-Write.}{4}{section*.12}\protected@file@percent }
+\@LN{249}{3}
+\@LN{250}{3}
+\@LN{251}{3}
+\@LN{252}{3}
+\@LN{253}{3}
+\@LN{254}{3}
+\@LN{255}{3}
+\@LN{256}{3}
+\@LN{257}{3}
+\@writefile{toc}{\contentsline {paragraph}{Self-distillation.}{4}{section*.13}\protected@file@percent }
+\@LN{258}{3}
+\@LN{259}{3}
+\@LN{260}{3}
+\@LN{261}{3}
+\@LN{262}{3}
+\@LN{263}{3}
+\@LN{264}{3}
+\@LN{265}{3}
+\@LN{266}{3}
+\@LN{267}{3}
+\@LN{268}{3}
+\@LN{269}{3}
+\@LN{270}{3}
+\@LN{271}{3}
+\@LN{272}{3}
+\@LN{273}{3}
+\@LN{274}{3}
+\newlabel{eq:distill}{{2}{4}{Self-distillation}{equation.2}{}}
+\@LN{275}{3}
+\@LN{276}{3}
+\@LN{277}{3}
+\@LN{278}{3}
+\@LN{279}{3}
+\@LN{280}{3}
+\@LN{281}{3}
+\@LN{282}{3}
+\@LN{283}{3}
+\@LN{284}{3}
+\@writefile{toc}{\contentsline {paragraph}{Selection and generation.}{4}{section*.14}\protected@file@percent }
+\@LN{285}{3}
+\@LN{286}{3}
+\@LN{287}{3}
+\@LN{288}{3}
+\@LN{289}{3}
+\@LN{290}{3}
+\@LN{291}{3}
+\@LN{292}{3}
+\citation{qwen3}
+\citation{ruler}
+\citation{babilong}
+\citation{longchat}
+\citation{longbench}
+\citation{locomo}
+\def\@LN@column{1}
+\@LN{293}{4}
+\@LN{294}{4}
+\@LN{295}{4}
+\@LN{296}{4}
+\@LN{297}{4}
+\@LN{298}{4}
+\@LN{299}{4}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Experiments}{5}{section.5}\protected@file@percent }
+\newlabel{sec:experiments}{{5}{5}{Experiments}{section.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{Setup.}{5}{section*.15}\protected@file@percent }
+\@LN{300}{4}
+\@LN{301}{4}
+\@LN{302}{4}
+\@LN{303}{4}
+\@LN{304}{4}
+\@LN{305}{4}
+\@LN{306}{4}
+\@LN{307}{4}
+\@LN{308}{4}
+\@LN{309}{4}
+\@LN{310}{4}
+\@LN{311}{4}
+\@LN{312}{4}
+\@LN{313}{4}
+\@LN{314}{4}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Matched depth reuse}{5}{subsection.5.1}\protected@file@percent }
+\@LN{315}{4}
+\@LN{316}{4}
+\@LN{317}{4}
+\@LN{318}{4}
+\@LN{319}{4}
+\@LN{320}{4}
+\@LN{321}{4}
+\@LN{322}{4}
+\@LN{323}{4}
+\@LN{324}{4}
+\@LN{325}{4}
+\@LN{326}{4}
+\@LN{327}{4}
+\@LN{328}{4}
+\@LN{329}{4}
+\@LN{330}{4}
+\@LN{331}{4}
+\@LN{332}{4}
+\@LN{333}{4}
+\@LN{334}{4}
+\@LN{335}{4}
+\@LN{336}{4}
+\@LN{337}{4}
+\@LN{338}{4}
+\@LN{339}{4}
+\@LN{340}{4}
+\@LN{341}{4}
+\def\@LN@column{2}
+\@LN{342}{4}
+\@LN{343}{4}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Amortization and equal-latency boundaries}{5}{subsection.5.2}\protected@file@percent }
+\@LN{344}{4}
+\@LN{345}{4}
+\@LN{346}{4}
+\@LN{347}{4}
+\@LN{348}{4}
+\@LN{349}{4}
+\@LN{350}{4}
+\@LN{351}{4}
+\@LN{352}{4}
+\@LN{353}{4}
+\@LN{354}{4}
+\@LN{355}{4}
+\@LN{356}{4}
+\@LN{357}{4}
+\@LN{358}{4}
+\@LN{359}{4}
+\@LN{360}{4}
+\@LN{361}{4}
+\@LN{362}{4}
+\@LN{363}{4}
+\@LN{364}{4}
+\@LN{365}{4}
+\@LN{366}{4}
+\@LN{367}{4}
+\@LN{368}{4}
+\@LN{369}{4}
+\@LN{370}{4}
+\@LN{371}{4}
+\@LN{372}{4}
+\@LN{373}{4}
+\@LN{374}{4}
+\@LN{375}{4}
+\@LN{376}{4}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Bounded diagnosis}{5}{subsection.5.3}\protected@file@percent }
+\@LN{377}{4}
+\@LN{378}{4}
+\@LN{379}{4}
+\@LN{380}{4}
+\@LN{381}{4}
+\@LN{382}{4}
+\@LN{383}{4}
+\@LN{384}{4}
+\@LN{385}{4}
+\@LN{386}{4}
+\@LN{387}{4}
+\@LN{388}{4}
+\@LN{389}{4}
+\@LN{390}{4}
+\@LN{391}{4}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces \textbf  {The central result is a matched depth-reuse endpoint, not a cross-system ranking.} Quality uses the paired 15-cell RULER-B cohort ($n{=}1{,}500$); the $j{=}0$--$j{=}12$ gap is 3.12 points with paired-bootstrap 95\% CI $[2.36,3.93]$. Read latency uses the same LoRA and a fixed selected pack (mean approximately 6.5k tokens; nominal cap 6,657) from 16k source contexts (three process medians); retrieval, persistent I/O, reusable Write, and decode are excluded. The continuous-prefix control supplies layer-12 states from a single causal lower-layer forward and exactly matches raw-text replay, showing that upper-layer continuation can be faithful with compatible states. The control jointly restores document, cross-chunk, and query-side lower-layer interaction, so it is a fidelity ceiling rather than a single-factor attribution.}}{6}{table.caption.16}\protected@file@percent }
+\newlabel{tab:core-tradeoff}{{2}{6}{\textbf {The central result is a matched depth-reuse endpoint, not a cross-system ranking.} Quality uses the paired 15-cell RULER-B cohort ($n{=}1{,}500$); the $j{=}0$--$j{=}12$ gap is 3.12 points with paired-bootstrap 95\% CI $[2.36,3.93]$. Read latency uses the same LoRA and a fixed selected pack (mean approximately 6.5k tokens; nominal cap 6,657) from 16k source contexts (three process medians); retrieval, persistent I/O, reusable Write, and decode are excluded. The continuous-prefix control supplies layer-12 states from a single causal lower-layer forward and exactly matches raw-text replay, showing that upper-layer continuation can be faithful with compatible states. The control jointly restores document, cross-chunk, and query-side lower-layer interaction, so it is a fidelity ceiling rather than a single-factor attribution}{table.caption.16}{}}
+\def\@LN@column{1}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces \textbf  {Measured repeated-query break-even $Q^\star $.} $G$ is generated tokens; a cell is the number of queries after which cumulative CoMem time is lower than matched $j{=}0$ raw-text replay. Both arms share selection, example, and pack; selection cancels in $Q^\star =(W_{\mathrm  {CoMem}}-I_{j=0})/ (T_{j=0}-T_{\mathrm  {CoMem}})$. The 32k CPU cell uses $W_{\mathrm  {CoMem}}{=}2.253$\,s and a 2.16\,ms raw-token index build. Values derive from three process medians and include store fetch, model Read, and decode; raw component times and dispersion are archived. At 128k, only $G{=}1$ is retained, so no generation-length trend is claimed there. ``---'' denotes an unavailable or non-finite retained cell.}}{6}{table.caption.17}\protected@file@percent }
+\newlabel{tab:serving-crossover}{{3}{6}{\textbf {Measured repeated-query break-even $Q^\star $.} $G$ is generated tokens; a cell is the number of queries after which cumulative CoMem time is lower than matched $j{=}0$ raw-text replay. Both arms share selection, example, and pack; selection cancels in $Q^\star =(W_{\mathrm {CoMem}}-I_{j=0})/ (T_{j=0}-T_{\mathrm {CoMem}})$. The 32k CPU cell uses $W_{\mathrm {CoMem}}{=}2.253$\,s and a 2.16\,ms raw-token index build. Values derive from three process medians and include store fetch, model Read, and decode; raw component times and dispersion are archived. At 128k, only $G{=}1$ is retained, so no generation-length trend is claimed there. ``---'' denotes an unavailable or non-finite retained cell}{table.caption.17}{}}
+\@LN{392}{5}
+\@LN{393}{5}
+\@writefile{toc}{\contentsline {paragraph}{Secondary scope checks.}{6}{section*.21}\protected@file@percent }
+\@LN{394}{5}
+\@LN{395}{5}
+\@LN{396}{5}
+\@LN{397}{5}
+\@LN{398}{5}
+\@LN{399}{5}
+\@LN{400}{5}
+\@LN{401}{5}
+\@LN{402}{5}
+\def\@LN@column{2}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces \textbf  {Equal-latency quality is selector-dependent; CoMem does not win either aggregate.} The latency-only calibration freezes replay budget 10 against CoMem budget 12 within a predeclared $\pm 5\%$ band. Quality is the equal-weight mean of nine task--length cells ($n{=}100$ each), and $\Delta $ is CoMem minus replay. ``Hier.'' first resamples nine cells with replacement and then resamples the 100 paired examples within each selected cell (100,000 replicates, deterministic seeds). LOCO drops one cell and averages the other eight. The original pooled-IID intervals remain only as sensitivity: $[-14.44,-8.67]$ (BM25) and $[-4.67,2.67]$ (BGE). The first 100 LoCoMo items are all conversation 0, so conversation-cluster resampling is not identifiable. Appendix Table~\ref {tab:equal-latency-protocol} gives protocol, per-cell differences, and the fixed-cell stratified bootstrap.}}{6}{table.caption.18}\protected@file@percent }
+\newlabel{tab:equal-latency}{{4}{6}{\textbf {Equal-latency quality is selector-dependent; CoMem does not win either aggregate.} The latency-only calibration freezes replay budget 10 against CoMem budget 12 within a predeclared $\pm 5\%$ band. Quality is the equal-weight mean of nine task--length cells ($n{=}100$ each), and $\Delta $ is CoMem minus replay. ``Hier.'' first resamples nine cells with replacement and then resamples the 100 paired examples within each selected cell (100,000 replicates, deterministic seeds). LOCO drops one cell and averages the other eight. The original pooled-IID intervals remain only as sensitivity: $[-14.44,-8.67]$ (BM25) and $[-4.67,2.67]$ (BGE). The first 100 LoCoMo items are all conversation 0, so conversation-cluster resampling is not identifiable. Appendix Table~\ref {tab:equal-latency-protocol} gives protocol, per-cell differences, and the fixed-cell stratified bootstrap}{table.caption.18}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces \textbf  {Bounded context-scope $\times $ Read-position diagnosis.} Paired Qwen3-8B multikey macro over 8k/16k ($n{=}200$), with identical retrieval, LoRA, and upper-layer Read. Document context adds 7.5 points with local Read positions and 12.0 with document-origin positions; changing position alone lowers the chunk-local writer by 4.5 points. The $+4.5$ interaction means the factors are not additive. This attribution is limited to the displayed cohort.}}{6}{table.caption.19}\protected@file@percent }
+\newlabel{tab:context-position}{{5}{6}{\textbf {Bounded context-scope $\times $ Read-position diagnosis.} Paired Qwen3-8B multikey macro over 8k/16k ($n{=}200$), with identical retrieval, LoRA, and upper-layer Read. Document context adds 7.5 points with local Read positions and 12.0 with document-origin positions; changing position alone lowers the chunk-local writer by 4.5 points. The $+4.5$ interaction means the factors are not additive. This attribution is limited to the displayed cohort}{table.caption.19}{}}
+\def\@LN@column{1}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces \textbf  {Lower-layer context is a focused repair, not a new headline result.} Paired Qwen3-8B results on RULER \texttt  {niah\_multikey\_1} at 8k and 16k ($n{=}200$ pooled). Every overlap width significantly exceeds the chunk-local writer; for $w{=}32$, the gain is $+6.0$ points, 95\% CI $[3.0,9.5]$. Persistent storage and Read/decode are identical across deployable rows. FLOPs are theoretical lower-12 Write ratios; measured wall-clock overhead is larger because of chunk-level execution. No natural-task overlap result is claimed.}}{7}{table.caption.20}\protected@file@percent }
+\newlabel{tab:write-context}{{6}{7}{\textbf {Lower-layer context is a focused repair, not a new headline result.} Paired Qwen3-8B results on RULER \texttt {niah\_multikey\_1} at 8k and 16k ($n{=}200$ pooled). Every overlap width significantly exceeds the chunk-local writer; for $w{=}32$, the gain is $+6.0$ points, 95\% CI $[3.0,9.5]$. Persistent storage and Read/decode are identical across deployable rows. FLOPs are theoretical lower-12 Write ratios; measured wall-clock overhead is larger because of chunk-level execution. No natural-task overlap result is claimed}{table.caption.20}{}}
+\@LN{403}{6}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion}{7}{section.6}\protected@file@percent }
+\newlabel{sec:conclusion}{{6}{7}{Conclusion}{section.6}{}}
+\@LN{404}{6}
+\@LN{405}{6}
+\@LN{406}{6}
+\@LN{407}{6}
+\@LN{408}{6}
+\@LN{409}{6}
+\@LN{410}{6}
+\@LN{411}{6}
+\@LN{412}{6}
+\@LN{413}{6}
+\@LN{414}{6}
+\@LN{415}{6}
+\@LN{416}{6}
+\@LN{417}{6}
+\@LN{418}{6}
+\@LN{419}{6}
+\@LN{420}{6}
+\@LN{421}{6}
+\@LN{422}{6}
+\@LN{423}{6}
+\@LN{424}{6}
+\@LN{425}{6}
+\@LN{426}{6}
+\@LN{427}{6}
+\@LN{428}{6}
+\@LN{429}{6}
+\newlabel{sec:limitations}{{6}{7}{Limitations}{section*.22}{}}
+\@LN{430}{6}
+\@LN{431}{6}
+\@LN{432}{6}
+\@LN{433}{6}
+\@LN{434}{6}
+\@LN{435}{6}
+\@LN{436}{6}
+\def\@LN@column{2}
+\@LN{437}{6}
+\@LN{438}{6}
+\@LN{439}{6}
+\@LN{440}{6}
+\@LN{441}{6}
+\@LN{442}{6}
+\@LN{443}{6}
+\@LN{444}{6}
+\@LN{445}{6}
+\@LN{446}{6}
+\@LN{447}{6}
+\@LN{448}{6}
+\@LN{449}{6}
+\@LN{450}{6}
+\@LN{451}{6}
+\@LN{452}{6}
+\@LN{453}{6}
+\@LN{454}{6}
+\@LN{455}{6}
+\@LN{456}{6}
+\@LN{457}{6}
+\@LN{458}{6}
+\@LN{459}{6}
+\@LN{460}{6}
+\@LN{461}{6}
+\@LN{462}{6}
+\@LN{463}{6}
+\@LN{464}{6}
+\@LN{465}{6}
+\@LN{466}{6}
+\@LN{467}{6}
+\@LN{468}{6}
+\@LN{469}{6}
+\@LN{470}{6}
+\@LN{471}{6}
+\@LN{472}{6}
+\@LN{473}{6}
+\@LN{474}{6}
+\@LN{475}{6}
+\@LN{476}{6}
+\@LN{477}{6}
+\@LN{478}{6}
+\@LN{479}{6}
+\@LN{480}{6}
+\@LN{481}{6}
+\@LN{482}{6}
+\@LN{483}{6}
+\@LN{484}{6}
+\@LN{485}{6}
+\@LN{486}{6}
+\@LN{487}{6}
+\@LN{488}{6}
+\bibdata{qcmem}
+\bibcite{cachecraft}{{1}{2025}{{Agarwal et~al.}}{{Agarwal, Sundaresan, Mitra, Mahapatra, Gupta, Sharma, Kapu, Yu, and Saini}}}
+\bibcite{longbench}{{2}{2024}{{Bai et~al.}}{{Bai, Lv, Zhang, Lyu, Tang, Huang, Du, Liu, Zeng, Hou, Dong, Tang, and Li}}}
+\bibcite{pyramidkv}{{3}{2025}{{Cai et~al.}}{{Cai, Zhang, Gao, Liu, Liu, Lu, Xiong, Dong, Chang, Hu, and Xiao}}}
+\bibcite{kvpacket}{{4}{2026}{{Chen et~al.}}{{Chen, Zhang, Yin, Zhuo, Li, and Schlichtmann}}}
+\bibcite{cartridgesbase}{{5}{2026}{{Eyuboglu et~al.}}{{Eyuboglu, Ehrlich, Arora, Guha, Zinsley, Liu, Rudra, Zou, Mirhoseini, and R{\'e}}}}
+\def\@LN@column{1}
+\@LN{489}{7}
+\@LN{490}{7}
+\@LN{491}{7}
+\@LN{492}{7}
+\@LN{493}{7}
+\@LN{494}{7}
+\@LN{495}{7}
+\@LN{496}{7}
+\@LN{497}{7}
+\@LN{498}{7}
+\@LN{499}{7}
+\@LN{500}{7}
+\@LN{501}{7}
+\@LN{502}{7}
+\@LN{503}{7}
+\@LN{504}{7}
+\@LN{505}{7}
+\@LN{506}{7}
+\@LN{507}{7}
+\@LN{508}{7}
+\@LN{509}{7}
+\@LN{510}{7}
+\@LN{511}{7}
+\@LN{512}{7}
+\@LN{513}{7}
+\@LN{514}{7}
+\@LN{515}{7}
+\@LN{516}{7}
+\@LN{517}{7}
+\@LN{518}{7}
+\@LN{519}{7}
+\@LN{520}{7}
+\@LN{521}{7}
+\@LN{522}{7}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Ethical Considerations}{8}{section.7}\protected@file@percent }
+\newlabel{sec:ethics}{{7}{8}{Ethical Considerations}{section.7}{}}
+\@LN{523}{7}
+\@LN{524}{7}
+\@LN{525}{7}
+\@LN{526}{7}
+\@LN{527}{7}
+\@LN{528}{7}
+\@LN{529}{7}
+\@LN{530}{7}
+\@LN{531}{7}
+\@LN{532}{7}
+\@LN{533}{7}
+\@LN{534}{7}
+\@LN{535}{7}
+\@LN{536}{7}
+\@LN{537}{7}
+\@LN{538}{7}
+\def\@LN@column{2}
+\@LN{539}{7}
+\@LN{540}{7}
+\@LN{541}{7}
+\@LN{542}{7}
+\@LN{543}{7}
+\@LN{544}{7}
+\@LN{545}{7}
+\@LN{546}{7}
+\@LN{547}{7}
+\@LN{548}{7}
+\@LN{549}{7}
+\@LN{550}{7}
+\@LN{551}{7}
+\@LN{552}{7}
+\@LN{553}{7}
+\@LN{554}{7}
+\@LN{555}{7}
+\@LN{556}{7}
+\@LN{557}{7}
+\@LN{558}{7}
+\@LN{559}{7}
+\@LN{560}{7}
+\@LN{561}{7}
+\@LN{562}{7}
+\@LN{563}{7}
+\@LN{564}{7}
+\@LN{565}{7}
+\@LN{566}{7}
+\@LN{567}{7}
+\@LN{568}{7}
+\@LN{569}{7}
+\@LN{570}{7}
+\@LN{571}{7}
+\@LN{572}{7}
+\@LN{573}{7}
+\@LN{574}{7}
+\@LN{575}{7}
+\@LN{576}{7}
+\@LN{577}{7}
+\@LN{578}{7}
+\@LN{579}{7}
+\@LN{580}{7}
+\@LN{581}{7}
+\@LN{582}{7}
+\@LN{583}{7}
+\@LN{584}{7}
+\@LN{585}{7}
+\@LN{586}{7}
+\@LN{587}{7}
+\@LN{588}{7}
+\@LN{589}{7}
+\@LN{590}{7}
+\@LN{591}{7}
+\bibcite{hcache}{{6}{2025}{{Gao et~al.}}{{Gao, Chen, and Shu}}}
+\bibcite{llama3}{{7}{2024}{{Grattafiori et~al.}}{{}}}
+\bibcite{cartridges}{{8}{2026}{{Hardalov et~al.}}{{Hardalov, Iglesias, and de~Gispert}}}
+\bibcite{distillation}{{9}{2015}{{Hinton et~al.}}{{Hinton, Vinyals, and Dean}}}
+\bibcite{ruler}{{10}{2024}{{Hsieh et~al.}}{{Hsieh, Sun, Kriman, Acharya, Rekesh, Jia, Zhang, and Ginsburg}}}
+\bibcite{lora}{{11}{2022}{{Hu et~al.}}{{Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, and Chen}}}
+\bibcite{epic}{{12}{2025}{{Hu et~al.}}{{Hu, Huang, Wang, Wang, Hu, Zhang, Feng, Chen, Shan, and Xie}}}
+\bibcite{ragcache}{{13}{2025}{{Jin et~al.}}{{Jin, Zhang, Jiang, Liu, Liu, Liu, and Jin}}}
+\bibcite{babilong}{{14}{2024}{{Kuratov et~al.}}{{Kuratov, Bulatov, Anokhin, Rodkin, Sorokin, Sorokin, and Burtsev}}}
+\bibcite{rag}{{15}{2020}{{Lewis et~al.}}{{Lewis, Perez, Piktus, Petroni, Karpukhin, Goyal, Kuettler, Lewis, Yih, Rocktaschel, Riedel, and Kiela}}}
+\bibcite{longchat}{{16}{2023}{{Li et~al.}}{{Li, Shao, Xie, Sheng, Zheng, Gonzalez, Stoica, Ma, and Zhang}}}
+\bibcite{snapkv}{{17}{2024}{{Li et~al.}}{{Li, Huang, Yang, Venkitesh, Locatelli, Ye, Cai, Lewis, and Chen}}}
+\bibcite{ilre}{{18}{2025}{{Liang et~al.}}{{Liang, Liu, Ji, Li, Yang, He, and Li}}}
+\bibcite{readonce}{{19}{2021}{{Lin et~al.}}{{Lin, Sabharwal, and Khot}}}
+\bibcite{minicache}{{20}{2024}{{Liu et~al.}}{{Liu, Liu, Pan, He, Haffari, and Zhuang}}}
+\bibcite{turborag}{{21}{2025}{{Lu et~al.}}{{Lu, Wang, Rong, Chen, and Tang}}}
+\bibcite{locomo}{{22}{2024}{{Maharana et~al.}}{{Maharana, Lee, Tulyakov, Bansal, Barbieri, and Fang}}}
+\bibcite{xccache}{{23}{2024}{{Monteiro et~al.}}{{Monteiro, Marcotte, No{\"e}l, Zantedeschi, V{\'a}zquez, Chapados, Pal, and Taslakian}}}
+\bibcite{kvdirect}{{24}{2026}{{Qasim et~al.}}{{Qasim, Zhang, Shaheen, Alharith, and Zhang}}}
+\bibcite{pg19}{{25}{2019}{{Rae et~al.}}{{Rae, Potapenko, Jayakumar, and Lillicrap}}}
+\bibcite{bm25}{{26}{2009}{{Robertson and Zaragoza}}{{}}}
+\bibcite{embeddingrecycling}{{27}{2023}{{Saad-Falcon et~al.}}{{Saad-Falcon, Singh, Soldaini, D'Arcy, Cohan, and Downey}}}
+\def\@LN@column{1}
+\@LN{592}{8}
+\@LN{593}{8}
+\@LN{594}{8}
+\@LN{595}{8}
+\@LN{596}{8}
+\@LN{597}{8}
+\@LN{598}{8}
+\@LN{599}{8}
+\@LN{600}{8}
+\@LN{601}{8}
+\@LN{602}{8}
+\@LN{603}{8}
+\@LN{604}{8}
+\@LN{605}{8}
+\@LN{606}{8}
+\@LN{607}{8}
+\@LN{608}{8}
+\@LN{609}{8}
+\@LN{610}{8}
+\@LN{611}{8}
+\@LN{612}{8}
+\@LN{613}{8}
+\@LN{614}{8}
+\@LN{615}{8}
+\@LN{616}{8}
+\@LN{617}{8}
+\@LN{618}{8}
+\@LN{619}{8}
+\@LN{620}{8}
+\@LN{621}{8}
+\@LN{622}{8}
+\@LN{623}{8}
+\@LN{624}{8}
+\@LN{625}{8}
+\@LN{626}{8}
+\@LN{627}{8}
+\@LN{628}{8}
+\@LN{629}{8}
+\@LN{630}{8}
+\@LN{631}{8}
+\@LN{632}{8}
+\@LN{633}{8}
+\@LN{634}{8}
+\@LN{635}{8}
+\@LN{636}{8}
+\@LN{637}{8}
+\@LN{638}{8}
+\@LN{639}{8}
+\@LN{640}{8}
+\@LN{641}{8}
+\@LN{642}{8}
+\@LN{643}{8}
+\@LN{644}{8}
+\@LN{645}{8}
+\def\@LN@column{2}
+\@LN{646}{8}
+\@LN{647}{8}
+\@LN{648}{8}
+\@LN{649}{8}
+\@LN{650}{8}
+\@LN{651}{8}
+\@LN{652}{8}
+\@LN{653}{8}
+\@LN{654}{8}
+\@LN{655}{8}
+\@LN{656}{8}
+\@LN{657}{8}
+\@LN{658}{8}
+\@LN{659}{8}
+\@LN{660}{8}
+\@LN{661}{8}
+\@LN{662}{8}
+\@LN{663}{8}
+\@LN{664}{8}
+\@LN{665}{8}
+\@LN{666}{8}
+\@LN{667}{8}
+\@LN{668}{8}
+\@LN{669}{8}
+\@LN{670}{8}
+\@LN{671}{8}
+\@LN{672}{8}
+\@LN{673}{8}
+\@LN{674}{8}
+\@LN{675}{8}
+\@LN{676}{8}
+\@LN{677}{8}
+\@LN{678}{8}
+\@LN{679}{8}
+\@LN{680}{8}
+\@LN{681}{8}
+\@LN{682}{8}
+\@LN{683}{8}
+\@LN{684}{8}
+\@LN{685}{8}
+\@LN{686}{8}
+\@LN{687}{8}
+\@LN{688}{8}
+\@LN{689}{8}
+\@LN{690}{8}
+\@LN{691}{8}
+\@LN{692}{8}
+\@LN{693}{8}
+\@LN{694}{8}
+\@LN{695}{8}
+\@LN{696}{8}
+\@LN{697}{8}
+\@LN{698}{8}
+\@LN{699}{8}
+\@LN{700}{8}
+\@LN{701}{8}
+\@LN{702}{8}
+\bibcite{gemfilter}{{28}{2026}{{Shi et~al.}}{{Shi, Ming, Nguyen, Liang, and Joty}}}
+\bibcite{reform}{{29}{2025}{{Song et~al.}}{{Song, Jayanthi, Ronanki, Sathyendra, Shin, Galstyan, Katiyar, and Bodapati}}}
+\bibcite{lloco}{{30}{2024}{{Tan et~al.}}{{Tan, Li, Patil, Wu, Zhang, Keutzer, Gonzalez, and Popa}}}
+\bibcite{hunyuan}{{31}{2026}{{Tencent Hunyuan Team}}{{}}}
+\bibcite{fusionrag}{{32}{2026}{{Wang et~al.}}{{Wang, Xie, Zhang, Zhang, Dong, Zhu, Lin, Tang, Han, Ai, Chen, Wu, and Jiang}}}
+\bibcite{mepic}{{33}{2025}{{Wang et~al.}}{{Wang, Yousefijamarani, Heisler, Gu, Xiaolong, Yizhou, Zhang, Lan, Xiong, Zhang, and Fan}}}
+\bibcite{longmem}{{34}{2023}{{Wang et~al.}}{{Wang, Dong, Cheng, Liu, Yan, Gao, and Wei}}}
+\bibcite{memoryllm}{{35}{2024}{{Wang et~al.}}{{Wang, Gao, Chen, Jiang, Li, Yang, Yin, Li, Li, Yin, Shang, and McAuley}}}
+\bibcite{infllm}{{36}{2024{a}}{{Xiao et~al.}}{{Xiao, Zhang, Han, Xiao, Lin, Zhang, Liu, and Sun}}}
+\bibcite{streamingllm}{{37}{2024{b}}{{Xiao et~al.}}{{Xiao, Tian, Chen, Han, and Lewis}}}
+\bibcite{sempic}{{38}{2026}{{Xie et~al.}}{{Xie, Xiao, Deng, Dou, Yang, and Guo}}}
+\bibcite{xu2024retrievallong}{{39}{2024}{{Xu et~al.}}{{Xu, Ping, Wu, McAfee, Zhu, Liu, Subramanian, Bakhturina, Shoeybi, and Catanzaro}}}
+\bibcite{qwen3}{{40}{2025{a}}{{Yang et~al.}}{{}}}
+\bibcite{ape}{{41}{2025{b}}{{Yang et~al.}}{{Yang, Chen, and Chen}}}
+\bibcite{cacheblend}{{42}{2025}{{Yao et~al.}}{{Yao, Li, Liu, Ray, Cheng, Zhang, Du, Lu, and Jiang}}}
+\bibcite{h2o}{{43}{2023}{{Zhang et~al.}}{{}}}
+\def\@LN@column{1}
+\@LN{703}{9}
+\@LN{704}{9}
+\@LN{705}{9}
+\@LN{706}{9}
+\@LN{707}{9}
+\@LN{708}{9}
+\@LN{709}{9}
+\@LN{710}{9}
+\@LN{711}{9}
+\@LN{712}{9}
+\@LN{713}{9}
+\@LN{714}{9}
+\@LN{715}{9}
+\@LN{716}{9}
+\@LN{717}{9}
+\@LN{718}{9}
+\@LN{719}{9}
+\@LN{720}{9}
+\@LN{721}{9}
+\@LN{722}{9}
+\@LN{723}{9}
+\@LN{724}{9}
+\@LN{725}{9}
+\@LN{726}{9}
+\@LN{727}{9}
+\@LN{728}{9}
+\@LN{729}{9}
+\@LN{730}{9}
+\@LN{731}{9}
+\@LN{732}{9}
+\@LN{733}{9}
+\@LN{734}{9}
+\@LN{735}{9}
+\@LN{736}{9}
+\@LN{737}{9}
+\@LN{738}{9}
+\@LN{739}{9}
+\@LN{740}{9}
+\@LN{741}{9}
+\@LN{742}{9}
+\@LN{743}{9}
+\@LN{744}{9}
+\@LN{745}{9}
+\@LN{746}{9}
+\@LN{747}{9}
+\@LN{748}{9}
+\@LN{749}{9}
+\@LN{750}{9}
+\@LN{751}{9}
+\@LN{752}{9}
+\@LN{753}{9}
+\@LN{754}{9}
+\@LN{755}{9}
+\@LN{756}{9}
+\@LN{757}{9}
+\@LN{758}{9}
+\def\@LN@column{2}
+\@LN{759}{9}
+\@LN{760}{9}
+\@LN{761}{9}
+\@LN{762}{9}
+\@LN{763}{9}
+\@LN{764}{9}
+\@LN{765}{9}
+\@LN{766}{9}
+\@LN{767}{9}
+\@LN{768}{9}
+\@LN{769}{9}
+\@LN{770}{9}
+\@LN{771}{9}
+\@LN{772}{9}
+\@LN{773}{9}
+\@LN{774}{9}
+\@LN{775}{9}
+\@LN{776}{9}
+\@LN{777}{9}
+\@LN{778}{9}
+\@LN{779}{9}
+\@LN{780}{9}
+\@LN{781}{9}
+\@LN{782}{9}
+\@LN{783}{9}
+\@LN{784}{9}
+\@LN{785}{9}
+\@LN{786}{9}
+\@LN{787}{9}
+\@LN{788}{9}
+\@LN{789}{9}
+\@LN{790}{9}
+\@LN{791}{9}
+\@LN{792}{9}
+\def\@LN@column{1}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Select-first online prefill on one H20 (Qwen3-8B, bf16/SDPA, median of three after one warmup). Dense runs the stock full-context path; CoMem uses its rank-32 LoRA and a fixed 6,657-token top-12 pack. This cohort times online model prefill after the persistent memory is built; it excludes one-time document Write and external-store fetch. The speedup is therefore an online bounded-read operating point, not a production end-to-end or depth-only causal effect.}}{11}{table.caption.25}\protected@file@percent }
+\newlabel{tab:online-prefill}{{7}{11}{Select-first online prefill on one H20 (Qwen3-8B, bf16/SDPA, median of three after one warmup). Dense runs the stock full-context path; CoMem uses its rank-32 LoRA and a fixed 6,657-token top-12 pack. This cohort times online model prefill after the persistent memory is built; it excludes one-time document Write and external-store fetch. The speedup is therefore an online bounded-read operating point, not a production end-to-end or depth-only causal effect}{table.caption.25}{}}
+\@LN{793}{10}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Additional Results and Ablations}{11}{appendix.A}\protected@file@percent }
+\newlabel{sec:appendix}{{A}{11}{Additional Results and Ablations}{appendix.A}{}}
+\@LN{794}{10}
+\@LN{795}{10}
+\@LN{796}{10}
+\@LN{797}{10}
+\@LN{798}{10}
+\@writefile{toc}{\contentsline {paragraph}{Secondary dense-context operating point.}{11}{section*.24}\protected@file@percent }
+\@LN{799}{10}
+\@LN{800}{10}
+\@LN{801}{10}
+\@LN{802}{10}
+\@LN{803}{10}
+\@LN{804}{10}
+\@LN{805}{10}
+\@LN{806}{10}
+\@LN{807}{10}
+\@writefile{toc}{\contentsline {paragraph}{Equal-latency audit.}{11}{section*.26}\protected@file@percent }
+\@LN{808}{10}
+\@LN{809}{10}
+\@LN{810}{10}
+\@LN{811}{10}
+\@LN{812}{10}
+\@LN{813}{10}
+\@LN{814}{10}
+\@LN{815}{10}
+\@writefile{toc}{\contentsline {paragraph}{Content-depth probe protocol.}{11}{section*.28}\protected@file@percent }
+\@LN{816}{10}
+\@LN{817}{10}
+\@LN{818}{10}
+\@LN{819}{10}
+\@LN{820}{10}
+\@LN{821}{10}
+\@LN{822}{10}
+\@LN{823}{10}
+\@LN{824}{10}
+\@LN{825}{10}
+\@LN{826}{10}
+\@LN{827}{10}
+\def\@LN@column{2}
+\@LN{828}{10}
+\@LN{829}{10}
+\@LN{830}{10}
+\@LN{831}{10}
+\@LN{832}{10}
+\@LN{833}{10}
+\@LN{834}{10}
+\@LN{835}{10}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Mechanism ablations}{11}{subsection.A.1}\protected@file@percent }
+\newlabel{app:ablations}{{A.1}{11}{Mechanism ablations}{subsection.A.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Split depth and self-distillation.}{11}{section*.29}\protected@file@percent }
+\@LN{836}{10}
+\@LN{837}{10}
+\@LN{838}{10}
+\@LN{839}{10}
+\@LN{840}{10}
+\@LN{841}{10}
+\@LN{842}{10}
+\@LN{843}{10}
+\@LN{844}{10}
+\@LN{845}{10}
+\@LN{846}{10}
+\@LN{847}{10}
+\@writefile{toc}{\contentsline {paragraph}{Selection.}{11}{section*.34}\protected@file@percent }
+\@LN{848}{10}
+\@LN{849}{10}
+\@LN{850}{10}
+\@LN{851}{10}
+\@LN{852}{10}
+\@LN{853}{10}
+\@LN{854}{10}
+\@LN{855}{10}
+\@LN{856}{10}
+\@LN{857}{10}
+\@LN{858}{10}
+\@LN{859}{10}
+\@LN{860}{10}
+\@LN{861}{10}
+\@LN{862}{10}
+\@LN{863}{10}
+\@LN{864}{10}
+\@LN{865}{10}
+\@writefile{toc}{\contentsline {paragraph}{Write-context factorization.}{11}{section*.37}\protected@file@percent }
+\@LN{866}{10}
+\@LN{867}{10}
+\@LN{868}{10}
+\@LN{869}{10}
+\@LN{870}{10}
+\@writefile{toc}{\contentsline {paragraph}{Read interaction and chunk size.}{11}{section*.38}\protected@file@percent }
+\@LN{871}{10}
+\@LN{872}{10}
+\@LN{873}{10}
+\@LN{874}{10}
+\@LN{875}{10}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces \textbf  {Protocol-complete equal-latency audit and dependence-aware reanalysis.} Phase B intentionally uses frozen BGE for raw replay and iterative BM25 for CoMem, so it tests selector sensitivity rather than a same-pack depth effect. The reanalysis reads only saved per-example scores; it runs no model. The anonymous release contains score-only exports (no benchmark text, gold answers, or predictions), the script, result JSON, and SHA-256 manifests.}}{12}{table.caption.27}\protected@file@percent }
+\newlabel{tab:equal-latency-protocol}{{8}{12}{\textbf {Protocol-complete equal-latency audit and dependence-aware reanalysis.} Phase B intentionally uses frozen BGE for raw replay and iterative BM25 for CoMem, so it tests selector sensitivity rather than a same-pack depth effect. The reanalysis reads only saved per-example scores; it runs no model. The anonymous release contains score-only exports (no benchmark text, gold answers, or predictions), the script, result JSON, and SHA-256 manifests}{table.caption.27}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Controlled comparison of retrieval, split depth, and self-distillation using Qwen3-8B. All configurations follow the same plain-text prompting protocol, with model-specific chat templating disabled (\texttt  {chat\_template=False}), and retrieve the same top-12 pack. For the frozen configurations, readout fidelity decreases as the split moves deeper. At the same split $j{=}12$, the rank-32 LoRA improves the LoCoMo Judge score by 13.75 points and the BABILong qa1, qa2, and qa5 means by 22.2, 9.0, and 8.4 points, respectively. BABILong entries are rounded task means from the underlying 21 task--length cells; the raw-cell $j{=}0$ macro is 56.14. The $j{=}0$ configuration performs full-depth recomputation over the retrieved pack, providing a selected-pack reference without lower-layer reuse and thus no depth-based reduction in query-time computation.}}{12}{table.caption.30}\protected@file@percent }
+\newlabel{tab:depth-tradeoff}{{9}{12}{Controlled comparison of retrieval, split depth, and self-distillation using Qwen3-8B. All configurations follow the same plain-text prompting protocol, with model-specific chat templating disabled (\texttt {chat\_template=False}), and retrieve the same top-12 pack. For the frozen configurations, readout fidelity decreases as the split moves deeper. At the same split $j{=}12$, the rank-32 LoRA improves the LoCoMo Judge score by 13.75 points and the BABILong qa1, qa2, and qa5 means by 22.2, 9.0, and 8.4 points, respectively. BABILong entries are rounded task means from the underlying 21 task--length cells; the raw-cell $j{=}0$ macro is 56.14. The $j{=}0$ configuration performs full-depth recomputation over the retrieved pack, providing a selected-pack reference without lower-layer reuse and thus no depth-based reduction in query-time computation}{table.caption.30}{}}
+\def\@LN@column{2}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Multi-depth deployment curve. Each split has a separately trained rank-32 adapter on layers $[j{:}36)$ under the same data order, seed, steps, optimizer, and KL recipe. RULER uses Cohort B ($n{=}1{,}500$ paired examples); gap CIs are paired bootstrap intervals against full replay with that depth's adapter, and all McNemar tests reject equality ($p\leq 3.05\times 10^{-5}$). LoCoMo reports the full-set GPT-4o judge point estimate ($n{=}1{,}986$). Read/Write use a fixed 16k same-pack input and three process medians; retrieval, I/O, and decode are excluded, and total latency remains decode-dominated. The matched fixed-pack Write value was not retained for the earlier $j{=}12$ artifact. Adapter spans and parameter counts differ, so this is not a training-compute-matched depth ablation.}}{13}{table.caption.31}\protected@file@percent }
+\newlabel{tab:distilled-depth-curve}{{10}{13}{Multi-depth deployment curve. Each split has a separately trained rank-32 adapter on layers $[j{:}36)$ under the same data order, seed, steps, optimizer, and KL recipe. RULER uses Cohort B ($n{=}1{,}500$ paired examples); gap CIs are paired bootstrap intervals against full replay with that depth's adapter, and all McNemar tests reject equality ($p\leq 3.05\times 10^{-5}$). LoCoMo reports the full-set GPT-4o judge point estimate ($n{=}1{,}986$). Read/Write use a fixed 16k same-pack input and three process medians; retrieval, I/O, and decode are excluded, and total latency remains decode-dominated. The matched fixed-pack Write value was not retained for the earlier $j{=}12$ artifact. Adapter spans and parameter counts differ, so this is not a training-compute-matched depth ablation}{table.caption.31}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Separate controlled RULER self-distillation ablation on Qwen3-8B at the same split $j{=}12$ ($n{=}100$ per cell). Each on/off pair uses the same task, length, selector, and cohort, so the difference isolates the adapter. Table~\ref {tab:depth-tradeoff} provides the broader same-$j$ LoCoMo/BABILong control used in the main argument.}}{13}{table.caption.32}\protected@file@percent }
+\newlabel{tab:adapter}{{11}{13}{Separate controlled RULER self-distillation ablation on Qwen3-8B at the same split $j{=}12$ ($n{=}100$ per cell). Each on/off pair uses the same task, length, selector, and cohort, so the difference isolates the adapter. Table~\ref {tab:depth-tradeoff} provides the broader same-$j$ LoCoMo/BABILong control used in the main argument}{table.caption.32}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Interface-adaptation diagnostic on an HCache-style, retrieval-free checkpoint path. The two configurations share the $j{=}12$ split and evaluation harness, isolating the adapter. The gain shows that aligning intermediate states to native upper-layer readout transfers beyond CoMem; this is not a head-to-head long-term-memory comparison.}}{13}{table.caption.33}\protected@file@percent }
+\newlabel{tab:hcache-lora}{{12}{13}{Interface-adaptation diagnostic on an HCache-style, retrieval-free checkpoint path. The two configurations share the $j{=}12$ split and evaluation harness, isolating the adapter. The gain shows that aligning intermediate states to native upper-layer readout transfers beyond CoMem; this is not a head-to-head long-term-memory comparison}{table.caption.33}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Single-pass selector sweep on RULER ($n{=}100$) without a chat template; each entry is the peak over $k\in \{4,8,12,16,24\}$. Oracle retrieval keeps both needle tasks at 100, showing that their long-range gap is selection rather than readout loss. The variable-tracking rows belong to this specific selector-sweep configuration and should not be conflated with the focused top-12 flagship in Table~\ref {tab:slm}. Oracle is undefined for a multi-chunk reference chain and is therefore not reported there.}}{13}{table.caption.35}\protected@file@percent }
+\newlabel{tab:selector}{{13}{13}{Single-pass selector sweep on RULER ($n{=}100$) without a chat template; each entry is the peak over $k\in \{4,8,12,16,24\}$. Oracle retrieval keeps both needle tasks at 100, showing that their long-range gap is selection rather than readout loss. The variable-tracking rows belong to this specific selector-sweep configuration and should not be conflated with the focused top-12 flagship in Table~\ref {tab:slm}. Oracle is undefined for a multi-chunk reference chain and is therefore not reported there}{table.caption.35}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces \textbf  {Frozen dense-retriever diagnostic.} BGE-large-en-v1.5 uses CLS pooling, L2 normalization, cosine search, the same 512-token chunks, and a Qwen3-8B $j{=}0$ reader without LoRA ($n{=}100$ per cell). Long-context recall can be the bottleneck even when hit-conditional reading remains strong; this is a fixed top-12 diagnostic, not a trained-retriever comparison. The separate equal-latency selector audit is Table~\ref {tab:equal-latency}.}}{14}{table.caption.36}\protected@file@percent }
+\newlabel{tab:dense-retriever}{{14}{14}{\textbf {Frozen dense-retriever diagnostic.} BGE-large-en-v1.5 uses CLS pooling, L2 normalization, cosine search, the same 512-token chunks, and a Qwen3-8B $j{=}0$ reader without LoRA ($n{=}100$ per cell). Long-context recall can be the bottleneck even when hit-conditional reading remains strong; this is a fixed top-12 diagnostic, not a trained-retriever comparison. The separate equal-latency selector audit is Table~\ref {tab:equal-latency}}{table.caption.36}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Equal-budget, no-chat RULER comparison ($n{=}100$/cell). CoMem and StreamingLLM use the same nominal budget and scorer but not paired examples; CoMem retrieves about 6.5k relevant tokens, whereas StreamingLLM keeps recent tokens.}}{14}{table.caption.39}\protected@file@percent }
+\newlabel{tab:slm}{{15}{14}{Equal-budget, no-chat RULER comparison ($n{=}100$/cell). CoMem and StreamingLLM use the same nominal budget and scorer but not paired examples; CoMem retrieves about 6.5k relevant tokens, whereas StreamingLLM keeps recent tokens}{table.caption.39}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Full cross-chunk attention versus block-diagonal reuse (8k/16k, no chat). RULER uses $n{=}50$ and BABILong $n{=}100$ with identical top-12 retrieval. Joint recomputation matters most for multi-fact tasks.}}{14}{table.caption.39}\protected@file@percent }
+\newlabel{tab:crosschunk}{{16}{14}{Full cross-chunk attention versus block-diagonal reuse (8k/16k, no chat). RULER uses $n{=}50$ and BABILong $n{=}100$ with identical top-12 retrieval. Joint recomputation matters most for multi-fact tasks}{table.caption.39}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces Chunk-size trade-off on RULER \texttt  {niah\_multikey} ($n{=}100$, no chat). Packed-step cost grows approximately linearly with read length; accuracy values are point estimates, not a multi-seed claim.}}{14}{table.caption.39}\protected@file@percent }
+\newlabel{tab:chunk}{{17}{14}{Chunk-size trade-off on RULER \texttt {niah\_multikey} ($n{=}100$, no chat). Packed-step cost grows approximately linearly with read length; accuracy values are point estimates, not a multi-seed claim}{table.caption.39}{}}
+\citation{kvdirect}
+\citation{infllm}
+\citation{streamingllm}
+\citation{memoryllm}
+\citation{llama3}
+\citation{lloco}
+\def\@LN@column{1}
+\@LN{876}{14}
+\@LN{877}{14}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Full chat-template-free benchmark comparisons}{15}{subsection.A.2}\protected@file@percent }
+\newlabel{app:tasks}{{A.2}{15}{Full chat-template-free benchmark comparisons}{subsection.A.2}{}}
+\@LN{878}{14}
+\@LN{879}{14}
+\@LN{880}{14}
+\@LN{881}{14}
+\@LN{882}{14}
+\@LN{883}{14}
+\@LN{884}{14}
+\@LN{885}{14}
+\@LN{886}{14}
+\@LN{887}{14}
+\@LN{888}{14}
+\@LN{889}{14}
+\@LN{890}{14}
+\def\@LN@column{2}
+\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces \textbf  {Descriptive cross-benchmark scope table, not a method leaderboard.} Only the $j{=}0$ and $j{=}12$ rows form the paper's matched depth comparison. Other rows differ in interface, context treatment, and sometimes backbone; $^{\dagger }$MemoryLLM uses a released 7B model. RULER superscripts are distinct cohorts and are never pooled or ranked across superscripts.}}{16}{table.caption.40}\protected@file@percent }
+\newlabel{tab:overview}{{18}{16}{\textbf {Descriptive cross-benchmark scope table, not a method leaderboard.} Only the $j{=}0$ and $j{=}12$ rows form the paper's matched depth comparison. Other rows differ in interface, context treatment, and sometimes backbone; $^{\dagger }$MemoryLLM uses a released 7B model. RULER superscripts are distinct cohorts and are never pooled or ranked across superscripts}{table.caption.40}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces Full chat-template-free RULER comparison using official \texttt  {string\_match\_all} ($n{=}100$ per cell). KV-Direct places the full context in the read with native RoPE and no YaRN; its 64k/128k cells are unextended stress references rather than a length-extended upper bound. CoMem keeps a bounded retrieved pack. This is \textbf  {Cohort A}: every method uses \texttt  {niah\_single\_2}, \texttt  {niah\_multikey\_1}, and \texttt  {variable\_tracking}, with $n{=}100$ and the official scorer. Its CoMem macro is 97.05. Cohort B instead uses \texttt  {niah\_single\_3} to match the YaRN arm (Table~\ref {tab:scaling}) and yields 96.07; the cohorts are never pooled in a direct comparison. $^{\dagger }$MemoryLLM is the principal external persistent-memory reference and uses its released Llama-3-8B-chat checkpoint; its different backbone precludes matched attribution.}}{16}{table.caption.41}\protected@file@percent }
+\newlabel{tab:h2h}{{19}{16}{Full chat-template-free RULER comparison using official \texttt {string\_match\_all} ($n{=}100$ per cell). KV-Direct places the full context in the read with native RoPE and no YaRN; its 64k/128k cells are unextended stress references rather than a length-extended upper bound. CoMem keeps a bounded retrieved pack. This is \textbf {Cohort A}: every method uses \texttt {niah\_single\_2}, \texttt {niah\_multikey\_1}, and \texttt {variable\_tracking}, with $n{=}100$ and the official scorer. Its CoMem macro is 97.05. Cohort B instead uses \texttt {niah\_single\_3} to match the YaRN arm (Table~\ref {tab:scaling}) and yields 96.07; the cohorts are never pooled in a direct comparison. $^{\dagger }$MemoryLLM is the principal external persistent-memory reference and uses its released Llama-3-8B-chat checkpoint; its different backbone precludes matched attribution}{table.caption.41}{}}
+\def\@LN@column{2}
+\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces LongEval register-content accuracy. Unmarked rows use the unified chat-template-free protocol. Means use the common 8k--128k support. KV-Direct uses native RoPE without YaRN, so its 64k/128k cells are unextended stress references and the five-length mean is not a length-extended upper bound. CoMem's separate six-length headline is 72.83 after including its 4k score of 92. The frozen CoMem control used 48 generation tokens rather than 16; both budgets exceed the single-number answer length. $^{\dagger }$MemoryLLM is the external persistent-memory reference and uses a different chat-tuned backbone, so its row is not a matched comparison.}}{16}{table.caption.42}\protected@file@percent }
+\newlabel{tab:longeval}{{20}{16}{LongEval register-content accuracy. Unmarked rows use the unified chat-template-free protocol. Means use the common 8k--128k support. KV-Direct uses native RoPE without YaRN, so its 64k/128k cells are unextended stress references and the five-length mean is not a length-extended upper bound. CoMem's separate six-length headline is 72.83 after including its 4k score of 92. The frozen CoMem control used 48 generation tokens rather than 16; both budgets exceed the single-number answer length. $^{\dagger }$MemoryLLM is the external persistent-memory reference and uses a different chat-tuned backbone, so its row is not a matched comparison}{table.caption.42}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces BABILong accuracy ($n{=}100$ per task--length cell), evaluated with the official \texttt  {compare\_answers} scorer and \texttt  {TASK\_LABELS}. Within the native context window, full-context KV-Direct is substantially stronger on qa1 and qa2, exposing the compression tax, whereas distilled CoMem achieves the highest qa5 mean, ahead of InfLLM (68.7 vs.\ 64.9). All methods are evaluated under the unified plain-text prompting protocol, with model-specific chat templating disabled (\texttt  {chat\_template=False}). $^{\dagger }$MemoryLLM is the principal external persistent-memory reference and uses its released Llama-3-8B-chat checkpoint. Its different backbone precludes matched attribution. We retain the uniform no-chat row and make no prompt-sensitivity claim without a paper-retained matched table.}}{17}{table.caption.43}\protected@file@percent }
+\newlabel{tab:babilong}{{21}{17}{BABILong accuracy ($n{=}100$ per task--length cell), evaluated with the official \texttt {compare\_answers} scorer and \texttt {TASK\_LABELS}. Within the native context window, full-context KV-Direct is substantially stronger on qa1 and qa2, exposing the compression tax, whereas distilled CoMem achieves the highest qa5 mean, ahead of InfLLM (68.7 vs.\ 64.9). All methods are evaluated under the unified plain-text prompting protocol, with model-specific chat templating disabled (\texttt {chat\_template=False}). $^{\dagger }$MemoryLLM is the principal external persistent-memory reference and uses its released Llama-3-8B-chat checkpoint. Its different backbone precludes matched attribution. We retain the uniform no-chat row and make no prompt-sensitivity claim without a paper-retained matched table}{table.caption.43}{}}
+\def\@LN@column{2}
+\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Official LongBench QA token F1 by dataset. Except for the explicitly marked LLoCO diagnostic, methods use the same plain-text no-chat protocol. CoMem with LoRA scores 12.15 and full-context KV-Direct scores 12.17; because only CoMem uses the split-interface adapter, this near-equality is descriptive rather than a training-budget-matched compression estimate. The frozen CoMem configuration reports adapter-free performance at $j{=}9$. NQA denotes NarrativeQA, and MultiF. denotes MultiFieldQA-en. $^{\dagger }$MemoryLLM is the principal external persistent-memory reference and uses its released Llama-3-8B-chat checkpoint. Its different backbone precludes matched attribution. We retain the uniform no-chat row and make no prompt-sensitivity claim without a paper-retained matched table. $^{\ddagger }$LLoCO uses LLaMA-2-7B AutoCompressor, released per-domain supervised LoRAs, fp16, and its native task prompts. Released weights cover only NarrativeQA/Qasper/HotpotQA on our 200-example sets; 30.97 is their three-task macro and is not comparable to the six-task macro column.}}{17}{table.caption.44}\protected@file@percent }
+\newlabel{tab:longbench}{{22}{17}{Official LongBench QA token F1 by dataset. Except for the explicitly marked LLoCO diagnostic, methods use the same plain-text no-chat protocol. CoMem with LoRA scores 12.15 and full-context KV-Direct scores 12.17; because only CoMem uses the split-interface adapter, this near-equality is descriptive rather than a training-budget-matched compression estimate. The frozen CoMem configuration reports adapter-free performance at $j{=}9$. NQA denotes NarrativeQA, and MultiF. denotes MultiFieldQA-en. $^{\dagger }$MemoryLLM is the principal external persistent-memory reference and uses its released Llama-3-8B-chat checkpoint. Its different backbone precludes matched attribution. We retain the uniform no-chat row and make no prompt-sensitivity claim without a paper-retained matched table. $^{\ddagger }$LLoCO uses LLaMA-2-7B AutoCompressor, released per-domain supervised LoRAs, fp16, and its native task prompts. Released weights cover only NarrativeQA/Qasper/HotpotQA on our 200-example sets; 30.97 is their three-task macro and is not comparable to the six-task macro column}{table.caption.44}{}}
+\citation{pg19}
+\citation{ruler}
+\citation{babilong}
+\citation{longbench}
+\citation{longchat}
+\citation{locomo}
+\@writefile{lot}{\contentsline {table}{\numberline {23}{\ignorespaces Matched-$n{=}100$ Qwen3-8B RULER scaling. $^\dagger $YaRN factor 4 gives an effective 163,840-token window. At 128k, unextended-backbone CoMem+LoRA scores 98/93/99.0 on single-needle, multikey, and variable tracking, versus 100/89/57.8 for KV-Direct+YaRN. Applying YaRN to CoMem changes these to 98/93/93.6, showing an in-window position-scaling tax on variable tracking.}}{18}{table.caption.45}\protected@file@percent }
+\newlabel{tab:scaling}{{23}{18}{Matched-$n{=}100$ Qwen3-8B RULER scaling. $^\dagger $YaRN factor 4 gives an effective 163,840-token window. At 128k, unextended-backbone CoMem+LoRA scores 98/93/99.0 on single-needle, multikey, and variable tracking, versus 100/89/57.8 for KV-Direct+YaRN. Applying YaRN to CoMem changes these to 98/93/93.6, showing an in-window position-scaling tax on variable tracking}{table.caption.45}{}}
+\def\@LN@column{1}
+\@writefile{lot}{\contentsline {table}{\numberline {24}{\ignorespaces LoCoMo comparison on all 1,986 chat-template-free examples. Judge$_{1:4}$ is GPT-4o accuracy on the 1,540 answerable items; the full Judge column folds in local abstention scoring for 446 adversarial items. F1 and substring accuracy are deterministic lexical diagnostics; semantic Judge is the primary metric. All rows use the same scoring protocol. The same-$j$ adapter effect is isolated in Table~\ref {tab:depth-tradeoff}. On paired answerable items, distilled CoMem exceeds KV-Direct by $4.81$ points (item-bootstrap 95\% CI $[2.34,7.34]$); a 10-conversation cluster bootstrap gives $[1.27,8.32]$ and 8/10 observed conversation differences favor CoMem. An independent DeepSeek-V3 audit preserves the ordering. $^{\dagger }$MemoryLLM is the external persistent-memory reference and uses its official chat-tuned Llama-3 checkpoint; its different backbone precludes matched attribution. The paper retains only its uniform no-chat evaluation and makes no native-chat sensitivity claim.}}{18}{table.caption.46}\protected@file@percent }
+\newlabel{tab:locomo}{{24}{18}{LoCoMo comparison on all 1,986 chat-template-free examples. Judge$_{1:4}$ is GPT-4o accuracy on the 1,540 answerable items; the full Judge column folds in local abstention scoring for 446 adversarial items. F1 and substring accuracy are deterministic lexical diagnostics; semantic Judge is the primary metric. All rows use the same scoring protocol. The same-$j$ adapter effect is isolated in Table~\ref {tab:depth-tradeoff}. On paired answerable items, distilled CoMem exceeds KV-Direct by $4.81$ points (item-bootstrap 95\% CI $[2.34,7.34]$); a 10-conversation cluster bootstrap gives $[1.27,8.32]$ and 8/10 observed conversation differences favor CoMem. An independent DeepSeek-V3 audit preserves the ordering. $^{\dagger }$MemoryLLM is the external persistent-memory reference and uses its official chat-tuned Llama-3 checkpoint; its different backbone precludes matched attribution. The paper retains only its uniform no-chat evaluation and makes no native-chat sensitivity claim}{table.caption.46}{}}
+\@LN{891}{17}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Store scaling and failure boundaries}{18}{subsection.A.3}\protected@file@percent }
+\newlabel{app:scaling}{{A.3}{18}{Store scaling and failure boundaries}{subsection.A.3}{}}
+\@LN{892}{17}
+\@LN{893}{17}
+\@LN{894}{17}
+\@LN{895}{17}
+\@LN{896}{17}
+\@LN{897}{17}
+\@LN{898}{17}
+\@LN{899}{17}
+\@LN{900}{17}
+\def\@LN@column{2}
+\@LN{901}{17}
+\@LN{902}{17}
+\@LN{903}{17}
+\@LN{904}{17}
+\@LN{905}{17}
+\@LN{906}{17}
+\@LN{907}{17}
+\@LN{908}{17}
+\@LN{909}{17}
+\@LN{910}{17}
+\@LN{911}{17}
+\@LN{912}{17}
+\@LN{913}{17}
+\@LN{914}{17}
+\@LN{915}{17}
+\@LN{916}{17}
+\@LN{917}{17}
+\@LN{918}{17}
+\@LN{919}{17}
+\@LN{920}{17}
+\@LN{921}{17}
+\@LN{922}{17}
+\@LN{923}{17}
+\@LN{924}{17}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Reproducibility details}{18}{subsection.A.4}\protected@file@percent }
+\newlabel{app:reproducibility}{{A.4}{18}{Reproducibility details}{subsection.A.4}{}}
+\@LN{925}{17}
+\@LN{926}{17}
+\@LN{927}{17}
+\@LN{928}{17}
+\@writefile{toc}{\contentsline {paragraph}{Artifacts, licenses, and data scope.}{18}{section*.52}\protected@file@percent }
+\@LN{929}{17}
+\@LN{930}{17}
+\@LN{931}{17}
+\@LN{932}{17}
+\@LN{933}{17}
+\@writefile{lot}{\contentsline {table}{\numberline {25}{\ignorespaces Store scaling with a fixed top-12 read. Values separated by ``/'' are single-evidence NIAH / five-link variable tracking (VT). Evidence recall ($n{=}20$) stays perfect and the model read stays about 6.2--6.5k tokens from 128k to 4M stored tokens; BM25 lookup grows approximately linearly. Generation scores use $n{=}10$ and reveal that VT reasoning remains noisy even when all five evidence chunks are retrieved. At 128k, increasing required VT evidence from 12 to 16/24/32 gives recall 1.0 to 0.75/0.50/0.375, exactly $\min (1,12/E)$.}}{19}{table.caption.47}\protected@file@percent }
+\newlabel{tab:store-scaling}{{25}{19}{Store scaling with a fixed top-12 read. Values separated by ``/'' are single-evidence NIAH / five-link variable tracking (VT). Evidence recall ($n{=}20$) stays perfect and the model read stays about 6.2--6.5k tokens from 128k to 4M stored tokens; BM25 lookup grows approximately linearly. Generation scores use $n{=}10$ and reveal that VT reasoning remains noisy even when all five evidence chunks are retrieved. At 128k, increasing required VT evidence from 12 to 16/24/32 gives recall 1.0 to 0.75/0.50/0.375, exactly $\min (1,12/E)$}{table.caption.47}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {26}{\ignorespaces Flagship CoMem inference configuration. The retrieval and read configuration is frozen across all five benchmarks; only benchmark harness parameters differ.}}{19}{table.caption.48}\protected@file@percent }
+\newlabel{tab:repro-config}{{26}{19}{Flagship CoMem inference configuration. The retrieval and read configuration is frozen across all five benchmarks; only benchmark harness parameters differ}{table.caption.48}{}}
+\def\@LN@column{1}
+\@LN{934}{18}
+\@LN{935}{18}
+\@LN{936}{18}
+\@LN{937}{18}
+\@LN{938}{18}
+\@LN{939}{18}
+\@LN{940}{18}
+\@LN{941}{18}
+\@LN{942}{18}
+\@LN{943}{18}
+\@LN{944}{18}
+\@LN{945}{18}
+\@LN{946}{18}
+\@LN{947}{18}
+\@LN{948}{18}
+\@LN{949}{18}
+\@LN{950}{18}
+\@LN{951}{18}
+\@LN{952}{18}
+\@LN{953}{18}
+\@LN{954}{18}
+\@LN{955}{18}
+\@LN{956}{18}
+\def\@LN@column{2}
+\@LN{957}{18}
+\@writefile{toc}{\contentsline {paragraph}{Software environment.}{19}{section*.53}\protected@file@percent }
+\@LN{958}{18}
+\@LN{959}{18}
+\@LN{960}{18}
+\@LN{961}{18}
+\@LN{962}{18}
+\@LN{963}{18}
+\@LN{964}{18}
+\@writefile{toc}{\contentsline {paragraph}{Compute accounting.}{19}{section*.54}\protected@file@percent }
+\@LN{965}{18}
+\@LN{966}{18}
+\@LN{967}{18}
+\@LN{968}{18}
+\@LN{969}{18}
+\@LN{970}{18}
+\@LN{971}{18}
+\@LN{972}{18}
+\@LN{973}{18}
+\newlabel{app:efficiency}{{A.4}{19}{Efficiency measurement}{section*.55}{}}
+\@writefile{toc}{\contentsline {paragraph}{Efficiency measurement.}{19}{section*.55}\protected@file@percent }
+\@LN{974}{18}
+\@LN{975}{18}
+\@LN{976}{18}
+\@LN{977}{18}
+\citation{snapkv,pyramidkv}
+\@writefile{lot}{\contentsline {table}{\numberline {27}{\ignorespaces Self-distillation and LoRA training configuration. The adapter name's ``4k'' denotes 4,000 optimization steps; the training sequence length is 2,048 tokens.}}{20}{table.caption.49}\protected@file@percent }
+\newlabel{tab:repro-train}{{27}{20}{Self-distillation and LoRA training configuration. The adapter name's ``4k'' denotes 4,000 optimization steps; the training sequence length is 2,048 tokens}{table.caption.49}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {28}{\ignorespaces Benchmark-level evaluation settings. Every main comparison uses \texttt  {chat\_template=False}. MemoryLLM is the external persistent-memory reference, evaluated with its released chat-tuned backbone.}}{20}{table.caption.50}\protected@file@percent }
+\newlabel{tab:repro-eval}{{28}{20}{Benchmark-level evaluation settings. Every main comparison uses \texttt {chat\_template=False}. MemoryLLM is the external persistent-memory reference, evaluated with its released chat-tuned backbone}{table.caption.50}{}}
+\def\@LN@column{1}
+\@LN{978}{19}
+\@LN{979}{19}
+\@LN{980}{19}
+\@LN{981}{19}
+\@LN{982}{19}
+\@LN{983}{19}
+\@LN{984}{19}
+\@LN{985}{19}
+\@LN{986}{19}
+\@LN{987}{19}
+\@LN{988}{19}
+\@LN{989}{19}
+\@LN{990}{19}
+\@LN{991}{19}
+\@LN{992}{19}
+\@LN{993}{19}
+\@LN{994}{19}
+\@LN{995}{19}
+\@LN{996}{19}
+\@LN{997}{19}
+\@LN{998}{19}
+\@LN{999}{19}
+\@LN{1000}{19}
+\def\@LN@column{2}
+\@LN{1001}{19}
+\@LN{1002}{19}
+\@LN{1003}{19}
+\@LN{1004}{19}
+\@LN{1005}{19}
+\@LN{1006}{19}
+\@LN{1007}{19}
+\@LN{1008}{19}
+\@LN{1009}{19}
+\@LN{1010}{19}
+\@LN{1011}{19}
+\@LN{1012}{19}
+\@writefile{toc}{\contentsline {paragraph}{Retained-KV references.}{20}{section*.56}\protected@file@percent }
+\@LN{1013}{19}
+\@LN{1014}{19}
+\@LN{1015}{19}
+\@LN{1016}{19}
+\@LN{1017}{19}
+\@LN{1018}{19}
+\@writefile{toc}{\contentsline {paragraph}{Paired quality--latency replay control.}{20}{section*.58}\protected@file@percent }
+\@LN{1019}{19}
+\@LN{1020}{19}
+\@LN{1021}{19}
+\@LN{1022}{19}
+\@LN{1023}{19}
+\@writefile{lot}{\contentsline {table}{\numberline {29}{\ignorespaces \textbf  {Seed-plus-effective-batch robustness, not clean seed variance.} All adapters use the same Qwen3-8B split, PG-19 data budget, and rank-32 objective; seed 42 is the flagship effective-batch-8 run, while seeds 1 and 2 use effective batch 3 with matched examples seen. Evaluation uses identical cells and supports: RULER single/multikey/variable-tracking at 32k/64k/128k ($n{=}50$/cell) and BABILong qa1/qa2/qa5 at 4k/16k/32k ($n{=}100$/cell). SD is the sample SD across the three run-level cell macros. These reduced-support cells are not the 15-cell RULER-B headline, and no LoCoMo or LongEval multi-run aggregate was retained.}}{21}{table.caption.51}\protected@file@percent }
+\newlabel{tab:seed-batch-robustness}{{29}{21}{\textbf {Seed-plus-effective-batch robustness, not clean seed variance.} All adapters use the same Qwen3-8B split, PG-19 data budget, and rank-32 objective; seed 42 is the flagship effective-batch-8 run, while seeds 1 and 2 use effective batch 3 with matched examples seen. Evaluation uses identical cells and supports: RULER single/multikey/variable-tracking at 32k/64k/128k ($n{=}50$/cell) and BABILong qa1/qa2/qa5 at 4k/16k/32k ($n{=}100$/cell). SD is the sample SD across the three run-level cell macros. These reduced-support cells are not the 15-cell RULER-B headline, and no LoCoMo or LongEval multi-run aggregate was retained}{table.caption.51}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {30}{\ignorespaces Standard selected/compressed-KV baselines at CoMem's retained budget. Panel (a) uses RULER Cohort A and full-set LoCoMo lexical scoring. CoMem reads its bounded pack from the full store without YaRN; the SnapKV/PyramidKV 64k/128k columns use YaRN factor 4 and see the full prompt. $^{\dagger }$Their native 15-cell macros include 64k/128k inputs left-truncated to the 40,960-token native window; within 8k--32k both score 99.96. Panel (b) times full-prompt prefill, compression, and 64-token decode (median of three); the final column is decode latency. These methods must prefill the full prompt before eviction. CoMem's separate L20A cohort peaks at 18.54\,GB at 128k (Appendix~\ref {app:efficiency}); hardware differs, so we report no cross-table latency ratio.}}{21}{table.caption.57}\protected@file@percent }
+\newlabel{tab:kvcompress}{{30}{21}{Standard selected/compressed-KV baselines at CoMem's retained budget. Panel (a) uses RULER Cohort A and full-set LoCoMo lexical scoring. CoMem reads its bounded pack from the full store without YaRN; the SnapKV/PyramidKV 64k/128k columns use YaRN factor 4 and see the full prompt. $^{\dagger }$Their native 15-cell macros include 64k/128k inputs left-truncated to the 40,960-token native window; within 8k--32k both score 99.96. Panel (b) times full-prompt prefill, compression, and 64-token decode (median of three); the final column is decode latency. These methods must prefill the full prompt before eviction. CoMem's separate L20A cohort peaks at 18.54\,GB at 128k (Appendix~\ref {app:efficiency}); hardware differs, so we report no cross-table latency ratio}{table.caption.57}{}}
+\def\@LN@column{1}
+\@LN{1024}{20}
+\@LN{1025}{20}
+\@LN{1026}{20}
+\@LN{1027}{20}
+\@LN{1028}{20}
+\@LN{1029}{20}
+\@LN{1030}{20}
+\@LN{1031}{20}
+\@LN{1032}{20}
+\@LN{1033}{20}
+\@LN{1034}{20}
+\@LN{1035}{20}
+\@LN{1036}{20}
+\@LN{1037}{20}
+\@LN{1038}{20}
+\@LN{1039}{20}
+\@LN{1040}{20}
+\@LN{1041}{20}
+\@LN{1042}{20}
+\@LN{1043}{20}
+\@LN{1044}{20}
+\@LN{1045}{20}
+\@LN{1046}{20}
+\@LN{1047}{20}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.5}Seed-plus-effective-batch robustness}{21}{subsection.A.5}\protected@file@percent }
+\@LN{1048}{20}
+\@LN{1049}{20}
+\@writefile{lot}{\contentsline {table}{\numberline {31}{\ignorespaces Paired quality--latency control with the same LoRA. Quality is the 15-cell RULER macro ($n{=}1{,}500$ paired examples); the 3.12-point loss has paired-bootstrap 95\% CI $[2.36,3.93]$. Latency uses a fixed approximately 6.5k-token pack retrieved from 16k source contexts and reports medians across three independent processes (20 reads each). Retrieval, reusable Write, I/O, and total decode are excluded; total decode is similar across arms.}}{21}{table.caption.59}\protected@file@percent }
+\newlabel{tab:replay-latency}{{31}{21}{Paired quality--latency control with the same LoRA. Quality is the 15-cell RULER macro ($n{=}1{,}500$ paired examples); the 3.12-point loss has paired-bootstrap 95\% CI $[2.36,3.93]$. Latency uses a fixed approximately 6.5k-token pack retrieved from 16k source contexts and reports medians across three independent processes (20 reads each). Retrieval, reusable Write, I/O, and total decode are excluded; total decode is similar across arms}{table.caption.59}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {32}{\ignorespaces Write-side attribution with identical examples, packs, and LoRA. The continuous-prefix oracle runs layers 0--11 over the selected packed sequence for every query, then starts upper replay from that $h_{12}$; it is bit-identical to full replay on all 1,500 Cohort-B examples. The deployable chunk-local path loses 3.12 points (95\% CI $[2.36,3.93]$; McNemar $p{=}8.79\!\times \!10^{-24}$), and 7.50 points on the pooled 8k/16k multikey cells ($n{=}200$, CI $[4.0,11.5]$). The oracle is an attribution upper bound, not a reusable cache.}}{21}{table.caption.60}\protected@file@percent }
+\newlabel{tab:h12-oracle}{{32}{21}{Write-side attribution with identical examples, packs, and LoRA. The continuous-prefix oracle runs layers 0--11 over the selected packed sequence for every query, then starts upper replay from that $h_{12}$; it is bit-identical to full replay on all 1,500 Cohort-B examples. The deployable chunk-local path loses 3.12 points (95\% CI $[2.36,3.93]$; McNemar $p{=}8.79\!\times \!10^{-24}$), and 7.50 points on the pooled 8k/16k multikey cells ($n{=}200$, CI $[4.0,11.5]$). The oracle is an attribution upper bound, not a reusable cache}{table.caption.60}{}}
+\citation{hunyuan}
+\def\@LN@column{1}
+\@writefile{lot}{\contentsline {table}{\numberline {33}{\ignorespaces Measured persistent-store tiers at 16M tokens (128\,GiB of bf16 $h_{12}$). Each query fetches the same 50.3\,MB top-12 pack; medians use seven repetitions after two warmups, and QPS is the best of 1/4/16 concurrent clients. GPU residence fits 8M tokens (64.98\,GB peak) but not 16M; off-GPU tiers retain store-size-independent transfer volume at increasing I/O latency. This microbenchmark times storage and transfer, not BM25 or model inference.}}{22}{table.caption.61}\protected@file@percent }
+\newlabel{tab:store-io}{{33}{22}{Measured persistent-store tiers at 16M tokens (128\,GiB of bf16 $h_{12}$). Each query fetches the same 50.3\,MB top-12 pack; medians use seven repetitions after two warmups, and QPS is the best of 1/4/16 concurrent clients. GPU residence fits 8M tokens (64.98\,GB peak) but not 16M; off-GPU tiers retain store-size-independent transfer volume at increasing I/O latency. This microbenchmark times storage and transfer, not BM25 or model inference}{table.caption.61}{}}
+\@LN{1050}{21}
+\@LN{1051}{21}
+\@LN{1052}{21}
+\@LN{1053}{21}
+\@LN{1054}{21}
+\@LN{1055}{21}
+\@LN{1056}{21}
+\@LN{1057}{21}
+\@LN{1058}{21}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.6}Prompt and native-chat sensitivity}{22}{subsection.A.6}\protected@file@percent }
+\@LN{1059}{21}
+\@LN{1060}{21}
+\@LN{1061}{21}
+\@LN{1062}{21}
+\@LN{1063}{21}
+\@LN{1064}{21}
+\@LN{1065}{21}
+\@LN{1066}{21}
+\@LN{1067}{21}
+\@LN{1068}{21}
+\@LN{1069}{21}
+\@LN{1070}{21}
+\@LN{1071}{21}
+\@LN{1072}{21}
+\@LN{1073}{21}
+\@LN{1074}{21}
+\@LN{1075}{21}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.7}Cross-scale and MoE generality}{22}{subsection.A.7}\protected@file@percent }
+\newlabel{app:generality}{{A.7}{22}{Cross-scale and MoE generality}{subsection.A.7}{}}
+\@LN{1076}{21}
+\@LN{1077}{21}
+\@LN{1078}{21}
+\@LN{1079}{21}
+\@LN{1080}{21}
+\@LN{1081}{21}
+\@LN{1082}{21}
+\@LN{1083}{21}
+\@LN{1084}{21}
+\@LN{1085}{21}
+\def\@LN@column{2}
+\@LN{1086}{21}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.7.1}Hunyuan Hy3: an 80-layer sparse MoE}{22}{subsubsection.A.7.1}\protected@file@percent }
+\newlabel{sec:hy3-general}{{A.7.1}{22}{Hunyuan Hy3: an 80-layer sparse MoE}{subsubsection.A.7.1}{}}
+\@LN{1087}{21}
+\@LN{1088}{21}
+\@LN{1089}{21}
+\@LN{1090}{21}
+\@LN{1091}{21}
+\@LN{1092}{21}
+\@LN{1093}{21}
+\@writefile{toc}{\contentsline {paragraph}{Exact partition through MoE routing.}{22}{section*.62}\protected@file@percent }
+\@LN{1094}{21}
+\@LN{1095}{21}
+\@LN{1096}{21}
+\@LN{1097}{21}
+\@LN{1098}{21}
+\@LN{1099}{21}
+\@LN{1100}{21}
+\@LN{1101}{21}
+\@writefile{toc}{\contentsline {paragraph}{Split depth and self-distillation.}{22}{section*.63}\protected@file@percent }
+\@LN{1102}{21}
+\@LN{1103}{21}
+\@LN{1104}{21}
+\@LN{1105}{21}
+\@LN{1106}{21}
+\@LN{1107}{21}
+\@writefile{lot}{\contentsline {table}{\numberline {34}{\ignorespaces CoMem self-distillation on Hy3 at split $j{=}32$ (LoRA $r{=}32, \alpha {=}64$ on \texttt  {layers[32:]}, teacher $j{=}0$ RAG recompute, 4000 steps of plain PG19 KL, no synthetic data). \textbf  {gap} is the multiplicative LM tax (CoMem-readout perplexity / full-context perplexity; $1.0$ is exact); \textbf  {top1} is argmax agreement with the full forward, over matched 16-doc PG19 windows. The 16k LM tax falls from $+49.6\%$ to $+7.8\%$ and top1 rises $0.773\to 0.871$, reproducing the 8B-backbone self-distillation effect on the 80-layer MoE.}}{22}{table.caption.64}\protected@file@percent }
+\newlabel{tab:hy3distill}{{34}{22}{CoMem self-distillation on Hy3 at split $j{=}32$ (LoRA $r{=}32, \alpha {=}64$ on \texttt {layers[32:]}, teacher $j{=}0$ RAG recompute, 4000 steps of plain PG19 KL, no synthetic data). \textbf {gap} is the multiplicative LM tax (CoMem-readout perplexity / full-context perplexity; $1.0$ is exact); \textbf {top1} is argmax agreement with the full forward, over matched 16-doc PG19 windows. The 16k LM tax falls from $+49.6\%$ to $+7.8\%$ and top1 rises $0.773\to 0.871$, reproducing the 8B-backbone self-distillation effect on the 80-layer MoE}{table.caption.64}{}}
+\@writefile{toc}{\contentsline {paragraph}{Bounded read through 256k.}{22}{section*.65}\protected@file@percent }
+\@LN{1108}{21}
+\@LN{1109}{21}
+\@LN{1110}{21}
+\@LN{1111}{21}
+\@LN{1112}{21}
+\def\@LN@column{1}
+\@writefile{lot}{\contentsline {table}{\numberline {35}{\ignorespaces CoMem on the Tencent Hunyuan \textbf  {Hy3} backbone (\texttt  {hy\_v3}, 80-layer sparse MoE), RULER needle recall ($n{=}50$, official \texttt  {string\_match\_all}), split $j{=}32$, BM25 top-$8$, self-distilled LoRA. The read length fed to the model stays $\approx $4.3--4.6k tokens while the context grows $16\times $ (16k$\to $256k); CoMem retains 100/98 recall at the backbone's 256k native ceiling, with $0$ out-of-memory failures. The context row reports the mean packed length of the RULER samples.}}{23}{table.caption.66}\protected@file@percent }
+\newlabel{tab:hy3ruler}{{35}{23}{CoMem on the Tencent Hunyuan \textbf {Hy3} backbone (\texttt {hy\_v3}, 80-layer sparse MoE), RULER needle recall ($n{=}50$, official \texttt {string\_match\_all}), split $j{=}32$, BM25 top-$8$, self-distilled LoRA. The read length fed to the model stays $\approx $4.3--4.6k tokens while the context grows $16\times $ (16k$\to $256k); CoMem retains 100/98 recall at the backbone's 256k native ceiling, with $0$ out-of-memory failures. The context row reports the mean packed length of the RULER samples}{table.caption.66}{}}
+\@LN{1113}{22}
+\@LN{1114}{22}
+\@writefile{toc}{\contentsline {section}{\numberline {B}Chat-Template-Free Statistical Verification}{23}{appendix.B}\protected@file@percent }
+\newlabel{app:statistics}{{B}{23}{Chat-Template-Free Statistical Verification}{appendix.B}{}}
+\@LN{1115}{22}
+\@LN{1116}{22}
+\@LN{1117}{22}
+\@LN{1118}{22}
+\@LN{1119}{22}
+\@LN{1120}{22}
+\@LN{1121}{22}
+\@LN{1122}{22}
+\@LN{1123}{22}
+\@LN{1124}{22}
+\@LN{1125}{22}
+\@LN{1126}{22}
+\@LN{1127}{22}
+\@LN{1128}{22}
+\@LN{1129}{22}
+\@LN{1130}{22}
+\@LN{1131}{22}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.1}RULER cohort definitions}{23}{subsection.B.1}\protected@file@percent }
+\@LN{1132}{22}
+\@LN{1133}{22}
+\@LN{1134}{22}
+\@LN{1135}{22}
+\@LN{1136}{22}
+\@LN{1137}{22}
+\@LN{1138}{22}
+\@LN{1139}{22}
+\@LN{1140}{22}
+\@LN{1141}{22}
+\def\@LN@column{2}
+\@writefile{lot}{\contentsline {table}{\numberline {36}{\ignorespaces RULER \textbf  {Cohort B}, used for the matched length-extension and $j{=}0$ comparisons. The $n{=}100$ macro is $1441.0/15=96.0667$; the exact single-needle variant is \texttt  {niah\_single\_3}.}}{23}{table.caption.67}\protected@file@percent }
+\newlabel{tab:ruler-statistics}{{36}{23}{RULER \textbf {Cohort B}, used for the matched length-extension and $j{=}0$ comparisons. The $n{=}100$ macro is $1441.0/15=96.0667$; the exact single-needle variant is \texttt {niah\_single\_3}}{table.caption.67}{}}
+\@LN{1142}{22}
+\@LN{1143}{22}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.2}LoCoMo judge protocol and denominator}{23}{subsection.B.2}\protected@file@percent }
+\@LN{1144}{22}
+\@LN{1145}{22}
+\@LN{1146}{22}
+\@LN{1147}{22}
+\@LN{1148}{22}
+\@LN{1149}{22}
+\@LN{1150}{22}
+\@LN{1151}{22}
+\@LN{1152}{22}
+\@LN{1153}{22}
+\@LN{1154}{22}
+\@writefile{lot}{\contentsline {table}{\numberline {37}{\ignorespaces LoCoMo GPT-4o judge by category. Categories 1--4 contain 282/321/96/841 judged items; Category 5 contains 446 locally scored abstention items. Overall aggregates all 1,986 examples.}}{23}{table.37}\protected@file@percent }
+\newlabel{tab:locomo-categories}{{37}{23}{LoCoMo GPT-4o judge by category. Categories 1--4 contain 282/321/96/841 judged items; Category 5 contains 446 locally scored abstention items. Overall aggregates all 1,986 examples}{table.37}{}}
+\@LN{1155}{22}
+\@LN{1156}{22}
+\@LN{1157}{22}
+\@LN{1158}{22}
+\@LN{1159}{22}
+\@LN{1160}{22}
+\@LN{1161}{22}
+\@LN{1162}{22}
+\@LN{1163}{22}
+\@LN{1164}{22}
+\@LN{1165}{22}
+\@LN{1166}{22}
+\@LN{1167}{22}
+\@LN{1168}{22}
+\@LN{1169}{22}
+\@LN{1170}{22}
+\@LN{1171}{22}
+\@LN{1172}{22}
+\@LN{1173}{22}
+\@LN{1174}{22}
+\def\@LN@column{1}
+\@LN{1175}{23}
+\@LN{1176}{23}
+\@LN{1177}{23}
+\@LN{1178}{23}
+\@LN{1179}{23}
+\@LN{1180}{23}
+\@LN{1181}{23}
+\@LN{1182}{23}
+\@LN{1183}{23}
+\@LN{1184}{23}
+\@LN{1185}{23}
+\@LN{1186}{23}
+\@LN{1187}{23}
+\@LN{1188}{23}
+\@LN{1189}{23}
+\@LN{1190}{23}
+\@LN{1191}{23}
+\@LN{1192}{23}
+\@LN{1193}{23}
+\@LN{1194}{23}
+\@LN{1195}{23}
+\@LN{1196}{23}
+\@LN{1197}{23}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.3}Independent-judge audit}{24}{subsection.B.3}\protected@file@percent }
+\@LN{1198}{23}
+\@LN{1199}{23}
+\@LN{1200}{23}
+\@LN{1201}{23}
+\@LN{1202}{23}
+\@LN{1203}{23}
+\@LN{1204}{23}
+\@LN{1205}{23}
+\@LN{1206}{23}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.4}Uncertainty and aggregation checks}{24}{subsection.B.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Equal-latency dependence reanalysis.}{24}{section*.68}\protected@file@percent }
+\@LN{1207}{23}
+\@LN{1208}{23}
+\@LN{1209}{23}
+\@LN{1210}{23}
+\@LN{1211}{23}
+\@LN{1212}{23}
+\@LN{1213}{23}
+\@LN{1214}{23}
+\@LN{1215}{23}
+\@LN{1216}{23}
+\@LN{1217}{23}
+\@LN{1218}{23}
+\@LN{1219}{23}
+\@LN{1220}{23}
+\@LN{1221}{23}
+\@LN{1222}{23}
+\@LN{1223}{23}
+\@LN{1224}{23}
+\def\@LN@column{2}
+\@LN{1225}{23}
+\@LN{1226}{23}
+\@LN{1227}{23}
+\@LN{1228}{23}
+\@LN{1229}{23}
+\@LN{1230}{23}
+\@LN{1231}{23}
+\@LN{1232}{23}
+\@LN{1233}{23}
+\@LN{1234}{23}
+\@LN{1235}{23}
+\@LN{1236}{23}
+\@LN{1237}{23}
+\@LN{1238}{23}
+\@LN{1239}{23}
+\@LN{1240}{23}
+\@LN{1241}{23}
+\@LN{1242}{23}
+\@LN{1243}{23}
+\@LN{1244}{23}
+\@LN{1245}{23}
+\@LN{1246}{23}
+\@LN{1247}{23}
+\gdef \@abspage@last{24}

@@ -1,0 +1,387 @@
+[
+  {
+    "key": "hcache",
+    "title": "Fast State Restoration in LLM Serving with HCache",
+    "crossref_status": "candidate",
+    "candidate": "Fast State Restoration in LLM Serving with HCache",
+    "score": 58.22541
+  },
+  {
+    "key": "ilre",
+    "title": "ILRe: Intermediate Layer Retrieval for Context Compression in Causal Language Models",
+    "crossref_status": "candidate",
+    "candidate": "Retrieval Augmented Generation via Context Compression Techniques for Large Language Models",
+    "score": 31.765099
+  },
+  {
+    "key": "kvcat",
+    "title": "Training Transformers for KV Cache Compressibility",
+    "crossref_status": "candidate",
+    "candidate": "Contract for 1100 kV transformers",
+    "score": 23.440369
+  },
+  {
+    "key": "compresskv",
+    "title": "CompressKV: Semantic-Retrieval-Guided KV-Cache Compression for Resource-Efficient Long-Context LLM Inference",
+    "crossref_status": "candidate",
+    "candidate": "FIER: Fine-Grained and Efficient KV Cache Retrieval for Long-context LLM Inference",
+    "score": 56.275166
+  },
+  {
+    "key": "yoco",
+    "title": "You Only Cache Once: Decoder-Decoder Architectures for Language Models",
+    "crossref_status": "candidate",
+    "candidate": "You Only Cache Once: Decoder-Decoder Architectures for Language Models",
+    "score": 81.373314
+  },
+  {
+    "key": "infllm",
+    "title": "InfLLM: Training-Free Long-Context Extrapolation for LLMs with an Efficient Context Memory",
+    "crossref_status": "candidate",
+    "candidate": "InfLLM: Training-Free Long-Context Extrapolation for LLMs with an Efficient Context Memory",
+    "score": 74.16814
+  },
+  {
+    "key": "reform",
+    "title": "Compress, Gather, and Recompute: REFORMing Long-Context Processing in Transformers",
+    "crossref_status": "candidate",
+    "candidate": "LongCodeZip: Compress Long Context for Code Language Models",
+    "score": 26.211277
+  },
+  {
+    "key": "cachecraft",
+    "title": "Cache-Craft: Managing Chunk-Caches for Efficient Retrieval-Augmented Generation",
+    "crossref_status": "candidate",
+    "candidate": "Cache-Craft: Managing Chunk-Caches for Efficient Retrieval-Augmented Generation",
+    "score": 79.732086
+  },
+  {
+    "key": "fier",
+    "title": "FIER: Fine-Grained and Efficient KV Cache Retrieval for Long-context LLM Inference",
+    "crossref_status": "candidate",
+    "candidate": "FIER: Fine-Grained and Efficient KV Cache Retrieval for Long-context LLM Inference",
+    "score": 83.70317
+  },
+  {
+    "key": "a2ats",
+    "title": "A$^2$ATS: Retrieval-Based KV Cache Reduction via Windowed Rotary Position Embedding and Query-Aware Vector Quantization",
+    "crossref_status": "candidate",
+    "candidate": "A2ATS: Retrieval-Based KV Cache Reduction via Windowed Rotary Position Embedding and Query-Aware Vector Quantization",
+    "score": 92.4861
+  },
+  {
+    "key": "heterocache",
+    "title": "HeteroCache: A Dynamic Retrieval Approach to Heterogeneous KV Cache Compression for Long-Context LLM Inference",
+    "crossref_status": "candidate",
+    "candidate": "HeteroCache: A Dynamic Retrieval Approach to Heterogeneous KV Cache Compression for Long-Context LLM Inference",
+    "score": 82.9038
+  },
+  {
+    "key": "real",
+    "title": "REAL: Retrieval-Reasoning and Logic-Constructed Attention Behaviors for Long-Context KV Cache Compression",
+    "crossref_status": "candidate",
+    "candidate": "REAL: REtrieval-reAsoning and Logic-constructed Attention Behaviors for Long-Context KV Cache Compression",
+    "score": 79.802086
+  },
+  {
+    "key": "indexmem",
+    "title": "IndexMem: Learned KV-Cache Eviction with Latent Memory for Long-Context LLM Inference",
+    "crossref_status": "candidate",
+    "candidate": "HqeKV: Towards Hybrid Quantization and Eviction for KV Cache in Long-Context LLM Inference",
+    "score": 53.565914
+  },
+  {
+    "key": "hunyuan",
+    "title": "Hy3: An Open 295B Mixture-of-Experts Model with 21B Activated Parameters",
+    "crossref_status": "candidate",
+    "candidate": "Mixture of embedding experts for open knowledge graphs",
+    "score": 25.0068
+  },
+  {
+    "key": "streamingllm",
+    "title": "Efficient Streaming Language Models with Attention Sinks",
+    "crossref_status": "candidate",
+    "candidate": "Attention Sinks in Diffusion Language Models",
+    "score": 34.020065
+  },
+  {
+    "key": "h2o",
+    "title": "H2O: Heavy-Hitter Oracle for Efficient Generative Inference of Large Language Models",
+    "crossref_status": "candidate",
+    "candidate": "H2O: Heavy-Hitter Oracle for Efficient Generative Inference of Large Language Models",
+    "score": 73.77078
+  },
+  {
+    "key": "snapkv",
+    "title": "SnapKV: LLM Knows What You are Looking for Before Generation",
+    "crossref_status": "candidate",
+    "candidate": "SnapKV: LLM Knows What You are Looking for Before Generation",
+    "score": 70.49547
+  },
+  {
+    "key": "ruler",
+    "title": "RULER: What's the Real Context Size of Your Long-Context Language Models?",
+    "crossref_status": "candidate",
+    "candidate": "Ghost Context: Cross-Context Hallucination in Long-Context Language Models",
+    "score": 36.49878
+  },
+  {
+    "key": "babilong",
+    "title": "BABILong: Testing the Limits of LLMs with Long Context Reasoning-in-a-Haystack",
+    "crossref_status": "candidate",
+    "candidate": "BABILong: Testing the Limits of LLMs with Long Context Reasoning-in-a-Haystack",
+    "score": 63.59701
+  },
+  {
+    "key": "locomo",
+    "title": "Evaluating Very Long-Term Conversational Memory of LLM Agents",
+    "crossref_status": "candidate",
+    "candidate": "Evaluating Very Long-Term Conversational Memory of LLM Agents",
+    "score": 60.13032
+  },
+  {
+    "key": "longbench",
+    "title": "LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding",
+    "crossref_status": "candidate",
+    "candidate": "LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding",
+    "score": 64.68792
+  },
+  {
+    "key": "pg19",
+    "title": "Compressive Transformers for Long-Range Sequence Modelling",
+    "crossref_status": "candidate",
+    "candidate": "Long-Horizon Aftershock Sequence Modeling with Transformers",
+    "score": 24.284826
+  },
+  {
+    "key": "longchat",
+    "title": "How Long Can Open-Source LLMs Truly Promise on Context Length?",
+    "crossref_status": "candidate",
+    "candidate": "‘Open source’ AI isn’t truly open — here’s how researchers can reclaim the term",
+    "score": 33.864727
+  },
+  {
+    "key": "lloco",
+    "title": "LLoCO: Learning Long Contexts Offline",
+    "crossref_status": "candidate",
+    "candidate": "LLoCO: Learning Long Contexts Offline",
+    "score": 54.11255
+  },
+  {
+    "key": "pyramidkv",
+    "title": "PyramidKV: Dynamic KV Cache Compression based on Pyramidal Information Funneling",
+    "crossref_status": "candidate",
+    "candidate": "A Graph-Based Methodology for Dynamic KV-Cache Compression in Transformer Inference",
+    "score": 33.700317
+  },
+  {
+    "key": "lckv",
+    "title": "Layer-Condensed KV Cache for Efficient Inference of Large Language Models",
+    "crossref_status": "candidate",
+    "candidate": "Layer-Condensed KV Cache for Efficient Inference of Large Language Models",
+    "score": 63.843933
+  },
+  {
+    "key": "actbeacon",
+    "title": "Long Context Compression with Activation Beacon",
+    "crossref_status": "candidate",
+    "candidate": "QUITO: Accelerating Long-Context Reasoning Through Query-Guided Context Compression",
+    "score": 21.557098
+  },
+  {
+    "key": "landmark",
+    "title": "Landmark Attention: Random-Access Infinite Context Length for Transformers",
+    "crossref_status": "candidate",
+    "candidate": "Random-Access Infinite Context Length for Transformers",
+    "score": 50.820824
+  },
+  {
+    "key": "longllama",
+    "title": "Focused Transformer: Contrastive Training for Context Scaling",
+    "crossref_status": "candidate",
+    "candidate": "Focused Transformer: Contrastive Training for Context Scaling",
+    "score": 51.093273
+  },
+  {
+    "key": "cacheblend",
+    "title": "CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion",
+    "crossref_status": "candidate",
+    "candidate": "CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion",
+    "score": 80.87947
+  },
+  {
+    "key": "ragcache",
+    "title": "RAGCache: Efficient Knowledge Caching for Retrieval-Augmented Generation",
+    "crossref_status": "candidate",
+    "candidate": "RAGCache: Efficient Knowledge Caching for Retrieval-Augmented Generation",
+    "score": 63.26907
+  },
+  {
+    "key": "memoryllm",
+    "title": "MemoryLLM: Towards Self-Updatable Large Language Models",
+    "crossref_status": "candidate",
+    "candidate": "Towards Self-Improving Table Understanding with Large Vision-Language Models",
+    "score": 28.432323
+  },
+  {
+    "key": "recsum",
+    "title": "Recursively Summarizing Enables Long-Term Dialogue Memory in Large Language Models",
+    "crossref_status": "candidate",
+    "candidate": "Recursively summarizing enables long-term dialogue memory in large language models",
+    "score": 73.067635
+  },
+  {
+    "key": "kvdirect",
+    "title": "The Residual Stream Is All You Need: On the Redundancy of the KV Cache in Transformer Inference",
+    "crossref_status": "candidate",
+    "candidate": "Redundancy Is All You Need",
+    "score": 37.955925
+  },
+  {
+    "key": "stagesofinference",
+    "title": "The Remarkable Robustness of LLMs: Stages of Inference?",
+    "crossref_status": "candidate",
+    "candidate": "Optimization and Robustness-Informed Membership Inference Attacks for LLMs",
+    "score": 27.732971
+  },
+  {
+    "key": "longmem",
+    "title": "Augmenting Language Models with Long-Term Memory",
+    "crossref_status": "candidate",
+    "candidate": "Augmenting Language Models with Long-Term Memory",
+    "score": 44.30052
+  },
+  {
+    "key": "minicache",
+    "title": "MiniCache: KV Cache Compression in Depth Dimension for Large Language Models",
+    "crossref_status": "candidate",
+    "candidate": "MiniCache: KV Cache Compression in Depth Dimension for Large Language Models",
+    "score": 72.218155
+  },
+  {
+    "key": "quest",
+    "title": "Quest: Query-Aware Sparsity for Efficient Long-Context LLM Inference",
+    "crossref_status": "candidate",
+    "candidate": "Q-Infer: Towards Efficient GPU-CPU Collaborative LLM Inference via Sparsity-Aware Dynamic Scheduling",
+    "score": 35.59831
+  },
+  {
+    "key": "retrievalattention",
+    "title": "RetrievalAttention: Accelerating Long-Context LLM Inference via Vector Retrieval",
+    "crossref_status": "candidate",
+    "candidate": "LLM-Prefetch: Accelerating Long-Context LLM Inference via Explicit Prefetching",
+    "score": 46.636066
+  },
+  {
+    "key": "cepe",
+    "title": "Long-Context Language Modeling with Parallel Context Encoding",
+    "crossref_status": "candidate",
+    "candidate": "Long-Context Language Modeling with Parallel Context Encoding",
+    "score": 53.18046
+  },
+  {
+    "key": "qwen3",
+    "title": "Qwen3 Technical Report",
+    "crossref_status": "candidate",
+    "candidate": "Reconstructing Qwen3 into Qwen3-Protein: A Versatile Biophysics-Grounded Protein Language Foundation Model for PTMs and Downstream Tasks",
+    "score": 18.19503
+  },
+  {
+    "key": "llama3",
+    "title": "The Llama 3 Herd of Models",
+    "crossref_status": "candidate",
+    "candidate": "Llama Herd Health",
+    "score": 30.198214
+  },
+  {
+    "key": "transformer",
+    "title": "Attention Is All You Need",
+    "crossref_status": "candidate",
+    "candidate": "Attention Is All You Need",
+    "score": 34.693928
+  },
+  {
+    "key": "bm25",
+    "title": "The Probabilistic Relevance Framework: BM25 and Beyond",
+    "crossref_status": "candidate",
+    "candidate": "The Probabilistic Relevance Framework: BM25 and Beyond",
+    "score": 47.309933
+  },
+  {
+    "key": "roformer",
+    "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+    "crossref_status": "candidate",
+    "candidate": "RoFormer: Enhanced transformer with Rotary Position Embedding",
+    "score": 59.651157
+  },
+  {
+    "key": "yarn",
+    "title": "YaRN: Efficient Context Window Extension of Large Language Models",
+    "crossref_status": "candidate",
+    "candidate": "The Context Window Fallacy in Large Language Models",
+    "score": 34.510384
+  },
+  {
+    "key": "lora",
+    "title": "LoRA: Low-Rank Adaptation of Large Language Models",
+    "crossref_status": "candidate",
+    "candidate": "PE-LoRA: Parameter-Efficient Bayesian Low-Rank Adaptation for Large Language Models",
+    "score": 45.14388
+  },
+  {
+    "key": "pagedattention",
+    "title": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+    "crossref_status": "candidate",
+    "candidate": "Efficient Memory Management for Large Language Model Serving with PagedAttention",
+    "score": 56.412483
+  },
+  {
+    "key": "rag",
+    "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+    "crossref_status": "candidate",
+    "candidate": "Evidentiality-guided Generation for Knowledge-Intensive NLP Tasks",
+    "score": 40.72436
+  },
+  {
+    "key": "distillation",
+    "title": "Distilling the Knowledge in a Neural Network",
+    "crossref_status": "candidate",
+    "candidate": "Distilling knowledge from Gaussian process teacher to neural network student",
+    "score": 29.2905
+  },
+  {
+    "key": "xu2024retrievallong",
+    "title": "Retrieval Meets Long Context Large Language Models",
+    "crossref_status": "candidate",
+    "candidate": "Information Retrieval Meets Large Language Models",
+    "score": 39.628666
+  },
+  {
+    "key": "zigzagkv",
+    "title": "ZigZagKV: Dynamic KV Cache Compression for Long-context Modeling based on Layer Uncertainty",
+    "crossref_status": "candidate",
+    "candidate": "HeteroCache: A Dynamic Retrieval Approach to Heterogeneous KV Cache Compression for Long-Context LLM Inference",
+    "score": 37.82637
+  },
+  {
+    "key": "kvcachebenchmark",
+    "title": "KV Cache Compression, But What Must We Give in Return? A Comprehensive Benchmark of Long Context Capable Approaches",
+    "crossref_status": "candidate",
+    "candidate": "KV Cache Compression, But What Must We Give in Return? A Comprehensive Benchmark of Long Context Capable Approaches",
+    "score": 84.95546
+  },
+  {
+    "key": "acre",
+    "title": "Boosting Long-Context Information Seeking via Query-Guided Activation Refilling",
+    "crossref_status": "candidate",
+    "candidate": "Boosting Long-Context Information Seeking via Query-Guided Activation Refilling",
+    "score": 74.66167
+  },
+  {
+    "key": "imdc",
+    "title": "Memorize Step by Step: Efficient Long-Context Prefilling with Incremental Memory and Decremental Chunk",
+    "crossref_status": "candidate",
+    "candidate": "Memorize Step by Step: Efficient Long-Context Prefilling with Incremental Memory and Decremental Chunk",
+    "score": 94.86421
+  }
+]

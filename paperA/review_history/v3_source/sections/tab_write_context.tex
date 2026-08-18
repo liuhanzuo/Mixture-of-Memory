@@ -1,0 +1,27 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.6pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Writer} & \textbf{Context} & \textbf{Macro}$\uparrow$ &
+\textbf{Write FLOPs} \\
+\midrule
+Independent ($w{=}0$) & current chunk & 92.5 & $1.000\times$ \\
+Overlap ($w{=}32$) & 32-token left prefix & 98.5 & $1.057\times$ \\
+Overlap ($w{=}64$) & 64-token left prefix & 98.5 & $1.115\times$ \\
+Overlap ($w{=}128$) & 128-token left prefix & \textbf{99.0} & $1.229\times$ \\
+Document-context control & full prefix & 100.0 & $O(N)$ forward \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Lower-layer Write context recovers the deployable gap.}
+Paired Qwen3-8B results on RULER \texttt{niah\_multikey\_1} at 8k and 16k
+($n{=}200$ pooled). Every overlap width significantly exceeds the independent
+writer; for $w{=}32$, the gain is $+6.0$ points, 95\% CI $[3.0,9.5]$.
+Persistent storage and Read/decode are identical across deployable rows.
+FLOPs are theoretical lower-12 Write ratios; measured wall-clock overhead is
+larger because of chunk-level execution.}
+\label{tab:write-context}
+\end{table}

@@ -1,0 +1,68 @@
+% Decisive retrieval, split-depth, and self-distillation controls under the
+% unified Qwen3-8B evaluation protocol.
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Configuration}
+& \textbf{Split $j$}
+& \textbf{LoRA}
+& \textbf{LoCoMo Judge}
+& \multicolumn{2}{c}{\textbf{BABILong mean}} \\
+\cmidrule(l){5-6}
+& & & & \textbf{qa1 / qa2} & \textbf{qa5} \\
+\midrule
+Matched raw-text replay
+& 0
+& no
+& \textbf{41.59}
+& 66.3 / 38.9
+& 63.3 \\
+
+CoMem frozen
+& 6
+& no
+& 32.78
+& 44.6 / 22.6
+& 53.9 \\
+
+CoMem frozen
+& 9
+& no
+& 29.15
+& 42.4 / 19.6
+& 55.6 \\
+
+CoMem frozen
+& 12
+& no
+& 24.52
+& 33.4 / 18.0
+& 60.3 \\
+
+\textbf{CoMem distilled}
+& 12
+& yes
+& 38.27
+& 55.6 / 27.0
+& \textbf{68.7} \\
+\bottomrule
+\end{tabular}%
+}
+\caption{Controlled comparison of retrieval, split depth, and
+self-distillation using Qwen3-8B. All configurations follow the same
+plain-text prompting protocol, with model-specific chat templating disabled
+(\texttt{chat\_template=False}), and retrieve the same top-12 pack.
+For the frozen configurations, readout fidelity decreases as the split moves
+deeper. At the same split $j{=}12$, the rank-32 LoRA improves the LoCoMo Judge
+score by 13.75 points and the BABILong qa1, qa2, and qa5 means by
+22.2, 9.0, and 8.4 points, respectively. BABILong entries are rounded task means
+from the underlying 21 task--length cells; the raw-cell $j{=}0$ macro is 56.14. The $j{=}0$ configuration performs
+full-depth recomputation over the retrieved pack, providing a selected-pack
+reference without lower-layer reuse and thus no
+depth-based reduction in query-time computation.}
+\label{tab:depth-tradeoff}
+\end{table}

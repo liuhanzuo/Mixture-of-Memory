@@ -1,0 +1,24 @@
+% Continuous-prefix h12 attribution oracle.
+\begin{table}[!htbp]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lrrc@{}}
+\toprule
+\textbf{Replay pathway} & \textbf{RULER B} & \textbf{MK 8/16k} & \textbf{Reusable} \\
+\midrule
+Full replay from $j{=}0$ & 99.19 & 100.0 & No \\
+Continuous-prefix $h_{12}$ oracle & 99.19 & 100.0 & No \\
+Chunk-local cached $h_{12}$ & 96.07 & 92.5 & Yes \\
+\bottomrule
+\end{tabular}
+\caption{Write-side attribution with identical examples, packs, and LoRA.
+The continuous-prefix oracle runs layers 0--11 over the selected packed sequence
+for every query, then starts upper replay from that $h_{12}$; it is bit-identical
+to full replay on all 1,500 Cohort-B examples. The deployable chunk-local path
+loses 3.12 points (95\% CI $[2.36,3.93]$; McNemar
+$p{=}8.79\!\times\!10^{-24}$), and 7.50 points on the pooled 8k/16k multikey
+cells ($n{=}200$, CI $[4.0,11.5]$). The oracle is an attribution upper bound,
+not a reusable cache.}
+\label{tab:h12-oracle}
+\end{table}

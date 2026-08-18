@@ -1,0 +1,22 @@
+\begin{abstract}
+Depth-pruned language models are often continued-pretrained until held-out
+perplexity improves, implicitly treating likelihood recovery as evidence that
+target capabilities have recovered. We test that proxy on literal observed
+paths from OLMo-2-7B, using in-domain perplexity, two MMLU scoring interfaces,
+and three zero-shot closed-book QA evaluations. In the single principal
+keep14+fresh2 run, both perplexity and answer-letter MMLU improve through the
+available 200k-step path, but the endpoint remains far below the intact model on
+MMLU and all three QA tasks. The intact full32 branch is observed only through
+25k; it stays closer to the base than keep14 at that short horizon, but does not
+control the 200k endpoint. Complete-option
+MMLU narrows the gap; however, a fully random 16-layer operating point reaches a
+similar content-score floor while remaining at answer-letter chance. A
+ShortGPT-16 operating point is substantially stronger, but its construction
+couples block selection, inherited-block count, final-block retention, and the
+absence of fresh tails. Thus, PPL improvement alone does not imply target
+recovery along these observed paths. We recommend reporting in-domain
+likelihood, target evaluation, interface, exact
+construction, training budget, and run-level uncertainty separately. We do not
+claim knowledge deletion or localization, causal factor attribution, universal
+recovery dynamics, or failure beyond the measured budgets.
+\end{abstract}

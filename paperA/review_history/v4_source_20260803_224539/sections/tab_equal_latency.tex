@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Method} & \textbf{top-$k$} & \textbf{Matched quality}$\uparrow$ &
+\textbf{Online latency} \\
+\midrule
+Raw-text replay & 10 & \textbf{64.78} & within $\pm5\%$ \\
+CoMem + LoRA & 12 & 53.22 & anchor \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Equal-latency BM25 comparison is negative for CoMem.}
+The retrieval budget is chosen on a disjoint latency-only calibration split,
+then frozen and evaluated on a mixed diagnostic cohort. CoMem trails raw-text replay by
+11.56 points (paired-bootstrap 95\% CI $[-14.44,-8.67]$). Thus the extra
+evidence admitted by cheaper upper-layer replay does not compensate for
+residual readout loss in this cohort.}
+\label{tab:equal-latency}
+\end{table}

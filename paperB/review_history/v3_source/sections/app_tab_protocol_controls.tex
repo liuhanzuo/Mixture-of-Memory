@@ -1,0 +1,56 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Arm} & \textbf{letter} & \textbf{content raw} & \textbf{content norm.} \\
+\midrule
+Full base & .6054 & .4400 & .4706 \\
+Full32 at 25k & .5877 & .4344 & .4662 \\
+keep8 endpoint$^\dagger$ & .2550 & .3219 & .3423 \\
+keep10 endpoint$^\dagger$ & .2720 & .3230 & .3445 \\
+keep12 endpoint$^\dagger$ & .2728 & .3419 & .3629 \\
+keep14 at 200k & .3184 & .3548 & .3832 \\
+Frozen front at 200k & .2624 & .3349 & .3604 \\
+Random init at 200k & .2470 & .3439 & .3598 \\
+ShortGPT-16 at 200k & .4742 & .3764 & .4012 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{MMLU scoring-interface control on all 14,042 items.} Letter
+scores one of A/B/C/D after displaying the options. Content scores the complete
+option text. ``Content raw'' selects by summed continuation log-likelihood;
+``content norm.'' selects by mean log-likelihood per continuation token and is
+the pre-specified content headline. $^\dagger$The ledger endpoint labels refer
+to retained keep8 at 121k, keep10 at 83.5k, and keep12 at 124k checkpoints; no literal
+step-200k content-protocol evaluations are available for these arms.}
+\label{tab:app-protocol-controls}
+\end{table}
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Arm} & \textbf{PopQA contains} & \textbf{TriviaQA EM} & \textbf{NQ EM} \\
+\midrule
+Full base & .2571 & .6355 & .2050 \\
+Full32 at 25k & .2280 & .5715 & .1582 \\
+keep14 at 200k & .1415 & .2940 & .0598 \\
+Frozen front at 200k & .1283 & .2477 & .0496 \\
+Random init at 200k & .1112 & .2086 & .0632 \\
+keep8 endpoint$^\dagger$ & .1246 & .1577 & .0368 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{\textbf{Zero-shot, no-retrieval closed-book evaluation.} All arms use
+the same plain \texttt{Question:/Answer:} generation protocol. All full32 cells
+use the intact 32-layer step-25k checkpoint. $^\dagger$keep8 has a different
+10-layer shape; its retained checkpoint is step 121k and it is included only as
+a depth reference.}
+\label{tab:app-closedbook}
+\end{table}

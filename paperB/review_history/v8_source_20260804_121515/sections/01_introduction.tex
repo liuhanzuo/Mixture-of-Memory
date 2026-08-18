@@ -1,0 +1,75 @@
+\section{Introduction}
+\label{sec:intro}
+
+Removing transformer blocks and then continuing pretraining (CPT, often called
+``healing'') is an attractive route to smaller language models
+~\citep{gromov2024unreasonable,shortenedllama,men2024shortgpt,
+yang2024laco}. Held-out perplexity is a natural training signal, but using its
+improvement as evidence of target recovery makes a stronger measurement
+assumption: that likelihood and the target evaluation recover together after
+the structural intervention.
+
+Compression research has already established that perplexity can miss changes
+in parametric knowledge, downstream behavior, and safety
+~\citep{costcompression,jaiswal2024truth,beyondperplexity}. Depth-pruning work
+also reports recovery curves and loss--task gaps
+~\citep{gromov2024unreasonable,shortenedllama,minitron,iterabre}. The open
+measurement problem is therefore not whether the metrics can disagree, but
+\emph{how to audit a recovery claim}: is the apparent gap a property of the
+training path, the evaluation interface, or the exact pruned construction?
+
+We answer this question with a densely instrumented OLMo-2-1124-7B case study
+~\citep{olmo2}. Our literature audit found no prior post-depth-pruning study
+that jointly combines (i) same-source held-out perplexity and within-path
+checkpoints, (ii) answer-letter and complete-option MMLU on the same 14,042
+items, (iii) three no-retrieval closed-book QA datasets, and (iv) an intact CPT
+branch, same-shape null points, and an alternative 16-layer construction.
+This combination turns a familiar ``PPL versus task'' comparison into a
+multi-axis test of proxy, interface, and construction.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig1_pruneheal_autofigure.pdf}
+\caption{\textbf{A multi-axis audit changes the recovery verdict.}
+\textbf{Left:} keep14 improves from 128k to 200k, yet the large intact-base
+MMLU gap remains. \textbf{Right:} the random model exposes a high
+complete-option floor, whereas ShortGPT reaches a much stronger endpoint at the
+same nominal depth and 200k-step budget; full32 supplies the available 25k
+intact-CPT reference. PPL uses a same-source held-out Dolmino shard. Each
+trained construction is one run and token counts are nominal presentations.
+The exact unmatched factors are reported in Table~\ref{tab:main-results} and
+Limitations.}
+\label{fig:proxy-validity}
+\end{figure*}
+
+Figure~\ref{fig:proxy-validity} previews three measurement findings. First,
+keep14 continues to improve late in training without approaching the intact
+target scores. Second, complete-option MMLU makes the compressed models look
+stronger, but the same interface also gives a random model a high floor. Third,
+ShortGPT is substantially stronger than keep14 at the same nominal depth,
+making construction an essential part of any recovery result.
+
+\paragraph{Study design.}
+The principal construction retains the first 14 of 32 pretrained blocks,
+appends two fresh blocks, and trains for 200k steps. We compare it with the
+intact base, a full32 CPT checkpoint at 25k, frozen and random same-shape
+operating points, and a non-contiguous ShortGPT-16 model at 200k. All PPL is
+in-domain on a disjoint shard from the same Dolmino/DCLM source. Each trained
+construction is one run; full32 has no 200k checkpoint, and ShortGPT changes
+four structural choices together. We state these boundaries once here and
+concentrate the remaining qualifications in Limitations.
+
+\paragraph{Contributions.}
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt]
+\item \textbf{A multi-interface recovery audit.} We jointly track same-source
+likelihood, paired letter/content MMLU, and three closed-book QA datasets, with
+item-level uncertainty for the load-bearing MMLU comparisons.
+\item \textbf{Null and construction diagnostics.} An intact CPT reference,
+random and frozen operating points, and ShortGPT separate three questions that
+a single loss curve conflates: training-domain fit, interface validity, and
+construction dependence.
+\item \textbf{Four actionable findings and an audit protocol.} We quantify the
+late keep14 target gap, the random content-score floor, the 15.5-point
+ShortGPT--keep14 MMLU gap, and the much smaller short-horizon full32 deficits;
+we turn them into a six-axis reporting checklist for future recovery studies.
+\end{itemize}

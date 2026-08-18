@@ -1,0 +1,73 @@
+\section{Related Work}
+\label{sec:related}
+
+Table~\ref{tab:priorart} positions our measurement design against the nearest
+recovery studies. The novelty is the \emph{joint audit}, not the observation
+that perplexity and downstream metrics can differ.
+
+\input{sections/tab_priorart}
+
+\paragraph{Selecting and removing depth.}
+ShortGPT and SLEB rank and remove redundant blocks
+~\citep{men2024shortgpt,song2024sleb}; LaCo merges adjacent layers
+~\citep{yang2024laco}; BlockPruner searches at attention/MLP-block granularity
+~\citep{blockpruner}. Other studies show that preferred removals depend on task
+and calibration choices~\citep{siddiqui2024deeper,lu2024reassessing,
+calibration2026}. These works optimize \emph{which} structure to retain. We
+instead measure what different retained structures recover under CPT.
+
+\paragraph{Recovery paths and retraining controls.}
+\citet{gromov2024unreasonable} are the closest antecedent for post-healing
+loss--task dissociation after removing deeper layers. Shortened LLaMA reports
+CPT learning curves and compares CPT, LoRA, and pruned versus scratch
+initialization~\citep{shortenedllama}. Minitron likewise studies retraining
+trajectories, iterative pruning, task behavior, and initialization choices
+within a structured-pruning/distillation pipeline~\citep{minitron}.
+IteRABRe explicitly alternates block removal and recovery, plotting task-family
+trajectories and weak MMLU recovery~\citep{iterabre}. Thus neither trajectories
+nor loss--task dissociation originate here. What these studies do not jointly
+provide is a same-item interface audit, a random interface floor, closed-book
+factual generation, an intact same-corpus CPT reference, and a same-depth
+construction contrast. We assemble those pieces into one auditable recovery
+study. PASER is complementary: it selects post-training data to improve
+recovery efficiency rather than auditing the validity of recovery
+measurements~\citep{paser}.
+Sheared LLaMA, compact-model distillation, and DRPruning integrate pruning with
+data allocation, distillation, or robust training~\citep{xia2024sheared,
+muralidharan2024compact,deng2025drpruning}. Our prefix-plus-fresh-tail recipe is
+not presented as competitive with these recovery algorithms.
+
+\paragraph{Repair and concurrent work.}
+LinearPatch and Prune\&Comp attribute part of layer-pruning damage to
+cross-layer interface or magnitude mismatch and repair it with lightweight
+transformations or compensation~\citep{linearpatch,prunecomp}. A decision-
+transition analysis studies where post-pruning performance collapse appears
+~\citep{decisioncollapse}. SlimQwen and ShortOPD appeared within three months of
+this manuscript version and are treated as concurrent work
+~\citep{slimqwen,shortopd}; they further cover matched-token initialization,
+progressive recovery, and recognition/generation behavior. ShortOPD and
+concurrent work on generative reasoning limits strengthen the case for
+evaluating free generation alongside multiple-choice recognition
+~\citep{limitsgenerativereasoning}. Our study complements these recovery
+methods by asking which measurements justify the word ``recovered.''
+
+\paragraph{Evaluating compression beyond perplexity.}
+The Cost of Compression studies how pruning and quantization affect parametric
+knowledge~\citep{costcompression}. \citet{jaiswal2024truth} show that low
+perplexity can coexist with large deficits on knowledge-intensive compressed-LM
+benchmarks, and \citet{beyondperplexity} document divergent safety effects.
+These studies motivate multi-dimensional evaluation. Our additional focus is
+measurement validity during post-depth-pruning CPT: within-arm checkpoints, an
+available intact same-corpus branch, a random null floor, paired scoring
+interfaces, closed-book generation, and an alternative same-depth
+construction.
+Fragile Knowledge, Robust Instruction-Following reports selective capability
+effects under width pruning~\citep{fragileknowledge}; it is adjacent evidence
+that compression can preserve some interfaces while damaging others.
+Multiple-choice evaluations are themselves interface-sensitive: first-token
+letter probabilities can disagree with generated text, leaderboard rankings
+change with evaluation details, and MMLU varies under answer reordering
+~\citep{myanswerisc,benchmarktargets,answerorder}. Our content protocol is a
+diagnostic within this broader literature. Its key addition is the random
+same-shape floor, which shows that a larger complete-option score is not by
+itself evidence of inherited target recovery.

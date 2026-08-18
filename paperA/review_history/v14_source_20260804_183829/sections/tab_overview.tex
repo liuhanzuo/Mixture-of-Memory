@@ -1,0 +1,37 @@
+% Descriptive cross-benchmark scope table; only j=0 vs j=12 is matched.
+\begin{table*}[!t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Method}
+& \textbf{RULER}$\uparrow$
+& \textbf{LongEval}$\uparrow$
+& \textbf{LongBench}$\uparrow$
+& \textbf{BABILong}$\uparrow$
+& \textbf{LoCoMo Judge}$\uparrow$ \\
+& 15-cell & 8k--128k & 6-QA F1 & qa1/2/5 macro & full set \\
+\midrule
+Matched raw-text replay ($j{=}0$)
+& 99.20$^{B}$ & 97.2 & 12.31 & 56.14 & 41.59 \\
+CoMem + LoRA ($j{=}12$)
+& \shortstack{97.05$^{A}$ / 96.07$^{B}$} & 69.0 & 12.15 & 50.43 & 38.27 \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{Unmatched descriptive references; do not compare columns as a ranking}} \\
+KV-Direct
+& 78.80$^{A}$ & 65.2 & 12.17 & 63.00 & 34.59 \\
+InfLLM
+& 77.83$^{A}$ & 21.6 & 11.86 & 59.52 & 22.21 \\
+StreamingLLM
+& 23.37$^{A}$ & 30.8 & 11.11 & 48.14 & 25.63 \\
+MemoryLLM$^{\dagger}$
+& 16.55$^{A}$ & 13.6 & 9.01 & 30.00 & 16.11 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Cross-benchmark performance of the matched depth endpoints and external references.} Only the $j{=}0$ and $j{=}12$ rows form the paper's matched depth
+comparison. Other rows differ in interface, context treatment, and sometimes
+backbone; $^{\dagger}$MemoryLLM uses a released 7B model. RULER superscripts are
+distinct cohorts and are never pooled or ranked across superscripts.}
+\label{tab:overview}
+\end{table*}

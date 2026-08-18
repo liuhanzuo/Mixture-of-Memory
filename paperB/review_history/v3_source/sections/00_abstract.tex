@@ -1,0 +1,24 @@
+\begin{abstract}
+Depth-pruned language models are commonly continued-pretrained to restore
+aggregate language-model quality, but lower perplexity does not by itself
+identify which behaviors have returned. We present a trajectory-level study of
+post-pruning recovery on OLMo-2 base models. Prefix variants retain pretrained
+lower blocks, append a fresh tail, and continue pretraining; we evaluate
+held-out likelihood, two MMLU scoring interfaces, three closed-book QA tasks,
+and a broader likelihood suite. In the 16-layer keep14 arm, perplexity improves
+to 10.561 after 200k steps but remains $1.428\times$ the intact model's 7.398,
+while answer-letter MMLU reaches only .319 versus .605. An intact 32-layer
+control stays near the base through its observed 25k plateau checkpoint,
+making short-horizon corpus shift an insufficient explanation. Complete-option
+scoring raises keep14 to .383, consistent with an answer-interface component;
+however, a fully random 16-layer model reaches nearly the same content score
+while remaining at chance on answer letters, exposing a large fluency floor.
+The deficit also persists on PopQA, TriviaQA, and NQ-open. A different
+construction, non-contiguous ShortGPT-16, reaches .474
+MMLU at the same 200k target budget, although coupled structural differences
+prevent attribution to a single retained block or selection rule. Our conclusion
+is methodological: after a structural intervention, likelihood, target
+capability, scoring interface, exact construction, and recovery compute should be
+reported separately; perplexity measures distributional fit, not a sufficient
+certificate of capability recovery.
+\end{abstract}

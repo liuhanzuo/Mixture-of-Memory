@@ -1,0 +1,68 @@
+\section{Prune--Regrow--Heal Study}
+\label{sec:method}
+
+\subsection{Intervention and model family}
+We study OLMo-2-1124-7B~\citep{olmo2}, a 32-layer base language model without
+instruction tuning. For prefix arm \texttt{keep}$=k$, we retain the first $k$
+pretrained decoder blocks and append two randomly initialized blocks. We denote
+the cut location by $d_{\mathrm{cut}}=k/32$ and resulting depth by
+$d_{\mathrm{model}}=(k+2)/32$. Embeddings, final normalization, and the output
+head are copied exactly. The 1B OLMo-2 model provides qualitative same-family
+context, not a matched replication.
+
+The principal arm, keep14, is therefore a 16-layer model containing 14 inherited
+prefix blocks and two fresh tail blocks. We additionally evaluate an
+influence-selected ShortGPT-16 endpoint that inherits 16 non-contiguous blocks,
+including the original final block. It is a construction comparison, not a
+selection-only ablation, because inherited count and fresh-tail construction
+also differ.
+
+\subsection{Healing}
+All inherited prefix arms continue pretraining on the DCLM portion of
+\texttt{dolmino-mix-1124}~\citep{dolma}, retokenized into 2,048-token windows. A disjoint
+$4096\times2048$ shard provides held-out likelihood. The maximum budget is
+200k optimizer steps with effective batch size 128. In inherited runs, all
+trainable parameters use peak learning rate $2\times10^{-5}$; AdamW, cosine
+decay, mixed precision, and reconstruction checks are detailed in
+Appendix~\ref{app:repro}.
+
+keep14 and ShortGPT complete 200k steps. Shallower prefix runs are evaluated at
+their latest retained checkpoints (keep8 121k, keep10 83.5k, and keep12 124k).
+These checkpoints were selected after knowledge-sensitive metrics appeared
+stable while PPL was still decreasing; there was no registered common stopping
+rule. We report literal steps and do not treat the depth ladder as a
+compute-matched 200k comparison.
+
+\subsection{Auxiliary operating points}
+Four auxiliary operating points delimit interpretation. The intact 32-layer
+model is continued on the same corpus array and nominal schedule through an
+available 25k checkpoint, measuring only short-horizon training drift without
+pruning. Frozen-front keep14
+trains the fresh tail and non-block modules without adapting inherited blocks.
+A fully random 16-layer model matches shape, data, batch, and maximum steps but
+uses a higher learning rate, so it is an operating point rather than an
+initialization-only ablation. Finally, ShortGPT provides a different construction at the
+same resulting depth. The study does not isolate its coupled structural
+differences, and current claims are limited accordingly.
+
+\subsection{Evaluation interfaces}
+Held-out perplexity is raw next-token loss with no chat template or inserted BOS.
+The principal downstream suite uses zero-shot likelihood scoring. Standard MMLU
+~\citep{hendrycks2021mmlu} shows all four options and scores the single answer
+letter. A paired content
+protocol instead scores each complete option text, reporting both summed and
+per-token mean log-likelihood; the latter is the reported content headline.
+Because a random-init model obtains a
+substantial normalized-content score, we interpret this protocol as an
+exploratory interface diagnostic rather than a clean readout ablation or direct
+knowledge measure. Letter and content scoring change the prompt, candidate
+string, tokenization, and normalization together.
+
+We additionally evaluate PopQA~\citep{mallen2023popqa}, TriviaQA
+~\citep{joshi2017triviaqa}, and NQ-open~\citep{kwiatkowski2019natural} with a
+shared zero-shot, no-retrieval \texttt{Question:/Answer:} generation protocol.
+The broader likelihood suite covers HellaSwag, ARC, PIQA, WinoGrande, LAMBADA,
+BoolQ, OpenBookQA, CommonsenseQA, and SocialIQA
+~\citep{hellaswag,arc,piqa,winogrande,lambada,boolq,openbookqa,
+commonsenseqa,socialiqa}. Metrics, sample counts, prompts, checkpoint provenance, and
+strict architecture reconstruction appear in Appendix~\ref{app:repro}.

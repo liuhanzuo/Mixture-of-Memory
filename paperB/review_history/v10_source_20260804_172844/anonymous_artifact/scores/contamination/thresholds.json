@@ -1,0 +1,19 @@
+{
+  "method": "long token-n-gram containment vs the exact tokenized Dolmino continuation corpus (inverted single streaming pass, no downsampling)",
+  "tokenizer": "allenai/OLMo-2-1124-7B",
+  "ns": [
+    13,
+    8
+  ],
+  "hash": "64-bit polynomial (Horner), P=1099511628211, mod 2^64; collision FP ~1e-4 total (negligible)",
+  "unit": "question text (add_special_tokens=False)",
+  "containment_def": "|question n-grams present in training| / |question n-grams|; questions with <n tokens use their whole token sequence as one gram",
+  "verdict_rule": ">= contam_high CONTAMINATED; < contam_low CLEAN; else PARTIAL",
+  "contam_high": 0.8,
+  "contam_low": 0.1,
+  "eval_sketch_unique_hashes": {
+    "13": 571193,
+    "8": 693221
+  },
+  "train_tokens_scanned": 15505225728
+}

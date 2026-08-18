@@ -1,0 +1,28 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Operating point} & \textbf{Letter} & \textbf{Content} &
+$\boldsymbol{\Delta}$ \textbf{(pp)} \\
+\midrule
+Intact base & .6054 & .4706 & $-13.48$ \\
+full32, 25k & .5877 & .4662 & $-12.15$ \\
+keep14, 200k & .3184 & .3832 & $+6.48$ \\
+Frozen, 200k & .2624 & .3604 & $+9.80$ \\
+Random, 200k & .2470 & .3598 & $+11.28$ \\
+ShortGPT, 200k & .4742 & .4012 & $-7.30$ \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Interface audit on the same 14,042 MMLU items.} This is the
+dual-interface rerun snapshot; its keep14 letter score is .3184, distinct from
+the independently merged .3191 trajectory/downstream aggregate.
+Content uses
+mean log-likelihood per complete-option token. It raises keep14 by 6.48 points
+(95\% CI $[5.43,7.56]$), but raises Random by 11.28 points
+($[10.24,12.31]$) to essentially the same content score as Frozen. The random
+floor shows that an interface gain cannot by itself certify inherited target
+recovery.}
+\label{tab:interface-audit}
+\end{table}

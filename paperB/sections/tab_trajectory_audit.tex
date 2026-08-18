@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{keep14 checkpoint} & \textbf{128k} & \textbf{153.5k} & \textbf{200k} \\
+\midrule
+Held-out PPL$\downarrow$ & 10.826 & 10.693 & \textbf{10.561} \\
+MMLU letter$\uparrow$ & .30117 & .3124 & \textbf{.31797} \\
+MMLU deficit to base (pp)$\downarrow$ & 30.42 & 29.30 & \textbf{28.74} \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Late keep14 recovery audit.} MMLU uses one same-item letter
+snapshot throughout. PPL and MMLU both improve, but the endpoint still has a
+28.74-point MMLU deficit to the intact base. The .30117$\rightarrow$.31797
+change is a 1.68-point paired gain
+(paired bootstrap 95\% CI $[1.08,2.29]$; exact McNemar
+$p=4.12{\times}10^{-8}$). The interval measures item variation for these fixed
+checkpoints.}
+\label{tab:trajectory-audit}
+\end{table}

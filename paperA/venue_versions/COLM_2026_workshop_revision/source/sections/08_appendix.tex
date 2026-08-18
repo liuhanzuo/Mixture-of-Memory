@@ -1,0 +1,440 @@
+\section{Additional Results and Ablations}
+\label{sec:appendix}
+
+This appendix contains the detailed task tables, mechanism ablations, and
+cross-scale generality results summarized in the main paper.
+Appendix~\ref{app:statistics} separately documents aggregation, uncertainty,
+and the LoCoMo judge protocol.
+
+\subsection{Systems accounting and equal-latency audit}
+\label{app:systems}
+
+\paragraph{Secondary dense-context operating point.}
+When the persistent store already exists, the select-first path reads a fixed
+6,657-token pack at every source length. Table~\ref{tab:online-prefill} reports
+1.32\,s and 18.7\,GB at 128k versus 50.59\,s and 50.0\,GB for stock dense
+prefill on the same H20. The resulting 38.3$\times$ combines bounded selection
+with depth reuse; it is neither the incremental depth effect nor an end-to-end
+repeated-query comparison.
+
+\input{sections/tab_online_prefill}
+\input{sections/tab_serving_crossover}
+\input{sections/tab_cacheblend_baseline}
+
+\paragraph{Equal-latency audit.}
+\input{sections/tab_equal_latency}
+
+Table~\ref{tab:equal-latency-protocol} reconstructs the complete saved protocol
+behind Table~\ref{tab:equal-latency}, including the nine cells, equal cell
+weights, disjoint latency calibration, generation limits, absolute TTFT,
+hardware, storage assumptions, all cell deltas, dependence-aware bootstraps,
+leave-one-cell-out sensitivity, and the original pooled-IID interval.
+
+\input{sections/tab_equal_latency_protocol}
+
+\paragraph{Content-depth probe protocol.}
+For SST2, WiC, and RTE we extract every layer once from a fixed stratified pool
+(up to 3,000 train examples), then fit L2 logistic regressions on five independent
+60/20/20 train/dev/test splits. Features are standardized; $C\in\{0.1,1,10\}$
+is selected on development data. For layer accuracy $a(l)$, the knee is
+$\min\{l:a(l)\geq0.98\max_l a(l)\}$. The native readout instead applies the
+model's own final norm and LM head to each layer using fixed verbalizers. Lexical
+uni/bi-grams, token length, random labels, majority class, and balanced training
+serve as controls. On SST2, probe peak is about 0.90 versus 0.71 lexical, 0.56
+position/majority, and 0.54 random-label accuracy; WiC/RTE are lower-selectivity
+and have wider per-task intervals. The reported confidence intervals are
+Student-$t$ intervals over task--split knees, not training-seed uncertainty.
+
+\subsection{Depth, selection, and interface ablations}
+\label{app:ablations}
+
+\paragraph{Split depth and self-distillation.}
+The probe values plotted in Figure~\ref{fig:depth} use five stratified data
+splits for Qwen and OLMo plus a matched-support Llama SST2 result; the protocol
+is specified above. Table~\ref{tab:depth-tradeoff} gives the frozen
+$j=0/6/9/12$ quality sweep and same-$j$ distilled control;
+Table~\ref{tab:distilled-depth-curve} gives separately distilled
+$j=6/9/12/18$ deployment points. Table~\ref{tab:adapter} provides a separate
+same-$j$ RULER control.
+Finally, Table~\ref{tab:hcache-lora} uses an HCache-style checkpoint path only
+as an interface-adaptation diagnostic, showing that the readout repair transfers
+beyond CoMem.
+
+\input{sections/tab_depth_tradeoff}
+\input{sections/tab_adapter_hcache_combined}
+\input{sections/tab_distilled_depth_curve}
+
+\paragraph{Selection.}
+Table~\ref{tab:selector} compares oracle, BM25, recency, and reader attention.
+BM25 is near oracle on the lexical needle tasks and is more reliable than the
+tested training-free alternatives at long lengths. Variable tracking instead
+requires iterative expansion along literal variable links; a three-round CPU
+microbenchmark costs 188.8\,ms at 128k, versus 41.0\,ms for one-shot BM25, without
+an additional model forward. This is a low-overhead selector in the tested
+regime, not a constant-time one: lookup grows approximately linearly with store
+size (Table~\ref{tab:store-scaling}). A frozen BGE-large-en-v1.5 retriever is
+also evaluated on a focused cohort: it preserves strong hit-conditional reader
+accuracy but loses recall as context grows. We do not train or tune a retriever,
+so our results establish lexical and frozen-dense operating points rather than
+selector optimality.
+
+\input{sections/tab_selector_dense_combined}
+
+\paragraph{Write-context factorization.}
+The complete $2{\times}2$ control is reported in the main paper
+(Table~\ref{tab:context-position}). It confirms that the position-only
+intervention does not repair chunk-local states and that context and position
+interact. The full overlap and trained-Write sweep is reported in
+Table~\ref{tab:write-context}.
+
+\input{sections/tab_write_context}
+
+\paragraph{Read interaction and chunk size.}
+Table~\ref{tab:crosschunk} compares full cross-chunk attention with
+block-diagonal reuse. Table~\ref{tab:chunk} reports the chunk-size sweep; its
+entries are point estimates rather than a multi-seed stability ranking.
+
+\input{sections/tab_mechanism_compact}
+
+\subsection{Full chat-template-free benchmark comparisons}
+\label{app:tasks}
+Tables~\ref{tab:h2h}--\ref{tab:longbench} give the full audited comparisons for
+RULER, LongEval, BABILong, and LongBench. Main rows use the unified no-chat
+protocol; they include KV-Direct~\citep{kvdirect}, InfLLM~\citep{infllm},
+StreamingLLM~\citep{streamingllm}, and MemoryLLM~\citep{memoryllm}. MemoryLLM
+uses its released Llama-3 checkpoint~\citep{llama3}, while the marked LLoCO
+row uses its released native setup~\citep{lloco}. These are descriptive external
+references rather than matched rankings.
+The all-method LoCoMo comparison is Table~\ref{tab:locomo}; judge details are in
+Appendix~\ref{app:statistics}.
+
+\input{sections/tab_overview}
+
+\subsubsection{RULER and length extrapolation}
+Table~\ref{tab:h2h} reports the complete common-support RULER grid; the
+matched positional-scaling comparison follows in Table~\ref{tab:scaling}.
+\input{sections/tab_h2h}
+The matched positional-scaling grid is Table~\ref{tab:scaling}; the natural-task breakdowns begin in Tables~\ref{tab:longeval}--\ref{tab:locomo}.
+\input{sections/tab_scaling}
+\input{sections/tab_longeval}
+\input{sections/tab_babilong}
+\input{sections/tab_longbench}
+\input{sections/tab_locomo}
+
+\subsection{Store scaling and failure boundaries}
+\label{app:scaling}
+Table~\ref{tab:store-scaling} tests the ``bounded read over extensible store''
+claim directly. Retrieval is invariant when the required evidence fits top-12,
+but lookup and index construction still scale with store size. Beyond the budget,
+recall is physically capped; co-keyed multivalue evidence falls below even this
+cap (recall 0.62 at $E{=}8$), and a common-word-frequency task scores zero as
+coverage falls from 4.5\% at 128k to 1.2\% at 512k. These negative results delimit
+the claim: bounded retrieval is not global aggregation, and successful retrieval
+does not guarantee multi-hop reasoning.
+
+\input{sections/tab_store_scaling}
+
+We audited the PG-19 adapter corpus against the InfiniteBench long-book support
+using normalized 13-gram containment sketches. The conservative 0.8 threshold
+flags 24/86 books (163/580 records), but containment is sharply bimodal: 31 books
+are below 0.10, no book lies in 0.18--0.60, and 54 are at least 0.60. Any cut in
+0.20--0.60 therefore flags 54/86 books and 387/580 records; anonymized character
+names make the 0.8 count an undercount. Existing predictions were unavailable
+for a strict-clean-subset rescore (113 QA and 76 choice records), so we remove
+the book-quality comparison rather than treat it as out-of-domain evidence.
+This does not affect the synthetic store-scaling results above.
+We subsequently audited the PG-19 adapter corpus against the natural-task
+suites. LoCoMo has no flagged overlap and LongEval is synthetic by construction.
+Within the six LongBench QA datasets, material overlap is localized to
+NarrativeQA: 96 of 200 examples are removed by the strict 13-gram clean filter,
+leaving 104. Recomputing all available rows changes six-task macro F1 by at most
+0.13 points; for example, frozen CoMem changes 10.63$\rightarrow$10.60 and
+KV-Direct 10.07$\rightarrow$9.94. The PG-19-trained $j{=}12$ row changes
+9.58$\rightarrow$9.57. Thus the displayed LongBench ordering and near-ties are
+robust to this strict subset, although the audit detects near-verbatim overlap
+rather than semantic paraphrase or exposure through other pretraining corpora.
+
+\subsection{Reproducibility details}
+\label{app:reproducibility}
+Tables~\ref{tab:repro-config}--\ref{tab:repro-eval} record the configuration,
+training, and evaluation settings used by the Qwen3-8B flagship. The archived
+configuration files and evaluation scripts accompany the code release.
+
+\begin{table}[!t]
+\centering
+\small
+\renewcommand{\arraystretch}{0.92}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.14\textwidth}p{0.20\textwidth}p{0.60\textwidth}@{}}
+\toprule
+\textbf{Layer} & \textbf{Setting} & \textbf{Value} \\
+\midrule
+Backbone & Architecture & Frozen Qwen/Qwen3-8B; revision \texttt{b968826d9c46} (full hash in artifact manifest); $L{=}36$, $d{=}4096$, 32 query heads, 8 KV heads, bf16, SDPA. \\
+Backbone & Positions & Native window 40,960; RoPE $\theta{=}10^6$; no active RoPE scaling or YaRN. \\
+Write & Cached state & Split $j{=}12$; disjoint 512-token chunks; chunk-local positions restart at zero; one bf16 residual tensor $h_j$ per token. \\
+Read & Pack & $[\mathrm{BOS};\,\text{selected }h_j;\,h_j(q)]$ in document order, with fresh contiguous RoPE and full causal cross-chunk attention. The nominal cap is $1+12\!\times\!512+512=6{,}657$ tokens; actual RULER means are about 6.2--6.5k because tail chunks and queries can be shorter. \\
+Retrieval & BM25 & Token-ID documents and bare-question token IDs; $k_1{=}1.5$, $b{=}0.75$, Robertson IDF with $+1$ smoothing; no lowercasing, stemming, or stop-word removal. \\
+Retrieval & Iteration & \texttt{rounds=0} means automatic $\lceil k/h\rceil$ rounds, not one-shot. Each round uses newly selected chunks as the next frontier and deduplicates the selected set. \\
+Retrieval & Width & All five benchmarks fix $k{=}12$, hop width $h{=}4$, and therefore three automatic rounds. Chunk size 512 and the BOS sink are also fixed. \\
+Read & Mask & The pack is one causal sequence: the final query sees all chunks; later chunks may attend to earlier chunks. In the block-diagonal ablation, chunks see only themselves and the sink, while the final query still sees all chunks. \\
+Generation & Decoding & Greedy decoding (no sampling, temperature, top-$p$, or beams); no chat template and no thinking mode. \\
+Adapter-free arm & Deployment & Frozen backbone, no LoRA, $j{=}9$; all other memory and evaluation settings are held fixed. \\
+\bottomrule
+\end{tabular}
+\caption{Flagship CoMem inference configuration. The retrieval and read
+configuration is frozen across all five benchmarks; only benchmark harness
+parameters differ.}
+\label{tab:repro-config}
+\end{table}
+
+\begin{table}[!t]
+\centering
+\small
+\renewcommand{\arraystretch}{0.92}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.18\textwidth}p{0.76\textwidth}@{}}
+\toprule
+\textbf{Setting} & \textbf{Value} \\
+\midrule
+Adapter & Rank 32, $\alpha{=}64$, dropout 0; Q/K/V/O and gate/up/down projections in layers 12--35 only; 58.20M trainable parameters (0.71\%). Final weight SHA-256: \path{dd09cd17457c63578c0f38dab79b287ab5da6e3f14c119aedafec1c34400536f}. \\
+Teacher and objective & The same Qwen3-8B with adapters disabled and $j{=}0$ serves as the frozen teacher. At every query token, the teacher top-64 vocabulary indices define a shared support; teacher and gathered student logits are each softmax-renormalized on that support, and outside-support logits are discarded. $\mathcal L=0.6\,\mathrm{KL}(p\Vert q)+0.4\,\mathrm{KL}(q\Vert p)$ at temperature 1, averaged over query tokens, with no CE term. Retained teacher top-64 probability mass was not logged. \\
+Data & Plain PG19 train text; no synthetic long-context examples, retrieval, task labels, or benchmark supervision. Training uses 2,048-token windows, formed as four 512-token chunks. \\
+Forward construction & Each 2,048-token window is split into three context chunks and one query chunk. Teacher and student use the same BOS sink, chunk token IDs, order, and query segment. The teacher replays every chunk from layer 0 with the adapter disabled; the student writes chunks independently through layers 0--11 without gradient and resumes one causal packed sequence through layers 12--35 with the LoRA. Loss is computed only on all query tokens. \\
+Optimization & AdamW, $\beta=(0.9,0.95)$, weight decay 0, peak LR $8\times10^{-5}$, 100-step linear warmup, cosine decay to zero, gradient clipping 1.0, seed 42, bf16, no gradient checkpointing. \\
+Schedule & 4,000 steps on 8 GPUs, one sample per GPU and no gradient accumulation (global batch 8), totaling about 65.5M tokens. \\
+Compute & One node with 8$\times$NVIDIA H20 GPUs. Logged throughput is about 24.5 samples/s, implying roughly 22 minutes wall-clock; training peak memory was not recorded. \\
+\bottomrule
+\end{tabular}
+\caption{Self-distillation and LoRA training configuration. The adapter name's
+``4k'' denotes 4,000 optimization steps; the training sequence length is 2,048
+tokens.}
+\label{tab:repro-train}
+\end{table}
+
+\begin{table}[!t]
+\centering
+\small
+\renewcommand{\arraystretch}{0.92}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.13\textwidth}p{0.25\textwidth}p{0.15\textwidth}p{0.39\textwidth}@{}}
+\toprule
+\textbf{Benchmark} & \textbf{Tasks and support} & \textbf{Generation} & \textbf{Scoring and aggregation} \\
+\midrule
+RULER & Single needle, multikey, and variable tracking; 8k--128k; 100 examples/cell; 8 shards; seed 42. & 48 tokens; 60 for variable tracking. & Official case-insensitive \texttt{string\_match\_all}; equal-weight macro over 15 cells. \\
+LongEval & Lines retrieval; 4k--128k; 100 examples/length; 8 shards; seed 1234. & 16 tokens for the flagship; 48 for frozen controls. & First numeric answer exact match; six-length macro (five-length 8k--128k macro for matched baseline tables). \\
+LongBench & Six QA datasets; 1,150 examples total; 8 shards; seed 42. & 32/64/128 tokens by dataset. & Official multi-reference token F1; equal-weight macro over six datasets. \\
+BABILong & qa1/qa2/qa5; 0k--32k; 100 examples/cell; 4 shards; seed 42. & 20 tokens. & Official \texttt{compare\_answers} with \texttt{TASK\_LABELS}. \\
+LoCoMo & All 1,986 QA pairs from 10 conversations; 4 shards. & 48 tokens for the main 8B comparison; 512 for the cross-scale audit. & GPT-4o judge on categories 1--4; official local abstention rule for category 5; full-set judge is the headline. \\
+\bottomrule
+\end{tabular}
+\caption{Benchmark-level evaluation settings. Every main comparison uses
+\texttt{chat\_template=False}. MemoryLLM is the external persistent-memory
+reference, evaluated with its released chat-tuned backbone.}
+\label{tab:repro-eval}
+\end{table}
+
+\paragraph{Artifacts, licenses, and data scope.}
+The study evaluates English text only. It uses the frozen released
+Qwen/Qwen3-8B checkpoint (Apache-2.0); we do no backbone continued pretraining.
+It also uses PG-19~\citep{pg19}, RULER~\citep{ruler}, BABILong~\citep{babilong},
+LongBench~\citep{longbench}, LongEval/LongChat~\citep{longchat}, and
+LoCoMo~\citep{locomo}. RULER and LongChat code are Apache-2.0; the LongBench
+repository is MIT-licensed, while its component datasets retain their upstream
+terms; BABILong code is Apache-2.0 and incorporates BSD-licensed bAbI tasks;
+LoCoMo is CC BY-NC 4.0. PG-19 contains pre-1919 Project Gutenberg books, for
+which the dataset page does not assert one uniform corpus license, so we do not
+redistribute its text. We likewise redistribute no model weights, benchmark
+examples, or private API responses. Subject to upstream terms, the anonymous
+archive includes the adapter, source, documentation, pinned requirements,
+prediction hashes or permissible shards, judge prompts/parsed outputs, raw
+timing records, and third-party notices. Users obtain all external artifacts
+from their original providers and remain
+responsible for their terms. Table~\ref{tab:repro-eval} reports the evaluated
+supports and sample counts; LoCoMo category denominators are in
+Appendix~\ref{app:statistics}.
+
+\paragraph{Software environment.}
+The archived environment specifies Python 3.10+, PyTorch 2.10,
+Transformers 5.5.4, PEFT 0.10+, Datasets 2.14+, bf16, and SDPA. Evaluation uses
+the benchmark-specific official scorers named in Table~\ref{tab:repro-eval}; the
+archive records all non-default flags and provides a CPU correctness gate.
+
+\paragraph{Compute accounting.}
+The final adapter run used one node with 8 H20 GPUs for about 22 minutes, or
+approximately 2.9 H20 GPU-hours. Table~\ref{tab:repro-train} and this section
+report model size, trainable parameters, hardware, and measured timing protocol.
+Total GPU-hours across preliminary probes, failed runs, baseline generation, and
+all ablations were not consistently logged; we report this omission rather than
+extrapolating an unreliable total.
+
+\subsection{Efficiency, replay attribution, and robustness}
+\paragraph{Efficiency measurement.}
+\label{app:efficiency}
+The Write-inclusive cohort uses one NVIDIA L20A (183\,GB HBM) with PyTorch 2.10,
+Transformers 5.5.4, bf16, SDPA, and the rank-32 LoRA enabled, reporting medians
+of three repetitions. Full-context prefill times the complete forward; CoMem
+times document Write, CPU retrieval, query Write, and upper-layer Read through
+logits. The timer excludes one-time BM25 index construction and external-store
+I/O; Table~\ref{tab:store-io} measures the latter separately. At 128k,
+full-context prefill is 6.035\,s and peaks at 89.39\,GB, while CoMem takes
+2.202\,s and peaks at 18.54\,GB. Cached decode uses 20 greedy steps.
+
+\input{sections/tab_eff}
+
+The store-ready online-prefill cohort above is the paper's only dense-context
+online reference. The dense arm is stock Qwen3-8B without the adapter, while
+CoMem uses the flagship LoRA, so it is a composed deployment point rather than
+an adapter-matched depth estimate. The same-adapter L20A pipeline in
+Table~\ref{tab:eff} is the complementary Write-inclusive reference.
+
+The main serving experiment instead measures write-once/fetch/reuse directly.
+At 32k, CPU-pinned break-even is 8.9--10.9 queries for generations up to
+128 tokens, while the complete GPU/CPU grid is 5.5--10.9. At 128k, the
+$G\le128$ crossover spans 25.8--37.4 queries; at 1M it spans about
+180--421. The difference from the earlier component
+cohort comes from source length, generation length, storage tier, and timing
+boundary.
+CoMem stores 8\,KiB/token (about
+1\,GiB at 128k), far more than text but 18$\times$ less than full KV. Main timing
+cohorts keep the store in HBM; Table~\ref{tab:store-io} separately measures
+placement beyond HBM, so its I/O microbenchmark is not added to model latency.
+
+\paragraph{Retained-KV references.}
+Table~\ref{tab:kvcompress} reports SnapKV and PyramidKV
+~\citep{snapkv,pyramidkv} under their full-prefill boundary. They answer a
+different systems question from cross-query persistence and are not treated as
+nearest modular-cache baselines.
+
+\input{sections/tab_kvcompress}
+
+\paragraph{Same-backbone full-depth chunk-KV baseline.}
+Table~\ref{tab:cacheblend-baseline} uses a minimal faithful CacheBlend-style
+implementation on Qwen3-8B: full-depth per-chunk KV, exact global RoPE
+reindexing, and selective context-token recomputation. The fp32 real-model
+self-test gives maximum KV reindex deviations below
+$4.4\!\times\!10^{-5}$ and makes $r{=}1$ agree with full prefill to
+$2.8\!\times\!10^{-5}$ maximum logit error with 100\% top-1 agreement. The
+released aggregate contains all 48 RULER ratio/task/length cells, 24 BABILong
+cells, and four full-set LoCoMo ratio points with no missing required cells.
+Full-depth Qwen3 GQA KV is
+$2\cdot36\cdot8\cdot128\cdot2=147{,}456$ bytes/token, versus 8,192 bytes/token
+for one bf16 residual. The baseline is training-free and does not include
+CacheBlend's complete native scheduler or cache manager.
+
+\paragraph{Paired quality--latency replay control.}
+Table~\ref{tab:replay-latency} uses a separate H20 harness. The two arms share
+the Qwen3-8B checkpoint, flagship LoRA SHA-256 and all 168 mounted modules,
+example IDs, decode parameters, and per-example retrieved chunk IDs, order, and
+pack tokens; only replay start differs. Across 15 RULER Cohort-B cells
+($n{=}100$ each), full replay scores 99.19 and layer-12 replay scores 96.07.
+The paired 3.12-point gap has bootstrap 95\% CI $[2.36,3.93]$ and exact McNemar
+$p{=}8.79\!\times\!10^{-24}$ (83 full-only correct versus one layer-12-only
+correct). The gap is largest on distractor-heavy multikey retrieval.
+
+For latency, each arm uses the same approximately 6.5k-token pack retrieved from
+16k source contexts in three independent
+processes, with three warmups and 20 reads per process. Layer-12 replay is
+$1.403\times$ faster (931.9 to 664.4\,ms), with all three process-level ratios
+between 1.402 and 1.404. Total-decode medians remain similar at roughly
+2.76--2.86\,s; adding the observed Read and decode components gives only about
+$1.07$--$1.09\times$ total ratios. A preceding component harness attributes the read reduction
+primarily to upper-transformer forward ($1.398\times$), with unchanged LM-head
+time. Retrieval, index construction, reusable store/query Write, and persistent
+I/O are outside this read-phase timing. The result is therefore a measured
+quality--latency trade-off, not quality-preserving or end-to-end acceleration.
+
+\input{sections/tab_replay_latency}
+\input{sections/tab_h12_oracle}
+\input{sections/tab_store_io}
+
+\subsection{Seed-plus-effective-batch robustness}
+
+Table~\ref{tab:seed-batch-robustness} reports the available run-level
+aggregates. Across the 18 individual RULER and BABILong cells, the median
+cell-wise SD is 1.34 points and the maximum is 4.36. Because the two added runs
+change effective batch from 8 to 3, these numbers jointly probe initialization
+and optimization-noise robustness; they are not a clean three-seed variance
+estimate. The available evidence also does not support a multi-run claim for the
+exact 15-cell RULER-B, LoCoMo, or LongEval headlines.
+
+\begin{table}[!t]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llrrrrr@{}}
+\toprule
+\textbf{Suite} & \textbf{Adapter} & \textbf{Seed 42} & \textbf{Seed 1} &
+\textbf{Seed 2} & \textbf{Mean} & \textbf{SD} \\
+\midrule
+RULER 9-cell macro & batch 8 / 3 / 3 & 98.80 & 99.42 & 98.76 & 98.99 & 0.37 \\
+BABILong 9-cell macro & batch 8 / 3 / 3 & 38.44 & 40.33 & 41.44 & 40.07 & 1.52 \\
+\midrule
+RULER multikey 3-length mean & batch 8 / 3 / 3 & 96.67 & 98.67 & 96.67 & 97.33 & 1.15 \\
+BABILong qa5 3-length mean & batch 8 / 3 / 3 & 66.00 & 69.33 & 71.00 & 68.78 & 2.55 \\
+\bottomrule
+\end{tabular}
+\caption{\textbf{Seed-plus-effective-batch robustness, not clean seed
+variance.} All adapters use the same Qwen3-8B split, PG-19 data budget, and
+rank-32 objective; seed 42 is the flagship effective-batch-8 run, while seeds
+1 and 2 use effective batch 3 with matched examples seen. Evaluation uses
+identical cells and supports: RULER single/multikey/variable-tracking at
+32k/64k/128k ($n{=}50$/cell) and BABILong qa1/qa2/qa5 at
+4k/16k/32k ($n{=}100$/cell). SD is the sample SD across the three run-level
+cell macros. These reduced-support cells are not the 15-cell RULER-B headline,
+and no LoCoMo or LongEval multi-run aggregate was retained.}
+\label{tab:seed-batch-robustness}
+\end{table}
+
+\subsection{Prompt and native-chat sensitivity}
+
+For Qwen3-8B, the GPT-4o LoCoMo judge is substantially less prompt-sensitive
+than token F1. CoMem scores 38.27 without chat templating and 37.76 with it;
+KV-Direct scores 34.59 and 38.22. In contrast, CoMem's F1/substring accuracy
+changes from 9.15/23.36 to 19.51/28.65, while KV-Direct F1 changes from 9.02 to
+40.06, showing that lexical metrics are strongly formatting-sensitive. We therefore retain the uniform
+no-chat judge comparison as the controlled headline.
+
+For MemoryLLM, we report only the uniform no-chat row in the paper. A matched
+native-chat/no-chat table was not retained in the frozen manuscript; therefore
+we make no prompt-sensitivity claim for this external baseline and do not mix
+prompt protocols within an average.
+
+\subsection{Cross-scale and MoE generality}
+\label{app:generality}
+Adapter-free sweeps across six Qwen3 sizes and Qwen3-30B-A3B confirm that the
+split-forward implementation ports beyond the flagship. Performance is
+non-monotonic because split, architecture, and task differ, so we infer neither
+a scaling law nor a replicated quality frontier. These exploratory values and
+raw predictions are retained in the artifact; the Hy3 study below gives the
+stronger architecture-level partition check reported in this appendix.
+
+\subsubsection{Hunyuan Hy3: an 80-layer sparse MoE}
+\label{sec:hy3-general}
+We additionally port CoMem to Tencent Hunyuan Hy3~\citep{hunyuan}, an 80-layer sparse
+Mixture-of-Experts model (192 experts, top-8 routing plus one shared expert;
+$\approx597$\,GB in bf16) with a 262,144-token native window. The backbone is
+sharded across eight GPUs; Write and Read semantics are unchanged.
+
+\paragraph{Exact partition through MoE routing.}
+Reconstructing a contiguous forward by writing \texttt{layers[0:$j$]} and
+resuming \texttt{layers[$j$:80]} gives
+$\max|\Delta\mathrm{logit}|=0.0$ at $j\in\{0,1,40,80\}$, including the
+Dense-to-MoE boundary. The resumed half re-executes every router and expert, so
+the partition preserves routing exactly on this self-test.
+
+\paragraph{Split depth and self-distillation.}
+A PG19 sweep places the best readout region near $j\approx32$--36. At $j=32$,
+self-distillation reduces the 16k multiplicative LM tax from 1.496 to 1.078 and
+raises top-1 agreement from 0.773 to 0.871
+(Table~\ref{tab:hy3distill}).
+
+\input{sections/tab_hy3_distill}
+
+\paragraph{Bounded read through 256k.}
+With the distilled adapter and BM25 top-8, the read stays at
+$\approx4.3$--4.6k tokens from 16k through 256k. CoMem reaches 100/98
+single/multikey recall at the 256k native ceiling with no OOM
+(Table~\ref{tab:hy3ruler}).
+
+\input{sections/tab_hy3_ruler}
+

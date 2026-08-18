@@ -1,0 +1,21 @@
+{
+  "file": "scripts/train_olmo2_arch_probe2.py",
+  "file_sha256": "88d263c3d5f7c5ac1657882ed9e88bbffdda29e553d197832c3a958d0d4c368f",
+  "dry_run_build_guard": [
+    {
+      "stmt_index_in_main_body": 44,
+      "lineno": 714,
+      "guard": "args.dry_run_build",
+      "contains_return": true
+    }
+  ],
+  "resume_from_guard": [
+    {
+      "stmt_index_in_main_body": 47,
+      "lineno": 752,
+      "guard": "args.resume_from",
+      "contains_return": false
+    }
+  ],
+  "dry_run_build_returns_before_resume_from_is_read": true
+}

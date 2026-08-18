@@ -1,0 +1,11 @@
+{
+  "status": "source-file snapshot of local-only evaluator revisions",
+  "commits": {
+    "closedbook_initial": "d05ef591cc2a",
+    "closedbook_nq_open": "9fabb88e53f6",
+    "mmlu_content_initial": "d2e28f22ce12",
+    "mmlu_content_mcnemar_fix": "324a44fb21f",
+    "trajectory_pairing": "918b6ed638b2"
+  },
+  "claim_boundary": "The files are released as a sanitized snapshot; public ancestry of those historical local commits and exact historical training replay are not claimed."
+}
