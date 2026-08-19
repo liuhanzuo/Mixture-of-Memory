@@ -122,7 +122,11 @@ counts. **Consequence for writing:** a content-interface floor must be quoted
 **with the tokenizer**, not just with the convention and the unit. The analysis code
 therefore records content nulls **per family** and only asserts invariance *within*
 a family. The character unit is not recoverable from these per-item records and is
-deliberately not guessed.
+deliberately not guessed. **[RETRACTED 2026-08-12 (#252, README:117-121): the
+"larger BPE vocabularies collapse more short option texts" mechanism is
+non-monotone in vocab size and is withdrawn. The floor spread above is real;
+the attribution to vocab size is not. See `03b_nulls.tex:22` for the paper's
+current, attribution-free wording.]**
 
 ## 3. Letter vs its own floor — the full cross-family table
 
@@ -458,3 +462,36 @@ constant predictor.
   null for any benchmark in this run, and MMLU's is `0.268908`.
 * ✗ "the mechanism is exact ties" — quadruple-falsified already, and §5e adds a
   fifth family-specific route (direct modal collapse at ~0% tie rate).
+
+---
+
+## Appendix: bootstrap Monte-Carlo noise disclosure (A3, 2026-08-20; responds to A2 r281 audit)
+
+All bootstrap p-values in this record use `n_boot = 10,000` resamples
+(`protocol.boot_seed = 7`). The Monte-Carlo noise on the p-scale is
+`1/sqrt(2B) = 1/sqrt(20000) = 0.00707`. Any cell whose decision margin
+`|p − 0.05|` is smaller than `0.00707` is **noise-sensitive**: its binary
+verdict can flip on a re-run with a different bootstrap seed.
+
+Audit over the 1,431 `boot_p` leaves in `gate2_crossfamily_nulls.json`:
+**34 / 1,431 (2.3%) fall inside `0.05 ± 0.00707`** (15 on the significant
+side, 19 on the non-significant side). Headline exposure:
+
+- **0-of-60 letter headline (§5b): SAFE.** The letter-interface edge cells are
+  `llama2_7b/arc_challenge/k12` and `/k14` at `boot_p = 0.0499`, and both verdicts
+  are **BELOW the floor** — the noise-sensitive direction can only strengthen the
+  headline ("below" possibly flipping to "at floor"), never produce an
+  above-floor cell. The remaining letter edge cells (llama2_7b/k8
+  `0.052`, qwen3_8b_base `arc_challenge/k10/k12/k14` `0.055`,
+  llama3_8b/arc_easy/k10 `0.0438` BELOW) likewise carry no above-floor verdict.
+- **One flagged edge cell changes a non-headline verdict under re-seeding:**
+  `llama3_8b/arc_easy/k8 content_norm`, `boot_p = 0.0448` (Δ = +2.399 pp),
+  currently reads *above the floor*. Its margin is 0.0052 < 0.00707 →
+  noise-sensitive. It enters no headline count (the 0-of-60 headline is the
+  letter interface); content-interface aggregates that include it should be
+  read as ±1 cell.
+- Resolution: reporting rule going forward is to print `B`, the MC noise
+  `1/sqrt(2B)`, and the margin alongside any load-bearing bootstrap p, and to
+  mark noise-sensitive cells rather than silently raising `B` (raising `B` to
+  100,000 would cut noise to 0.00224; none of the 34 cells carries a headline,
+  so re-runs were not commissioned — recorded here as an explicit decision).
