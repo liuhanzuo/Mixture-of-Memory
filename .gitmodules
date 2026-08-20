@@ -1,0 +1,11 @@
+[submodule "locomo"]
+	path = locomo
+	url = https://github.com/snap-research/locomo.git
+
+[submodule "third_party/HMT-pytorch"]
+	path = third_party/HMT-pytorch
+	url = https://github.com/OswaldHe/HMT-pytorch.git
+
+[submodule "third_party/recurrent-memory-transformer"]
+	path = third_party/recurrent-memory-transformer
+	url = https://github.com/booydar/recurrent-memory-transformer.git

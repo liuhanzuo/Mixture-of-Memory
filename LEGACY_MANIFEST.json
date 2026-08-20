@@ -1,0 +1,216 @@
+{
+  "schema_version": "1.0.0",
+  "audited_at": "2026-08-20T23:36:13+08:00",
+  "audited_source_commit": "79e9e48b3ade3d282042907e1f9558364330200e",
+  "branch": "research/continue-20260819",
+  "remote_main_at_audit": "6c09dff51d3aca94701a93968c71a3fd5861079b",
+  "git_integrity": {
+    "fsck_full": "pass",
+    "missing_objects": 0,
+    "tracked_paths": 36113,
+    "source_commits_ahead_of_remote_main": 1,
+    "sparse_checkout_policy": "core inheritance trees materialized; large result snapshots retained in Git objects"
+  },
+  "papers": [
+    {
+      "identity": "paperA",
+      "title": "CoMem: Reusing Transformer Depth across Queries with Persistent Intermediate Residuals",
+      "path": "paperA",
+      "tree_sha": "f710a0f22cf8938bf75dacc24d9ffeeb6eaeab1f",
+      "file_count": 1454,
+      "state": "full_source_pdf_artifacts_reviews_and_followup_todos",
+      "canonical_pdf": "paperA/main.pdf",
+      "canonical_pdf_sha256": "9451a471b0e007616452f99545ba861712d81c01a176dd5761c0445e01ef9c97"
+    },
+    {
+      "identity": "paperB",
+      "title": "Auditing Recovery after Depth Pruning: Perplexity, Evaluation Interfaces, and Construction Matter",
+      "path": "paperB",
+      "tree_sha": "58748c208ba2c6ab19e5a4730e27fd94485c715e",
+      "file_count": 1093,
+      "state": "full_source_pdf_submission_artifact_and_reviews_with_stale_repro_manifest",
+      "canonical_pdf": "paperB/main.pdf",
+      "canonical_pdf_sha256": "2d57964ef31fe3cbd62c22f930df5950ded0fa12b2110d57de8e023231712741"
+    },
+    {
+      "identity": "paperC",
+      "title": "Null Calibration for Multiple-Choice Evaluation: When Above Chance Fails the Input-Blind Floor",
+      "path": "paperC",
+      "tree_sha": "b1690a12034db2b8c2a015b08c43747cbd8e15dc",
+      "file_count": 524,
+      "state": "round_06_submission_complete_present_but_paper_state_json_stale_at_round_03",
+      "canonical_pdf": "paperC/main.pdf",
+      "canonical_pdf_sha256": "9dbbaf8ca10395b26d679bf954429e1a051ef3b3f8924e6454b784aa0c3ace75",
+      "frozen_review_rounds": [
+        "round_00",
+        "round_01",
+        "round_02",
+        "round_03",
+        "round_04",
+        "round_05",
+        "round_06"
+      ]
+    },
+    {
+      "identity": "unlettered_comem_extension_draft",
+      "title": "Understanding Is Done Early: A Depth Division of Labor in Large Language Models and Its Use for Unbounded-Context Memory",
+      "path": "paper",
+      "tree_sha": "c9e4b7ab585738fc4b4ccb1ed6299fda002bc74a",
+      "file_count": 25,
+      "state": "latex_draft_without_committed_pdf",
+      "canonical_pdf": null,
+      "canonical_pdf_sha256": null
+    },
+    {
+      "identity": "historical_paperD_research",
+      "path": "paperD_research",
+      "tree_sha": "a551a8f0b66c041b8d0b4ead35c8d412ab4a5bfa",
+      "file_count": 126,
+      "state": "old_cross_family_stitching_direction_dead_no_tex_no_pdf",
+      "canonical_pdf": null,
+      "canonical_pdf_sha256": null,
+      "naming_authority": "proposal/PAPER_LETTER_ASSIGNMENT.md"
+    }
+  ],
+  "research_trees": [
+    {
+      "path": "proposal",
+      "tree_sha": "4541a7124885cb51bb8b4837b2119bab01f83d80",
+      "file_count": 787,
+      "logical_bytes": 22588457,
+      "materialized": true
+    },
+    {
+      "path": "legacy",
+      "tree_sha": "ba39233d5cc51cad6b01b2c7e9fac4cf0b240f6d",
+      "file_count": 522,
+      "logical_bytes": 5020100,
+      "materialized": true
+    },
+    {
+      "path": "method_sources",
+      "tree_sha": "c02606feba4f78ae8e76dff302d4d249c8351334",
+      "file_count": 476,
+      "logical_bytes": 37396102,
+      "materialized": true
+    },
+    {
+      "path": "experiments_archive",
+      "tree_sha": "401c88989a2f79954b55d9202520ace2c4887567",
+      "file_count": 1056,
+      "logical_bytes": 2156217084,
+      "materialized": false
+    },
+    {
+      "path": "babilong_results",
+      "tree_sha": "d428ce739d496e119e66ec39436483d8c651365e",
+      "file_count": 21755,
+      "logical_bytes": 60339660,
+      "materialized": false
+    },
+    {
+      "path": "ruler_results",
+      "tree_sha": "326d5d180627102554fbc4b23ee761b5df61e3a5",
+      "file_count": 4495,
+      "logical_bytes": 29697916,
+      "materialized": false
+    },
+    {
+      "path": "longbench_results",
+      "tree_sha": "a471e9dcc3de9179c19ec5d087a658db5901f248",
+      "file_count": 610,
+      "logical_bytes": 18128335,
+      "materialized": false
+    },
+    {
+      "path": "longeval_results",
+      "tree_sha": "1942e4813e2a7b0c79e1f560e99b9d954c41a6c4",
+      "file_count": 280,
+      "logical_bytes": 1387121,
+      "materialized": false
+    },
+    {
+      "path": "bench_results",
+      "tree_sha": "fc39e04a76f16aa295cda6c9eca712f9bec1d96e",
+      "file_count": 819,
+      "logical_bytes": 28663918,
+      "materialized": false
+    }
+  ],
+  "submodules": [
+    {
+      "path": "locomo",
+      "url": "https://github.com/snap-research/locomo.git",
+      "commit": "3eb6f2c585f5e1699204e3c3bdf7adc5c28cb376",
+      "verified_checkout": true
+    },
+    {
+      "path": "third_party/HMT-pytorch",
+      "url": "https://github.com/OswaldHe/HMT-pytorch.git",
+      "commit": "177da4b7787557dd8475f9be62f09b5d19516cb7",
+      "verified_checkout": true
+    },
+    {
+      "path": "third_party/recurrent-memory-transformer",
+      "url": "https://github.com/booydar/recurrent-memory-transformer.git",
+      "commit": "9d0ebe1778687995697fe68e886bc1dcf0e45e1c",
+      "verified_checkout": true
+    }
+  ],
+  "external_dependencies": [
+    {
+      "path": "third_party/babilong-pkg",
+      "url": "https://github.com/booydar/babilong",
+      "historical_commit": "f09a184b43316a751d5059e13de7c557b6daca86",
+      "tracked_or_submodule": false,
+      "restored_by": "scripts/setup_third_party.sh",
+      "available_on_current_host": true,
+      "role": "official BABILong scorer"
+    }
+  ],
+  "external_data": [
+    {
+      "path": "data/dolmino_now15b.npy",
+      "recorded_sha256": "4c1a2c899568714e859ba8429cc2ec393ff9c91599429f6e14a77aecd689a41b",
+      "available_on_current_host": false
+    },
+    {
+      "path": "data/dolmino_now_val.npy",
+      "recorded_sha256": "ee36248dc8e4a79c1ffda16272f9e44a0675eb0dea5c9920f2f0735e570f22e8",
+      "available_on_current_host": false
+    }
+  ],
+  "external_asset_policy": {
+    "git_ignored_classes": [
+      "model weights",
+      "training checkpoints",
+      "raw datasets",
+      "Hugging Face caches",
+      "virtual environments",
+      "cluster output directories"
+    ],
+    "historical_inventory": "status/DISK_DECISION_20260816.md",
+    "checkpoint_keep_ledger": "status/CKPT_CLEANUP_VETOED_370.txt",
+    "checkpoint_delete_ledger": "status/CKPT_CLEANUP_EXECUTED_579.txt",
+    "old_cluster_roots_reachable_at_audit": false,
+    "unreachable_does_not_imply_deleted": true
+  },
+  "known_inconsistencies": [
+    {
+      "id": "paperB_stale_repro_manifest",
+      "detail": "paperB/REPRO_SHA256_AUDIT_20260816.md measured 3/9 matches and 6/9 mismatches; the two referenced files present in this clone also mismatch the historical manifest"
+    },
+    {
+      "id": "paperC_state_lags_physical_round",
+      "detail": "paperC/state/paper_state.json says round 3 while round_06/submission_complete exists and its PDF equals paperC/main.pdf"
+    },
+    {
+      "id": "proposal_stale_absence_assertion",
+      "detail": "B09 claims RELATED_WORK.md absent although it exists; add a dated superseding field instead of rewriting append-only history"
+    },
+    {
+      "id": "paperD_name_collision",
+      "detail": "paperD_research is the dead cross-family stitching direction; no new canonical Paper D manuscript exists"
+    }
+  ]
+}
